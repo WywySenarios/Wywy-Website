@@ -1,0 +1,9 @@
+# I sure do love security!!!
+**/*client_secret*.json
+**/*credentials*.json
+**/*token.json
+
+# don't copy data over because that's just weird
+data/*
+# make sure the folder still exists though!
+!data/empty
