@@ -1,0 +1,67 @@
+.container {
+    --bgColor: #fae4b9;
+}
+
+head {
+    font-family: monospace;
+}
+
+body {
+    font-family: monospace;
+    background: linear-gradient(3deg, #f0a383 0%, #de5568 100%);
+}
+
+/* COLORS GALORE */
+
+.top-bar {
+    background-color: #de5568;
+}
+
+.top-bar input[type="button"] {
+    color: black;
+    background-color: unset;
+}
+
+.top-bar input[type="button"]:hover {
+    background-color: #cd2561;
+}
+
+.top-bar input[type="text"] {
+    background-color:#f0a383;
+}
+
+footer {
+    background: linear-gradient(to right, #fffef0, #fae4b9);
+}
+
+/* Animations START */
+
+.mainContent {
+    animation-duration: 1.5s;
+    animation-name: appear;
+}
+
+.top-bar {
+    animation-duration: 1.5s;
+    animation-name: appear;
+}
+
+@keyframes appear {
+    from {
+        translate: 0 10px;
+        opacity: 0%;
+    }
+
+    to {
+        translate: 0 0;
+        opacity: 100%;
+    }
+}
+
+/* Animations END */
+
+/* Fix the frustrating misalignment of the bullet points ;) */
+
+.mainContent ul {
+    margin-left: 20px;
+}

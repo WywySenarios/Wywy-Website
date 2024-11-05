@@ -7,3 +7,11 @@
 data/*
 # make sure the folder still exists though!
 !data/empty
+
+# ignore node packages
+package-lock.json
+package.json
+node_modules/*
+
+# ignore python virtual environment & packages
+.venv/*

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Rock, Paper, Scissors! Runtime</title>
+    <link rel="icon" href="assets/rock-paper-scissors.png">
+    <link rel="stylesheet" href="\stylesheets\main_sunset.css">
+    <link rel="stylesheet" href="\stylesheets\bars.css">
+    <style>
+
+    </style>
+</head>
+
+<body>
+    <!-- Top bar -->
+    <div class="top-bar">
+        <!-- Icon -->
+        <img src="assets/rock-paper-scissors.png">
+
+        <!-- Buttons -->
+        <!-- Made thanks to : https://stackoverflow.com/questions/2906582/how-do-i-create-an-html-button-that-acts-like-a-link -->
+        <input type="button" onclick="location.href='/';" value="Home"></input>
+        <input type="button" onclick="location.href='visualization.html';" value="Results"></input>
+        <input type="button" value="Play"></input>
+
+        <!-- Search bar -->
+        <input type="text" placeholder="Search">
+    </div>
+
+    <!-- Main content -->
+    <div class="mainContent">
+        <p>Don't worry about filling in all the form---fill in all you know and leave anything that you don't know blank.</p>
+        <br>
+        <h1>How to get PC information</h1>
+        <p>Windows PC: type "about" in the windows search bar & you should be taken to a settings page with all the necessary specs listed under the device name, "Device specifications", and "Windows specifications".</p>
+        <br>
+        <p>Mac: type "About this Mac" or "About" in the Mac search bar. All the necessary information should be provided.</p>
+        <br>
+        <p>ChromeBook: To find the hardware specs of a chromebook, type "about" in the ChromeOS search bar (NOT CHROME).</p>
+        <p>To find the OS version of a chromebook, type "about ChromeOS" in the ChromeOS search bar (NOT CHROME); and then click on "additional details", and then click on "build details". The OS version should be the first line of relevant information.</p>
+        <br>
+        <h1>How to get Phone information</h1>
+        <p>iPhone: Go to settings, "general", and then "about". Important hardware information can be found by searching the model number online.</p>
+        <br>
+        <p>Android: Go to settings, "System" , and then "About phone" or "about". Alternatively, go to settings and then "About phone". The device name, model, hardware specs, and OS version should all be visible.</p>
+        <h1>The Form</h1>
+        <form>
+            <p>Device Model (e.g. iPhone 14 or Macbook Pro)</p>
+            <input type="text" id="device model">
+            <br>
+            <p>Are you using Windows 11?</p>
+            <input type="checkbox" id="windows11">
+            <br>
+            <!-- <p>Operating System Type</p>
+            <select name="OS" id="OS">
+                <option value="Windows 11">Windows 11</option>
+                <option value="Windows 10">Windows 10</option>
+                <option value="Linux">Linux</option>
+                <option value="macOS">Mac OS</option>
+                Negligible difference between iPhone & iPad
+                <option value="iOS">Apple Phones & iPads (iOS or iPadOS)</option>
+                <option value="watchOS">Apple Watches (watchOS)</option>
+                <option value="Android">Android</option>
+                <option value="other">Other</option>
+            </select> -->
+            <p>System type (leave blank if unknown)</p>
+            <select name="system type" id="system type">
+                <option value="unknown">IDK</option>
+                <option value="x32">x32</option>
+                <option value="x64">x64</option>
+                <option value="x86">x86</option>
+            </select>
+            <br>
+            <br>
+            <p>Processor Model (e.g. Intel(R) Core(TM) i7-8550U) (refer to "How to get PC Information" or "How to get Phone information" paragraphs above for how to find out this information)</p>
+            <input type="text" id="processor">
+            <br>
+            <br>
+            <p>CPU clock speed (GHz) (Many devices don't tell you this information) (Leave blank if unknown)</p>
+            <input type="text" id="CPU clock speed">
+            <br>
+            <br>
+            <p>OS Version (e.g. "22631.4317") (refer to "How to get PC Information" or "How to get Phone information" paragraphs above for how to find out this information)</p>
+            <input type="text" id="OS version">
+            <br>
+            <br>
+            <p>Specify any special software modifications you have made to your computer:</p>
+            <input type="text" id="modifications">
+            <br>
+            <br>
+            <p>Website task priority (e.g. "High") (leave as "Unset" if unknown)</p>
+            <select name="website priority" id="website priority">
+                <option value="Unset">Unset</option>
+                <option value="Efficiency Mode">Efficiency Mode</option>
+                <option value="Low">Low</option>
+                <option value="Below Normal">Below Normal</option>
+                <option value="Normal">Normal</option>
+                <option value="Above Normal">Above Normal</option>
+                <option value="High">High</option>
+                <option value="Realtime">Realtime</option>
+            </select>
+            <br>
+            <br>
+            <p>Device Age in Years</p>
+            <input type="range" id="device age" min="0" max="12" value="2" oninput="this.nextElementSibling.value = this.value">
+            <output>2</output>
+            <br>
+            <br>
+            <p>Device RAM or Memory in GB (refer to "How to get PC Information" or "How to get Phone information" paragraphs above for how to find out this information)</p>
+            <input type="range" id="memory" min="2" max="32" value="8" oninput="this.nextElementSibling.value = this.value">
+            <output>8</output>
+            <br>
+            <br>
+            <p>Name or Device Name (e.g. DESKTOP-4MC7FUG) (you can put a fake one if you'd like!)</p>
+            <input type="text" id="name" minlength="1" maxlength="">
+            <br>
+            <br>
+        </form>
+        <input type="button" id="run" onclick="runInit()" value="Run"> <label id="statusLabel" for="status">Status: Idle</label>
+        <!-- 23 * 4 = 92 tests -->
+        <progress id="status" style="width: 100%;" value="0" max="92"></progress>
+
+        <table id="runtimeTable">
+            <tr>
+                <th></th>
+                <th>Standard Algorithm</th>
+                <th>Optimized Algorithm</th>
+                <th>Zeroes Algorithm</th>
+                <th>Polynomial Algorithm</th>
+            </tr>
+
+            <tr>
+                <th>Runtime (ms/100 cases)</th>
+                <th id="standard100"></th>
+                <th id="optimized100"></th>
+                <th id="zeroes100"></th>
+                <th id="polynomial100"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/1000 cases)</th>
+                <th id="standard1000"></th>
+                <th id="optimized1000"></th>
+                <th id="zeroes1000"></th>
+                <th id="polynomial1000"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/10000 cases)</th>
+                <th id="standard10000"></th>
+                <th id="optimized10000"></th>
+                <th id="zeroes10000"></th>
+                <th id="polynomial10000"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/100000 cases)</th>
+                <th id="standard100000.1"></th>
+                <th id="optimized100000.1"></th>
+                <th id="zeroes100000.1"></th>
+                <th id="polynomial100000.1"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/100000 cases)</th>
+                <th id="standard100000.2"></th>
+                <th id="optimized100000.2"></th>
+                <th id="zeroes100000.2"></th>
+                <th id="polynomial100000.2"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/100000 cases)</th>
+                <th id="standard100000.3"></th>
+                <th id="optimized100000.3"></th>
+                <th id="zeroes100000.3"></th>
+                <th id="polynomial100000.3"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/100000 cases)</th>
+                <th id="standard100000.4"></th>
+                <th id="optimized100000.4"></th>
+                <th id="zeroes100000.4"></th>
+                <th id="polynomial100000.4"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/100000 cases)</th>
+                <th id="standard100000.5"></th>
+                <th id="optimized100000.5"></th>
+                <th id="zeroes100000.5"></th>
+                <th id="polynomial100000.5"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/100000 cases)</th>
+                <th id="standard100000.6"></th>
+                <th id="optimized100000.6"></th>
+                <th id="zeroes100000.6"></th>
+                <th id="polynomial100000.6"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/100000 cases)</th>
+                <th id="standard100000.7"></th>
+                <th id="optimized100000.7"></th>
+                <th id="zeroes100000.7"></th>
+                <th id="polynomial100000.7"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/100000 cases)</th>
+                <th id="standard100000.8"></th>
+                <th id="optimized100000.8"></th>
+                <th id="zeroes100000.8"></th>
+                <th id="polynomial100000.8"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/100000 cases)</th>
+                <th id="standard100000.9"></th>
+                <th id="optimized100000.9"></th>
+                <th id="zeroes100000.9"></th>
+                <th id="polynomial100000.9"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/100000 cases)</th>
+                <th id="standard100000.10"></th>
+                <th id="optimized100000.10"></th>
+                <th id="zeroes100000.10"></th>
+                <th id="polynomial100000.10"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/1000000 cases)</th>
+                <th id="standard1000000.1"></th>
+                <th id="optimized1000000.1"></th>
+                <th id="zeroes1000000.1"></th>
+                <th id="polynomial1000000.1"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/1000000 cases)</th>
+                <th id="standard1000000.2"></th>
+                <th id="optimized1000000.2"></th>
+                <th id="zeroes1000000.2"></th>
+                <th id="polynomial1000000.2"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/1000000 cases)</th>
+                <th id="standard1000000.3"></th>
+                <th id="optimized1000000.3"></th>
+                <th id="zeroes1000000.3"></th>
+                <th id="polynomial1000000.3"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/1000000 cases)</th>
+                <th id="standard1000000.4"></th>
+                <th id="optimized1000000.4"></th>
+                <th id="zeroes1000000.4"></th>
+                <th id="polynomial1000000.4"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/1000000 cases)</th>
+                <th id="standard1000000.5"></th>
+                <th id="optimized1000000.5"></th>
+                <th id="zeroes1000000.5"></th>
+                <th id="polynomial1000000.5"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/1000000 cases)</th>
+                <th id="standard1000000.6"></th>
+                <th id="optimized1000000.6"></th>
+                <th id="zeroes1000000.6"></th>
+                <th id="polynomial1000000.6"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/1000000 cases)</th>
+                <th id="standard1000000.7"></th>
+                <th id="optimized1000000.7"></th>
+                <th id="zeroes1000000.7"></th>
+                <th id="polynomial1000000.7"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/1000000 cases)</th>
+                <th id="standard1000000.8"></th>
+                <th id="optimized1000000.8"></th>
+                <th id="zeroes1000000.8"></th>
+                <th id="polynomial1000000.8"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/1000000 cases)</th>
+                <th id="standard1000000.9"></th>
+                <th id="optimized1000000.9"></th>
+                <th id="zeroes1000000.9"></th>
+                <th id="polynomial1000000.9"></th>
+            </tr>
+            <tr>
+                <th>Runtime (ms/1000000 cases)</th>
+                <th id="standard1000000.10"></th>
+                <th id="optimized1000000.10"></th>
+                <th id="zeroes1000000.10"></th>
+                <th id="polynomial1000000.10"></th>
+            </tr>
+        </table>
+        <br>
+        <p>DISCLAIMER: This is NOT an accurate representation of how "fast" or "good" your computer is.</p>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <!-- Contact info -->
+        <address>
+            Website created by: <a href="mailto:wywyericzhu@gmail.com">Eric Zhu & Wywy</a>
+        </address>
+
+        <!-- Privacy Policy -->
+        <div class="footerColumn">
+            <a href="privacyPolicy.html">Privacy Policy</a>
+        </div>
+
+        <!-- Support me! -->
+        <div class="footerColumn">
+            <p>Support me by starring my <a href="https://github.com/WywySenarios/Web-RockPaperScissors">repository</a>!<p>
+        </div>
+
+        <!-- Attributions -->
+        <div class="footerColumn">
+            Attributions:
+            <a href="https://www.flaticon.com/free-icons/rock-paper-scissors" title="rock paper scissors icons">Rock
+                paper scissors icons created by Freepik - Flaticon</a>
+            <a href="https://commons.wikimedia.org/wiki/File:Rock-paper-scissors.svg"
+                title="rock paper scissors icons">Rock
+                paper scissors diagram created by Enzoklop</a>
+        </div>
+
+        <script src="run.js"></script>
+        <noscript>Your browser does not support JavaScript! Unfortunately, that means that you can't test my cool RPS
+            algorithms on your computer. Very sad :c</noscript>
+    </footer>
+</body>
+
+</html>

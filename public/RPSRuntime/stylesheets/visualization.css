@@ -1,0 +1,18 @@
+/* Limit chart size */
+.mainContent canvas.chart {
+    max-height: 75vh;
+}
+
+
+/* mobile support */
+
+@media (orientation: portrait) {
+    .mainContent select {
+        height: 100px;
+        font-size: large;
+    }
+    .mainContent button {
+        height: 100px;
+        font-size: large;
+    }
+}
