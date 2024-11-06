@@ -14,4 +14,4 @@ Make sure to put your credentials inside the root directory in a file called "cr
 
 NOTE: runGetDaily.bat is automatically configured to run using a virtual environment. Change it if you need to use another installation of python.
 
-Change the filepaths of "config\filepaths.cfg" to reflect the respective locations you are going to use.
+Change the filepaths of "config\filepaths.cfg" to reflect the respective locations you are going to use. (absolute pathes have not been tested)
