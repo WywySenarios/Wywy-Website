@@ -5,7 +5,7 @@ Note: npm REQUIRES execution policy to be set to "RemoteSigned" or a policy that
 
 How to install node js on Windows: https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows
 
-Run the following commands in the respective folder to install node packages:
+Run the following command in the respective folder to install node packages:
 npm install express cors body-parser ua-parser fs child_process
 
 Install the python "google" package & verify your credentials. Read https://developers.google.com/sheets/api/quickstart/python
@@ -14,4 +14,9 @@ Make sure to put your credentials inside the root directory in a file called "cr
 
 NOTE: runGetDaily.bat is automatically configured to run using a virtual environment. Change it if you need to use another installation of python.
 
-Change the filepaths of "config\filepaths.cfg" to reflect the respective locations you are going to use. (absolute pathes have not been tested)
+Change the filepaths of "config\filepaths.cfg" to reflect the respective locations you are going to use. (absolute paths have not been tested)
+
+# Why I used google sheets
+Google Sheets is particularily annoying when it comes to processing data---it's super clunky to use complex formulas on a couple arrays of numbers inside the google sheet, and it eventually gets SUPER DUPER LAGGY when you're trying to process thousands of data points.
+
+However, Google Sheets is super good at one thing---making it easy to input data. Yes, I made the server run around my lifestyle. I love it :P
