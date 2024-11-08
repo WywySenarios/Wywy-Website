@@ -34,32 +34,6 @@ footer {
     background: linear-gradient(to right, #fae4b9, #f0a383);
 }
 
-/* Animations START */
-
-.mainContent {
-    animation-duration: 1.5s;
-    animation-name: appear;
-}
-
-.top-bar {
-    animation-duration: 1.5s;
-    animation-name: appear;
-}
-
-@keyframes appear {
-    from {
-        translate: 0 10px;
-        opacity: 0%;
-    }
-
-    to {
-        translate: 0 0;
-        opacity: 100%;
-    }
-}
-
-/* Animations END */
-
 /* Fix the frustrating misalignment of the bullet points ;) */
 
 .mainContent ul {

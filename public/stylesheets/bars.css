@@ -25,29 +25,15 @@
 
 /* Main content */
 
-.mainContent {
+body {
     margin-top: var(--top-bar-height);
     padding: 10px;
-    min-height: calc(100vh - 75px - 75px);
+    min-height: calc(100vh);
     /* screen height - top bar - footer*/
     display: flex;
     flex-direction: column;
     justify-content: left;
 }
-
-.mainContent iframe {
-    border-radius: 2.5%;
-    border-width: 10px;
-    border-style: solid;
-    border-color: #701355;
-}
-
-/* .mainContent a {
-    color: black;
-    display: block;
-    padding: 12px;
-    text-decoration: none;
-} */
 
 /* Top bar */
 

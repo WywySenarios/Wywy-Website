@@ -1,0 +1,20 @@
+/* Animations START */
+
+body {
+    animation-duration: 0.5s;
+    animation-name: appear;
+}
+
+@keyframes appear {
+    from {
+        translate: 0 10px;
+        opacity: 0%;
+    }
+
+    to {
+        translate: 0 0;
+        opacity: 100%;
+    }
+}
+
+/* Animations END */

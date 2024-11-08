@@ -1,0 +1,300 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+---
+
+<Layout
+    title="a"
+    path="../../"
+    css_color_palette="sunset"
+    iconPath="RPSRuntime/assets/rock-paper-scissors.png"
+>
+    <input
+        slot="top-bar-button2"
+        type="button"
+        onclick="location.href='visualization';"
+        value="Results"
+    />
+    <input
+        slot="top-bar-button3"
+        type="button"
+        onclick="location.href='run';"
+        value="Play"
+    />
+
+    <main>
+        <h1>What is "Runtime"?</h1>
+        <p>
+            <a
+                href="https://www.techtarget.com/searchsoftwarequality/definition/runtime#:~:text=When%20written%20as%20two%20words,runtime%20error%20and%20runtime%20metrics."
+                >Runtime</a
+            >, or run time, not to be confused with <a
+                href="https://en.wikipedia.org/wiki/Execution_(computing)#Runtime"
+                >runtime</a
+            > is the amount of time it takes for a computer to run a program, usually
+            measured in nanoseconds or milliseconds.
+        </p>
+        <br />
+        <p>
+            Runtime is used as a general metric of how resource intensive a
+            computer program is for a <a
+                href="https://en.wikipedia.org/wiki/Central_processing_unit"
+                >CPU</a
+            >; computer programs with a lower runtime are usually considered
+            "better".
+        </p>
+        <br />
+        <p>
+            Some factors that affect runtime are: the algorithm, the current
+            state of the hardware (including factors such as the temperature of
+            the <a href="https://en.wikipedia.org/wiki/Central_processing_unit"
+                >CPU</a
+            >); <a href="https://en.wikipedia.org/wiki/Operating_system">OS</a>,
+            and the compiler being used in addition to any other programs that
+            are being run simultaneously.
+        </p>
+        <br />
+        <p>
+            Since algorithms are usually ranked based on their runtime, this
+            experiment aims to find the best Rock Paper Scissors algorithm by
+            finding the algorithm with the lowest runtime while controlling for
+            hardware differences.
+        </p>
+
+        <h1>Interactive Chart</h1>
+
+        <br />
+        <button onclick="chart('chart1')">Regenerate Chart</button>
+        <table style="border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="border-bottom: solid 2px black;"
+                        >Chart Settings</th
+                    >
+                    <th
+                        style="border-bottom: solid 2px black;border-left: solid 2px black;"
+                        >Chart</th
+                    >
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th style="text-align: left;">
+                        <div id="chart1 select">
+                            <p>Chart type:</p>
+                            <select id="chart1 chart type">
+                                <option value="bar">Bar</option>
+                                <!-- <option value="scatter">Scatter Plot</option> this line of code is bugged :( -->
+                            </select>
+                            <br />
+                            <br />
+
+                            <p>Datasets:</p>
+                            <button onclick="selectAll('chart1')" type="button"
+                                >Select All</button
+                            >
+                            <br />
+                            <input type="checkbox" id="100" />
+                            <label for="100">100</label>
+                            <br />
+                            <input type="checkbox" id="1000" />
+                            <label for="1000">1000</label>
+                            <br />
+                            <input type="checkbox" id="10000" />
+                            <label for="10000">10000</label>
+                            <br />
+                            <input type="checkbox" id="100000.1" />
+                            <label for="100000.1">100000.1</label>
+                            <br />
+                            <input type="checkbox" id="100000.2" />
+                            <label for="100000.2">100000.2</label>
+                            <br />
+                            <input type="checkbox" id="100000.3" />
+                            <label for="100000.3">100000.3</label>
+                            <br />
+                            <input type="checkbox" id="100000.4" />
+                            <label for="100000.4">100000.4</label>
+                            <br />
+                            <input type="checkbox" id="100000.5" />
+                            <label for="100000.5">100000.5</label>
+                            <br />
+                            <input type="checkbox" id="100000.6" />
+                            <label for="100000.6">100000.6</label>
+                            <br />
+                            <input type="checkbox" id="100000.7" />
+                            <label for="100000.7">100000.7</label>
+                            <br />
+                            <input type="checkbox" id="100000.8" />
+                            <label for="100000.8">100000.8</label>
+                            <br />
+                            <input type="checkbox" id="100000.9" />
+                            <label for="100000.9">100000.9</label>
+                            <br />
+                            <input type="checkbox" id="100000.10" />
+                            <label for="100000.10">100000.10</label>
+                            <br />
+                            <br />
+
+                            <p>Algorithm type</p>
+                            <select
+                                name="chart1 algorithm"
+                                id="chart1 algorithm"
+                            >
+                                <option value="standard">standard</option>
+                                <option value="optimized">optimized</option>
+                                <option value="zeroes">zeroes</option>
+                                <option value="polynomial">polynomial</option>
+                            </select>
+                        </div>
+                    </th>
+                    <th style="width:100%;border-left: solid 2px black;"
+                        ><canvas id="chart1" class="chart"></canvas>
+                    </th>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Thanks to Bory for helping me discover chart.js! It's super useful :) -->
+        <script
+            src="https://cdn.jsdelivr.net/npm/chart.js@4.4.5/dist/chart.umd.min.js"
+        ></script>
+        <!-- <script src="getChart.js"></script> -->
+    </main>
+
+    <div slot="attributions">
+        <a
+            href="https://www.flaticon.com/free-icons/rock-paper-scissors"
+            title="rock paper scissors icons"
+            >Rock paper scissors icons created by Freepik - Flaticon</a
+        >
+        <a
+            href="https://commons.wikimedia.org/wiki/File:Rock-paper-scissors.svg"
+            title="rock paper scissors icons"
+            >Rock paper scissors diagram created by Enzoklop</a
+        >
+    </div>
+</Layout>
+
+<script is:inline>
+    let charts = {};
+
+    // returns [labels, runtime] or an empty array given an error
+    async function getChartData(trialIDs, algorithmName) {
+        try {
+            let output = [];
+            for (let i = 0; i < trialIDs.length; i++) {
+                let response = await fetch(
+                    "/graph" +
+                        "?algorithmName=" +
+                        algorithmName +
+                        "&trialID=" +
+                        trialIDs[i],
+                    {
+                        method: "GET",
+                    },
+                );
+
+                const data = await response.json();
+                let labels = Array(0);
+                let runtime = Array(0);
+                for (let i = 0; i < data["content"].length; i++) {
+                    await runtime.push(data["content"][i][0]);
+                    await labels.push(data["content"][i][1]);
+                }
+
+                await output.push([labels, runtime]);
+            }
+
+            return output;
+        } catch (error) {
+            console.error(`ERROR: ${error.message}\n\nGraph will now be empty`);
+            return [];
+        }
+    }
+
+    // returns the chart that has been set
+    async function setChart(trialIDs, algorithmName, chartElement, chartType) {
+        let dataIn = await getChartData(trialIDs, algorithmName);
+        let chartDatasets = [];
+        for (let i = 0; i < dataIn.length; i++) {
+            chartDatasets.push({
+                label: "Runtime Ascending Order Trial " + trialIDs[i],
+                data: dataIn[i][1],
+                borderWidth: 1,
+            });
+        }
+
+        return await new Chart(chartElement, {
+            type: chartType,
+            data: {
+                labels: dataIn[0][0],
+                datasets: chartDatasets,
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                    },
+                },
+            },
+        });
+    }
+
+    async function chart(id) {
+        try {
+            charts[id].destroy();
+        } catch (error) {} // delete a chart if it's already there so a new one may be generated
+
+        let trialIDs = [];
+        let elements = document.getElementById(id + " select").children;
+        for (const i of elements) {
+            if (i.checked == true) {
+                trialIDs.push(i.id);
+            }
+        }
+
+        charts[id] = await setChart(
+            trialIDs,
+            document.getElementById(id + " algorithm").value,
+            document.getElementById(id),
+            document.getElementById(id + " chart type").value,
+        );
+    }
+
+    function selectAll(id) {
+        let elements = document.getElementById(id + " select").children;
+        for (const i of elements) {
+            if (i.type == "checkbox") {
+                i.checked = true;
+            }
+        }
+    }
+</script>
+
+<style>
+    main {
+        margin: auto;
+        font-size: 12px;
+        line-height: 1.6;
+        text-align: center;
+    }
+    h1 {
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        margin-bottom: 1em;
+    }
+    .text-gradient {
+        background-image: var(--accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-size: 400%;
+        background-position: 0%;
+    }
+    .link-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr));
+        gap: 2rem;
+        padding: 0;
+    }
+</style>

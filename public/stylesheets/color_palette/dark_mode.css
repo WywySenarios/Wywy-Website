@@ -1,0 +1,50 @@
+html {
+    background: #13151a;
+    /* linear-gradient(3deg, #f0a383 0%, #de5568 100%) */
+}
+
+.container {
+    --bgColor: #fae4b9;
+}
+
+head {
+    font-family: monospace;
+}
+
+body {
+    font-family: monospace;
+}
+
+/* COLORS GALORE */
+
+.top-bar {
+    background-color: #008170;
+}
+
+.top-bar input[type="button"] {
+    color: black;
+    background-color: unset;
+}
+
+.top-bar input[type="button"]:hover {
+    background-color: #0e302e;
+}
+
+.top-bar input[type="text"] {
+    background-color: #008170;
+}
+
+.top-bar input[type="text"]::placeholder {
+    color: black;
+}
+
+footer {
+    background-color: #008170;
+    color: black;
+}
+
+/* Fix the frustrating misalignment of the bullet points ;) */
+
+.mainContent ul {
+    margin-left: 20px;
+}
