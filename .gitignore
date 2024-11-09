@@ -25,6 +25,7 @@ nextPush.txt
 # ignore resumes
 public/resumes/*
 !public/resumes/empty
+src/pages/resumes.astro
 
 
 
