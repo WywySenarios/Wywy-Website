@@ -1,0 +1,87 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Eric's Privacy Policy" css_color_palette="dark_mode">
+    <main>
+        <h1>Privacy Policy: Main</h1>
+        <p>Yes, I will probably need to gather data to keep this site running. Everything should be sever-side, and this type of data is for maintaining useability & making new features.</p>
+        <h1>Privacy Policy: RPS Runtime</h1>
+        <p>
+            Whenever anyone is gathering data, there's always the question of
+            privacy. Most of my projects involving data are very self-centered,
+            and as a result, I haven't delved much into gathering other peoples'
+            data.
+        </p>
+        <br />
+        <p>
+            This project in particular is aimed at finding out what is the best
+            Rock Paper Scissors algorithm. This project is not all that formal
+            and the data gathered here will not be published academically.
+        </p>
+        <p>
+            Here are a couple good policies I will try my best to follow:
+            <ul>
+                <li>Your data will be confidential within reason.</li>
+                <li>
+                    Your data will not be sold unless you approve before sending
+                    me the data.
+                </li>
+                <li>Your name will only be visible by trusted individuals</li>
+            </ul>
+        </p>
+        <h2>"Trusted Individuals":</h2>
+        <p>Here are a list of "trusted" people:</p>
+        <ul>
+            <li>OCDSB admin</li>
+            <li>Earl admin</li>
+            <li>Earl Math, CS, and Data Mangement departments/teachers</li>
+            <li>Myself :P</li>
+        </ul>
+        <h2>Who's "in the know"?</h2>
+        <p>
+            Here are some people I will probably share your data with:
+            <ul>
+                <li>OCDSB admin</li>
+                <li>Earl admin</li>
+                <li>Earl Math, CS, and Data Management departments/teachers*</li>
+                <li>Myself :P</li>
+                <li>My data management class*</li>
+                <li>My CS class*</li>
+            </ul>
+        </p>
+        <p>*I will share data around the time of the presentation</p>
+    </main>
+</Layout>
+
+<style>
+    main {
+        margin: auto;
+        padding: 1rem;
+        width: 800px;
+        max-width: calc(100% - 2rem);
+        color: white;
+        font-size: 20px;
+        line-height: 1.6;
+    }
+    h1 {
+        font-size: 4rem;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        margin-bottom: 1em;
+    }
+    .text-gradient {
+        background-image: var(--accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-size: 400%;
+        background-position: 0%;
+    }
+    .link-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr));
+        gap: 2rem;
+        padding: 0;
+    }
+</style>
