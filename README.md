@@ -12,10 +12,18 @@ Make sure to put your credentials inside the root directory in a file called "cr
 NOTE: runGetDaily.bat is automatically configured to run python using a virtual environment. Change it if you need to use another installation of python.
 Change the filepaths of "config\filepaths.cfg" to reflect the respective locations you are going to use. (absolute paths have not been tested)
 
+Look at "Building & Running the Project" to see how to launch it.
+
 ## Why I used google sheets
 Google Sheets is particularily annoying when it comes to processing data---it's super clunky to use complex formulas on a couple arrays of numbers inside the google sheet, and it eventually gets SUPER DUPER LAGGY when you're trying to process thousands of data points.
 However, Google Sheets is super good at one thing---making it easy to input data. Yes, I made the server run around my lifestyle. I love it :P
 
 ## Resumes
+Resumes are automatically detected in the "public/resumes" folder. The filetype should be PDF. The folder path is NOT modifiable because static files should definitely be inside the static files folder :P 
 
-I haven't found a way to automatically detect which files are in the resumes folder. This means that each resume will have to be inserted manually. Edit "src/pages/resumes.astro" to see them take effect!
+## Building & Running the Project
+To build, run this command: npm run build
+
+To run, run this command: node server.js
+
+Build before you run, please.
