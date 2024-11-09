@@ -2,20 +2,14 @@
 interface Props {
 	title: string;
 	css_color_palette: string;
-	path?: string;
 	iconPath?: string;
 }
 
-let { title, css_color_palette, path, iconPath } = Astro.props;
-
-if (path == null) {
-	path = "";
-}
+let { title, css_color_palette, iconPath } = Astro.props;
 
 if (iconPath == null) {
 	iconPath = "/favicon.svg";
 }
-iconPath = path + iconPath;
 ---
 
 <!doctype html>
@@ -25,12 +19,12 @@ iconPath = path + iconPath;
 		<meta name="description" content="Astro description" />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href={iconPath} />
-		<link rel="stylesheet" href={path + "stylesheets/bars.css"} />
+		<link rel="stylesheet" href={"/stylesheets/bars.css"} />
 		<!-- <link rel="stylesheet" href="stylesheets/animations.css"> -->
 		<link
 			rel="stylesheet"
-			href={path +
-				"stylesheets/color_palette/" +
+			href={
+				"/stylesheets/color_palette/" +
 				css_color_palette +
 				".css"}
 		/>

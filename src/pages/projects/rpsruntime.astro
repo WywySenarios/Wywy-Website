@@ -4,20 +4,19 @@ import Layout from "../../layouts/Layout.astro";
 
 <Layout
     title="RPS Runtime"
-    path="../"
     css_color_palette="sunset"
-    iconPath="RPSRuntime/assets/rock-paper-scissors.png"
+    iconPath="/RPSRuntime/assets/rock-paper-scissors.png"
 >
     <input
         slot="top-bar-button2"
         type="button"
-        onclick="location.href='rpsruntime/visualization';"
+        onclick="location.href='/projects/rpsruntime/visualization';"
         value="Results"
     />
     <input
         slot="top-bar-button3"
         type="button"
-        onclick="location.href='rpsruntime/run';"
+        onclick="location.href='/projects/rpsruntime/run';"
         value="Play"
     />
 

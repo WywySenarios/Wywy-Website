@@ -1,8 +1,14 @@
-// const readline = require('node:readline');
-// const rl = readline.createInterface({
-//   input: process.stdin,
-//   output: process.stdout
-// });
+// import
+import express from 'express';
+// import urlLibrary from 'url';
+import cors from 'cors';
+// const multer = require('multer');
+import bodyParser from 'body-parser';
+import UAParsing from 'ua-parser-js';
+import fs from 'fs';
+// import childProcess from "child_process";
+import { handler as ssrHandler } from './dist/server/entry.mjs';
+
 
 function randomizeTestCases(numGames) {
   let output = "";
@@ -15,21 +21,6 @@ function randomizeTestCases(numGames) {
   return output;
 }
 
-// function shuffleTestCases() { }
-
-// imports
-const express = require('express');
-const urlLibrary = require('url');
-const cors = require('cors');
-// const multer = require('multer');
-const bodyParser = require('body-parser');
-const UAParsing = require('ua-parser-js');
-const fs = require('fs');
-const childProcess = require("child_process");
-
-//const cppAddon = require('.build/Release/randomizeTestCases');
-//console.log(cppAddon.hello());
-
 // constants
 const port = 5322;
 const app = express();
@@ -38,7 +29,16 @@ const sleepLength = 100; // sleep length in ms for the client; separation betwee
 app.use(cors()); // allow input from ANY ip address
 app.use(bodyParser.json()); // allow JSON input (related to the POST function)
 
-app.use(express.static(__dirname + '/public')); // allow file access in the "public" folder
+// full express server configs:
+// import path from 'path';
+// import { fileURLToPath } from "url";
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+// app.use(express.static(path.join(__dirname, "dist"))); // allow static file access
+
+const base = '/';
+app.use(base, express.static('dist/client/'));
+app.use(ssrHandler);
 
 app.use(express.urlencoded({
   extended: true, // use complex algorithm for large amounts of nested data?
@@ -128,9 +128,10 @@ app.post('/upload', (req, res) => {
   // look for the user's info using user-agent s
   let userInfo = (new UAParsing.UAParser(req.headers["user-agent"])).getResult();
   let userID;
+  let data;
 
   try {
-    data = req.body
+    data = req.body;
     console.log(`Receiving Data:${JSON.stringify(data)}:END-Receiving Data`); // note what input has been given in logs
     // add user-agent related specs
     data["specs"]["browser"] = userInfo["browser"];
@@ -154,6 +155,7 @@ app.post('/upload', (req, res) => {
     userID = username + "_" + Date.now().toString(); // ID is always unique even if the same person comes back to the program at a later date
     delete data["name"];
   } catch (error) { // erroneous user input
+    console.log(error);
     res.status(213);
     res.end();
     return;

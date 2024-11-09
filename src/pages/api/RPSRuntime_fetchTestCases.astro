@@ -1,0 +1,37 @@
+---
+import type {APIContext} from 'astro';
+
+const sleepLength = 50;
+
+function randomizeTestCases(numGames: string) {
+  let output = "";
+
+  for (let i = 0; i < parseInt(numGames); i++) {
+    output += Math.round(1 + Math.random() * 2).toString() + Math.round(1 + Math.random() * 2).toString();
+  }
+
+  //console.log("Test cases generated: " + output)
+  return output;
+}
+
+// GET requests for test cases
+
+export async function get(context: APIContext) {
+  console.log("API route accessed!");
+
+    const url = new URL(context.request.url);
+    const numTestCases = url.searchParams.get('num') || '100';
+
+    console.log(`Querystring: ${numTestCases}`);
+
+    return new Response(JSON.stringify({
+        "Content": randomizeTestCases(numTestCases),
+        "sleepLength": sleepLength
+    }), {
+        status: 200,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+}
+---

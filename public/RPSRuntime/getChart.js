@@ -13,11 +13,11 @@ async function getChartData(trialIDs, algorithmName) {
       let labels = Array(0);
       let runtime = Array(0);
       for (let i = 0; i < data["content"].length; i++) {
-        await runtime.push(data["content"][i][0]);
-        await labels.push(data["content"][i][1]);
+        runtime.push(data["content"][i][0]);
+        labels.push(data["content"][i][1]);
       }
 
-      await output.push([labels, runtime]);
+      output.push([labels, runtime]);
     }
 
     return output;

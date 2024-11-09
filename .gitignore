@@ -19,6 +19,8 @@ node_modules/*
 # ignore VS code folder :P
 .vscode
 
+# ignore my quick notes
+nextPush.txt
 
 
 # build output
