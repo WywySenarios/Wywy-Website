@@ -22,6 +22,11 @@ node_modules/*
 # ignore my quick notes
 nextPush.txt
 
+# ignore resumes
+public/resumes/*
+!public/resumes/empty
+
+
 
 # build output
 dist/

@@ -1,10 +1,10 @@
-/* Dark mode color palette (half of it is) from https://colorhunt.co/palette/0f0f0f232d3f005b41008170 */
+/* Light mode color palette from https://www.color-hex.com/color-palette/106748 */
 * {
-    --color1: #13151a;
-    --color2: #008170;
-    --color3: #008170;
-    --color4: #008170;
-    --color5: #0e302e;
+    --color1: #fafafa;
+    --color2: #e4e5f1;
+    --color3: #d2d3db;
+    --color4: #9394a5;
+    --color5: #484b6a;
     --textcolor: black;
 }
 
@@ -39,6 +39,5 @@ footer {
 }
 
 .link-card {
-    /* hardcoded to Astro's default color :P */
-    background-color: #23262d;
+    background-color: var(--color4);
 }

@@ -1,0 +1,17 @@
+* {
+    font-family: monospace;
+}
+
+head {
+    font-family: monospace;
+}
+
+body {
+    font-family: monospace;
+}
+
+/* Fix the frustrating misalignment of the bullet points ;) */
+
+.mainContent ul {
+    margin-left: 20px;
+}

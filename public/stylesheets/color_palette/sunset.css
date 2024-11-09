@@ -1,41 +1,48 @@
-.container {
-    --bgColor: #fae4b9;
+/* COLORS GALORE */
+
+/* Light mode color palette from https://lospec.com/palette-list/fiery-dreams */
+* {
+    --color1: #fae4b9;
+    --color2: #f0a383;
+    --color3: #de5568;
+    --color4: #de5568;
+    --color5: #cd2561;
+    --textcolor: black;
 }
 
-head {
-    font-family: monospace;
-}
-
-body {
-    font-family: monospace;
+html {
+    /* background: var(--color1); */
     background: linear-gradient(3deg, #f0a383 0%, #de5568 100%);
 }
 
 /* COLORS GALORE */
 
 .top-bar {
-    background-color: #de5568;
+    background-color: var(--color4);
 }
 
 .top-bar input[type="button"] {
-    color: black;
+    color: var(--textcolor);
     background-color: unset;
 }
 
 .top-bar input[type="button"]:hover {
-    background-color: #cd2561;
+    background-color: var(--color5);
 }
 
 .top-bar input[type="text"] {
-    background-color:#f0a383;
+    background-color: var(--color2);
+}
+
+.top-bar input[type="text"]::placeholder {
+    color: var(--textcolor);
 }
 
 footer {
     background: linear-gradient(to right, #fae4b9, #f0a383);
+    color: var(--textcolor);
 }
 
-/* Fix the frustrating misalignment of the bullet points ;) */
-
-.mainContent ul {
-    margin-left: 20px;
+.link-card {
+    background-color: var(--color4);
 }

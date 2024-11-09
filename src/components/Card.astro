@@ -5,11 +5,15 @@ interface Props {
 	href: string;
 }
 
-const { href, title, body } = Astro.props;
+let { href, title, body } = Astro.props;
+
+if (href.substring(0, 4) != "http") {
+	href = new URL(href, Astro.url).pathname
+}
 ---
 
 <li class="link-card">
-	<a href={new URL(href, Astro.url).pathname}>
+	<a href={href}>
 		<h2>
 			{title}
 			<span>&rarr;</span>
@@ -24,7 +28,7 @@ const { href, title, body } = Astro.props;
 		list-style: none;
 		display: flex;
 		padding: 1px;
-		background-color: #23262d;
+		/* background-color: #23262d; */
 		background-image: none;
 		background-size: 400%;
 		border-radius: 7px;
