@@ -2,21 +2,18 @@
 import Layout from "../layouts/Layout.astro";
 import Card from "../components/Card.astro";
 
-import fs from "fs";
+const resumeDirectory = import.meta.glob("/public/resumes/*.pdf");
+console.log(resumeDirectory);
+let resumeFiles: any = [];
+for (const i in resumeDirectory) {
+    resumeFiles.push(i.substring("/public/resumes/".length));
+}
 
-const resumeDirectory = "./public/resumes";
-let resumeFiles: any[] = []; // idk hwo 
-try {
-    resumeFiles = fs.readdirSync(resumeDirectory)
-        .filter(file => file !== "empty")
-        .map(file => ({
+resumeFiles = resumeFiles.map((file: any) => ({
             href: `/resumes/${file}`,
             title: file.substring(0, file.length - 4), // Remove file extension
             body: ""
         }));
-} catch (err) {
-    console.error("Error reading resumes directory:", err);
-}
 
 let count = 0;
 ---
@@ -24,7 +21,6 @@ let count = 0;
 <Layout title="Eric's Resumes" css_color_palette="light_mode">
     <main>
         <ul id="main" role="list" class="link-card-grid">
-            <!-- <Card href="/resumes/11_8_2024.pdf" title="11/8/2024" body="" /> -->
             {resumeFiles.map((resume: any) => (
                 <Card href={resume.href} title={resume.title} body={resume.body} />
             ))}

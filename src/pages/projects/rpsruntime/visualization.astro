@@ -20,7 +20,7 @@ import Layout from "../../../layouts/Layout.astro";
         value="Play"
     />
 
-    <main>
+    <main id="mainBody">
         <h1>What is "Runtime"?</h1>
         <p>
             <a
@@ -60,6 +60,7 @@ import Layout from "../../../layouts/Layout.astro";
         </p>
 
         <h1>Interactive Chart</h1>
+        <!-- {sortBy ? <p>Sorted (ascending) by test case: {sortBy}</p> : null} -->
 
         <br />
         <button onclick="chart('chart1')">Regenerate Chart</button>
@@ -151,12 +152,9 @@ import Layout from "../../../layouts/Layout.astro";
                 </tr>
             </tbody>
         </table>
-
-        <!-- Thanks to Bory for helping me discover chart.js! It's super useful :) -->
-        <script
-            src="https://cdn.jsdelivr.net/npm/chart.js@4.4.5/dist/chart.umd.min.js"
-        ></script>
         <!-- <script src="getChart.js"></script> -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.5/dist/chart.umd.min.js"
+        is:inline></script>
     </main>
 
     <div slot="attributions">
@@ -172,6 +170,10 @@ import Layout from "../../../layouts/Layout.astro";
         >
     </div>
 </Layout>
+
+<!-- Thanks to Borui for helping me discover chart.js! It's super useful :) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.5/dist/chart.umd.min.js"
+></script>
 
 <script is:inline>
     let charts = {};
@@ -196,11 +198,11 @@ import Layout from "../../../layouts/Layout.astro";
                 let labels = Array(0);
                 let runtime = Array(0);
                 for (let i = 0; i < data["content"].length; i++) {
-                    runtime.push(data["content"][i][0]);
-                    labels.push(data["content"][i][1]);
+                    await runtime.push(data["content"][i][0]);
+                    await labels.push(data["content"][i][1]);
                 }
 
-                output.push([labels, runtime]);
+                await output.push([labels, runtime]);
             }
 
             return output;
@@ -268,6 +270,10 @@ import Layout from "../../../layouts/Layout.astro";
         }
     }
 </script>
+
+<!-- Thanks to Borui for helping me discover chart.js! It's super useful :) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.5/dist/chart.umd.min.js"
+is:inline></script>
 
 <style>
     main {
