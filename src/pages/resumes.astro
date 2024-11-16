@@ -1,6 +1,6 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import Card from "../components/Card.astro";
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
 
 const resumeDirectory = import.meta.glob("/public/resumes/*.pdf");
 console.log(resumeDirectory);
@@ -14,8 +14,6 @@ resumeFiles = resumeFiles.map((file: any) => ({
             title: file.substring(0, file.length - 4), // Remove file extension
             body: ""
         }));
-
-let count = 0;
 ---
 
 <Layout title="Eric's Resumes" css_color_palette="light_mode">

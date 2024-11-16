@@ -1,5 +1,5 @@
 @echo off
-set configJSON = ConvertFrom-Json Get-Content config\filepaths.cfg
+set configJSON = ConvertFrom-Json Get-Content config.json
 set pyPath = %configJSON.python%
 
 %pyPath% getDaily.py

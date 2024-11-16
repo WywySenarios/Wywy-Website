@@ -1,0 +1,123 @@
+{
+  "name": "schedule",
+    "content": [{
+        "time": "8:00AM - 9:00AM",
+        "monday": "High school :D",
+        "tuesday": "High school :D",
+        "wednesday": "High school :D",
+        "thursday": "High school :D",
+        "friday": "High school :D",
+        "saturday": "",
+        "sunday": ""
+      },
+      {
+        "time": "9:00AM - 10:00AM",
+        "monday": "High school :D",
+        "tuesday": "High school :D",
+        "wednesday": "High school :D",
+        "thursday": "High school :D",
+        "friday": "High school :D",
+        "saturday": "",
+        "sunday": ""
+      },
+      {
+        "time": "10:00AM - 11:00AM",
+        "monday": "High school :D",
+        "tuesday": "High school :D",
+        "wednesday": "High school :D",
+        "thursday": "High school :D",
+        "friday": "High school :D",
+        "saturday": "",
+        "sunday": ""
+      },
+      {
+        "time": "11:00AM - 12:00PM",
+        "monday": "High school :D",
+        "tuesday": "High school :D",
+        "wednesday": "High school :D",
+        "thursday": "High school :D",
+        "friday": "High school :D",
+        "saturday": "",
+        "sunday": ""
+      },
+      {
+        "time": "12:00PM - 1:00PM",
+        "monday": "High school :D",
+        "tuesday": "High school :D",
+        "wednesday": "High school :D",
+        "thursday": "High school :D",
+        "friday": "High school :D",
+        "saturday": "",
+        "sunday": ""
+      },
+      {
+        "time": "1:00PM - 2:00PM",
+        "monday": "High school :D",
+        "tuesday": "High school :D",
+        "wednesday": "High school :D",
+        "thursday": "High school :D",
+        "friday": "High school :D",
+        "saturday": "",
+        "sunday": ""
+      },
+      {
+        "time": "2:00PM - 3:00PM",
+        "monday": "High school :D",
+        "tuesday": "High school :D",
+        "wednesday": "High school :D",
+        "thursday": "High school :D",
+        "friday": "High school :D",
+        "saturday": "",
+        "sunday": ""
+      },
+      {
+        "time": "3:00PM - 4:00PM",
+        "monday": "",
+        "tuesday": "",
+        "wednesday": "",
+        "thursday": "",
+        "friday": "",
+        "saturday": "",
+        "sunday": ""
+      },
+      {
+        "time": "4:00PM - 5:00PM",
+        "monday": "",
+        "tuesday": "",
+        "wednesday": "",
+        "thursday": "",
+        "friday": "",
+        "saturday": "",
+        "sunday": ""
+      },
+      {
+        "time": "5:00PM - 6:00PM",
+        "monday": "",
+        "tuesday": "",
+        "wednesday": "",
+        "thursday": "",
+        "friday": "",
+        "saturday": "",
+        "sunday": ""
+      },
+      {
+        "time": "7:00PM - 8:00PM",
+        "monday": "",
+        "tuesday": "",
+        "wednesday": "",
+        "thursday": "",
+        "friday": "",
+        "saturday": "",
+        "sunday": ""
+      },
+      {
+        "time": "8:00PM - 9:00PM",
+        "monday": "",
+        "tuesday": "",
+        "wednesday": "",
+        "thursday": "",
+        "friday": "",
+        "saturday": "",
+        "sunday": ""
+      }]
+}

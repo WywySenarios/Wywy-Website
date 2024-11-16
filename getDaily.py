@@ -15,7 +15,7 @@ SPREADSHEET_ID = "1reqTRELv3O9aNCOr1_wG2pbsL14POf8uvKY2uPpwh-U"
 DATA_SHEET_NAME = "Daily Data"
 
 # Open and read the config filepath file
-with open('config\\filepaths.cfg', 'r') as file:
+with open('config.json', 'r') as file:
     cfgFilepaths = json.load(file)
 
 """

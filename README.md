@@ -4,8 +4,16 @@ This is a framework for my personal website! Unforutnately, user friendliness is
 ## SETUP SERVER:
 Note: npm REQUIRES execution policy to be set to "RemoteSigned" or a policy that is less strict than "RemoteSigned"
 How to install node js on Windows: https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows
-Run the following command in the respective folder to install node packages: (to be updated???)
-npm install express cors body-parser ua-parser fs child_process
+Run the following commands in the respective folder to install node packages: (to be updated???)
+npm install express cors body-parser ua-parser fs child_process lucide-react class-variance-authority tailwindcss
+npm install -D tailwindcss postcss autoprefixer vite
+npm tailwindcss init
+
+Install astro in an empty directory and copy over the files to there. Install typescript.
+npm create astro@latest
+
+Run the following command in the respective folder to install astro packages:
+npx astro add node tailwind react
 
 Install the python "google" package & verify your credentials. Read https://developers.google.com/sheets/api/quickstart/python
 Make sure to put your credentials inside the root directory in a file called "credentials.json".

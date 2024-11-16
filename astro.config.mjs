@@ -12,10 +12,8 @@ export default defineConfig({
   output: 'server',
 
   adapter: node({
-    mode: 'middleware'
+    mode: 'standalone'
   }),
 
-  integrations: [react(), tailwind({
-    applyBaseStyles: false
-  })]
+  integrations: [react(), tailwind()]
 });

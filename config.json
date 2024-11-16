@@ -1,0 +1,8 @@
+{
+    "googleCredentials": "credentials.json",
+    "googleToken": "token.json",
+    "python": ".venv\\Scripts\\python.exe",
+    "schedule": {
+        "current_schedule": "2024Fall"
+    }
+}
