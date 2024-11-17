@@ -25,7 +25,11 @@ nextPush.txt
 # ignore resumes
 public/resumes/*
 !public/resumes/empty
-src/pages/resumes.astro
+# src/pages/resumes.astro
+
+# ignore calendar items
+public/calendar/*
+!public/calendar/empty
 
 
 

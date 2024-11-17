@@ -15,6 +15,9 @@ npm create astro@latest
 Run the following command in the respective folder to install astro packages:
 npx astro add node tailwind react
 
+Other things I ran that might be important:
+npm i @types/node
+
 Install the python "google" package & verify your credentials. Read https://developers.google.com/sheets/api/quickstart/python
 Make sure to put your credentials inside the root directory in a file called "credentials.json".
 NOTE: runGetDaily.bat is automatically configured to run python using a virtual environment. Change it if you need to use another installation of python.

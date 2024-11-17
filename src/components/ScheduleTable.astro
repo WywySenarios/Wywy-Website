@@ -1,13 +1,11 @@
 ---
-import globalcss from "@public/stylesheets/index.css";
 // import globalcss from "@/index.css";
+import '@/styles/globals.css';
 
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -33,7 +31,7 @@ const { timeslots } = Astro.props;
 
 <!-- <link rel="stylesheets/index.css" /> -->
 <div>
-  <Table aria-label="Invoice Table">
+  <Table>
     <!-- <TableCaption>Wywy's Schedule!</TableCaption> -->
     <TableHeader>
       <TableRow>
@@ -70,9 +68,3 @@ const { timeslots } = Astro.props;
     </TableFooter> -->
   </Table>
 </div>
-
-<style>
-  @tailwind base;
-  @tailwind components;
-  @tailwind utilities;
-</style>

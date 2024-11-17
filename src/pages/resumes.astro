@@ -3,8 +3,8 @@ import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 
 const resumeDirectory = import.meta.glob("/public/resumes/*.pdf");
-console.log(resumeDirectory);
-let resumeFiles: any = [];
+// console.log(resumeDirectory);
+let resumeFiles = [];
 for (const i in resumeDirectory) {
     resumeFiles.push(i.substring("/public/resumes/".length));
 }
