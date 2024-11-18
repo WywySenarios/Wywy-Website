@@ -1,13 +1,13 @@
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker, type DateRange } from "react-day-picker"
+import { DayPicker } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
-import { se } from "date-fns/locale"
+// import { se } from "date-fns/locale"
 
 import data from "@/assets/calendar.json";
-import { TableCell, TableRow } from "./table"
+// import { TableCell, TableRow } from "./table"
 
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>

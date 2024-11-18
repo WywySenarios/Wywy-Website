@@ -1,0 +1,74 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Card from '@/components/Card.astro';
+---
+
+<Layout title="EZ & Wywy's Website" css_color_palette="dark_mode">
+	<main>
+		
+		<ul role="list" class="link-card-grid">
+			<Card
+				href="awards"
+				title="⭐ Awards!"
+				body="These are the awards & recognitions I got!"
+			/>
+			<Card
+				href="projects"
+				title="🚀 Projects"
+				body="These are my very very cool projects!!!"
+			/>
+			<!-- and resumes are to be graphed over time :P -->
+			<Card
+				href="resumes"
+				title="📝 Resumes"
+				body="Read my resume, and how it evolved over time."
+			/>
+			<Card
+				href="Senarios"
+				title="🎨 Senarios"
+				body="Wywy's home ❤️"
+			/>
+			<Card
+				href="personal"
+				title="📝 Personal Blog & Journal"
+				body="Here's my personal documentation, starting from 2022!"
+			/>
+			<Card
+				href="https://github.com/WywySenarios/Wywy-Website"
+				title="Upcoming Content... 🚧"
+				body="This block of STUFF!!! has not been implemented yet! :( Very sad indeed."
+			/>
+		</ul>
+	</main>
+</Layout>
+
+<style>
+	main {
+		margin: auto;
+		padding: 1rem;
+		width: 800px;
+		max-width: calc(100% - 2rem);
+		font-size: 20px;
+		line-height: 1.6;
+	}
+	h1 {
+		font-size: 4rem;
+		font-weight: 700;
+		line-height: 1;
+		text-align: center;
+		margin-bottom: 1em;
+	}
+	.text-gradient {
+		background-image: var(--accent-gradient);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-size: 400%;
+		background-position: 0%;
+	}
+	.link-card-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr));
+		gap: 2rem;
+		padding: 0;
+	}
+</style>

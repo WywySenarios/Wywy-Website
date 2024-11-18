@@ -1,5 +1,9 @@
 ---
+
+export const prerender = true;
 import Layout from "@/layouts/Layout.astro";
+
+
 ---
 
 <Layout
@@ -417,28 +421,9 @@ import Layout from "@/layouts/Layout.astro";
         "1000000": null,
     };
 
-    function defaultTestCases() {
-        return "111213212223313233";
-    }
-
-    // length should be a STRING
-    async function serverTestCases(length) {
-        try {
-            let response = await fetch("/testCases/" + length, {
-                method: "GET",
-            });
-
-            const json = await response.json();
-            // console.log(`Received Test Cases ${json["Content"]}`);
-            sleepLength = json["sleepLength"];
-            return processTestCases(json["Content"]);
-        } catch (error) {
-            console.error(
-                `${error.message}\n\nProceeding to use default test cases...`,
-            );
-            return defaultTestCases();
-        }
-    }
+    // function defaultTestCases() {
+    //     return "111213212223313233";
+    // }
 
     async function processTestCases(gamesStr) {
         // console.log(`Test cases to process: ${gamesStr}`);
@@ -478,13 +463,19 @@ import Layout from "@/layouts/Layout.astro";
         return output;
     }
 
-    async function runInit() {
+    window.runInit = async function runInit() {
         progressLabel.innerHTML = "Grabbing Server Test Cases...";
-        let testCasesToGrab = ["100", "1000", "10000", "100000", "1000000"];
-        for (const i of testCasesToGrab) {
-            progressLabel.innerHTML =
-                "Grabbing Test Case for " + i + " cases trial...";
-            testCases[i] = await serverTestCases(i);
+        let rawTestCases = await fetch("fetchTestCases", {
+                method: "GET",
+            });
+
+        rawTestCases = await rawTestCases.json();
+
+        progressLabel.innerHTML = "Formatting Test Cases...";
+        for (const i in rawTestCases) {
+            if (i != "sleepLength") {
+                testCases[i] = await processTestCases(rawTestCases[i]);
+            }
         }
 
         progressLabel.innerHTML = "Grabbing Specs...";
@@ -544,7 +535,7 @@ import Layout from "@/layouts/Layout.astro";
 
         progressLabel.innerHTML = "Sending Results to Server...";
 
-        fetch("/upload", {
+        fetch("uploadResults", {
             method: "POST",
             body: JSON.stringify(results),
             // body: await JSON.stringify(results),
@@ -554,7 +545,7 @@ import Layout from "@/layouts/Layout.astro";
         });
 
         progressLabel.innerHTML = "Done!";
-    }
+    };
 
     // run all algorithms in a random order with "games" as the test cases
     async function run(numTestCases, elementName) {
@@ -621,7 +612,7 @@ import Layout from "@/layouts/Layout.astro";
 
             results["runtime"][algorithms[index][0]] = output[0];
             results["executionResults"][algorithms[index][0]] = output[1];
-            if (!(delete algorithms[index])) {
+            if (!delete algorithms[index]) {
                 console.log(
                     'Failed to delete array element. "run()" function failed. Aborting...',
                 );
