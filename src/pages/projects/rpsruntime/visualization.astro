@@ -153,8 +153,9 @@ import Layout from "@/layouts/Layout.astro";
             </tbody>
         </table>
         <!-- <script src="getChart.js"></script> -->
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.5/dist/chart.umd.min.js"
-        is:inline></script>
+        <script
+            src="https://cdn.jsdelivr.net/npm/chart.js@4.4.5/dist/chart.umd.min.js"
+            is:inline></script>
     </main>
 
     <div slot="attributions">
@@ -178,32 +179,46 @@ import Layout from "@/layouts/Layout.astro";
 <script is:inline>
     let charts = {};
 
-    // returns [labels, runtime] or an empty array given an error
-    async function getChartData(trialIDs, algorithmName) {
+    // returns [[all names], [[labels, runtime], [labels, runtime], ...], [[labels, runtime], [labels, runtime], ...], ...] or an empty array given an error
+    async function getChartData(trialIDs, trialIDToSortBy, algorithmName) {
         try {
-            let output = [];
-            for (let i = 0; i < trialIDs.length; i++) {
-                let response = await fetch(
-                    "/graph" +
-                        "?algorithmName=" +
-                        algorithmName +
-                        "&trialID=" +
-                        trialIDs[i],
-                    {
-                        method: "GET",
-                    },
-                );
+            let output = [[]];
+            // create empty array with sufficient length
+            for (let a = 0; a < trialIDs.length; a++) {output.push([[], []]);}
 
-                const data = await response.json();
-                let labels = Array(0);
-                let runtime = Array(0);
-                for (let i = 0; i < data["content"].length; i++) {
-                    runtime.push(data["content"][i][0]);
-                    labels.push(data["content"][i][1]);
-                }
+            let trialIDsString = "";
 
-                output.push([labels, runtime]);
+            for (const i of trialIDs) {
+                trialIDsString += "," + i;
             }
+            trialIDsString = trialIDsString.substring(1, trialIDsString.length);
+
+            let response = await fetch(
+                "/projects/rpsruntime/chart" +
+                    "?trialID=" +
+                    trialIDsString +
+                    "&sortBy=" +
+                    trialIDToSortBy +
+                    "," +
+                    algorithmName,
+                {
+                    method: "GET",
+                },
+            );
+            
+            let dataIn = await response.json();
+            let contentIn = dataIn["content"];
+
+            // traverse through data
+            for (const i of contentIn) {
+                // record name
+                output[0].push(i["name"]);
+                for (let a = 0; a < trialIDs.length; a++) { // order should be correct already when passing into this function, do not worry about order.
+                    output[a + 1][0].push("Runtime Ascending Order Trial " + trialIDs[a]);
+                    output[a + 1][1].push(i[trialIDs[a]][algorithmName]);
+                }
+            }
+            console.log(output);
 
             return output;
         } catch (error) {
@@ -214,20 +229,22 @@ import Layout from "@/layouts/Layout.astro";
 
     // returns the chart that has been set
     async function setChart(trialIDs, algorithmName, chartElement, chartType) {
-        let dataIn = await getChartData(trialIDs, algorithmName);
+        let dataIn = await getChartData(trialIDs, "10000",algorithmName);
         let chartDatasets = [];
-        for (let i = 0; i < dataIn.length; i++) {
+        for (let i = 1; i < dataIn.length; i++) {
             chartDatasets.push({
-                label: "Runtime Ascending Order Trial " + trialIDs[i],
+                label: "Runtime Ascending Order Trial " + trialIDs[i - 1],
                 data: dataIn[i][1],
                 borderWidth: 1,
             });
         }
 
+        console.log(chartDatasets);
+
         return await new Chart(chartElement, {
             type: chartType,
             data: {
-                labels: dataIn[0][0],
+                labels: dataIn[0],
                 datasets: chartDatasets,
             },
             options: {
@@ -253,6 +270,10 @@ import Layout from "@/layouts/Layout.astro";
             }
         }
 
+        if (trialIDs.length == 0) { // Abort if there are no datasets
+            return;
+        }
+
         charts[id] = await setChart(
             trialIDs,
             document.getElementById(id + " algorithm").value,
@@ -272,8 +293,9 @@ import Layout from "@/layouts/Layout.astro";
 </script>
 
 <!-- Thanks to Borui for helping me discover chart.js! It's super useful :) -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.5/dist/chart.umd.min.js"
-is:inline></script>
+<script
+    src="https://cdn.jsdelivr.net/npm/chart.js@4.4.5/dist/chart.umd.min.js"
+    is:inline></script>
 
 <style>
     main {
