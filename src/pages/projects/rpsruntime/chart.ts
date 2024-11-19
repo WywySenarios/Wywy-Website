@@ -9,7 +9,6 @@
 import type { APIRoute } from 'astro';
 
 import master from "@root/data/RPSRuntime/master.json";
-import { L } from '@root/dist/server/chunks/astro/assets-service_g6DNmJna.mjs';
 
 
 export const GET: APIRoute = async ({ url }) => {

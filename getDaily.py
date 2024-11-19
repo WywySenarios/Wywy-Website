@@ -66,7 +66,6 @@ def getRange(rangeName, notes):
     
     return data
   except HttpError as err:
-    print("Yikes")
     return None # error encountered :(
 
 

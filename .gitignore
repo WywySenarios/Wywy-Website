@@ -3,6 +3,9 @@
 **/*credentials*.json
 **/*token.json
 
+# freeze config.json
+# config.json
+
 # don't copy data over because that's just weird
 data/*
 # make sure the folder still exists though!
