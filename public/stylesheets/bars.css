@@ -63,7 +63,6 @@ body {
     padding: 0px;
     border: none;
     cursor: pointer;
-    visibility: visible;
 }
 
 .top-bar input[type="text"] {
@@ -75,7 +74,6 @@ body {
     border: none;
     color: #000;
     border-radius: 5px;
-    visibility: visible;
 }
 
 /* Footer */
