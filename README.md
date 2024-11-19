@@ -15,6 +15,10 @@ npm create astro@latest
 Run the following command in the respective folder to install astro packages:
 npx astro add node tailwind react
 
+Install ShadCN things (do NOT override files):
+npx shadcn@latest init
+npx shadcn@latest add button calendar table
+
 Other things I ran that might be important:
 npm i @types/node
 
