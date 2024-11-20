@@ -1,6 +1,24 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Chart from "@/components/rpsruntime/chart.astro";
+
+let datapoints: string[] = [
+    "100",
+    "1000",
+    "10000",
+    "100000.1",
+    "100000.2",
+    "100000.3",
+    "100000.4",
+    "100000.5",
+    "100000.6",
+    "100000.7",
+    "100000.8",
+    "100000.9",
+    "100000.10",
+];
+
+let charts = {};
 ---
 
 <Layout
@@ -65,14 +83,13 @@ import Chart from "@/components/rpsruntime/chart.astro";
         <br />
 
         <script
-    src="https://cdn.jsdelivr.net/npm/chart.js@4.4.5/dist/chart.umd.min.js"
-    is:inline></script>
-        <Chart chartID="chart1"/>
-        <Chart chartID="chart2"/>
-        <Chart chartID="chart3"/>
-        <Chart chartID="chart4"/>
-        <br>
-
+            src="https://cdn.jsdelivr.net/npm/chart.js@4.4.5/dist/chart.umd.min.js"
+            is:inline></script>
+        <Chart datapoints={datapoints} chartID="chart1" />
+        <Chart datapoints={datapoints} chartID="chart2" />
+        <Chart datapoints={datapoints} chartID="chart3" />
+        <Chart datapoints={datapoints} chartID="chart4" />
+        <br />
     </main>
 
     <div slot="attributions">
@@ -88,123 +105,6 @@ import Chart from "@/components/rpsruntime/chart.astro";
         >
     </div>
 </Layout>
-
-<script is:inline>
-    let charts = {};
-
-    // returns [[all names], [[labels, runtime], [labels, runtime], ...], [[labels, runtime], [labels, runtime], ...], ...] or an empty array given an error
-    async function getChartData(trialIDs, trialIDToSortBy, algorithmName) {
-        try {
-            let output = [[]];
-            // create empty array with sufficient length
-            for (let a = 0; a < trialIDs.length; a++) {output.push([[], []]);}
-
-            let trialIDsString = "";
-
-            for (const i of trialIDs) {
-                trialIDsString += "," + i;
-            }
-            trialIDsString = trialIDsString.substring(1, trialIDsString.length);
-
-            let response = await fetch(
-                "/projects/rpsruntime/chart" +
-                    "?trialID=" +
-                    trialIDsString +
-                    "&sortBy=" +
-                    trialIDToSortBy +
-                    "," +
-                    algorithmName,
-                {
-                    method: "GET",
-                },
-            );
-            
-            let dataIn = await response.json();
-            let contentIn = dataIn["content"];
-
-            // traverse through data
-            for (const i of contentIn) {
-                // record name
-                output[0].push(i["name"]);
-                for (let a = 0; a < trialIDs.length; a++) { // order should be correct already when passing into this function, do not worry about order.
-                    output[a + 1][0].push("Runtime Ascending Order Trial " + trialIDs[a]);
-                    output[a + 1][1].push(i[trialIDs[a]][algorithmName]);
-                }
-            }
-            console.log(output);
-
-            return output;
-        } catch (error) {
-            console.error(`ERROR: ${error.message}\n\nGraph will now be empty`);
-            return [];
-        }
-    }
-
-    // returns the chart that has been set
-    async function setChart(trialIDs, trialIDToSortBy, algorithmName, chartElement, chartType) {
-        let dataIn = await getChartData(trialIDs, trialIDToSortBy, algorithmName);
-        let chartDatasets = [];
-        for (let i = 1; i < dataIn.length; i++) {
-            chartDatasets.push({
-                label: "Runtime Ascending Order Trial " + trialIDs[i - 1],
-                data: dataIn[i][1],
-                borderWidth: 1,
-            });
-        }
-
-        console.log(chartDatasets);
-
-        return await new Chart(chartElement, {
-            type: chartType,
-            data: {
-                labels: dataIn[0],
-                datasets: chartDatasets,
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                    },
-                },
-            },
-        });
-    }
-
-    async function chart(id) {
-        try {
-            charts[id].destroy();
-        } catch (error) {} // delete a chart if it's already there so a new one may be generated
-
-        let trialIDs = [];
-        let elements = document.getElementById(id + " select").children;
-        for (const i of elements) {
-            if (i.checked == true) {
-                trialIDs.push(i.id);
-            }
-        }
-
-        if (trialIDs.length == 0) { // Abort if there are no datasets
-            return;
-        }
-
-        charts[id] = await setChart(
-            trialIDs,
-            document.getElementById(id + " sortBy").value,
-            document.getElementById(id + " algorithm").value,
-            document.getElementById(id),
-            document.getElementById(id + " chart type").value,
-        );
-    }
-
-    function selectAll(id) {
-        let elements = document.getElementById(id + " select").children;
-        for (const i of elements) {
-            if (i.type == "checkbox") {
-                i.checked = true;
-            }
-        }
-    }
-</script>
 
 <style>
     main {

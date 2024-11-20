@@ -15,7 +15,7 @@
                     "notes": false
                 },
                 "content": {
-                    "range": "B3:J5",
+                    "range": "B3:J",
                     "notes": true,
                     "strip_notes": [
                         1,2
@@ -29,7 +29,7 @@
                     "notes": false
                 },
                 "content": {
-                    "range": "M3:U3",
+                    "range": "M3:U",
                     "notes": true,
                     "strip_notes": []
                 }

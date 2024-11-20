@@ -1,108 +1,14 @@
 ---
+import BasicChart from "@/components/chart.astro";
+
 interface Props {
     chartID: string;
+    datapoints: string[];
 }
 
-let { chartID } = Astro.props;
+let { chartID, datapoints } = Astro.props;
+
+let charts = {};
 ---
 
-<button onclick={"chart('" + chartID + "')"}>Regenerate Chart</button>
-<table style="border-collapse: collapse;">
-    <thead>
-        <tr>
-            <th style="border-bottom: solid 2px black;">Chart Settings</th>
-            <th
-                style="border-bottom: solid 2px black;border-left: solid 2px black;"
-                >Chart</th
-            >
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <th style="text-align: left;">
-                <div id={chartID + " select"}>
-                    <p>Chart type:</p>
-                    <select id={chartID + " chart type"}>
-                        <option value="bar">Bar</option>
-                        <!-- <option value="scatter">Scatter Plot</option> this line of code is bugged :( -->
-                    </select>
-                    <br />
-                    <br />
-
-                    <p>Datasets:</p>
-                    <button onclick={"selectAll('" + chartID + "')"} type="button"
-                        >Select All</button
-                    >
-                    <br />
-                    <input type="checkbox" id="100" />
-                    <label for="100">100</label>
-                    <br />
-                    <input type="checkbox" id="1000" />
-                    <label for="1000">1000</label>
-                    <br />
-                    <input type="checkbox" id="10000" />
-                    <label for="10000">10000</label>
-                    <br />
-                    <input type="checkbox" id="100000.1" />
-                    <label for="100000.1">100000.1</label>
-                    <br />
-                    <input type="checkbox" id="100000.2" />
-                    <label for="100000.2">100000.2</label>
-                    <br />
-                    <input type="checkbox" id="100000.3" />
-                    <label for="100000.3">100000.3</label>
-                    <br />
-                    <input type="checkbox" id="100000.4" />
-                    <label for="100000.4">100000.4</label>
-                    <br />
-                    <input type="checkbox" id="100000.5" />
-                    <label for="100000.5">100000.5</label>
-                    <br />
-                    <input type="checkbox" id="100000.6" />
-                    <label for="100000.6">100000.6</label>
-                    <br />
-                    <input type="checkbox" id="100000.7" />
-                    <label for="100000.7">100000.7</label>
-                    <br />
-                    <input type="checkbox" id="100000.8" />
-                    <label for="100000.8">100000.8</label>
-                    <br />
-                    <input type="checkbox" id="100000.9" />
-                    <label for="100000.9">100000.9</label>
-                    <br />
-                    <input type="checkbox" id="100000.10" />
-                    <label for="100000.10">100000.10</label>
-                    <br />
-                    <br />
-
-                    <p>Sort By Trial:</p>
-                    <select name={chartID + " sortBy"} id={chartID + " sortBy"}>
-                        <option value="100">100</option>
-                        <option value="1000">1000</option>
-                        <option value="10000">10000</option>
-                        <option value="100000.1">100000.1</option>
-                        <option value="100000.2">100000.2</option>
-                        <option value="100000.3">100000.3</option>
-                        <option value="100000.4">100000.4</option>
-                        <option value="100000.5">100000.5</option>
-                        <option value="100000.6">100000.6</option>
-                        <option value="100000.7">100000.7</option>
-                        <option value="100000.8">100000.8</option>
-                        <option value="100000.9">100000.9</option>
-                        <option value="100000.10">100000.10</option>
-                    </select>
-                    <p>Algorithm type</p>
-                    <select name={chartID + " algorithm"} id={chartID + " algorithm"}>
-                        <option value="standard">standard</option>
-                        <option value="optimized">optimized</option>
-                        <option value="zeroes">zeroes</option>
-                        <option value="polynomial">polynomial</option>
-                    </select>
-                </div>
-            </th>
-            <th style="width:100%;border-left: solid 2px black;"
-                ><canvas id={chartID} class="chart"></canvas>
-            </th>
-        </tr>
-    </tbody>
-</table>
+<BasicChart datapoints={datapoints} chartID={chartID} datasetTypesLabel={"Algorithm Name"} datasetTypes={["standard", "optimized", "zeroes", "polynomial"]}/>
