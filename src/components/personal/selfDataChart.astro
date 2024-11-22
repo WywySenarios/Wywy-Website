@@ -8,38 +8,15 @@ interface Props {
 
 let { chartID, datapoints } = Astro.props;
 
-let datasetTypes = ["standard", "optimized", "zeroes", "polynomial"];
-
 let charts = {};
 ---
 
-<BasicChart
-    datapoints={datapoints}
-    chartID={chartID}
->
-    <div slot="datasetTypes">
-        <p>Algorithm Name</p>
-        <select name={chartID + " datasetType"} id={chartID + " datasetType"}>
-            {
-                datasetTypes.map((i: string) => {
-                    return <option value={i}>{i}</option>;
-                })
-            }
-        </select>
-    </div>
-</BasicChart>
+<BasicChart datapoints={datapoints} chartID={chartID}/>
+
 
 <script is:inline define:vars={{ charts, chartID }}>
-    document
-        .getElementById(chartID + " regenerateChart")
-        .addEventListener("click", () => {
-            chart();
-        });
-    // document
-    //     .getElementById(chartID + " selectAll")
-    //     .addEventListener("click", () => {
-    //         selectAll();
-    //     });
+    document.getElementById(chartID + " regenerateChart").addEventListener("click", () => {chart();});
+    document.getElementById(chartID + " selectAll").addEventListener("click", () => {selectAll();});
 
     // returns [[all names], [[labels, runtime], [labels, runtime], ...], [[labels, runtime], [labels, runtime], ...], ...] or an empty array given an error
     async function getChartData(trialIDs, trialIDToSortBy, algorithmName) {
@@ -152,9 +129,18 @@ let charts = {};
         charts[chartID] = await setChart(
             trialIDs,
             document.getElementById(chartID + " sortBy").value,
-            document.getElementById(chartID + " datasetType").value,
+            document.getElementById(chartID + " algorithm").value,
             document.getElementById(chartID),
             document.getElementById(chartID + " chart type").value,
         );
+    }
+
+    function selectAll() {
+        let elements = document.getElementById(chartID + " select").children;
+        for (const i of elements) {
+            if (i.type == "checkbox") {
+                i.checked = true;
+            }
+        }
     }
 </script>

@@ -2,14 +2,15 @@
 interface Props {
     chartID: string;
     datapoints: string[];
-    datasetTypes: string[];
-    datasetTypesLabel: string;
 }
 
-let { chartID, datapoints, datasetTypes, datasetTypesLabel } = Astro.props;
-
-let charts = {};
-let thisChartID = chartID; // I want to avoid duping variable names :P
+let { chartID, datapoints } = Astro.props;
+const chartTypes = {
+    "bar": "Bar",
+    "scatter": "Scatter Plot",
+    "bubble": "Bubble",
+    "pie": "Pie"
+};
 ---
 
 <button id={chartID + " regenerateChart"}>Regenerate Chart</button>
@@ -62,15 +63,7 @@ let thisChartID = chartID; // I want to avoid duping variable names :P
                             })
                         }
                     </select>
-                    <p>{datasetTypesLabel}</p>
-                    <select
-                        name={chartID + " algorithm"}
-                        id={chartID + " algorithm"}
-                    >
-                        {datasetTypes.map((i: string) => {
-                            return <option value={i}>{i}</option>
-                        })}
-                    </select>
+                    <slot name="datasetTypes"/>
                 </div>
             </th>
             <th style="width:100%;border-left: solid 2px black;"
@@ -80,133 +73,11 @@ let thisChartID = chartID; // I want to avoid duping variable names :P
     </tbody>
 </table>
 
-<script is:inline define:vars={{ charts, thisChartID }}>
-    document.getElementById(thisChartID + " regenerateChart").addEventListener("click", () => {chart(thisChartID)});
-    document.getElementById(thisChartID + " selectAll").addEventListener("click", () => {selectAll(thisChartID);console.log("lol");});
+<script is:inline define:vars={{ chartID }}>
+    document.getElementById(chartID + " selectAll").addEventListener("click", () => {selectAll();});
 
-    // returns [[all names], [[labels, runtime], [labels, runtime], ...], [[labels, runtime], [labels, runtime], ...], ...] or an empty array given an error
-    async function getChartData(trialIDs, trialIDToSortBy, algorithmName) {
-        try {
-            let output = [[]];
-            // create empty array with sufficient length
-            for (let a = 0; a < trialIDs.length; a++) {
-                output.push([[], []]);
-            }
-
-            let trialIDsString = "";
-
-            for (const i of trialIDs) {
-                trialIDsString += "," + i;
-            }
-            trialIDsString = trialIDsString.substring(1, trialIDsString.length);
-
-            let response = await fetch(
-                "/projects/rpsruntime/chart" +
-                    "?trialID=" +
-                    trialIDsString +
-                    "&sortBy=" +
-                    trialIDToSortBy +
-                    "," +
-                    algorithmName,
-                {
-                    method: "GET",
-                },
-            );
-
-            let dataIn = await response.json();
-            let contentIn = dataIn["content"];
-
-            // traverse through data
-            for (const i of contentIn) {
-                // record name
-                output[0].push(i["name"]);
-                for (let a = 0; a < trialIDs.length; a++) {
-                    // order should be correct already when passing into this function, do not worry about order.
-                    output[a + 1][0].push(
-                        "Runtime Ascending Order Trial " + trialIDs[a],
-                    );
-                    output[a + 1][1].push(i[trialIDs[a]][algorithmName]);
-                }
-            }
-            console.log(output);
-
-            return output;
-        } catch (error) {
-            console.error(`ERROR: ${error.message}\n\nGraph will now be empty`);
-            return [];
-        }
-    }
-
-    // returns the chart that has been set
-    async function setChart(
-        trialIDs,
-        trialIDToSortBy,
-        algorithmName,
-        chartElement,
-        chartType,
-    ) {
-        let dataIn = await getChartData(
-            trialIDs,
-            trialIDToSortBy,
-            algorithmName,
-        );
-        let chartDatasets = [];
-        for (let i = 1; i < dataIn.length; i++) {
-            chartDatasets.push({
-                label: "Runtime Ascending Order Trial " + trialIDs[i - 1],
-                data: dataIn[i][1],
-                borderWidth: 1,
-            });
-        }
-
-        console.log(chartDatasets);
-
-        return await new Chart(chartElement, {
-            type: chartType,
-            data: {
-                labels: dataIn[0],
-                datasets: chartDatasets,
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                    },
-                },
-            },
-        });
-    }
-
-    async function chart(id) {
-        try {
-            charts[id].destroy();
-        } catch (error) {} // delete a chart if it's already there so a new one may be generated
-
-        let trialIDs = [];
-        let elements = document.getElementById(id + " select").children;
-        for (const i of elements) {
-            if (i.checked == true) {
-                trialIDs.push(i.id);
-            }
-        }
-
-        if (trialIDs.length == 0) {
-            // Abort if there are no datasets
-            return;
-        }
-
-        console.log(document.getElementById(id + " algorithm").value);
-        charts[id] = await setChart(
-            trialIDs,
-            document.getElementById(id + " sortBy").value,
-            document.getElementById(id + " algorithm").value,
-            document.getElementById(id),
-            document.getElementById(id + " chart type").value,
-        );
-    }
-
-    function selectAll(id) {
-        let elements = document.getElementById(id + " select").children;
+    function selectAll() {
+        let elements = document.getElementById(chartID + " select").children;
         for (const i of elements) {
             if (i.type == "checkbox") {
                 i.checked = true;

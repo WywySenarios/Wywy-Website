@@ -1,44 +1,19 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import Card from '@/components/Card.astro';
+import Chart from '@/components/personal/selfDataChart.astro';
+import rawData from '@data/daily.json';
+
+let datapoints: any = {};
+for (const i in rawData) {
+	datapoints[i] = rawData[i]["headers"][0];
+}
 ---
 
-<Layout title="EZ & Wywy's Website" css_color_palette="dark_mode">
+<Layout title="EZ & Wywy's Website" css_color_palette="sunset">
 	<main>
 		
-		<ul role="list" class="link-card-grid">
-			<Card
-				href="awards"
-				title="⭐ Awards!"
-				body="These are the awards & recognitions I got!"
-			/>
-			<Card
-				href="projects"
-				title="🚀 Projects"
-				body="These are my very very cool projects!!!"
-			/>
-			<!-- and resumes are to be graphed over time :P -->
-			<Card
-				href="resumes"
-				title="📝 Resumes"
-				body="Read my resume, and how it evolved over time."
-			/>
-			<Card
-				href="Senarios"
-				title="🎨 Senarios"
-				body="Wywy's home ❤️"
-			/>
-			<Card
-				href="personal"
-				title="📝 Personal Blog & Journal"
-				body="Here's my personal documentation, starting from 2022!"
-			/>
-			<Card
-				href="https://github.com/WywySenarios/Wywy-Website"
-				title="Upcoming Content... 🚧"
-				body="This block of STUFF!!! has not been implemented yet! :( Very sad indeed."
-			/>
-		</ul>
+		<Chart chartID="chart 1" datapoints={datapoints}></Chart>
 	</main>
 </Layout>
 
