@@ -1,28 +1,46 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import Card from '@/components/Card.astro';
 import Chart from '@/components/personal/selfDataChart.astro';
-import rawData from '@data/daily.json';
+import rawDataIn from '@data/daily.json' assert { type: "json" };
 
-let datapoints: any = {};
+type rawDataType = {
+	[key: string]: {
+		headers: string[];
+		content: { note: string; value:string }[][];
+	};
+}
+
+const rawData: rawDataType = rawDataIn;
+
+let headers: any = {};
 for (const i in rawData) {
-	datapoints[i] = rawData[i]["headers"][0];
+	headers[i] = rawData[i]["headers"][0];
+}
+
+let datapoints: string[] = [];
+for (const key in rawData) {
+  for (const header of rawData[key].headers) {
+    datapoints.push(header);
+  }
 }
 ---
 
 <Layout title="EZ & Wywy's Website" css_color_palette="sunset">
 	<main>
 		
-		<Chart chartID="chart 1" datapoints={datapoints}></Chart>
+		<Chart chartID="chart 1" datapoints={datapoints}>
+
+		</Chart>
 	</main>
 </Layout>
+
+<script
+            src="https://cdn.jsdelivr.net/npm/chart.js@4.4.5/dist/chart.umd.min.js"
+            is:inline></script>
 
 <style>
 	main {
 		margin: auto;
-		padding: 1rem;
-		width: 800px;
-		max-width: calc(100% - 2rem);
 		font-size: 20px;
 		line-height: 1.6;
 	}
@@ -39,11 +57,5 @@ for (const i in rawData) {
 		-webkit-text-fill-color: transparent;
 		background-size: 400%;
 		background-position: 0%;
-	}
-	.link-card-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr));
-		gap: 2rem;
-		padding: 0;
 	}
 </style>

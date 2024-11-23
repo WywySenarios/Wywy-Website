@@ -1,14 +1,12 @@
 /* Light mode color palette from https://www.color-hex.com/color-palette/106748 */
-* {
+
+html {
     --color1: #fafafa;
     --color2: #e4e5f1;
     --color3: #d2d3db;
     --color4: #9394a5;
     --color5: #484b6a;
     --textcolor: black;
-}
-
-html {
     background: var(--color1);
 }
 

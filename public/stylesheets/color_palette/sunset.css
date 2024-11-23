@@ -1,17 +1,15 @@
 /* COLORS GALORE */
 
 /* Light mode color palette from https://lospec.com/palette-list/fiery-dreams */
-* {
+
+html {
+    /* background: var(--color1); */
     --color1: #fae4b9;
     --color2: #f0a383;
     --color3: #de5568;
     --color4: #de5568;
     --color5: #cd2561;
     --textcolor: black;
-}
-
-html {
-    /* background: var(--color1); */
     background: linear-gradient(3deg, #f0a383 0%, #de5568 100%);
 }
 

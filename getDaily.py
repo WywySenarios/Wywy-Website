@@ -95,7 +95,7 @@ def main():
     currentData = json.loads("{}")
     
     
-    currentData["headers"] = getRange(DATA_SHEET_NAME + "!" + item["headers"]["range"], item["headers"]["notes"])
+    currentData["headers"] = getRange(DATA_SHEET_NAME + "!" + item["headers"]["range"], item["headers"]["notes"])[0]
     currentData["content"] = getRange(DATA_SHEET_NAME + "!" + item["content"]["range"], item["content"]["notes"])
     
     

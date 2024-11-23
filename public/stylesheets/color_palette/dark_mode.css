@@ -1,15 +1,13 @@
 /* Dark mode color palette (half of it is) from https://colorhunt.co/palette/0f0f0f232d3f005b41008170 */
-* {
+
+html {
+    background: var(--color1);
     --color1: #13151a;
     --color2: #008170;
     --color3: #008170;
     --color4: #008170;
     --color5: #0e302e;
     --textcolor: black;
-}
-
-html {
-    background: var(--color1);
 }
 
 .top-bar {

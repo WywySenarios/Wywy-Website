@@ -1,6 +1,4 @@
 ---
-import BasicChart from "@/components/chart.astro";
-
 interface Props {
     chartID: string;
     datapoints: string[];
@@ -11,59 +9,67 @@ let { chartID, datapoints } = Astro.props;
 let charts = {};
 ---
 
-<BasicChart datapoints={datapoints} chartID={chartID}/>
-
+<button id={chartID + " regenerateChart"}>Regenerate Chart</button>
+<table style="border-collapse: collapse; width: 85vw;">
+    <thead>
+        <tr>
+            <th style="border-bottom: solid 2px black;">Chart Settings</th>
+            <th
+                style="border-bottom: solid 2px black;border-left: solid 2px black;"
+                >Chart</th
+            >
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th style="text-align: left;">
+                <div id={chartID + " select"}>
+                    <p>X-axis:</p>
+                    <select name={chartID + " x-axis"} id={chartID + " x-axis"}>
+                        {
+                            datapoints.map((datum: string) => {
+                                return <option value={datum}>{datum}</option>;
+                            })
+                        }
+                    </select>
+                    <p>Y-axis:</p>
+                    <select name={chartID + " y-axis"} id={chartID + " y-axis"}>
+                        {
+                            datapoints.map((datum: string) => {
+                                return <option value={datum}>{datum}</option>;
+                            })
+                        }
+                    </select>
+                </div>
+            </th>
+            <th style="width:100%;border-left: solid 2px black;"
+                ><canvas id={chartID} class="chart"></canvas>
+            </th>
+        </tr>
+    </tbody>
+</table>
 
 <script is:inline define:vars={{ charts, chartID }}>
-    document.getElementById(chartID + " regenerateChart").addEventListener("click", () => {chart();});
-    document.getElementById(chartID + " selectAll").addEventListener("click", () => {selectAll();});
+    document
+        .getElementById(chartID + " regenerateChart")
+        .addEventListener("click", () => {
+            chart();
+        });
 
-    // returns [[all names], [[labels, runtime], [labels, runtime], ...], [[labels, runtime], [labels, runtime], ...], ...] or an empty array given an error
-    async function getChartData(trialIDs, trialIDToSortBy, algorithmName) {
+    /*
+     * @param x is the name of the header that is used for the x-axis values
+     * @param y is the name of the header that is used for the y-axis values
+     */
+    async function getChartData(x, y) {
         try {
-            let output = [[]];
-            // create empty array with sufficient length
-            for (let a = 0; a < trialIDs.length; a++) {
-                output.push([[], []]);
-            }
-
-            let trialIDsString = "";
-
-            for (const i of trialIDs) {
-                trialIDsString += "," + i;
-            }
-            trialIDsString = trialIDsString.substring(1, trialIDsString.length);
-
             let response = await fetch(
-                "/projects/rpsruntime/chart" +
-                    "?trialID=" +
-                    trialIDsString +
-                    "&sortBy=" +
-                    trialIDToSortBy +
-                    "," +
-                    algorithmName,
+                "/personal/chart" + "?x-axis=" + x + "&y-axis=" + y,
                 {
                     method: "GET",
                 },
             );
 
-            let dataIn = await response.json();
-            let contentIn = dataIn["content"];
-
-            // traverse through data
-            for (const i of contentIn) {
-                // record name
-                output[0].push(i["name"]);
-                for (let a = 0; a < trialIDs.length; a++) {
-                    // order should be correct already when passing into this function, do not worry about order.
-                    output[a + 1][0].push(
-                        "Runtime Ascending Order Trial " + trialIDs[a],
-                    );
-                    output[a + 1][1].push(i[trialIDs[a]][algorithmName]);
-                }
-            }
-
-            return output;
+            return response.json();
         } catch (error) {
             console.error(`ERROR: ${error.message}\n\nGraph will now be empty`);
             return [];
@@ -71,37 +77,34 @@ let charts = {};
     }
 
     // returns the chart that has been set
-    async function setChart(
-        trialIDs,
-        trialIDToSortBy,
-        algorithmName,
-        chartElement,
-        chartType,
-    ) {
-        let dataIn = await getChartData(
-            trialIDs,
-            trialIDToSortBy,
-            algorithmName,
-        );
+    async function setChart(chartElement, x, y) {
+        let dataIn = await getChartData(x, y);
         let chartDatasets = [];
-        for (let i = 1; i < dataIn.length; i++) {
-            chartDatasets.push({
-                label: "Runtime Ascending Order Trial " + trialIDs[i - 1],
-                data: dataIn[i][1],
-                borderWidth: 1,
-            });
-        }
+        chartDatasets.push(dataIn["content"]);
 
-        return await new Chart(chartElement, {
-            type: chartType,
+        return new Chart(chartElement, {
+            type: "scatter",
             data: {
-                labels: dataIn[0],
-                datasets: chartDatasets,
+                datasets: [{
+                    label: dataIn["x-axis"]["name"] + " vs. " + dataIn["y-axis"]["name"],
+                    data: chartDatasets[0],
+                }],
             },
             options: {
                 scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: dataIn["x-axis"]["name"],
+                        },
+                    },
                     y: {
                         beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: dataIn["y-axis"]["name"],
+                        },
                     },
                 },
             },
@@ -113,25 +116,10 @@ let charts = {};
             charts[chartID].destroy();
         } catch (error) {} // delete a chart if it's already there so a new one may be generated
 
-        let trialIDs = [];
-        let elements = document.getElementById(chartID + " select").children;
-        for (const i of elements) {
-            if (i.checked == true) {
-                trialIDs.push(i.id);
-            }
-        }
-
-        if (trialIDs.length == 0) {
-            // Abort if there are no datasets
-            return;
-        }
-
         charts[chartID] = await setChart(
-            trialIDs,
-            document.getElementById(chartID + " sortBy").value,
-            document.getElementById(chartID + " algorithm").value,
             document.getElementById(chartID),
-            document.getElementById(chartID + " chart type").value,
+            document.getElementById(chartID + " x-axis").value,
+            document.getElementById(chartID + " y-axis").value,
         );
     }
 
