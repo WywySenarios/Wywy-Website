@@ -4,8 +4,9 @@ This is a framework for my personal website! Unforutnately, user friendliness is
 ## SETUP SERVER:
 Note: npm REQUIRES execution policy to be set to "RemoteSigned" or a policy that is less strict than "RemoteSigned"
 How to install node js on Windows: https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows
-Run the following commands in the respective folder to install node packages: (to be updated???)
-npm install express cors body-parser ua-parser-js fs child_process lucide-react class-variance-authority tailwindcss
+Run the following commands in the respective folder and order to install node packages: (to be updated???)
+npm install express cors body-parser ua-parser-js fs child_process lucide-react class-variance-authority tailwindcss chart.js
+npm install --save regression
 npm install -D tailwindcss postcss autoprefixer vite
 npm tailwindcss init
 

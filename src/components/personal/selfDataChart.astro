@@ -22,7 +22,7 @@ let charts = {};
     </thead>
     <tbody>
         <tr>
-            <th style="text-align: left;">
+            <th style="text-align: left; p {font-size: 5px}">
                 <div id={chartID + " select"}>
                     <p>X-axis:</p>
                     <select name={chartID + " x-axis"} id={chartID + " x-axis"}>
@@ -41,6 +41,10 @@ let charts = {};
                         }
                     </select>
                 </div>
+
+                <br>
+                <p>Regression results:</p>
+                <p id={chartID + " regression results"}/>
             </th>
             <th style="width:100%;border-left: solid 2px black;"
                 ><canvas id={chartID} class="chart"></canvas>
@@ -79,16 +83,26 @@ let charts = {};
     // returns the chart that has been set
     async function setChart(chartElement, x, y) {
         let dataIn = await getChartData(x, y);
-        let chartDatasets = [];
-        chartDatasets.push(dataIn["content"]);
+        // let chartDatasets = [];
+        // chartDatasets.push(dataIn["content"]);
+
+        console.log(dataIn["regression"]);
+
+        // display regression data to user
+        document.getElementById(chartID + " regression results").innerText = dataIn["regression"]["string"] + " R^2=" + dataIn["regression"]["r2"];
 
         return new Chart(chartElement, {
             type: "scatter",
             data: {
-                datasets: [{
-                    label: dataIn["x-axis"]["name"] + " vs. " + dataIn["y-axis"]["name"],
-                    data: chartDatasets[0],
-                }],
+                datasets: [
+                    {
+                        label:
+                            dataIn["x-axis"]["name"] +
+                            " vs. " +
+                            dataIn["y-axis"]["name"],
+                        data: dataIn["content"],
+                    },
+                ],
             },
             options: {
                 scales: {
@@ -121,14 +135,5 @@ let charts = {};
             document.getElementById(chartID + " x-axis").value,
             document.getElementById(chartID + " y-axis").value,
         );
-    }
-
-    function selectAll() {
-        let elements = document.getElementById(chartID + " select").children;
-        for (const i of elements) {
-            if (i.type == "checkbox") {
-                i.checked = true;
-            }
-        }
     }
 </script>

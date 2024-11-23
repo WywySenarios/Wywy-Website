@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import rawData from "@root/data/daily.json";
+import regression from 'regression';
 
 type rawDataType = {
 	[key: string]: {
@@ -43,12 +44,29 @@ export const GET: APIRoute = async ({ url }) => {
             }
         }
 
+        let unprocessedContent = [];
+        let datum = [];
         // get all data
         for (let i = 0; i < master[x["section"]]["content"].length; i++) {
-            content.push({x: master[x["section"]]["content"][i][x["index"]]["value"], y: master[y["section"]]["content"][i][y["index"]]["value"]});
+            datum = [master[x["section"]]["content"][i][x["index"]]["value"], master[y["section"]]["content"][i][y["index"]]["value"]]
+            // content.push({x: datum[0], y: datum[1]});
+            unprocessedContent.push(datum);
         }
 
-        return new Response(JSON.stringify({ "content": content, "x-axis": x, "y-axis": y}), {
+        // remove datapoints with a missing X or Y value, because that just doesn't make sense to graph!
+        // content = content.filter((datum) => datum.x != '' && datum.y != '');
+        unprocessedContent = unprocessedContent.filter((datum) => datum[0] != '' && datum[1] != '');
+
+        // save the regression module's life by parsing every integer. IDK why this boi hates me for inputting strings.
+        unprocessedContent.map((value: string[], index: number) => {
+            content.push([parseInt(value[0]), parseInt(value[1])]);
+        })
+
+        // sort by X-axis value
+        content.sort((a, b) => {return a[0] - b[0]});
+
+        let regressionResults = regression.linear(content);
+        return new Response(JSON.stringify({ "content": content, "x-axis": x, "y-axis": y, "regression": regressionResults }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
         });
