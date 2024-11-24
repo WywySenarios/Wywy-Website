@@ -6,7 +6,7 @@ import Card from '@/components/LinklessCard.astro';
 // const images = import.meta.glob('@/content/awards/*.png');
 
 let awards: {[key: string]: any}[] = [];
-const accomplishments = await getCollection('awards', ({ data }) => {
+await getCollection('awards', ({ data }) => {
 	awards.push(data);
 });
 
@@ -42,6 +42,11 @@ const accomplishments = await getCollection('awards', ({ data }) => {
 		line-height: 1;
 		text-align: center;
 		margin-bottom: 1em;
+	}
+	img {
+		display: block;
+		margin-left: auto;
+		margin-right: auto;
 	}
 	.text-gradient {
 		background-image: var(--accent-gradient);

@@ -8,4 +8,10 @@ export const collections = {
         "date": z.string(),
         "imagePath": z.string().optional(),
     }) }),
+    "directives": defineCollection({ type: 'content', schema: z.object({
+        "title": z.string(),
+        "description": z.string(),
+        "date": z.string(),
+        "imagePath": z.string().optional(),
+    })})
 };
