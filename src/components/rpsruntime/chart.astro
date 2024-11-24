@@ -35,6 +35,7 @@ let charts = {};
         .addEventListener("click", () => {
             chart();
         });
+        const autocolors = window['chartjs-plugin-autocolors'];
     // document
     //     .getElementById(chartID + " selectAll")
     //     .addEventListener("click", () => {
@@ -115,7 +116,7 @@ let charts = {};
             });
         }
 
-        return await new Chart(chartElement, {
+        return new Chart(chartElement, {
             type: chartType,
             data: {
                 labels: dataIn[0],
@@ -128,7 +129,8 @@ let charts = {};
                     },
                 },
             },
-        });
+            plugins: [autocolors]
+        });;
     }
 
     async function chart() {
