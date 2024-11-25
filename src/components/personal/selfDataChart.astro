@@ -42,9 +42,9 @@ let charts = {};
                     </select>
                 </div>
 
-                <br>
+                <br />
                 <p>Regression results:</p>
-                <p id={chartID + " regression results"}/>
+                <p id={chartID + " regression results"}></p>
             </th>
             <th style="width:100%;border-left: solid 2px black;"
                 ><canvas id={chartID} class="chart"></canvas>
@@ -54,6 +54,50 @@ let charts = {};
 </table>
 
 <script is:inline define:vars={{ charts, chartID }}>
+    // custom plugin made by me to draw a regression line!
+    const drawLinearLine = {
+        id: "drawLinearLine",
+        beforeDraw(chart, args, options) {
+            const {
+                ctx,
+                chartArea: { top, right, bottom, left, width, height },
+                scales: { x, y },
+            } = chart;
+            ctx.save();
+
+            // check if regression has been successfully passed in or not:
+            if (chart.options.regressionEquation != undefined) {
+                ctx.strokeStyle = "#a41759"; // stroke color
+                ctx.beginPath(); // prepare to draw
+
+                // y value is calculated using regresion thing!
+                let yPoints = [
+                    chart.options.regressionEquation[0] * x.min +
+                        chart.options.regressionEquation[1],
+                        chart.options.regressionEquation[0] * x.max +
+                        chart.options.regressionEquation[1],
+                ];
+                // clamp y-values
+                // if (yPoints[0] < y.min) { // beginning value too small
+                //     // since this is a linear equation, just look for an intersection with the minimum y value.
+
+                // }
+
+                // draw the line
+                ctx.moveTo(
+                    x.getPixelForValue(x.min),
+                    y.getPixelForValue(yPoints[0]),
+                );
+                ctx.lineTo(
+                    x.getPixelForValue(x.max),
+                    y.getPixelForValue(yPoints[1]),
+                );
+                ctx.stroke();
+                ctx.restore();
+            }
+        },
+    };
+
     document
         .getElementById(chartID + " regenerateChart")
         .addEventListener("click", () => {
@@ -86,10 +130,11 @@ let charts = {};
         // let chartDatasets = [];
         // chartDatasets.push(dataIn["content"]);
 
-        console.log(dataIn["regression"]);
-
         // display regression data to user
-        document.getElementById(chartID + " regression results").innerText = dataIn["regression"]["string"] + " R^2=" + dataIn["regression"]["r2"];
+        document.getElementById(chartID + " regression results").innerText =
+            dataIn["regression"]["string"] +
+            " R^2=" +
+            dataIn["regression"]["r2"];
 
         return new Chart(chartElement, {
             type: "scatter",
@@ -106,6 +151,7 @@ let charts = {};
                 ],
             },
             options: {
+                regressionEquation: dataIn["regression"]["equation"],
                 scales: {
                     x: {
                         beginAtZero: true,
@@ -123,6 +169,7 @@ let charts = {};
                     },
                 },
             },
+            plugins: [drawLinearLine],
         });
     }
 

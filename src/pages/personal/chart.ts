@@ -59,7 +59,7 @@ export const GET: APIRoute = async ({ url }) => {
 
         // save the regression module's life by parsing every integer. IDK why this boi hates me for inputting strings.
         unprocessedContent.map((value: string[], index: number) => {
-            content.push([parseInt(value[0]), parseInt(value[1])]);
+            content.push([parseFloat(value[0]), parseFloat(value[1])]);
         })
 
         // sort by X-axis value
