@@ -1,6 +1,6 @@
 /* Light mode color palette from https://www.color-hex.com/color-palette/106748 */
 
-html {
+:root {
     --color1: #fafafa;
     --color2: #e4e5f1;
     --color3: #d2d3db;
@@ -8,34 +8,4 @@ html {
     --color5: #484b6a;
     --textcolor: black;
     background: var(--color1);
-}
-
-.top-bar {
-    background-color: var(--color4);
-}
-
-.top-bar input[type="button"] {
-    color: var(--textcolor);
-    background-color: unset;
-}
-
-.top-bar input[type="button"]:hover {
-    background-color: var(--color5);
-}
-
-.top-bar input[type="text"] {
-    background-color: var(--color2);
-}
-
-.top-bar input[type="text"]::placeholder {
-    color: var(--textcolor);
-}
-
-footer {
-    background-color: var(--color4);
-    color: var(--textcolor);
-}
-
-.link-card {
-    background-color: var(--color4);
 }

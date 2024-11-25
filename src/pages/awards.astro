@@ -12,7 +12,7 @@ await getCollection('awards', ({ data }) => {
 
 ---
 
-<Layout title="Awards & Accomplishments" css_color_palette="dark_mode">
+<Layout title="Awards & Accomplishments" css_color_palette="dark_mode" useAstroDefaultCSS={false}>
 	<main>
 		<ul role="list" class="link-card-grid">
 			{ awards.map((award) => {

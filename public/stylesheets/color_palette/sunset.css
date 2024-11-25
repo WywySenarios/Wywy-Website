@@ -13,34 +13,6 @@ html {
     background: linear-gradient(3deg, #f0a383 0%, #de5568 100%);
 }
 
-/* COLORS GALORE */
-
-.top-bar {
-    background-color: var(--color4);
-}
-
-.top-bar input[type="button"] {
-    color: var(--textcolor);
-    background-color: unset;
-}
-
-.top-bar input[type="button"]:hover {
-    background-color: var(--color5);
-}
-
-.top-bar input[type="text"] {
-    background-color: var(--color2);
-}
-
-.top-bar input[type="text"]::placeholder {
-    color: var(--textcolor);
-}
-
 footer {
     background: linear-gradient(to right, #fae4b9, #f0a383);
-    color: var(--textcolor);
-}
-
-.link-card {
-    background-color: var(--color4);
 }

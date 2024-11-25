@@ -1,6 +1,6 @@
 /* Dark mode color palette (half of it is) from https://colorhunt.co/palette/0f0f0f232d3f005b41008170 */
 
-html {
+:root {
     background: var(--color1);
     --color1: #13151a;
     --color2: #008170;
@@ -10,33 +10,7 @@ html {
     --textcolor: black;
 }
 
-.top-bar {
-    background-color: var(--color4);
-}
-
-.top-bar input[type="button"] {
-    color: var(--textcolor);
-    background-color: unset;
-}
-
-.top-bar input[type="button"]:hover {
-    background-color: var(--color5);
-}
-
-.top-bar input[type="text"] {
-    background-color: var(--color2);
-}
-
-.top-bar input[type="text"]::placeholder {
-    color: var(--textcolor);
-}
-
-footer {
-    background-color: var(--color4);
-    color: var(--textcolor);
-}
-
-.link-card {
-    /* hardcoded to Astro's default color :P */
+/* .link-card {
+    /* hardcoded to Astro's default color :P * /
     background-color: #23262d;
-}
+} */

@@ -2,7 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 ---
 
-<Layout title="Eric's Privacy Policy" css_color_palette="dark_mode">
+<Layout title="Eric's Privacy Policy" css_color_palette="dark_mode" useAstroDefaultCSS={false}>
     <main>
         <h1>Privacy Policy: Main</h1>
         <p>Yes, I will probably need to gather data to keep this site running. Everything should be sever-side, and this type of data is for maintaining useability & making new features.</p>
@@ -61,7 +61,7 @@ import Layout from "@/layouts/Layout.astro";
         width: 800px;
         max-width: calc(100% - 2rem);
         color: white;
-        font-size: 20px;
+        font-size: 16px;
         line-height: 1.6;
     }
     h1 {
