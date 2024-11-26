@@ -13,7 +13,7 @@ html {
 
 /* Fixes weird behaviour with top bar being Arial */
 input {
-    font-family: monospace;
+    font-family: var(--globalfontfamilies);
 }
 
 /* Fix the frustrating misalignment of the bullet points ;) */
