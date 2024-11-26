@@ -1,12 +1,18 @@
-* {
-    font-family: monospace;
+html {
+    --globalfontfamilies: 'Quicksand', monospace;
+    font-family: var(--globalfontfamilies);
 }
 
-head {
-    font-family: monospace;
+@font-face {
+    font-family: 'Quicksand';
+    src: url('/fonts/Quicksand/Quicksand-VariableFont_wght.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
 }
 
-body {
+/* Fixes weird behaviour with top bar being Arial */
+input {
     font-family: monospace;
 }
 
