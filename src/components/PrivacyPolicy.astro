@@ -1,0 +1,28 @@
+---
+interface Props {
+    title: string;
+    dateLastUpdated: Date;
+    summary: string;
+    datapointsReleased: string[];
+    datapointsKeptPrivate: string[];
+}
+
+let { title, dateLastUpdated, summary, datapointsReleased, datapointsKeptPrivate } = Astro.props;
+---
+
+<h1>{title}</h1>
+<p>{dateLastUpdated}</p>
+<h2>Summary</h2>
+<p>{summary}</p>
+<h2>Data released</h2>
+<ul>
+    {datapointsReleased.map((datum) => {
+        return <li>datum</li>;
+    })}
+</ul>
+<h2>Data not released</h2>
+<ul>
+    {datapointsKeptPrivate.map((datum) => {
+        return <li>datum</li>;
+    })}
+</ul>
