@@ -1,0 +1,26 @@
+---
+import { getCollection, getEntry } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+
+const pages: { [key: string]: any }[] = await getCollection("blog");
+// console.log(pages);
+
+const { url } = Astro.params;
+const page = pages.find((page) => page.data.url === url);
+if (!page) return Astro.redirect("/404");
+
+const {Content} = await page.render();
+---
+
+<Layout title={page["data"]["title"]} css_color_palette="light_mode" useAstroDefaultCSS>
+	<main>
+		<Content />
+	</main>
+</Layout>
+
+<style>
+	main {
+		width: unset;
+		max-width: unset;
+	}
+</style>
