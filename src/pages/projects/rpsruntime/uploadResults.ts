@@ -1,13 +1,13 @@
 import type { APIRoute } from 'astro';
-import fs from "node:fs";
-import UAParser from "ua-parser-js";
+import { readFileSync, writeFileSync } from "node:fs";
+import { UAParser } from "ua-parser-js";
 
 
 // Do NOT use "data" or "type" as the incomingIndex variable
 function appendJSON(filePath: string, incomingIndex: string, infoToAdd: JSON) {
   let data;
   try {
-    const dataFile = fs.readFileSync(filePath);
+    const dataFile = readFileSync(filePath);
     data = JSON.parse(dataFile.toString());
     console.log(`Data (before): ${JSON.stringify(data)}`);
   } catch (error: any) {
@@ -27,13 +27,13 @@ function appendJSON(filePath: string, incomingIndex: string, infoToAdd: JSON) {
   // console.log(`Data (after): ${JSON.stringify(data)}`);
 
   // come back and see if the removing the let statement broke anything
-  fs.writeFileSync(filePath, JSON.stringify(data));
+  writeFileSync(filePath, JSON.stringify(data));
 }
 
 
 export const POST: APIRoute = async ({ request }) => {
   console.log("Received a POST request!!!");
-  let userInfo = (new UAParser.UAParser(request.headers.get("user-agent") || "")).getResult();
+  let userInfo = (new UAParser(request.headers.get("user-agent") || "")).getResult();
 
   try {
     let userID;

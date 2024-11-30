@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ url }) => {
 
     // Convert params to an object for easier usage
     const queryObject: Record<string, string> = {};
-    for (const [key, value] of params.entries()) {
+    for (const [key, value] of Array.from(params.entries())) {
         queryObject[key] = value;
     }
 
