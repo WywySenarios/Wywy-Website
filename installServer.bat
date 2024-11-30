@@ -8,7 +8,16 @@ echo Config successfully cleaned.
 pause
 
 :: Install Astro & node dependancies.
-npm install astro express cors body-parser ua-parser-js fs child_process lucide-react class-variance-authority tailwindcss chart.js
+npm install astro
+npm install express
+npm install cors
+npm install body-parser
+npm install ua-parser-js
+npm install fs child_process
+npm install lucide-react
+npm install class-variance-authority
+npm install tailwindcss
+npm install chart.js
 npm install --save regression
 
 echo Succesfully installed astro & node dependancies.
