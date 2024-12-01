@@ -50,3 +50,7 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+
+# ignore temporary installation files
+TEMPORARY_CLONE_astro.config.mjs

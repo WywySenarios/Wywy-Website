@@ -32,13 +32,14 @@ pause
 
 :: Install tailwind CSS for ShadCN to use
 call npm install -D tailwindcss postcss autoprefixer vite &:: I'm not sure if this line is needed, but this is for redundnacy, I guess. I'm just too lazy to test without it :P
+call npm install tailwind-merge
 call npx tailwind init
 
 echo "Successfully installed Tailwind CSS."
 pause
 
-:: Install ShadCN. Please do NOT override any components.
-echo "When installing ShadCN, please DO NOT override any components."
+:: Install ShadCN. Please do NOT overwrite any components.
+echo "When installing ShadCN, please DO NOT overwrite any components."
 pause
 @REM call npx shadcn@latest init
 call npx shadcn@latest add button calendar table
@@ -64,7 +65,20 @@ py scripts/addCommands.py
 echo "Succesfully added commands to package.json."
 pause
 
+:: remove tailwind config imposter
+py scripts/removeTailwindConfig.py
+
+echo "Tailwind config imposter removed."
+pause
+
+:: create dummy files to prevent build errors
+py scripts/createDummies.py
+
+echo "Dummy files created."
+pause
+
 :: optionally build the project once all dependancies have been installed.
+:: currently errors because daily.json & master.json do not exist on a fresh installation.
 choice /c TF /m "Do you want to build this project (press lowercase key)"
 if errorlevel 2 (
     echo "Build skipped."
