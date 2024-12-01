@@ -12,8 +12,6 @@ import master from "@root/data/RPSRuntime/master.json";
 
 
 export const GET: APIRoute = async ({ url }) => {
-    let output = {};
-
     // Get the query string parameters
     const params = new URLSearchParams(url.search);
 
@@ -23,11 +21,18 @@ export const GET: APIRoute = async ({ url }) => {
         queryObject[key] = value;
     }
 
-    if (queryObject["trialID"] != null && queryObject["sortBy"]) {
+    if (queryObject["trialID"] != null && queryObject["sortBy"] != null) {
         let trialIDs = queryObject["trialID"].split(",");
         let sortBy = queryObject["sortBy"].split(',')
         let trialToSearchFor = sortBy[0];
         let algorithmToSearchFor = sortBy[1];
+
+        if (trialIDs.findIndex((element) => element == trialToSearchFor) == -1) {
+            return new Response(JSON.stringify(queryObject), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+            });
+        }
 
         let content = [];
         let temp;

@@ -1,8 +1,11 @@
 ---
-
 export const prerender = true;
 import Layout from "@/layouts/Layout.astro";
+import "@/styles/RPSRuntime.css";
+import TableRow from "@/components/rpsruntime/TableRow.astro";
 
+const algorithms = ["standard", "optimized", "zeroes", "polynomial"];
+const runtimeUnit = "ms";
 
 ---
 
@@ -180,181 +183,45 @@ import Layout from "@/layouts/Layout.astro";
             <br />
         </form>
         <input type="button" id="run" onclick="runInit()" value="Run" />
+        <br>
         <label id="statusLabel" for="status">Status: Idle</label>
         <!-- 23 * 4 = 92 tests -->
         <progress id="status" style="width: 100%;" value="0" max="92"
         ></progress>
 
-        <table id="runtimeTable">
-            <tr>
-                <th></th>
-                <th>Standard Algorithm</th>
-                <th>Optimized Algorithm</th>
-                <th>Zeroes Algorithm</th>
-                <th>Polynomial Algorithm</th>
-            </tr>
-
-            <tr>
-                <th>Runtime (ms/100 cases)</th>
-                <th id="standard100"></th>
-                <th id="optimized100"></th>
-                <th id="zeroes100"></th>
-                <th id="polynomial100"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/1000 cases)</th>
-                <th id="standard1000"></th>
-                <th id="optimized1000"></th>
-                <th id="zeroes1000"></th>
-                <th id="polynomial1000"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/10000 cases)</th>
-                <th id="standard10000"></th>
-                <th id="optimized10000"></th>
-                <th id="zeroes10000"></th>
-                <th id="polynomial10000"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/100000 cases)</th>
-                <th id="standard100000.1"></th>
-                <th id="optimized100000.1"></th>
-                <th id="zeroes100000.1"></th>
-                <th id="polynomial100000.1"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/100000 cases)</th>
-                <th id="standard100000.2"></th>
-                <th id="optimized100000.2"></th>
-                <th id="zeroes100000.2"></th>
-                <th id="polynomial100000.2"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/100000 cases)</th>
-                <th id="standard100000.3"></th>
-                <th id="optimized100000.3"></th>
-                <th id="zeroes100000.3"></th>
-                <th id="polynomial100000.3"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/100000 cases)</th>
-                <th id="standard100000.4"></th>
-                <th id="optimized100000.4"></th>
-                <th id="zeroes100000.4"></th>
-                <th id="polynomial100000.4"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/100000 cases)</th>
-                <th id="standard100000.5"></th>
-                <th id="optimized100000.5"></th>
-                <th id="zeroes100000.5"></th>
-                <th id="polynomial100000.5"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/100000 cases)</th>
-                <th id="standard100000.6"></th>
-                <th id="optimized100000.6"></th>
-                <th id="zeroes100000.6"></th>
-                <th id="polynomial100000.6"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/100000 cases)</th>
-                <th id="standard100000.7"></th>
-                <th id="optimized100000.7"></th>
-                <th id="zeroes100000.7"></th>
-                <th id="polynomial100000.7"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/100000 cases)</th>
-                <th id="standard100000.8"></th>
-                <th id="optimized100000.8"></th>
-                <th id="zeroes100000.8"></th>
-                <th id="polynomial100000.8"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/100000 cases)</th>
-                <th id="standard100000.9"></th>
-                <th id="optimized100000.9"></th>
-                <th id="zeroes100000.9"></th>
-                <th id="polynomial100000.9"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/100000 cases)</th>
-                <th id="standard100000.10"></th>
-                <th id="optimized100000.10"></th>
-                <th id="zeroes100000.10"></th>
-                <th id="polynomial100000.10"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/1000000 cases)</th>
-                <th id="standard1000000.1"></th>
-                <th id="optimized1000000.1"></th>
-                <th id="zeroes1000000.1"></th>
-                <th id="polynomial1000000.1"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/1000000 cases)</th>
-                <th id="standard1000000.2"></th>
-                <th id="optimized1000000.2"></th>
-                <th id="zeroes1000000.2"></th>
-                <th id="polynomial1000000.2"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/1000000 cases)</th>
-                <th id="standard1000000.3"></th>
-                <th id="optimized1000000.3"></th>
-                <th id="zeroes1000000.3"></th>
-                <th id="polynomial1000000.3"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/1000000 cases)</th>
-                <th id="standard1000000.4"></th>
-                <th id="optimized1000000.4"></th>
-                <th id="zeroes1000000.4"></th>
-                <th id="polynomial1000000.4"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/1000000 cases)</th>
-                <th id="standard1000000.5"></th>
-                <th id="optimized1000000.5"></th>
-                <th id="zeroes1000000.5"></th>
-                <th id="polynomial1000000.5"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/1000000 cases)</th>
-                <th id="standard1000000.6"></th>
-                <th id="optimized1000000.6"></th>
-                <th id="zeroes1000000.6"></th>
-                <th id="polynomial1000000.6"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/1000000 cases)</th>
-                <th id="standard1000000.7"></th>
-                <th id="optimized1000000.7"></th>
-                <th id="zeroes1000000.7"></th>
-                <th id="polynomial1000000.7"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/1000000 cases)</th>
-                <th id="standard1000000.8"></th>
-                <th id="optimized1000000.8"></th>
-                <th id="zeroes1000000.8"></th>
-                <th id="polynomial1000000.8"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/1000000 cases)</th>
-                <th id="standard1000000.9"></th>
-                <th id="optimized1000000.9"></th>
-                <th id="zeroes1000000.9"></th>
-                <th id="polynomial1000000.9"></th>
-            </tr>
-            <tr>
-                <th>Runtime (ms/1000000 cases)</th>
-                <th id="standard1000000.10"></th>
-                <th id="optimized1000000.10"></th>
-                <th id="zeroes1000000.10"></th>
-                <th id="polynomial1000000.10"></th>
-            </tr>
+        <table class="runtimeTable" id="runtimeTable">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Standard Algorithm</th>
+                    <th>Optimized Algorithm</th>
+                    <th>Zeroes Algorithm</th>
+                    <th>Polynomial Algorithm</th>
+                </tr>
+            </thead>
+            <TableRow algorithms={algorithms} numTestCases="100" trialID="" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="1000" trialID="" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="10000" trialID="" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="100000" trialID=".1" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="100000" trialID=".2" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="100000" trialID=".3" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="100000" trialID=".4" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="100000" trialID=".5" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="100000" trialID=".6" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="100000" trialID=".7" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="100000" trialID=".8" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="100000" trialID=".9" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="100000" trialID=".10" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="1000000" trialID=".1" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="1000000" trialID=".2" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="1000000" trialID=".3" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="1000000" trialID=".4" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="1000000" trialID=".5" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="1000000" trialID=".6" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="1000000" trialID=".7" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="1000000" trialID=".8" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="1000000" trialID=".9" runtimeUnit={runtimeUnit}/>
+            <TableRow algorithms={algorithms} numTestCases="1000000" trialID=".10" runtimeUnit={runtimeUnit}/>
         </table>
         <br />
         <p>

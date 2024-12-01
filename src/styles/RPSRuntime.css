@@ -1,0 +1,27 @@
+/* This CSS stylesheet is primarily made so that the stupid BUTTONS won't implode */
+
+/* Make the buttons finally feel like buttons again */
+button, input[type="button"] {
+    padding: 4px;
+    background-color: HSL(40, 87%, 85%, 40%);
+    border-radius: 5%;
+}
+
+button:hover, input[type="button"]:hover {
+    transform: scale(1.05, 1.05);
+}
+
+/* PROGRESS BAR FINALLY HAS COLOR??? */
+progress {
+    color:blue;
+}
+
+/* Runtime table finally has some chill */
+.runtimeTable {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.runtimeTable thead {
+    border-bottom: 2px solid black;
+}

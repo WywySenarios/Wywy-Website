@@ -1,0 +1,19 @@
+---
+interface Props {
+    algorithms: string[];
+    numTestCases: string;
+    trialID: string;
+    runtimeUnit: string;
+}
+
+const { algorithms, numTestCases, trialID, runtimeUnit } = Astro.props;
+---
+
+<tr>
+    <th>{"Runtime (" + runtimeUnit + "/" + numTestCases + " cases)"}</th>
+    {
+        algorithms.map((column) => {
+            return <th id={column + numTestCases + trialID} />;
+        })
+    }
+</tr>
