@@ -8,8 +8,8 @@
 
 import type { APIRoute } from 'astro';
 
-import master from "@root/data/RPSRuntime/master.json";
-
+import { readFileSync } from 'node:fs';
+// import master from "@root/data/RPSRuntime/master.json";
 
 export const GET: APIRoute = async ({ url }) => {
     // Get the query string parameters
@@ -36,6 +36,7 @@ export const GET: APIRoute = async ({ url }) => {
 
         let content = [];
         let temp;
+        let master = JSON.parse(readFileSync(".\\data\\RPSRuntime\\master.json", "utf-8"));
         for (const key in master) {
             type temp = {[key:string]:any};
             temp = {};
