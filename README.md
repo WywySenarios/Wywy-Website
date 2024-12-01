@@ -3,18 +3,18 @@ This is a framework for my personal website! Unforutnately, user friendliness is
 
 ### SETUP SERVER:
 This section will run you through how to setup the server from the developer side!
-# Node Package Manager (npm)
+# Install Node Package Manager (npm)
 Note: npm REQUIRES execution policy to be set to "RemoteSigned" or a policy that is less strict than "RemoteSigned"
 How to install node js on Windows: https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows
 Yes, you need node js for this.
 
-# Python
+# Install Python
 Install python through their official website: https://www.python.org/
 I wrote a python script to help you install this website, and it's a super useful programming language, too!
 
-# Astro, Astro & Node packages
-BEFORE DOING THIS, PLEASE CLEAN ASTRO's CONFIG FILE.
+# Install Astro, Astro & Node packages
 Run "installServer.bat" to install Astro & most dependancies.
+You can navigate to the root directory's folder, open CMD, and run this command to run the batch file: ".\installServer.bat"
 DO NOT override any files when installing ShadCN.
 
 # Additional feature: Read Google Sheets (Setup Python virtual environment)
