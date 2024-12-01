@@ -40,4 +40,4 @@ To run, run this command: node server.js
 
 Build before you run, please.
 
-The server port can be customized by editing the server.js file located in the root directory of this project.
+Astro will notify you of the port that the server is active on.
