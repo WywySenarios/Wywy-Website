@@ -3,9 +3,6 @@
 **/*credentials*.json
 **/*token.json
 
-# freeze config.json
-config.json
-
 # don't copy data over because that's just weird
 data/*
 # make sure the folder still exists though!
@@ -14,10 +11,13 @@ data/*
 # ignore node packages
 package-lock.json
 package.json
-node_modules/*
+node_modules
+
+# ignore Astro content libraries
+src/content
 
 # ignore python virtual environment & packages
-.venv/*
+.venv
 
 # ignore VS code folder :P
 .vscode
@@ -25,20 +25,15 @@ node_modules/*
 # ignore my quick notes
 nextPush.txt
 
-# ignore calendar items
-public/calendar/*
+# ignore calendar items (these don't even work, IDK why they are ignored)
+public/calendar
 !public/calendar/empty
-
-
 
 # build output
 dist/
 
 # generated types
 .astro/
-
-# dependencies
-node_modules/
 
 # logs
 npm-debug.log*
