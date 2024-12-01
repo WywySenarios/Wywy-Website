@@ -39,3 +39,5 @@ To build, run this command: npm run build
 To run, run this command: node server.js
 
 Build before you run, please.
+
+The server port can be customized by editing the server.js file located in the root directory of this project.
