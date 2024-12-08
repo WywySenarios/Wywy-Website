@@ -1,22 +1,99 @@
 ---
-import Layout from '@/layouts/Layout.astro';
-import Card from '@/components/Card.astro';
+export const prerender = true;
+import { getCollection } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+
+const projects: { [key: string]: any }[] = await getCollection("projects");
 ---
 
-<Layout title="EZ's Projects" css_color_palette="dark_mode">
+<Layout
+	title="EZ's Projects"
+	css_color_palette="dark_mode"
+	useAstroDefaultCSS={false}
+>
 	<main>
-		
 		<ul role="list" class="link-card-grid">
-			<Card
-				href="/projects/rpsruntime"
-				title="✂️ RPS Runtime (Website)"
-				body="This website is for gathering a TON of RPS runtime data!"
-			/>
-			<Card
+			{
+				projects.map((project) => {
+					if (project["data"]["imagePath"] != null) {
+						// if there is an image,
+						return (
+							<div>
+								<Card
+									href={
+										"/projects/" +
+										project["id"].replace(".md", "")
+									}
+									title={project["data"]["title"]}
+									body={project["data"]["description"]}
+								/>{" "}
+								<img
+									src={project["data"]["imagePath"]}
+									alt={
+										"Image describing the " +
+										project["id"].replace(".md", "") +
+										" project."
+									}
+								/>
+							</div>
+						);
+					} else {
+						return (
+							<Card
+								href={
+									"/projects/" +
+									project["id"].replace(".md", "")
+								}
+								title={project["data"]["title"]}
+								body={project["data"]["description"]}
+							/>
+						);
+					}
+				})
+			}
+			<!-- <Card
 				href="https://github.com/WywySenarios"
 				title="Upcoming Content... 🚧"
 				body="This block of STUFF!!! has not been implemented yet! :( Very sad indeed."
-			/>
+			/> -->
 		</ul>
 	</main>
 </Layout>
+
+<style>
+	main {
+		margin: auto;
+		padding: 1rem;
+		width: 800px;
+		max-width: calc(100% - 2rem);
+		font-size: 20px;
+		line-height: 1.6;
+	}
+	h1 {
+		font-size: 4rem;
+		font-weight: 700;
+		line-height: 1;
+		text-align: center;
+		margin-bottom: 1em;
+	}
+	img {
+		display: block;
+		margin-left: auto;
+		margin-right: auto;
+		padding: 5px;
+	}
+	.text-gradient {
+		background-image: var(--accent-gradient);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-size: 400%;
+		background-position: 0%;
+	}
+	.link-card-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr));
+		gap: 2rem;
+		padding: 0;
+	}
+</style>
