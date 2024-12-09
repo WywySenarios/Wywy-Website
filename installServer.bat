@@ -20,6 +20,7 @@ call npm install class-variance-authority
 call npm install tailwindcss
 call npm install chart.js
 call npm install --save regression
+call npm install animejs --save
 
 echo "Succesfully installed astro & node dependancies."
 pause
@@ -49,6 +50,7 @@ pause
 
 :: node module types? IDK if this is needed anymore
 call npm i @types/node
+call npm i --save-dev @types/animejs
 
 echo "Successfully installed node types."
 pause

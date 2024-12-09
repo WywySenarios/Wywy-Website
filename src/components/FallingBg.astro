@@ -1,0 +1,92 @@
+---
+const { UID, leftPos, endLocations } = Astro.props;
+
+interface Props {
+    UID: string[]; // UID to be a string with no spaces
+    leftPos: string[]; // leftPos to be an integer thing
+    endLocations: number[][];
+}
+
+// console.log(UID)
+let indexes: number[] = [];
+for (let i in UID) {
+    indexes.push(parseInt(i));
+}
+
+const itemsToGenerate = [
+    ["angry", 1],
+    ["anxious", 1],
+    ["concerned", 1],
+    ["dead", 1],
+    ["happy", 2],
+    ["sad", 1],
+    ["satisfied", 2],
+    ["standard", 1],
+];
+
+const itemPath = "/falling_screens/wywy/";
+---
+
+{
+    indexes.map((index) => {
+        return itemsToGenerate.map((i) => {
+            return (
+                <img
+                    src={itemPath + i[0] + ".jpg"}
+                    class={"fallingItem " + UID[index]}
+                    style={"left:" + leftPos[index] + "vw"}
+                />
+                <img
+                    src={itemPath + i[0] + ".jpg"}
+                    class={"fallingItem " + UID[index] + "dupe"}
+                    style={"left:" + leftPos[index] + "vw"}
+                />
+            );
+        });
+    })
+}
+
+<style>
+    .fallingItem {
+        top: 0;
+        position: absolute;
+        height: min(5vh, 5vw);
+        width: min(5vh, 5vw);
+    }
+</style>
+
+<script
+    is:inline
+    src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.js"
+></script>
+<script is:inline define:vars={{ itemsToGenerate, itemPath, UID, endLocations }}
+>
+    const duration = 5000;
+
+    function triggerAnimation(extraTag) {
+        index = parseInt(this)
+
+        anime({
+            targets: "." + UID[index] + extraTag,
+            loop: true,
+            left: function () {
+                return (
+                    anime.random(endLocations[index][0], endLocations[index][1]) + "vw"
+                );
+            },
+            top: 0,
+            translateY: "100vh",
+            duration: duration,
+            rotate: anime.stagger([-720, 720]),
+            easing: "linear",
+            delay: anime.stagger(duration / 10, {}),
+        });
+    }
+
+    for (i in UID) {
+        let functionToRun = triggerAnimation.bind(i, "")
+        functionToRun();
+
+        setTimeout(triggerAnimation.bind(i, "dupe"), duration - duration / 10 * 2);
+    }
+</script>
