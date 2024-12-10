@@ -1,30 +1,25 @@
 ---
-const { UID, leftPos, endLocations } = Astro.props;
+const { UID, leftPos, endLocations, duration = 5000, itemsToGenerate, path = "/falling_screens/wywy/", rotationBounds = [-270, 270] } = Astro.props;
 
 interface Props {
     UID: string[]; // UID to be a string with no spaces
     leftPos: string[]; // leftPos to be an integer thing
     endLocations: number[][];
+    duration?: number;
+    itemsToGenerate: ReadonlyArray<[string, number]>
+    path?: string;
+    rotationBounds?: ReadonlyArray<number>;
 }
 
-// console.log(UID)
 let indexes: number[] = [];
 for (let i in UID) {
     indexes.push(parseInt(i));
 }
 
-const itemsToGenerate = [
-    ["angry", 1],
-    ["anxious", 1],
-    ["concerned", 1],
-    ["dead", 1],
-    ["happy", 2],
-    ["sad", 1],
-    ["satisfied", 2],
-    ["standard", 1],
-];
-
-const itemPath = "/falling_screens/wywy/";
+let numItems: number = 0;
+for (let i of itemsToGenerate) {
+    numItems += i[1];
+}
 ---
 
 {
@@ -32,12 +27,12 @@ const itemPath = "/falling_screens/wywy/";
         return itemsToGenerate.map((i) => {
             return (
                 <img
-                    src={itemPath + i[0] + ".jpg"}
+                    src={path + i[0] + ".jpg"}
                     class={"fallingItem " + UID[index]}
                     style={"left:" + leftPos[index] + "vw"}
                 />
                 <img
-                    src={itemPath + i[0] + ".jpg"}
+                    src={path + i[0] + ".jpg"}
                     class={"fallingItem " + UID[index] + "dupe"}
                     style={"left:" + leftPos[index] + "vw"}
                 />
@@ -59,9 +54,8 @@ const itemPath = "/falling_screens/wywy/";
     is:inline
     src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.js"
 ></script>
-<script is:inline define:vars={{ itemsToGenerate, itemPath, UID, endLocations }}
+<script is:inline define:vars={{ itemsToGenerate, numItems, path, UID, endLocations, duration, rotationBounds }}
 >
-    const duration = 5000;
 
     function triggerAnimation(extraTag) {
         index = parseInt(this)
@@ -70,14 +64,16 @@ const itemPath = "/falling_screens/wywy/";
             targets: "." + UID[index] + extraTag,
             loop: true,
             left: function () {
+                let pos = anime.random(endLocations[index][0], endLocations[index][1]) + "vw"
                 return (
-                    anime.random(endLocations[index][0], endLocations[index][1]) + "vw"
+                    [pos, pos]
                 );
             },
-            top: 0,
             translateY: "100vh",
             duration: duration,
-            rotate: anime.stagger([-720, 720]),
+            rotate: function() {
+                return anime.random(rotationBounds[0], rotationBounds[1]);
+            },
             easing: "linear",
             delay: anime.stagger(duration / 10, {}),
         });
@@ -87,6 +83,6 @@ const itemPath = "/falling_screens/wywy/";
         let functionToRun = triggerAnimation.bind(i, "")
         functionToRun();
 
-        setTimeout(triggerAnimation.bind(i, "dupe"), duration - duration / 10 * 2);
+        setTimeout(triggerAnimation.bind(i, "dupe"), duration - duration / numItems * 2);
     }
 </script>

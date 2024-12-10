@@ -1,0 +1,46 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import FallingBg from "@root/src/components/FallingBg.astro";
+interface Props {
+    title: string;
+    css_color_palette: string;
+    iconPath?: string;
+    fontPath?: string;
+    useAstroDefaultCSS?: boolean;
+}
+
+let { title, css_color_palette, iconPath, fontPath, useAstroDefaultCSS } =
+    Astro.props;
+---
+
+<Layout
+    title={title}
+    css_color_palette={css_color_palette}
+    iconPath={iconPath}
+    fontPath={fontPath}
+    useAstroDefaultCSS={useAstroDefaultCSS}
+>
+    <!-- Removing FallingBg outside of Layout element MIGHT mess up the emojis (aka encoding) -->
+    <FallingBg
+        UID={["wywy1", "wywy2"]}
+        leftPos={["12.5", "87.5"]}
+        endLocations={[
+            [7.5, 25],
+            [75, 92.5],
+        ]}
+        itemsToGenerate={[
+            ["angry", 1],
+            ["anxious", 1],
+            ["concerned", 1],
+            ["dead", 1],
+            ["happy", 1],
+            ["sad", 1],
+            ["satisfied", 1],
+            ["standard", 1],
+        ]}
+        duration={5000}
+    />
+    <slot slot="top-bar-button2" name="top-bar-button2" />
+    <slot slot="top-bar-button3" name="top-bar-button3" />
+    <slot />
+</Layout>

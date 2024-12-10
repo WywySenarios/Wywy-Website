@@ -1,13 +1,12 @@
 ---
-import Layout from '@/layouts/Layout.astro';
-import FallingBg from '@/components/FallingBg.astro';
-import Card from '@/components/Card.astro';
+// import Layout from "@/layouts/Layout.astro";
+import Layout from "@/layouts/base/LayoutFallingBgWywy.astro";
+import FallingBg from "@/components/FallingBg.astro";
+import Card from "@/components/Card.astro";
 ---
 
 <Layout title="EZ & Wywy's Website" css_color_palette="dark_mode">
 	<main>
-		<!-- Removing FallingBg outside of Layout element MIGHT mess up the emojis (aka encoding) -->
-		<FallingBg UID={["wywy1", "wywy2"]} leftPos={["12.5", "87.5"]} endLocations={[[0, 25], [75, 100]]}/>
 		<ul role="list" class="link-card-grid">
 			<Card
 				href="awards"
@@ -25,11 +24,7 @@ import Card from '@/components/Card.astro';
 				title="📝 Resumes"
 				body="Read my resume, and how it evolved over time."
 			/>
-			<Card
-				href="Senarios"
-				title="🎨 Senarios"
-				body="Wywy's home ❤️"
-			/>
+			<Card href="Senarios" title="🎨 Senarios" body="Wywy's home ❤️" />
 			<Card
 				href="personal"
 				title="📝 Personal Blog & Journal"
