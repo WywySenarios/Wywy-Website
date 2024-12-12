@@ -97,71 +97,46 @@ import { i } from "@root/dist/server/chunks/astro/server_DzIX4Flx.mjs";
         });
     }
 
+    function animation(i, extraTag) {
+        return {
+            targets: "." + UID[i] + extraTag,
+            loop: true,
+            left: function () {
+                let pos = anime.random(endLocations[i][0], endLocations[i][1]) + "vw"
+                return (
+                    [pos, pos]
+                );
+            },
+            translateY: "100vh",
+            duration: duration,
+            rotate: function() {
+                return [anime.random(rotationBounds[0], rotationBounds[1]), anime.random(rotationBounds[0], rotationBounds[1])];
+            },
+            easing: "linear",
+            autoplay: true,
+            direction: "alternate",
+            changeComplete: function(anim) { // called when they switch directions
+                for (i of anim.animatables) {
+                    if (i.target.style.opacity == 0) {
+                        i.target.style.opacity = 1;
+                    } else {
+                        i.target.style.opacity = 0;
+                    }
+                    
+                    console.log(i.target.style.opacity);
+                }
+            },
+            delay: anime.stagger(duration / 10, {}),
+        }
+    }
+
     let timeline = anime.timeline({
-        duration: duration * 2
+        duration: duration * 2,
+        loop: true
     });
     for (i in UID) {
-        timeline.add({
-            targets: "." + UID[i],
-            loop: true,
-            left: function () {
-                let pos = anime.random(endLocations[i][0], endLocations[i][1]) + "vw"
-                return (
-                    [pos, pos]
-                );
-            },
-            translateY: "100vh",
-            duration: duration,
-            rotate: function() {
-                return [anime.random(rotationBounds[0], rotationBounds[1]), anime.random(rotationBounds[0], rotationBounds[1])];
-            },
-            easing: "linear",
-            autoplay: true,
-            direction: "alternate",
-            changeComplete: function(anim) { // called when they switch directions
-                for (i of anim.animatables) {
-                    if (i.target.style.visibility == "hidden") {
-                        i.target.style.visibility = "visible";
-                    } else {
-                        i.target.style.visibility = "hidden";
-                    }
-                    
-                    console.log(i.target.style.visibility);
-                }
-            },
-            delay: anime.stagger(duration / 10, {}),
-        }, 0);
-
-        timeline.add({
-            targets: "." + UID[i] + "dupe",
-            loop: true,
-            left: function () {
-                let pos = anime.random(endLocations[i][0], endLocations[i][1]) + "vw"
-                return (
-                    [pos, pos]
-                );
-            },
-            translateY: "100vh",
-            duration: duration,
-            rotate: function() {
-                return [anime.random(rotationBounds[0], rotationBounds[1]), anime.random(rotationBounds[0], rotationBounds[1])];
-            },
-            easing: "linear",
-            autoplay: true,
-            direction: "alternate",
-            changeComplete: function(anim) { // called when they switch directions
-                for (i of anim.animatables) {
-                    if (i.target.style.visibility == "hidden") {
-                        i.target.style.visibility = "visible";
-                    } else {
-                        i.target.style.visibility = "hidden";
-                    }
-                    
-                    console.log(i.target.style.visibility);
-                }
-            },
-            delay: anime.stagger(duration / 10, {}),
-        }, duration);
+        timeline.add(animation(i, ""), 0);
+        timeline.add(animation(i, "dupe"), duration);
 
         // let functionToRun = triggerAnimation.bind(i, "")
         // functionToRun();
