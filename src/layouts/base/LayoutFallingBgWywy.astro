@@ -2,14 +2,15 @@
 import Layout from "@/layouts/Layout.astro";
 import FallingBg from "@root/src/components/FallingBg.astro";
 interface Props {
-    title: string;
-    css_color_palette: string;
-    iconPath?: string;
-    fontPath?: string;
-    useAstroDefaultCSS?: boolean;
+    readonly title: string;
+    readonly css_color_palette: string;
+    readonly iconPath?: string;
+    readonly fontPath?: string;
+    readonly useAstroDefaultCSS?: boolean;
+    readonly imageDimensions?: Readonly<[number, number]>;
 }
 
-let { title, css_color_palette, iconPath, fontPath, useAstroDefaultCSS } =
+let { title, css_color_palette, iconPath, fontPath, useAstroDefaultCSS, imageDimensions } =
     Astro.props;
 ---
 
@@ -41,6 +42,7 @@ let { title, css_color_palette, iconPath, fontPath, useAstroDefaultCSS } =
         duration={5000}
         path={"/falling_screens/wywy_" + css_color_palette + "/"}
         imageFileExtension=".png"
+        imageDimensions={imageDimensions}
     />
     <slot slot="top-bar-button2" name="top-bar-button2" />
     <slot slot="top-bar-button3" name="top-bar-button3" />

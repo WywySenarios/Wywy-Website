@@ -1,16 +1,17 @@
 ---
 export const prerender = true
-const { UID, leftPos, endLocations, duration = 5000, itemsToGenerate, path = "/falling_screens/wywy/", rotationBounds = [-270, 270], imageFileExtension = ".jpg" } = Astro.props;
+const { UID, leftPos, endLocations, duration = 5000, itemsToGenerate, path = "/falling_screens/wywy/", rotationBounds = [-180, 180], imageFileExtension = ".jpg", imageDimensions = [50, 50] } = Astro.props;
 
 interface Props {
-    UID: string[]; // UID to be a string with no spaces
-    leftPos: string[]; // leftPos to be an integer thing
-    endLocations: number[][];
-    duration?: number;
-    itemsToGenerate: ReadonlyArray<[string, number]>
-    path?: string;
-    rotationBounds?: ReadonlyArray<number>;
-    imageFileExtension?: string;
+    readonly UID: ReadonlyArray<string>; // UID to be a string with no spaces
+    readonly leftPos: ReadonlyArray<string>; // leftPos to be an integer thing
+    readonly endLocations: ReadonlyArray<ReadonlyArray<number>>;
+    readonly duration?: number;
+    readonly itemsToGenerate: ReadonlyArray<[string, number]>
+    readonly path?: string;
+    readonly rotationBounds?: ReadonlyArray<number>;
+    readonly imageFileExtension?: string;
+    readonly imageDimensions?: Readonly<[number, number]>
 }
 
 let indexes: number[] = [];
@@ -31,12 +32,12 @@ for (let i of itemsToGenerate) {
                 <img
                     src={path + i[0] + imageFileExtension}
                     class={"fallingItem " + UID[index]}
-                    style={"left:" + leftPos[index] + "vw"}
+                    style={"left:" + leftPos[index] + "vw;" + "width:" + String(imageDimensions[0]) + "px;height:" + String(imageDimensions[1]) + "px;"}
                 />
                 <img
                     src={path + i[0] + imageFileExtension}
                     class={"fallingItem " + UID[index] + "dupe"}
-                    style={"left:" + leftPos[index] + "vw"}
+                    style={"left:" + leftPos[index] + "vw;" + "width:" + String(imageDimensions[0]) + "px;height:" + String(imageDimensions[1]) + "px;"}
                 />
             );
         });
@@ -55,10 +56,12 @@ for (let i of itemsToGenerate) {
 <script
     is:inline
     src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.js"
-></script>
+>
+import { i } from "@root/dist/server/chunks/astro/server_DzIX4Flx.mjs";
+
+</script>
 <script define:vars={{ itemsToGenerate, numItems, path, UID, endLocations, duration, rotationBounds }}
 >
-
     function triggerAnimation(extraTag) {
         index = parseInt(this)
 
@@ -74,17 +77,95 @@ for (let i of itemsToGenerate) {
             translateY: "100vh",
             duration: duration,
             rotate: function() {
-                return anime.random(rotationBounds[0], rotationBounds[1]);
+                return [anime.random(rotationBounds[0], rotationBounds[1]), anime.random(rotationBounds[0], rotationBounds[1])];
             },
             easing: "linear",
+            autoplay: true,
+            direction: "alternate",
+            changeComplete: function(anim) { // called when they switch directions
+                for (i of anim.animatables) {
+                    if (i.target.style.visibility == "hidden") {
+                        i.target.style.visibility = "visible";
+                    } else {
+                        i.target.style.visibility = "hidden";
+                    }
+                    
+                    console.log(i.target.style.visibility);
+                }
+            },
             delay: anime.stagger(duration / 10, {}),
         });
     }
 
+    let timeline = anime.timeline({
+        duration: duration * 2
+    });
     for (i in UID) {
-        let functionToRun = triggerAnimation.bind(i, "")
-        functionToRun();
+        timeline.add({
+            targets: "." + UID[i],
+            loop: true,
+            left: function () {
+                let pos = anime.random(endLocations[i][0], endLocations[i][1]) + "vw"
+                return (
+                    [pos, pos]
+                );
+            },
+            translateY: "100vh",
+            duration: duration,
+            rotate: function() {
+                return [anime.random(rotationBounds[0], rotationBounds[1]), anime.random(rotationBounds[0], rotationBounds[1])];
+            },
+            easing: "linear",
+            autoplay: true,
+            direction: "alternate",
+            changeComplete: function(anim) { // called when they switch directions
+                for (i of anim.animatables) {
+                    if (i.target.style.visibility == "hidden") {
+                        i.target.style.visibility = "visible";
+                    } else {
+                        i.target.style.visibility = "hidden";
+                    }
+                    
+                    console.log(i.target.style.visibility);
+                }
+            },
+            delay: anime.stagger(duration / 10, {}),
+        }, 0);
 
-        setTimeout(triggerAnimation.bind(i, "dupe"), duration - duration / numItems * 2);
+        timeline.add({
+            targets: "." + UID[i] + "dupe",
+            loop: true,
+            left: function () {
+                let pos = anime.random(endLocations[i][0], endLocations[i][1]) + "vw"
+                return (
+                    [pos, pos]
+                );
+            },
+            translateY: "100vh",
+            duration: duration,
+            rotate: function() {
+                return [anime.random(rotationBounds[0], rotationBounds[1]), anime.random(rotationBounds[0], rotationBounds[1])];
+            },
+            easing: "linear",
+            autoplay: true,
+            direction: "alternate",
+            changeComplete: function(anim) { // called when they switch directions
+                for (i of anim.animatables) {
+                    if (i.target.style.visibility == "hidden") {
+                        i.target.style.visibility = "visible";
+                    } else {
+                        i.target.style.visibility = "hidden";
+                    }
+                    
+                    console.log(i.target.style.visibility);
+                }
+            },
+            delay: anime.stagger(duration / 10, {}),
+        }, duration);
+
+        // let functionToRun = triggerAnimation.bind(i, "")
+        // functionToRun();
+
+        // setTimeout(triggerAnimation.bind(i, "dupe"), duration - duration / numItems * 2);
     }
 </script>
