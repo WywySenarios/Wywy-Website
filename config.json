@@ -45,5 +45,15 @@
                 "Blog Post 4"
             ]
         }
+    },
+    "Senarios": {
+        "cards": {
+            "pinned": [
+                "example",
+                "example",
+                "example",
+                "example"
+            ]
+        }
     }
 }

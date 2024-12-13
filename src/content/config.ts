@@ -36,6 +36,13 @@ export const collections = {
             "category": z.array(z.string()),
         })
     }),
+    "cards": defineCollection({
+        type: "content", schema: z.object({
+            "title": z.string(),
+            "imagePath": z.string(),
+            "description": z.string()
+        })
+    }),
     "privacyPolicies": defineCollection({
         type: 'content', schema: z.object({
             "title": z.string(),

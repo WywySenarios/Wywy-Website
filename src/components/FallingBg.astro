@@ -56,8 +56,8 @@ for (let i of itemsToGenerate) {
     is:inline
     src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.js"
 ></script>
-<script define:vars={{ itemsToGenerate, numItems, path, UID, endLocations, duration, rotationBounds }}
->
+<script define:vars={{ itemsToGenerate, numItems, path, UID, endLocations, duration, rotationBounds }}>
+    window.onload = renderAnimations; // prevent weird timing issues with document.body.scrollHeight :)
 
     function triggerAnimation(extraTag) {
         index = parseInt(this)
@@ -71,7 +71,9 @@ for (let i of itemsToGenerate) {
                     [pos, pos]
                 );
             },
-            translateY: "100vh",
+            // translateY: document.body.scrollHeight,
+            translateY: [0, document.body.scrollHeight + "px"],
+            // translateY: "100vh",
             duration: duration,
             rotate: function() {
                 return anime.random(rotationBounds[0], rotationBounds[1]);
@@ -81,10 +83,10 @@ for (let i of itemsToGenerate) {
         });
     }
 
-    for (i in UID) {
-        let functionToRun = triggerAnimation.bind(i, "")
-        functionToRun();
-
-        setTimeout(triggerAnimation.bind(i, "dupe"), duration - duration / numItems * 2);
+    function renderAnimations() {
+        for (i in UID) {
+            triggerAnimation.bind(i, "")();
+            setTimeout(triggerAnimation.bind(i, "dupe"), duration - duration / numItems * 2);
+        }
     }
 </script>

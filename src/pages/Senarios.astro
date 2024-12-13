@@ -1,16 +1,23 @@
 ---
-import Layout from '@/layouts/Layout.astro';
-import Card from '@/components/Card.astro';
+import { getEntry } from "astro:content";
+import Layout from "@/layouts/base/LayoutFallingBgWywy.astro";
+import Card from "@/components/Card.astro";
+import SenariosCard from "@/components/Senarios/SenariosCard.astro";
+import config from "@root/config.json";
+
+let pinnedCards = [];
+for (let i of config.Senarios.cards.pinned) {
+	pinnedCards.push(await getEntry("cards", i));
+}
 ---
 
 <Layout title="Senarios!" css_color_palette="dark_mode">
 	<main>
-		
 		<ul role="list" class="link-card-grid">
-            <Card
-				href="https://github.com/WywySenarios/Wywy-Website"
-				title="Upcoming Content... 🚧"
-				body="This block of STUFF!!! has not been implemented yet! :( Very sad indeed."
+			<Card
+				href="/Senarios/cards"
+				title="📕 Cards"
+				body="Browse through a catalog of all my Senarios cards!"
 			/>
 			<Card
 				href="https://github.com/WywySenarios/Wywy-Website"
@@ -18,5 +25,45 @@ import Card from '@/components/Card.astro';
 				body="This block of STUFF!!! has not been implemented yet! :( Very sad indeed."
 			/>
 		</ul>
+
+		<h1 style="padding: 20px;">Featured Cards</h1>
+		<ul role="list" class="cardGrid">
+			<!-- Featured cards -->
+			{
+				pinnedCards.map((card) => {
+					if (card != undefined) {
+						return (
+							<SenariosCard
+								title={card.data.title}
+								imagePath={card.data.imagePath}
+								description={card.data.description}
+							/>
+						);
+					}
+				})
+			}
+		</ul>
 	</main>
 </Layout>
+
+<style>
+	.cardGrid {
+		display: grid;
+		grid-template-columns: 1fr 1fr; /* This line of code will almost CERTAINLY cause issues in the future, especially if the "main" element's width is anything but 800px. */
+		/* grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr)); */
+		gap: 2rem;
+		padding: 0;
+	}
+
+	h1 {
+		width: 100%;
+		text-decoration: none;
+		line-height: 1.4;
+		padding: calc(1.5rem - 1px);
+		border-radius: 8px;
+		color: white;
+		/* background-color: #23262d; */
+		font-size: 3rem;
+		opacity: 0.8;
+	}
+</style>
