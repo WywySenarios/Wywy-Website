@@ -31,6 +31,16 @@ nextPush.txt
 public/calendar
 !public/calendar/empty
 
+# ignore public folder files related to Astro content libraries
+public/awards
+public/cards
+public/directives
+public/projects
+public/schedules
+
+# ignore the webpage icon :)
+public/favicon.svg
+
 # build output
 dist/
 
