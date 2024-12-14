@@ -1,0 +1,59 @@
+{
+    "googleCredentials": "credentials.json",
+    "googleToken": "token.json",
+    "python": ".venv\\Scripts\\python.exe",
+    "schedule": {
+        "current_schedule": "2024Fall"
+    },
+    "personalSheet": {
+        "id": "1reqTRELv3O9aNCOr1_wG2pbsL14POf8uvKY2uPpwh-U",
+        "ranges": {
+            "Qualitative": {
+                "dataSheetName": "Daily Data",
+                "headers": {
+                    "range": "B2:J2",
+                    "notes": false
+                },
+                "content": {
+                    "range": "B3:J",
+                    "notes": true,
+                    "strip_notes": [
+                        1,2
+                    ]
+                }
+            },
+            "Quantitative": {
+                "dataSheetName": "Daily Data",
+                "headers": {
+                    "range": "M2:U2",
+                    "notes": false
+                },
+                "content": {
+                    "range": "M3:U",
+                    "notes": true,
+                    "strip_notes": []
+                }
+            }
+        }
+    },
+    "blog": {
+        "homepage": {
+            "pinned": [
+                "Blog Post 1",
+                "Blog Post 2",
+                "Blog Post 3",
+                "Blog Post 4"
+            ]
+        }
+    },
+    "Senarios": {
+        "cards": {
+            "pinned": [
+                "example",
+                "example",
+                "example",
+                "example"
+            ]
+        }
+    }
+}

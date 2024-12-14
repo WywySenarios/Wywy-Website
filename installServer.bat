@@ -73,10 +73,10 @@ py scripts/removeTailwindConfig.py
 echo "Tailwind config imposter removed."
 pause
 
-:: create dummy files to prevent build errors
-py scripts/createDummies.py
+:: instate default files to prevent errors and give the user a template to learn from
+py scripts/instateDefaults.py
 
-echo "Dummy files created."
+echo "Default files instated."
 pause
 
 :: optionally build the project once all dependancies have been installed.
