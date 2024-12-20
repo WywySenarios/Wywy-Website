@@ -1,11 +1,11 @@
 ---
 interface Props {
 	title: string;
-	body: string;
+	body?: string;
 	href: string;
 }
 
-let { href, title, body } = Astro.props;
+let { href = "", title, body } = Astro.props;
 
 if (href.substring(0, 4) != "http") {
 	href = new URL(href, Astro.url).pathname
@@ -20,6 +20,7 @@ if (href.substring(0, 4) != "http") {
 		</h2>
 		<p>
 			{body}
+			<slot/>
 		</p>
 	</a>
 </li>

@@ -1,20 +1,27 @@
 ---
+export const prerender = true;
+import { getCollection } from 'astro:content';
 import Layout from "@/layouts/Layout.astro";
 import ScheduleTable from "@/components/ScheduleTable.astro";
 import config from "@root/config.json";
 
-const schedules = await Astro.glob("@public/schedules/*.json");
+let schedules: {[key: string]: any}[] = [];
+await getCollection('schedules', ({ data }) => {
+	schedules.push(data);
+});
+
+const scheduleToFind: string = config.schedule.current_schedule
 
 let timeslots = [
   {
     time: "8:00AM - 9:00AM",
-    monday: "",
-    tuesday: "",
-    wednesday: "",
-    thursday: "",
-    friday: "",
-    saturday: "",
-    sunday: "",
+    monday: "DEFAULT VALUE",
+    tuesday: "DEFAULT VALUE",
+    wednesday: "DEFAULT VALUE",
+    thursday: "DEFAULT VALUE",
+    friday: "DEFAULT VALUE",
+    saturday: "DEFAULT VALUE",
+    sunday: "DEFAULT VALUE",
   },
   {
     time: "9:00AM - 10:00AM",
@@ -107,6 +114,16 @@ let timeslots = [
     sunday: "",
   },
   {
+    time: "6:00PM - 7:00PM",
+    monday: "",
+    tuesday: "",
+    wednesday: "",
+    thursday: "",
+    friday: "",
+    saturday: "",
+    sunday: "",
+  },
+  {
     time: "7:00PM - 8:00PM",
     monday: "",
     tuesday: "",
@@ -127,9 +144,10 @@ let timeslots = [
     sunday: "",
   },
 ];
-for (const i of schedules) {
-  if (i["name"] === config["schedule"]["current_schedule"]) {
-    timeslots = i["content"];
+
+for (let i in schedules) {
+  if (schedules[i].title == scheduleToFind) {
+    timeslots = schedules[i].content
   }
 }
 ---

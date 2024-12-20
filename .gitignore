@@ -3,65 +3,82 @@
 **/*credentials*.json
 **/*token.json
 
-# don't copy data over because that's just weird
+# ignore website content
+
+## don't copy data over because that's just weird
 data/*
-# make sure the folder still exists though!
+## make sure the folder still exists though!
 !data/empty
 
-# ignore node packages
-package-lock.json
-package.json
-node_modules
-
-# ignore Astro content libraries
+## ignore legacy Astro content libraries
 src/content
-## include Astro content library config
+### include legacy Astro content library config
 !src/content/config.ts
 
-# ignore python virtual environment & packages
-.venv
+## ignore Astro content libraries
+src/data
 
-# ignore VS code folder :P
-.vscode
+## ignore resumes
+public/resumes
 
-# ignore my quick notes
-nextPush.txt
+## ignore Senarios content
+public/Senarios
 
-# ignore calendar items (these don't even work, IDK why they are ignored)
+## ignore calendar items (these don't even work, IDK why they are ignored)
 public/calendar
 !public/calendar/empty
 
-# ignore public folder files related to Astro content libraries
+## ignore public folder files related to Astro content libraries
 public/awards
 public/cards
 public/directives
 public/projects
 public/schedules
 
-# ignore the webpage icon :)
+## ignore the webpage icon :)
 public/favicon.svg
 
-# build output
-dist/
 
-# generated types
+
+
+# ignore pacakages and runtime environment
+## ignore node packages
+package-lock.json
+package.json
+node_modules
+
+## ignore python virtual environment & packages
+.venv
+
+## ignore VS code folder :P
+.vscode
+
+## generated types
 .astro/
 
-# logs
+## logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# environment variables
+## environment variables
 .env
 .env.production
 
-# macOS-specific files
+## macOS-specific files
 .DS_Store
 
-# jetbrains setting folder
+## jetbrains setting folder
 .idea/
+
+
+# Miscellaneous
+## ignore my quick notes
+nextPush.txt
+
+## build output
+dist/
 
 
 # ignore temporary installation files

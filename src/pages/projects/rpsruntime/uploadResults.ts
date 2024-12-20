@@ -9,7 +9,7 @@ function appendJSON(filePath: string, incomingIndex: string, infoToAdd: JSON) {
   try {
     const dataFile = readFileSync(filePath);
     data = JSON.parse(dataFile.toString());
-    console.log(`Data (before): ${JSON.stringify(data)}`);
+    // console.log(`Data (before): ${JSON.stringify(data)}`);
   } catch (error: any) {
     if (error.code === 'ENOENT') {
       data = {};
@@ -32,16 +32,15 @@ function appendJSON(filePath: string, incomingIndex: string, infoToAdd: JSON) {
 
 
 export const POST: APIRoute = async ({ request }) => {
-  console.log("Received a POST request!!!");
+  // console.log("Received a POST request!!!");
   let userInfo = (new UAParser(request.headers.get("user-agent") || "")).getResult();
 
   try {
     let userID;
     let data = await request.json(); // Parse JSON data from the request body
-    console.log('Received data:', data);
 
     // Perform actions with the received data (e.g., save to a database)
-    console.log(`Receiving Data:${JSON.stringify(data)}:END-Receiving Data`); // note what input has been given in logs
+    console.log("Receiving Data:", data, ":END-Receiving Data"); // note what input has been given in logs
     // add user-agent related specs
     data["specs"]["browser"] = userInfo["browser"];
     data["specs"]["engine"] = userInfo["engine"]; // js engine

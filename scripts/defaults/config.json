@@ -1,9 +1,10 @@
 {
+    "websiteTitle": "EZ & Wywy's Website!",
     "googleCredentials": "credentials.json",
     "googleToken": "token.json",
     "python": ".venv\\Scripts\\python.exe",
     "schedule": {
-        "current_schedule": "2024Fall"
+        "current_schedule": "Winter Break 2024"
     },
     "personalSheet": {
         "id": "1reqTRELv3O9aNCOr1_wG2pbsL14POf8uvKY2uPpwh-U",
@@ -49,10 +50,7 @@
     "Senarios": {
         "cards": {
             "pinned": [
-                "example",
-                "example",
-                "example",
-                "example"
+                "Shock Trooper"
             ]
         }
     }

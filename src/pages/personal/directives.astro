@@ -8,7 +8,7 @@ import Card from '@/components/LinklessCard.astro';
 let directives: {[key: string]: any}[] = [];
 await getCollection('directives', ({ data }) => {
 	directives.push(data);
-});
+}); console.log(directives)
 ---
 
 <Layout title="Eric's Directives" css_color_palette="light_mode" useAstroDefaultCSS={false}>

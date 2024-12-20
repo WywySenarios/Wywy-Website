@@ -17,12 +17,12 @@ let { title, dateLastUpdated, summary, datapointsReleased, datapointsKeptPrivate
 <h2>Data released</h2>
 <ul>
     {datapointsReleased.map((datum) => {
-        return <li>datum</li>;
+        return <li>{datum}</li>;
     })}
 </ul>
 <h2>Data not released</h2>
 <ul>
     {datapointsKeptPrivate.map((datum) => {
-        return <li>datum</li>;
+        return <li>{datum}</li>;
     })}
 </ul>

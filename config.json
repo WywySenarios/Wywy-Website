@@ -4,7 +4,7 @@
     "googleToken": "token.json",
     "python": ".venv\\Scripts\\python.exe",
     "schedule": {
-        "current_schedule": "2024Fall"
+        "current_schedule": "Winter Break 2024"
     },
     "personalSheet": {
         "id": "1reqTRELv3O9aNCOr1_wG2pbsL14POf8uvKY2uPpwh-U",
@@ -39,21 +39,13 @@
     },
     "blog": {
         "homepage": {
-            "pinned": [
-                "Blog Post 1",
-                "Blog Post 2",
-                "Blog Post 3",
-                "Blog Post 4"
-            ]
+            "pinned": []
         }
     },
     "Senarios": {
         "cards": {
             "pinned": [
-                "example",
-                "example",
-                "example",
-                "example"
+                "shock-trooper"
             ]
         }
     }
