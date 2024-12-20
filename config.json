@@ -1,4 +1,5 @@
 {
+    "websiteTitle": "EZ & Wywy's Website!",
     "googleCredentials": "credentials.json",
     "googleToken": "token.json",
     "python": ".venv\\Scripts\\python.exe",

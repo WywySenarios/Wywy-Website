@@ -1,16 +1,17 @@
 ---
 // import '@/styles/globals.css'
 import '@/styles/bars.css'
+import config from "@root/config.json";
 
 interface Props {
-	title: string;
+	title?: string;
 	css_color_palette: string;
 	iconPath?: string;
 	fontPath?: string;
 	useAstroDefaultCSS?: boolean ;
 }
 
-let { title, css_color_palette, iconPath, fontPath, useAstroDefaultCSS } = Astro.props;
+let { title = config.websiteTitle, css_color_palette, iconPath, fontPath, useAstroDefaultCSS } = Astro.props;
 
 if (iconPath == null) {
 	iconPath = "/favicon.svg";
