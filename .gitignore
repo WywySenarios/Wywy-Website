@@ -38,6 +38,9 @@ public/schedules
 ## ignore the webpage icon :)
 public/favicon.svg
 
+## ignore config
+config.json
+
 
 
 
