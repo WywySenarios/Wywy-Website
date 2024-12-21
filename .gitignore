@@ -30,6 +30,7 @@ public/calendar
 
 ## ignore public folder files related to Astro content libraries
 public/awards
+public/blog
 public/cards
 public/directives
 public/projects

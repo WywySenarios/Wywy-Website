@@ -1,0 +1,31 @@
+---
+import Layout from "@/layouts/Layout.astro";
+// import Card from "@/components/Card.astro";
+---
+
+<Layout css_color_palette="dark_mode">
+	<main>
+		<!-- Instructions -->
+         <h1>Instructions</h1>
+         <p>You are a frog in a pond of 7 lily pads (numbered 0 to 6), and your goal is to escape the pond by getting to lily pad number 6. However, there is a snake at lily pad 0, patiently waiting for you to come to lily pad number 0. If you do land on lily pad 0, the snake opens its jaws and swallows you whole. You can pay 10 dollars and decide whether you start on the first or second lily pad, and you get 40 or 20 dollars respectively for successfully escaping the pond.</p>
+         <p>In order to move the frog, you need to play a minigame that corresponds to the lily pad you are currently on. The minigames are:</p>
+
+         <ul>
+            <li>FATE. Shuffle the letters of FATE. If the A appears before the E, you move backwards. Otherwise, move forwards.</li>
+            <li>You are dealt 4 cards. If you have exactly two cards of the same suit, move forwards. If none of the cards are the same suit, move backwards. Otherwise, reshuffle the deck and pick out 4 more cards.</li>
+            <li>PROBABILITY. Shuffle the letters of PROBABILITY. If two B’s touch or two I’s touch, move forwards. Otherwise, move backwards.</li>
+            <li>Roll two dice. If one die is a multiple of the other, move backwards. Otherwise, move forwards.</li>
+            <li>Spin a spinner, with five tiles on RED and two tiles on BLUE (all tiles have equal size). If you land on a RED tile, move forward. If you land on a BLUE tile, move backwards.</li>
+         </ul>
+	</main>
+</Layout>
+
+<style>
+    main {
+        color: white;
+    }
+</style>
+
+<script>
+
+</script>

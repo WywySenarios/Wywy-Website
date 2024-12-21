@@ -11,7 +11,11 @@ interface Props {
 	useAstroDefaultCSS?: boolean ;
 }
 
-let { title = config.websiteTitle, css_color_palette, iconPath = config.iconPath, fontPath, useAstroDefaultCSS } = Astro.props;
+let { title = config.websiteTitle, css_color_palette, iconPath, fontPath, useAstroDefaultCSS } = Astro.props;
+
+if (iconPath == null) {
+	iconPath = "/favicon.svg";
+}
 
 if (fontPath == null) {
 	fontPath = "/stylesheets/fonts/main.css";
