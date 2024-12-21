@@ -1,5 +1,6 @@
 {
     "websiteTitle": "EZ & Wywy's Website!",
+    "iconPath": "/favicon.svg",
     "googleCredentials": "credentials.json",
     "googleToken": "token.json",
     "python": ".venv\\Scripts\\python.exe",
