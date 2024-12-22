@@ -2,7 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 // import bodyParser from 'body-parser';
-import { handler as ssrHandler } from './dist/server/entry.mjs';
+import { handler as ssrHandler } from '../dist/server/entry.mjs';
 
 // constants
 // const port = 5322;

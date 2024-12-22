@@ -1,6 +1,11 @@
 {
     "websiteTitle": "EZ & Wywy's Website!",
     "iconPath": "/favicon.svg",
+    "admin": {
+        "sheets": {
+            "active": true
+        }
+    },
     "googleCredentials": "credentials.json",
     "googleToken": "token.json",
     "python": ".venv\\Scripts\\python.exe",

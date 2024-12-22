@@ -12,10 +12,10 @@ SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
 # Open and read the config filepath file
 with open('config.json', 'r') as file:
-    cfgFilepaths = json.load(file)
+    config = json.load(file)
 
 # The ID and range of the spreadsheet.
-SPREADSHEET_ID = cfgFilepaths.get("personalSheet").get("id")
+SPREADSHEET_ID = config["sheets"]["content"]["id"]
 DATA_SHEET_NAME = "Daily Data"
 
 """
@@ -26,19 +26,19 @@ def getRange(rangeName, notes):
   # The file token.json stores the user's access and refresh tokens, and is
   # created automatically when the authorization flow completes for the first
   # time.
-  if os.path.exists(cfgFilepaths.get("googleToken")):
-    creds = Credentials.from_authorized_user_file(cfgFilepaths.get("googleToken"), SCOPES)
+  if os.path.exists(config["sheets"]["token"]):
+    creds = Credentials.from_authorized_user_file(config["sheets"]["token"], SCOPES)
   # If there are no (valid) credentials available, let the user log in.
   if not creds or not creds.valid:
     if creds and creds.expired and creds.refresh_token:
       creds.refresh(Request())
     else:
       flow = InstalledAppFlow.from_client_secrets_file(
-          cfgFilepaths.get("googleCredentials"), SCOPES
+          config["sheets"]["credentials"], SCOPES
       )
       creds = flow.run_local_server(port=0)
     # Save the credentials for the next run
-    with open(cfgFilepaths.get("googleToken"), "w") as token:
+    with open(config["sheets"]["token"], "w") as token:
       token.write(creds.to_json())
 
   try:
@@ -89,7 +89,7 @@ def getRange(rangeName, notes):
 def main():
   allData = json.loads("{}")
   a = 0
-  ranges = cfgFilepaths.get("personalSheet").get("ranges")
+  ranges = config["sheets"]["content"]["ranges"]
   for itemName in ranges:
     item = ranges.get(itemName)
     currentData = json.loads("{}")
