@@ -15,10 +15,10 @@ await getCollection('directives', ({ data }) => {
 	<main>
 		
 		<ul role="list" class="link-card-grid">
-            { directives.map((award) => {
-				let output = <Card title={award.title} href="" body={award.description}></Card>;
-				if (award.imagePath != null) { // if there is an image,
-					return <Card title={award.title} href="" body={award.description}></Card> <img src={award.imagePath} alt={"Image for the " + award.title + " award"}/>;
+            { directives.map((directive) => {
+				let output = <Card title={directive.title} body={directive.description}></Card>;
+				if (directive.imagePath != null) { // if there is an image,
+					return <Card title={directive.title} body={directive.description}></Card> <img src={directive.imagePath} alt={"Image for the " + directive.title + " award"}/>;
 				}
 
 				return output;
