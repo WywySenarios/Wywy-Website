@@ -1,27 +1,23 @@
 ---
 export const prerender = true;
-import { getCollection } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 import Layout from '@/layouts/Layout.astro';
 import Card from '@/components/LinklessCard.astro';
 // const images = import.meta.glob('@/content/awards/*.png');
 
-let awards: {[key: string]: any}[] = [];
-await getCollection('awards', ({ data }) => {
-	awards.push(data);
-});
-
+let awards = await getCollection('awards');
 ---
 
 <Layout title="Awards & Accomplishments" css_color_palette="dark_mode" useAstroDefaultCSS={false}>
 	<main>
 		<ul role="list" class="link-card-grid">
-			{ awards.map((award) => {
-				let output = <Card title={award.title} href="" body={award.description}></Card>;
-				if (award.imagePath != null) { // if there is an image,
-					return <Card title={award.title} href="" body={award.description}></Card> <img src={award.imagePath} alt={"Image for the " + award.title + " award"}/>;
+			{ awards.map(async (award) => {
+				const { Content } = await render(award);
+				if (award.data.imagePath != null) { // if there is an image,
+					return <Card title={award.data.title} body={award.data.description}><Content/></Card> <img src={award.data.imagePath} alt={"Image for the " + award.data.title + " award"}/>;
+				} else {
+					return <Card title={award.data.title} body={award.data.description}><Content/></Card>;
 				}
-
-				return output;
 			}) }
 		</ul>
 	</main>
