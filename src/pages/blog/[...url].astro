@@ -13,15 +13,16 @@ if (!page) return Astro.redirect("/404");
 const {Content} = await render(page);
 ---
 
-<Layout title={page["data"]["title"]} css_color_palette="light_mode" useAstroDefaultCSS>
+<Layout title={page["data"]["title"]} css_color_palette="light_mode">
 	<main>
 		<Content />
 	</main>
-</Layout>
 
-<style>
-	main {
-		width: unset;
-		max-width: unset;
-	}
-</style>
+	<style>
+		main {
+			width: unset;
+			max-width: unset;
+		}
+	</style>
+	
+</Layout>
