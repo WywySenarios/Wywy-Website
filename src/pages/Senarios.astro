@@ -45,26 +45,24 @@ for (let i of config.Senarios.cards.pinned) {
 			}
 		</ul>
 	</main>
+
+	<style>
+		.cardGrid {
+			display: grid;
+			grid-template-columns: 1fr 1fr; /* This line of code will almost CERTAINLY cause issues in the future, especially if the "main" element's width is anything but 800px. */
+			/* grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr)); */
+		}
+	
+		h1 {
+			width: 100%;
+			text-decoration: none;
+			line-height: 1.4;
+			padding: calc(1.5rem - 1px);
+			border-radius: 8px;
+			color: white;
+			/* background-color: #23262d; */
+			font-size: 3rem;
+			opacity: 0.8;
+		}
+	</style>
 </Layout>
-
-<style>
-	.cardGrid {
-		display: grid;
-		grid-template-columns: 1fr 1fr; /* This line of code will almost CERTAINLY cause issues in the future, especially if the "main" element's width is anything but 800px. */
-		/* grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr)); */
-		gap: 2rem;
-		padding: 0;
-	}
-
-	h1 {
-		width: 100%;
-		text-decoration: none;
-		line-height: 1.4;
-		padding: calc(1.5rem - 1px);
-		border-radius: 8px;
-		color: white;
-		/* background-color: #23262d; */
-		font-size: 3rem;
-		opacity: 0.8;
-	}
-</style>
