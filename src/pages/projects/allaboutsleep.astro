@@ -1,0 +1,46 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+---
+
+<Layout css_color_palette="dark_mode">
+	<main>
+		<ul role="list" class="link-card-grid">
+			<Card
+				href="/projects/allaboutsleep/All About Sleep.pdf"
+				title="📕 Report"
+				body="This is the main report!"
+			/>
+            <Card
+				href="https://docs.google.com/spreadsheets/d/1Uoi0fTLikt1z7lo5N8g5QwTciBRKqSvPIiCgy0FwtcI/edit?gid=0#gid=0"
+				title="📊 Data"
+				body="This is the main spreadsheet!"
+			/>
+            <Card
+				href="/projects/allaboutsleep/Eric Zhu MDM4U - Infographics Assignment - Excel Histograms.pdf"
+				title="📊 Excel Histograms"
+				body="I made two extra histograms in Excel."
+			/>
+            <Card
+				href="/projects/allaboutsleep/Eric Zhu MDM4U - Infographics Assignment Journal.pdf"
+				title="📕 Journal"
+				body="My teacher made me justify some of my design choices."
+			/>
+            <Card
+				href="/projects/allaboutsleep/Eric Zhu MDM4U - Infographics Assignment Citations.pdf"
+				title="Citations"
+				body="APA format."
+			/>
+		</ul>
+	</main>
+</Layout>
+
+<style>
+    main {
+        color: white;
+    }
+</style>
+
+<script>
+
+</script>
