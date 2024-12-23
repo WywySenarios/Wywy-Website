@@ -48,22 +48,24 @@ if (useAstroDefaultCSS == undefined || useAstroDefaultCSS) {
 	</head>
 	<body>
 		<!-- Top bar -->
-		<div class="top-bar">
+		<nav class="top-bar">
 			<!-- Icon -->
-			<img src={iconPath} />
+			<img src={iconPath} alt="Website Icon" />
 
 			<!-- Buttons -->
 			<!-- Made thanks to : https://stackoverflow.com/questions/2906582/how-do-i-create-an-html-button-that-acts-like-a-link -->
-			<input type="button" onclick="location.href='/';" value="Home" />
+			<a href="/">
+				<input type="button" value="Home" />
+			</a>
 
 			<slot name="top-bar-button2" />
 			<slot name="top-bar-button3" />
 
 			<!-- Search bar -->
 			<!--  <input type="text" placeholder="Search (DOES NOT WORK)" /> -->
-		</div>
+		</nav>
+		<slot />
 	</body>
-	<slot />
 </html>
 
 <!-- Footer -->
