@@ -20,7 +20,7 @@ call npm install class-variance-authority
 call npm install tailwindcss
 call npm install chart.js
 call npm install --save regression
-call npm install animejs --save
+call npm install animejs
 
 echo "Succesfully installed astro & node dependancies."
 pause

@@ -6,6 +6,12 @@ import Card from "@/components/Card.astro";
 ---
 
 <Layout css_color_palette="dark_mode">
+	<!-- Preconnect to steam. Thanks to Google Lighthouse for pointing this out! NOTE: The value of crossorigin was NOT explicitly set. -->
+	<div slot="head">
+		<link rel="preconnect" crossorigin href="https://cdn.akamai.steamstatic.com">
+		<link rel="preconnect" crossorigin href="https://avatars.akamai.steamstatic.com">
+	</div>
+
 	<main>
 		<ul role="list" class="link-card-grid">
 			<Card

@@ -11,19 +11,7 @@ interface Props {
 	useAstroDefaultCSS?: boolean;
 }
 
-let { title = config.websiteTitle, css_color_palette, iconPath, fontPath, useAstroDefaultCSS } = Astro.props;
-
-if (iconPath == null) {
-	iconPath = "/favicon.svg";
-}
-
-if (fontPath == null) {
-	fontPath = "/stylesheets/fonts/main.css";
-}
-
-if (useAstroDefaultCSS == undefined || useAstroDefaultCSS) {
-	useAstroDefaultCSS = true;
-}
+let { title = config.websiteTitle, css_color_palette, iconPath = "/favicon.svg", fontPath = "/stylesheets/fonts/main.css", useAstroDefaultCSS = true } = Astro.props;
 ---
 
 <!doctype html>
@@ -33,16 +21,23 @@ if (useAstroDefaultCSS == undefined || useAstroDefaultCSS) {
 		<meta name="description" content="Astro description" />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href={iconPath} />
-		<link rel="stylesheet" href={fontPath} />
-		{ useAstroDefaultCSS && <link rel="stylesheet" href="/stylesheets/default.css"> }
-		<!-- <link rel="stylesheet" href="stylesheets/animations.css"> -->
+		<link rel="stylesheet" rel="preload" href={fontPath} />
+		{ useAstroDefaultCSS && <link rel="stylesheet" rel="preload" href="/stylesheets/default.css"> }
+		<!-- <link rel="stylesheet" rel="preload" href="stylesheets/animations.css"> -->
 		<link
 			rel="stylesheet"
+			rel="preload"
 			href={
 				"/stylesheets/color_palette/" +
 				css_color_palette +
 				".css"}
 		/>
+
+		<!-- Preconnect to cloudflare. Thanks to Google Lighthouse for pointing this out! NOTE: The value of crossorigin was NOT explicitly set. -->
+		<link rel="preconnect" crossorigin href="https://cdnjs.cloudflare.com">
+
+		<slot name="head"/>
+		
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
 	</head>

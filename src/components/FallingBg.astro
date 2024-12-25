@@ -6,11 +6,11 @@ interface Props {
     UID: string[]; // UID to be a string with no spaces
     leftPos: string[]; // leftPos to be an integer thing
     endLocations: number[][];
-    duration?: number;
+    duration?: number; // optional, but has a default value.
     itemsToGenerate: ReadonlyArray<[string, number]>
-    path?: string;
+    path?: string; // optional, but has a default value.
     rotationBounds?: ReadonlyArray<number>;
-    imageFileExtension?: string;
+    imageFileExtension?: string; // optional, but has a default value.
 }
 
 let indexes: number[] = [];
@@ -24,26 +24,30 @@ for (let i of itemsToGenerate) {
 }
 ---
 
-{
-    indexes.map((index) => {
-        return itemsToGenerate.map((i) => {
-            return (
-                <img
-                    src={path + i[0] + imageFileExtension}
-                    class={"fallingItem " + UID[index]}
-                    style={"left:" + leftPos[index] + "vw"}
-                    alt=""
-                />
-                <img
-                    src={path + i[0] + imageFileExtension}
-                    class={"fallingItem " + UID[index] + "dupe"}
-                    style={"left:" + leftPos[index] + "vw"}
-                    alt=""
-                />
-            );
-        });
-    })
-}
+<!-- DO NOT REMOVE THIS DIV. THIS WILL RESULT IN ERRORS IN THE SCRIPT -->
+<!-- Dummy placeholder so I can grab information in the script -->
+<div id="fallingBgMain" data-itemsToGenerate={JSON.stringify(itemsToGenerate)} data-numItems={numItems} data-UID={JSON.stringify(UID)} data-endLocations={JSON.stringify(endLocations)} data-duration={JSON.stringify(duration)} data-rotationBounds={JSON.stringify(rotationBounds)}>
+    {
+        indexes.map((index) => {
+            return itemsToGenerate.map((i) => {
+                return (
+                    <img
+                        src={path + i[0] + imageFileExtension}
+                        class={"fallingItem " + UID[index]}
+                        style={"left:" + leftPos[index] + "vw"}
+                        alt=""
+                    />
+                    <img
+                        src={path + i[0] + imageFileExtension}
+                        class={"fallingItem " + UID[index] + "dupe"}
+                        style={"left:" + leftPos[index] + "vw"}
+                        alt=""
+                    />
+                );
+            });
+        })
+    }
+</div>
 
 <style>
     .fallingItem {
@@ -54,21 +58,36 @@ for (let i of itemsToGenerate) {
     }
 </style>
 
-<script
+
+<!-- <script
     is:inline
     src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.js"
-></script>
-<script define:vars={{ itemsToGenerate, numItems, path, UID, endLocations, duration, rotationBounds }}>
+></script> -->
+<script>
+    import anime from "animejs";
+    let main = document.getElementById("fallingBgMain")!; // I'm ABSOLUTELY confident that the dummy placeholder will always be there.
+    // let vars = main.dataset
+
+    // IDK why main.dataset removes all capitalization when passing in variables, but it happens. What the actual hell man.
+    // give me my variables (I'm ABSOLUTELY confident that these are not null. Otherwise, this component can't do its job anyways.
+    const itemsToGenerate: ReadonlyArray<[string, number]> = JSON.parse(main.dataset.itemstogenerate!);
+    const numItems: number = parseInt(main.dataset.numitems!);
+    // const path: string = main.dataset.path!
+    const UID: string[] = JSON.parse(main.dataset.uid!);
+    const endLocations: string[][] = JSON.parse(main.dataset.endlocations!);
+    const duration: number = parseInt(main.dataset.duration!);
+    const rotationBounds: ReadonlyArray<number> = JSON.parse(main.dataset.rotationbounds!);
+
     window.onload = renderAnimations; // prevent weird timing issues with document.body.scrollHeight :)
 
-    function triggerAnimation(extraTag) {
-        index = parseInt(this)
+    function triggerAnimation(this: string, extraTag: string) {
+        let index = parseInt(this)
 
         anime({
             targets: "." + UID[index] + extraTag,
             loop: true,
             left: function () {
-                let pos = anime.random(endLocations[index][0], endLocations[index][1]) + "vw"
+                let pos = anime.random(parseInt(endLocations[index][0]), parseInt(endLocations[index][1])) + "vw"
                 return (
                     [pos, pos]
                 );
@@ -86,7 +105,7 @@ for (let i of itemsToGenerate) {
     }
 
     function renderAnimations() {
-        for (i in UID) {
+        for (let i in UID) {
             triggerAnimation.bind(i, "")();
             setTimeout(triggerAnimation.bind(i, "dupe"), duration - duration / numItems * 2);
         }
