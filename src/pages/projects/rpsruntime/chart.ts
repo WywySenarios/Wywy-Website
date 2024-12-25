@@ -35,15 +35,13 @@ export const GET: APIRoute = async ({ url }) => {
         }
 
         let content = [];
-        let temp;
+        type tempType = {[key:string]:any};
+        let temp: tempType;
         let master = JSON.parse(readFileSync(".\\data\\RPSRuntime\\master.json", "utf-8"));
         for (const key in master) {
-            type temp = {[key:string]:any};
             temp = {};
-            // @ts-ignore
             temp["name"] = master[key]["specs"]["device model"];
             for (const i of trialIDs) {
-                // @ts-ignore
                 temp[i] = master[key][i];
             }
 

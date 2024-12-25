@@ -34,7 +34,7 @@ export default defineConfig({
   }),
 
   integrations: [tailwind(), react()],
-  server: ({command}) => (
+  server: () => (
     { port: 5322, host: results["Wi-Fi"][0] }
   )
 });
