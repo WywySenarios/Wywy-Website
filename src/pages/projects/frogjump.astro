@@ -2,25 +2,680 @@
 export const prerender = true;
 import Layout from "@/layouts/Layout.astro";
 // import Card from "@/components/Card.astro";
+import Dice from "@/components/projects/frogjump/dice.astro";
 ---
 
 <Layout css_color_palette="dark_mode">
-	<main>
-		<!-- Instructions -->
-         <h1>Instructions</h1>
-         <p>You are a frog in a pond of 7 lily pads (numbered 0 to 6), and your goal is to escape the pond by getting to lily pad number 6. However, there is a snake at lily pad 0, patiently waiting for you to come to lily pad number 0. If you do land on lily pad 0, the snake opens its jaws and swallows you whole. You can pay 10 dollars and decide whether you start on the first or second lily pad, and you get 40 or 20 dollars respectively for successfully escaping the pond.</p>
-         <p>In order to move the frog, you need to play a minigame that corresponds to the lily pad you are currently on. The minigames are:</p>
+   <main>
+      <!-- Instructions -->
+      <h1>Instructions</h1>
+      <p>
+         You are a frog in a pond of 7 lily pads (numbered 0 to 6), and your
+         goal is to escape the pond by getting to lily pad number 6. However,
+         there is a snake at lily pad 0, patiently waiting for you to come to
+         lily pad number 0. If you do land on lily pad 0, the snake opens its
+         jaws and swallows you whole. You can pay 10 dollars and decide whether
+         you start on the first or second lily pad, and you get 40 or 20 dollars
+         respectively for successfully escaping the pond.
+      </p>
+      <p>
+         In order to move the frog, you need to play a minigame that corresponds
+         to the lily pad you are currently on. The minigames are:
+      </p>
 
-         <ul>
-            <li>FATE. Shuffle the letters of FATE. If the A appears before the E, you move backwards. Otherwise, move forwards.</li>
-            <li>You are dealt 4 cards. If you have exactly two cards of the same suit, move forwards. If none of the cards are the same suit, move backwards. Otherwise, reshuffle the deck and pick out 4 more cards.</li>
-            <li>PROBABILITY. Shuffle the letters of PROBABILITY. If two B’s touch or two I’s touch, move forwards. Otherwise, move backwards.</li>
-            <li>Roll two dice. If one die is a multiple of the other, move backwards. Otherwise, move forwards.</li>
-            <li>Spin a spinner, with five tiles on RED and two tiles on BLUE (all tiles have equal size). If you land on a RED tile, move forward. If you land on a BLUE tile, move backwards.</li>
-         </ul>
-	</main>
+      <ul>
+         <li>
+            FATE. Shuffle the letters of FATE. If the A appears before the E,
+            you move backwards. Otherwise, move forwards.
+         </li>
+         <li>
+            You are dealt 4 cards. If you have exactly two cards of the same
+            suit, move forwards. If none of the cards are the same suit, move
+            backwards. Otherwise, reshuffle the deck and pick out 4 more cards.
+         </li>
+         <li>
+            PROBABILITY. Shuffle the letters of PROBABILITY. If two B’s touch or
+            two I’s touch, move forwards. Otherwise, move backwards.
+         </li>
+         <li>
+            Roll two dice. If one die is a multiple of the other, move
+            backwards. Otherwise, move forwards.
+         </li>
+         <li>
+            Spin a spinner, with five tiles on RED and two tiles on BLUE (all
+            tiles have equal size). If you land on a RED tile, move forward. If
+            you land on a BLUE tile, move backwards.
+         </li>
+      </ul>
+
+      <div class="gameButtons">
+         <button id="Bet1">Bet on Lily Pad 1</button>
+         <button id="Bet2">Bet on Lily Pad 2</button>
+         <button id="Play">Play</button>
+         <button id="Next">Next</button>
+      </div>
+      <div id="Gamespace" class="gamespace">
+         <div id="game1"></div>
+         <Dice />
+         <div class="Letters" id="Letters">
+            <div class="game1 game1i0">F</div>
+            <div class="game1 game1i1">A</div>
+            <div class="game1 game1i2">T</div>
+            <div class="game1 game1i3">E</div>
+
+            <p class="game3 game3i0">P</p>
+            <p class="game3 game3i1">R</p>
+            <p class="game3 game3i2">O</p>
+            <p class="game3 game3i3">B</p>
+            <p class="game3 game3i4">A</p>
+            <p class="game3 game3i5">B</p>
+            <p class="game3 game3i6">I</p>
+            <p class="game3 game3i7">L</p>
+            <p class="game3 game3i8">I</p>
+            <p class="game3 game3i9">T</p>
+            <p class="game3 game3i10">Y</p>
+         </div>
+      </div>
+
+      <p
+         id="gameStatusElement"
+         style="font-family: monospace; text-align: center;"
+      >
+         PENDING BET.
+      </p>
+   </main>
+
+   <style>
+      .gamespace {
+         display: flex;
+         justify-content: center;
+      }
+
+      .Letters {
+         font-family: monospace;
+         display: flex;
+      }
+
+      .gameButtons {
+         display: flex;
+         column-gap: 1rem;
+         justify-content: center;
+      }
+
+      .gameButtons > button {
+         padding: 10px;
+      }
+
+      .game1,
+      .game3 {
+         display: none;
+      }
+
+      button {
+         border: solid;
+         padding: 10px;
+      }
+   </style>
 </Layout>
 
 <script>
+   import anime from "animejs";
 
+   // hide dice (I'm sorry but I can't modify a component otherwise)
+   //@ts-ignore
+   document.querySelectorAll(".game").forEach((value: Element) => {
+      (value as HTMLElement).style.display = "none";
+   });
+
+   /**
+    * Defines the game status.
+    * This should contain the following information:
+    * * which lily pad the player is currently on.
+    * * the bet the player initially made (lily pad number).
+    * * Whether or not a minigame is currently being played
+    */
+   let gameStatus = {
+      pad: 1,
+      bet: -1,
+      preGame: placeholder,
+      nextGame: placeholder,
+      nextNext: placeholder,
+      nextPressed: true,
+   };
+   const defaultGameStatus = {
+      pad: 1,
+      bet: -1,
+      preGame: placeholder,
+      nextGame: placeholder,
+      nextNext: placeholder,
+      nextPressed: true,
+   };
+   /**
+    * Pregame is a collection of functions called to make each game's elements visible.
+    */
+   let preGame = {
+      0: placeholder,
+      1: () => {
+         document.querySelectorAll(".game1").forEach((value: Element) => {
+            // redundant position reset
+            (value as HTMLElement).style.transform = "translate(0)";
+            (value as HTMLElement).dataset.translateX = "0";
+            (value as HTMLElement).dataset.translateY = "0";
+
+            // make letters visible
+            (value as HTMLElement).style.display = "initial";
+         });
+      },
+      2: () => {
+         // WARNING：PLACEHOLDER:
+         document.querySelectorAll(".game3").forEach((value: Element) => {
+            // redundant position reset
+            (value as HTMLElement).style.transform = "translate(0)";
+            (value as HTMLElement).dataset.translateX = "0";
+            (value as HTMLElement).dataset.translateY = "0";
+
+            // make letters visible
+            (value as HTMLElement).style.display = "initial";
+         });
+      },
+      3: () => {
+         // make letters visible
+         document.querySelectorAll(".game3").forEach((value: Element) => {
+            // redundant position reset
+            (value as HTMLElement).style.transform = "translate(0)";
+            (value as HTMLElement).dataset.translateX = "0";
+            (value as HTMLElement).dataset.translateY = "0";
+
+            // make letters visible
+            (value as HTMLElement).style.display = "initial";
+         });
+      },
+      4: () => {},
+      5: () => {},
+      6: placeholder,
+   };
+   /**
+    * This contains all the game functions, which process game logic.
+    */
+   let gameFunctions = {
+      0: placeholder,
+      1: firstLilyPad,
+      2: secondLilyPad,
+      3: thirdLilyPad,
+      4: fourthLilyPad,
+      5: fifthLilyPad,
+      6: placeholder,
+   };
+   /**
+    * This contains the functions that hide game elements after the game is over.
+    */
+   let nextFunctions = {
+      0: () => {
+         // reset letter positions and hide letters
+         document.querySelectorAll(".game1").forEach((value: Element) => {
+            // reset translations
+            (value as HTMLElement).style.transform = "translate(0)";
+            (value as HTMLElement).dataset.translateX = "0";
+            (value as HTMLElement).dataset.translateY = "0";
+
+            (value as HTMLElement).style.display = "none"; // hide
+         });
+      },
+      1: () => {
+         // reset letter positions and hide letters
+         document.querySelectorAll(".game1").forEach((value: Element) => {
+            // reset translations
+            (value as HTMLElement).style.transform = "translate(0)";
+            (value as HTMLElement).dataset.translateX = "0";
+            (value as HTMLElement).dataset.translateY = "0";
+
+            (value as HTMLElement).style.display = "none"; // hide
+         });
+      },
+      2: () => {
+         // reset card positions and hide them
+
+         // WARNING: PLACEHOLDER CODE:
+         document.querySelectorAll(".game3").forEach((value: Element) => {
+            // reset translations
+            (value as HTMLElement).style.transform = "translate(0)";
+            (value as HTMLElement).dataset.translateX = "0";
+            (value as HTMLElement).dataset.translateY = "0";
+
+            (value as HTMLElement).style.display = "none"; // hide
+         });
+      },
+      3: () => {
+         // reset letter positions and hide letters
+         document.querySelectorAll(".game3").forEach((value: Element) => {
+            // reset translations
+            (value as HTMLElement).style.transform = "translate(0)";
+            (value as HTMLElement).dataset.translateX = "0";
+            (value as HTMLElement).dataset.translateY = "0";
+
+            (value as HTMLElement).style.display = "none"; // hide
+         });
+      },
+      4: () => {},
+      5: () => {},
+      6: placeholder,
+   };
+   /**
+    * Win messages based on your current lily pad number.
+    * To elaborate, you have just won the game, and now you are on lily pad #[KEY].
+    */
+   const winMessages = {
+      0: "PENDING BET.",
+      1: "Wow. The game logic really did blow up, huh?",
+      2: "You won! You move to lily pad 2.",
+      3: "You won! You move to lily pad 3.",
+      4: "You won! You move to lily pad 4.",
+      5: "You won! You move to lily pad 5.",
+      6: "You won! You move to lily pad 6. YOU WON THE BET!!!",
+   };
+   const lossMessages = {
+      0: "You lost! You move to lily pad 0. The snake LEAPS at you, swallowing you whole before you could even close your eyes.",
+      1: "You lost! You move to lily pad 1",
+      2: "You lost! You move to lily pad 2.",
+      3: "You lost! You move to lily pad 3.",
+      4: "You lost! You move to lily pad 4.",
+      5: "You lost! You move to lily pad 5.",
+   };
+   let gameStatusElement = document.getElementById("gameStatusElement");
+   /**
+    * Unshuffled deck constant.
+    */
+   const deck = [];
+
+   // buttons and event listeners
+   let playButton = document.getElementById("Play");
+   playButton?.addEventListener("click", playNextGame);
+
+   function onBetButtonClick(padNumber: number) {
+      // ensure valid input
+      if (padNumber != 1 && padNumber != 2) return;
+
+      if (
+         gameStatus.nextPressed === false &&
+         gameStatus.nextNext != placeholder
+      ) {
+         gameStatus.nextNext(); // clear up stuff from the last game
+      }
+
+      gameStatus = {
+         pad: padNumber,
+         bet: padNumber,
+         preGame: preGame[padNumber],
+         nextGame: gameFunctions[padNumber],
+         nextNext: nextFunctions[padNumber],
+         nextPressed: true,
+      };
+
+      if (gameStatusElement != null) {
+         gameStatusElement.innerHTML =
+            "You bet on lily pad #" + padNumber + ".";
+      }
+
+      gameStatus.preGame();
+   }
+
+   let betButtons = [
+      document.getElementById("Bet1"),
+      document.getElementById("Bet2"),
+   ];
+   betButtons[0]?.addEventListener("click", onBetButtonClick.bind(null, 1));
+   betButtons[1]?.addEventListener("click", onBetButtonClick.bind(null, 2));
+
+   let nextButton = document.getElementById("Next");
+   nextButton?.addEventListener("click", next);
+   // END: buttons and event listeners
+
+   function playNextGame() {
+      switch (gameStatus.pad) {
+         case 1:
+            break;
+         case 2:
+            break;
+         case 3:
+            break;
+         case 4:
+            break;
+         case 5:
+            break;
+         default:
+            return;
+      }
+
+      // force the nextGame function to be defined
+      if (gameStatus.nextGame == undefined) return;
+      // if the player didn't press the next button already, do it for them.
+      if (gameStatus.nextPressed === false) {
+         console.log(
+            "Automatically pressing the next button since the user didn't already do so!",
+         );
+         gameStatus.nextNext();
+         gameStatus.preGame();
+      }
+      let win = gameStatus.nextGame();
+
+      // REQUIRE next button be pressed.
+      gameStatus.nextPressed = false;
+      gameStatus.nextNext = nextFunctions[gameStatus.pad];
+
+      console.log("Game status BEFORE: ", gameStatus);
+      console.log("Pad number BEFORE: ", gameStatus.pad);
+      // win/loss logic
+      if (win === true) {
+         // win
+         gameStatus.pad++;
+
+         // show win message
+         if (gameStatusElement != null) {
+            //@ts-ignore I know for a FACT that 6 is fine.
+            gameStatusElement.innerHTML = winMessages[gameStatus.pad];
+         }
+      } else if (win === false) {
+         // loss
+         gameStatus.pad--;
+
+         // COMPLETE loss
+         if (gameStatus.pad == 0) {
+            gameStatus = defaultGameStatus;
+
+            gameStatus.nextPressed = false; // let the onBetButtonClicked function know that they need to reset the game area.
+
+            // send user a message about the loss
+            if (gameStatusElement != null) {
+               //@ts-ignore I know for a FACT that 0 is fine.
+               gameStatusElement.innerHTML = lossMessages[0];
+            }
+
+            // enable the ability to hide the game area stuff relating to the first lily pad
+            gameStatus.nextNext = nextFunctions[1];
+            return;
+         }
+
+         if (gameStatusElement != null) {
+            //@ts-ignore I know for a FACT that 0 is fine.
+            gameStatusElement.innerHTML = lossMessages[gameStatus.pad];
+         }
+         // } else if (win === undefined) {
+         // lost the entire bet
+      } else {
+         // tie
+      }
+
+      console.log("Game status AFTER: ", gameStatus);
+      console.log("Pad number AFTER: ", gameStatus.pad);
+      //@ts-ignore I know for a FACT that 0 and 6 are fine.
+      gameStatus.nextGame = gameFunctions[gameStatus.pad];
+      //@ts-ignore
+      gameStatus.preGame = preGame[gameStatus.pad];
+   }
+
+   function placeholder(): any {
+      console.log("A placeholder function has been called.");
+      if (gameStatusElement != null)
+         gameStatusElement.innerHTML = "PENDING BET. PLEASE CLICK ON BET.";
+   }
+
+   /**
+    * Called when the next button is pressed.
+    */
+   function next() {
+      // force the function to be called to be defined
+      if (gameStatus.nextNext == undefined) return;
+      gameStatus.nextNext();
+
+      gameStatus.nextPresesed = true;
+   }
+
+   // MINIGAME LOGIC
+   /**
+    * Plays the game and animations for a lily pad's game.
+    * Returns the next function of the next lily pad OR returns a placeholder function and immediately executes win/loss code.
+    */
+   function firstLilyPad() {
+      // game logic
+      let gameResult = ["F", "A", "T", "E"];
+      shuffleLetters(gameResult, "game1");
+
+      // if the index of the A is smaller than the E,
+      // that means that the A is before the E,
+      // which means that the player loses.
+      if (
+         gameResult.findIndex((element) => element == "A") <
+         gameResult.findIndex((element) => element == "E")
+      ) {
+         // loss
+         return false;
+      } else {
+         // win
+         return true;
+      }
+   }
+
+   function secondLilyPad() {
+      // game logic
+      let gameResult = ["P", "R", "O", "B", "A", "B", "I", "L", "I", "T", "Y"];
+      shuffleLetters(gameResult, "game3");
+
+      // if two letters are one index away from each other,
+      // they must be touching.
+      // The player loses if two letters are touching.
+      let Bs = [gameResult.indexOf("B")];
+      Bs.push(gameResult.indexOf("B", Bs[0] + 1)); // this will NEVER error given that there are two B's in PROBABILITY
+      let Is = [gameResult.indexOf("I")];
+      Is.push(gameResult.indexOf("I", Is[0] + 1));
+
+      if (Math.abs(Bs[0] - Bs[1]) == 1 || Math.abs(Is[0] - Is[1])) {
+         // loss
+         return false;
+      } else {
+         // win
+         return true;
+      }
+   }
+
+   function thirdLilyPad() {
+      // game logic
+      let gameResult = ["P", "R", "O", "B", "A", "B", "I", "L", "I", "T", "Y"];
+      shuffleLetters(gameResult, "game3");
+
+      // if two letters are one index away from each other,
+      // they must be touching.
+      // The player loses if two letters are touching.
+      let Bs = [gameResult.indexOf("B")];
+      Bs.push(gameResult.indexOf("B", Bs[0] + 1)); // this will NEVER error given that there are two B's in PROBABILITY
+      let Is = [gameResult.indexOf("I")];
+      Is.push(gameResult.indexOf("I", Is[0] + 1));
+
+      if (Math.abs(Bs[0] - Bs[1]) == 1 || Math.abs(Is[0] - Is[1])) {
+         // loss
+         return false;
+      } else {
+         // win
+         return true;
+      }
+   }
+
+   function fourthLilyPad() {}
+
+   function fifthLilyPad() {}
+   // shuffleLetters(["P", "R", "O", "B", "A", "B", "I", "L", "I", "T", "Y"], "game3");
+   // END: MINIGAME LOGIC
+
+   /**
+    * Shuffles letters, displays their animations, and returns the final result. NOTE: the array should have already been changed because it was passed in by reference?
+    * @param letters: Array<String>; all the letters of the word you want to shuffle.
+    * @param targets: String; base class name of all the targets for animation
+    * Coded with logic pulled from https://dev.to/codebubb/how-to-shuffle-an-array-in-javascript-2ikj
+    */
+   function shuffleLetters(letters: Array<String>, targets: String) {
+      const singleShuffleLength = 250;
+
+      // redundant reset
+
+      let tl = anime.timeline({});
+
+      for (let i = letters.length - 1; i >= 0; i--) {
+         let j = Math.floor(Math.random() * (i + 1));
+
+         // Swap values at i and j, the randomly generated location.
+         if (i == j) {
+            // console.log("Skipping...");
+            continue;
+         }
+
+         // console.log("Swap ", letters[i], " with ", letters[j]);
+         let temp = letters[i];
+         letters[i] = letters[j];
+         letters[j] = temp;
+
+         if (targets === null || targets == "") {
+            continue;
+         } // check for no syntax error
+
+         // animate this swap
+         let iElementTemp = document.querySelector("." + targets + "i" + i);
+         let jElementTemp = document.querySelector("." + targets + "i" + j);
+         if (iElementTemp == null || jElementTemp == null) continue;
+         let iElement: HTMLElement = iElementTemp as HTMLElement;
+         let jElement: HTMLElement = jElementTemp as HTMLElement;
+
+         let initialPositions: Array<[number, number]> = [
+            [
+               iElement.getBoundingClientRect().left,
+               jElement.getBoundingClientRect().left,
+            ],
+            [
+               iElement.getBoundingClientRect().top,
+               jElement.getBoundingClientRect().top,
+            ],
+         ];
+         if (iElement.dataset.translateX != null)
+            initialPositions[0][0] += parseInt(iElement.dataset.translateX);
+         if (jElement.dataset.translateX != null)
+            initialPositions[0][1] += parseInt(jElement.dataset.translateX);
+         if (iElement.dataset.translateY != null)
+            initialPositions[1][0] += parseInt(iElement.dataset.translateY);
+         if (jElement.dataset.translateY != null)
+            initialPositions[1][1] += parseInt(jElement.dataset.translateY);
+
+         // console.log("Initial Positions: ", initialPositions);
+         tl.add({
+            targets: "." + targets + "i" + i, // VS code tells me that the variable reference will work as intended
+            translateY: function (
+               element: any,
+               index: number,
+               targetsLength: number,
+            ) {
+               // j's initial y coordinate - i's initial y coordinate
+               // Delta (change) = final - initial
+               // remember to also include the element.translateY to modify rather than completely override the value
+               let output = initialPositions[1][1] - initialPositions[1][0];
+               if (element.dataset.translateY != undefined)
+                  output += parseInt(element.dataset.translateY);
+               // console.log("i translateY: ", output);
+               element.dataset.translateY = output;
+               return output;
+            }, // how many array elements does this guy move backwards or forwards?
+            translateX: function (
+               element: any,
+               index: number,
+               targetsLength: number,
+            ) {
+               let output = initialPositions[0][1] - initialPositions[0][0];
+               if (element.dataset.translateX != undefined)
+                  output += parseInt(element.dataset.translateX);
+               // console.log("i translateX: ", output);
+               element.dataset.translateX = output;
+               return output;
+            }, // how many array elements does this guy move backwards or forwards?
+            // direction: "reverse",
+            duration: singleShuffleLength,
+         });
+
+         tl.add(
+            {
+               targets: "." + targets + "i" + j,
+               translateY: function (
+                  element: any,
+                  index: number,
+                  targetsLength: number,
+               ) {
+                  let output = initialPositions[1][0] - initialPositions[1][1];
+                  if (element.dataset.translateY != undefined)
+                     output += parseInt(element.dataset.translateY);
+                  // console.log("j translateY: ", output);
+                  element.dataset.translateY = output;
+                  return output;
+               },
+               translateX: function (
+                  element: any,
+                  index: number,
+                  targetsLength: number,
+               ) {
+                  let output = initialPositions[0][0] - initialPositions[0][1];
+                  if (element.dataset.translateX != undefined)
+                     output += parseInt(element.dataset.translateX);
+                  // console.log("j translateX: ", output);
+                  element.dataset.translateX = output;
+                  return output;
+               },
+               // direction: "reverse",
+               duration: singleShuffleLength,
+            },
+            "-=" + singleShuffleLength,
+         ); // offset of zero---the cards start swapping at the same time
+         // console.log("Initial positions: ", initialPositions);
+
+         // make sure the class names are right
+         iElement.classList.remove(targets + "i" + i);
+         // iElement.classList.remove(targets + "i" + j);
+         iElement.classList.add(targets + "i" + j);
+         // jElement.classList.remove(targets + "i" + i);
+         jElement.classList.remove(targets + "i" + j);
+         jElement.classList.add(targets + "i" + i);
+
+         // console.log(document.querySelector("." + targets + "i" + i));
+         // console.log(document.querySelector("." + targets + "i" + j));
+      }
+
+      console.log("Done shuffling letters: ", letters);
+      return letters;
+   }
+
+   // DICE ROLL LOGIC:
+   let elDiceOne = document.getElementById("dice1");
+   let elDiceTwo = document.getElementById("dice2");
+
+   /**
+    * Rolls the dice while playing an animation for them. I did not write this code or the animation code.
+    * This was made thanks to Lena Stanley on codepen.io: https://codepen.io/lenasta92579651/pen/yLeVmdW.
+    */
+   function rollDice() {
+      var diceOne = Math.floor(Math.random() * 6 + 1);
+      var diceTwo = Math.floor(Math.random() * 6 + 1);
+
+      // console.log(diceOne + " " + diceTwo);
+
+      for (var i = 1; i <= 6; i++) {
+         elDiceOne.classList.remove("show-" + i);
+         if (diceOne === i) {
+            elDiceOne.classList.add("show-" + i);
+         }
+      }
+
+      for (var k = 1; k <= 6; k++) {
+         elDiceTwo.classList.remove("show-" + k);
+         if (diceTwo === k) {
+            elDiceTwo.classList.add("show-" + k);
+         }
+      }
+
+      return [diceOne, diceTwo];
+      // setTimeout(rollDice(), 1000);
+   }
+   // END: DICE ROLL LOGIC
 </script>
