@@ -87,3 +87,6 @@ dist/
 
 # ignore temporary installation files
 TEMPORARY_CLONE_astro.config.mjs
+
+# ignore startup scripts (for personal use only)
+startup.*

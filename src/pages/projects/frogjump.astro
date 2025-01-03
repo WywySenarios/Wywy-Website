@@ -982,7 +982,6 @@ import Dice from "@/components/projects/frogjump/dice.astro";
       }
 
       // if all the cards are in different suits,
-      return true;
       if (
          numberOfSuits["Clubs"] == 1 &&
          numberOfSuits["Diamond"] == 1 &&
@@ -1021,7 +1020,6 @@ import Dice from "@/components/projects/frogjump/dice.astro";
       Bs.push(gameResult.indexOf("B", Bs[0] + 1)); // this will NEVER error given that there are two B's in PROBABILITY
       let Is = [gameResult.indexOf("I")];
       Is.push(gameResult.indexOf("I", Is[0] + 1));
-      return true;
       if (Math.abs(Bs[0] - Bs[1]) == 1 || Math.abs(Is[0] - Is[1]) == 1) {
          // loss
          return false;
@@ -1042,7 +1040,6 @@ import Dice from "@/components/projects/frogjump/dice.astro";
       //    gameResult[1] % gameResult[0],
       // );
 
-      return true;
       // if one die is a multiple of the other,
       // AKA if the first die is a multiple of the second die OR the second die is a multiple of the first die,
       if (
@@ -1089,7 +1086,7 @@ import Dice from "@/components/projects/frogjump/dice.astro";
          case 4:
             return true;
          default:
-            return true;
+            return false;
       }
    }
    // END: MINIGAME LOGIC
