@@ -76,14 +76,14 @@ export const prerender = true;
     <!-- <div id="roll" class="roll-button"><button>Roll dice!</button></div> -->
 </div>
 
-<style>
+<style is:global>
     .game {
         /* position: relative; */
         width: auto;
         height: 100%;
         /* display: flex; */
         display: none;
-        /* justify-items: space-between; */
+        justify-items: space-between;
     }
 
     .container {
@@ -165,23 +165,23 @@ export const prerender = true;
     }
 
     .show-6 {
-        transform: rotateX(-900deg) rotateZ(1080deg);
-    }
-
-    .show-3 {
         transform: rotateY(-450deg) rotateZ(-1440deg);
     }
 
-    .show-4 {
+    .show-3 {
         transform: rotateY(810deg) rotateZ(720deg);
     }
 
-    .show-5 {
+    .show-4 {
         transform: rotateX(-810deg) rotateZ(-1080deg);
     }
 
-    .show-2 {
+    .show-5 {
         transform: rotateX(450deg) rotateZ(-720deg);
+    }
+
+    .show-2 {
+        transform: rotateX(-900deg) rotateZ(1080deg);
     }
 
     .two-1,
