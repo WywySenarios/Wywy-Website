@@ -4,6 +4,7 @@ Welcome to WYWY, my CLI assistant. Wywy is really nice ❤️, so he decided to 
 
 # imports
 import cmd # Say hi to Wywy!
+import sys
 from subprocess import Popen
 import subprocess
 import json
@@ -37,6 +38,7 @@ class Wywy(cmd.Cmd):
     
     def do_refreshrun(self, arg):
         self.do_refresh()
+        self.do_runServer()
     
     def do_install(self, arg):
         print("WARNNIG: REINSTALLING THE SERVER MAY OVERRIDE CODE, ASSETS, AND MARKDOWN FILES. PLEASE BACKUP YOUR FOLDER BEFORE RUNNING THIS COMMAND.")
@@ -55,7 +57,33 @@ refresh -> refreshes data based on the argument provided. If no argument is prov
 refreshrun -> refreshes EVERYTHING then runs the server, taking in the tunnel name as an argument.
 install -> attempts to install every dependancy. WARNNIG: MAY OVERRIDE CODE, ASSETS, AND MARKDOWN FILES. PLEASE BACKUP YOUR FOLDER BEFORE RUNNING THIS COMMAND.
 """)
+    
+    # NOTE: please contain not only the aliases but also the default recognized syntax as well
+    aliases = {
+        "refreshSheets": do_refreshSheets,
+        "refresh": do_refresh,
+        "run": do_runServer,
+        "runServer": do_runServer,
+        "refreshrun": do_refreshrun,
+        "install": do_install,
+        "help": do_help,
+    }
+    
+    # made with code thanks to the first response of https://stackoverflow.com/questions/12911327/aliases-for-commands-with-python-cmd-module
+    def default(self, line):
+        cmd, arg, line = self.parseline(line)
+        if cmd in self.aliases:
+            self.aliases[cmd](self, arg)
+        else:
+            print("UH OH! - Unknown Syntax: %s" % line)
 
 
 if __name__ == "__main__":
-    Wywy().cmdloop()
+    wywy = Wywy()
+    
+    # run all passed in arguments as commands. TODO make this better and be able to pass in arguments
+    for i in sys.argv:
+        if i in wywy.aliases:
+            wywy.onecmd(i)
+    
+    wywy.cmdloop()
