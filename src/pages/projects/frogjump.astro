@@ -743,6 +743,11 @@ import Dice from "@/components/projects/frogjump/dice.astro";
       // ensure valid input
       if (padNumber != 1 && padNumber != 2) return;
 
+      // make sure ther is no bet active
+      if (gameStatus.pad != 0 && gameStatus.pad != 6) {
+         return;
+      }
+
       if (
          gameStatus.nextPressed === false &&
          gameStatus.nextNext != placeholder
