@@ -151,9 +151,9 @@ address, .footerColumn {
         width: 45vw;
     }
 
-    .top-bar img {
+    /* .top-bar img {
         width:20vw;
-    }
+    } */
     .top-bar input[type="button"] {
         width:30vw;
         font-size: xx-large;
