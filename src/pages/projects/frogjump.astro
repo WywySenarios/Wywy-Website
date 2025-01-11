@@ -1322,9 +1322,7 @@ import Dice from "@/components/projects/frogjump/dice.astro";
          tl.add({
             targets: iElement,
             translateY: function (
-               element: any,
-               index: number,
-               targetsLength: number,
+               element: any
             ) {
                // j's initial y coordinate - i's initial y coordinate
                // Delta (change) = final - initial
@@ -1337,9 +1335,7 @@ import Dice from "@/components/projects/frogjump/dice.astro";
                return output;
             }, // how many array elements does this guy move backwards or forwards?
             translateX: function (
-               element: any,
-               index: number,
-               targetsLength: number,
+               element: any
             ) {
                let output = initialPositions[0][1] - initialPositions[0][0];
                if (element.dataset.translateX != undefined)
