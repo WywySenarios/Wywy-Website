@@ -90,3 +90,6 @@ TEMPORARY_CLONE_astro.config.mjs
 
 # ignore startup scripts (for personal use only)
 startup.*
+
+# Obsidian Workspace
+.obsidian/workspace
