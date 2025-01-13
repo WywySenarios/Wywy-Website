@@ -30,7 +30,7 @@ import Dice from "@/components/projects/frogjump/dice.astro";
          </li>
          <li>
             You are dealt 4 cards. If you have exactly two cards of the same
-            suit, move forwards. If none of the cards are the same suit, move
+            suit and the other two cards are in different suits, move forwards. If none of the cards are the same suit, move
             backwards. Otherwise, reshuffle the deck and pick out 4 more cards.
          </li>
          <li>
@@ -43,8 +43,8 @@ import Dice from "@/components/projects/frogjump/dice.astro";
          </li>
          <li>
             Spin a spinner, with five tiles on RED and two tiles on BLUE (all
-            tiles have equal size). If you land on a RED tile, move forward. If
-            you land on a BLUE tile, move backwards.
+            tiles have equal size). If you land on a BLUE tile, move forward. If
+            you land on a RED tile, move backwards.
          </li>
       </ul>
 
@@ -1084,7 +1084,7 @@ import Dice from "@/components/projects/frogjump/dice.astro";
 
       // shuffle deck
       for (let i = deck.length - 1; i >= 0; i--) {
-         let j = Math.ceil(Math.random() * (52 - i));
+         let j = Math.floor(Math.random() * (i + 1));
 
          let temp = deck[i];
          deck[i] = deck[j];
@@ -1159,17 +1159,17 @@ import Dice from "@/components/projects/frogjump/dice.astro";
 
       // if two letters are one index away from each other,
       // they must be touching.
-      // The player loses if two letters are touching.
+      // The player wins if two letters are touching.
       let Bs = [gameResult.indexOf("B")];
       Bs.push(gameResult.indexOf("B", Bs[0] + 1)); // this will NEVER error given that there are two B's in PROBABILITY
       let Is = [gameResult.indexOf("I")];
       Is.push(gameResult.indexOf("I", Is[0] + 1));
       if (Math.abs(Bs[0] - Bs[1]) == 1 || Math.abs(Is[0] - Is[1]) == 1) {
-         // loss
-         return false;
-      } else {
          // win
          return true;
+      } else {
+         // loss
+         return false;
       }
    }
 
@@ -1199,9 +1199,6 @@ import Dice from "@/components/projects/frogjump/dice.astro";
 
    function fifthLilyPad() {
       let rollNumber = Math.floor(Math.random() * 7 + 1);
-      if (rollNumber == 7) {
-         rollNumber = 1;
-      } // avoid this edge case. IDK what's up with JS nowadays.
 
       // start playing animation before returning the result
       anime({
