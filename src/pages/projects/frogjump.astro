@@ -50,7 +50,8 @@ import Dice from "@/components/projects/frogjump/dice.astro";
 
       <div class="betButtons">
          <button id="Bet1">Bet on Lily Pad 1</button>
-         <button id="Bet2">Bet on Lily Pad 2</button>
+         <!-- <button id="Bet2">Bet on Lily Pad 2</button> -->
+         <button id="Bet3">Bet on Lily Pad 3</button>
       </div>
       <div class="gameButtons">
          <button id="Play">Play</button>
@@ -856,7 +857,16 @@ import Dice from "@/components/projects/frogjump/dice.astro";
 
    function onBetButtonClick(padNumber: number) {
       // ensure valid input
-      if (padNumber != 1 && padNumber != 2) return;
+      switch(padNumber) {
+         case 1:
+         case 2:
+         case 3:
+         case 4:
+         case 5:
+            break;
+         default:
+            return
+      }
 
       // make sure ther is no bet active
       if (gameStatus.pad != 0 && gameStatus.pad != 6) {
@@ -902,9 +912,11 @@ import Dice from "@/components/projects/frogjump/dice.astro";
    let betButtons = [
       document.getElementById("Bet1"),
       document.getElementById("Bet2"),
+      document.getElementById("Bet3"),
    ];
    betButtons[0]?.addEventListener("click", onBetButtonClick.bind(null, 1));
    betButtons[1]?.addEventListener("click", onBetButtonClick.bind(null, 2));
+   betButtons[2]?.addEventListener("click", onBetButtonClick.bind(null, 3));
 
    let nextButton = document.getElementById("Next");
    nextButton?.addEventListener("click", next);
