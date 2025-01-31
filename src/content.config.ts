@@ -80,6 +80,14 @@ const schedules = defineCollection({
             sunday: z.string(),
         }))
     })
-})
+});
 
-export const collections = { awards, projects, directives, blog, cards, privacyPolicies, schedules };
+const wishlist = defineCollection({
+    loader: glob({pattern: "**/*.md", base: "./src/data/wishlist"}),
+    schema: z.object({
+        "title": z.string(),
+        "dateLastUpdated": z.coerce.date(),
+    })
+});
+
+export const collections = { awards, projects, directives, blog, cards, privacyPolicies, schedules, wishlist };

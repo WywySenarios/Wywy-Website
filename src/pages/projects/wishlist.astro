@@ -1,0 +1,35 @@
+---
+export const prerender = true;
+import { getCollection, render } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/LinklessCard.astro";
+
+const projects = await getCollection("wishlist");
+---
+
+<Layout css_color_palette="dark_mode">
+	<main>
+		<!-- <ul role="list" class="link-card-grid"> -->
+		{
+			projects.map(async (project) => {
+				const { Content } = await render(project);
+				return (<Card title={project.data.title} body={"Last updated: " + project.data.dateLastUpdated.toString()}><Content/></Card>)
+			})
+		}
+		<!-- </ul> -->
+	</main>
+</Layout>
+
+<style is:global>
+	/* I'm hard-coding this. Sorry! */
+	h1, h2, h3, h4, h5, h6 {
+		margin-top: 0.75rem;
+	}
+	p {
+		font-size: 1rem;
+	}
+</style>
+
+<script>
+
+</script>

@@ -26,6 +26,9 @@ Change the filepaths of "config\filepaths.cfg" to reflect the respective locatio
 
 Look at "Building & Running the Project" to see how to launch it.
 
+# Projects
+The name of the .md file determines the link where the Card from ./projects links to (AKA that's the URL to the page of the project).
+
 # Why I used google sheets
 Google Sheets is particularily annoying when it comes to processing data---it's super clunky to use complex formulas on a couple arrays of numbers inside the google sheet, and it eventually gets SUPER DUPER LAGGY when you're trying to process thousands of data points.
 However, Google Sheets is super good at one thing---making it easy to input data. Yes, I made the server run around my lifestyle. I love it :P
