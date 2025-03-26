@@ -29,9 +29,25 @@ Look at "Building & Running the Project" to see how to launch it.
 # Projects
 The name of the .md file determines the link where the Card from ./projects links to (AKA that's the URL to the page of the project).
 
-# Why I used google sheets
-Google Sheets is particularily annoying when it comes to processing data---it's super clunky to use complex formulas on a couple arrays of numbers inside the google sheet, and it eventually gets SUPER DUPER LAGGY when you're trying to process thousands of data points.
-However, Google Sheets is super good at one thing---making it easy to input data. Yes, I made the server run around my lifestyle. I love it :P
+# Google Sheets Interactions
+## Basic Setup Template
+See this sheet for a basic template:
+https://docs.google.com/spreadsheets/d/14c2IYDWpd3uxK_PdfJplrstjo9-n5j7QKFZLZsLIb3I/edit?gid=440337105#gid=440337105
+
+## Row 1: Datatypes
+Here are all the valid datatypes currently:
+* Score
+* Subscore; scores that will contribute to a the value of a score elsewhere on the sheet.
+* Raw
+
+## Ignoring Columns
+You can prevent data extraction from a column by having its title (row 3) be in full caps, or be empty.
+
+## Technical Notes (You can skip these if you want)
+* Cell A1 should always be "DATATYPE". The python script will fail to extract data if it is not.
+* Cell A2 should always be "Reference". The python script will fail to extract data if it is not.
+* Cell A3 should contain the name for the independant variable. The python script will ignore this cell.
+* The last couple of lines that contain operations performed on entire columns should have a name like "SUM" on column A. Otherwise, the script will recognize these rows as regular datapoints.
 
 # Resumes
 Resumes are automatically detected in the "public/resumes" folder. The filetype should be PDF. The folder path is NOT modifiable because static files should definitely be inside the static files folder :P 

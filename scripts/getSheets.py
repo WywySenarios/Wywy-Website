@@ -1,3 +1,5 @@
+# OLD SCRIPT, @deprecated
+
 import os.path
 import json
 
