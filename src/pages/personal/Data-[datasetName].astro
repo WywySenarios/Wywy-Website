@@ -1,0 +1,51 @@
+---
+export const prerender = false;
+import { getEntry } from "astro:content";
+
+import "@/styles/global.css";
+const { datasetName } = Astro.params;
+
+if (typeof datasetName !== "string") {
+    throw new Error("datasetName must be a string");
+}
+
+const entry = await getEntry("datasets", decodeURI(datasetName));
+var fullInfo: any;
+
+// if (!data) return Astro.redirect("/404");
+if (!entry) {
+    console.log("hey", decodeURI(datasetName));
+    // return Astro.redirect("/404");
+} else {
+    fullInfo = entry.data;
+}
+
+import Layout from "@/layouts/Layout.astro";
+
+import { RadialCharts } from "@/components/personal/RadialCharts.tsx";
+import { RadialChart } from "@/components/ui/RadialChart.tsx";
+---
+
+<Layout
+    title="Eric's Data"
+    css_color_palette="sunset"
+    useAstroDefaultCSS={false}
+>
+    <main>
+        <RadialCharts x="2025-03-13" info={fullInfo} client:load/>
+        <!-- {
+            entry?.data.buckets?.map((bucket: any) => {
+                return (
+                <RadialCharts fullInfo={fullInfo} client:load/>
+            );
+            })
+        } -->
+        <!-- <RadialChart client:load/> -->
+    </main>
+</Layout>
+
+<!-- <RadialChart /> -->
+
+<!-- <script define:vars={{ fullInfo }}>
+    console.log(fullInfo);
+</script> -->

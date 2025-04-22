@@ -6,6 +6,8 @@ import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
 import { networkInterfaces } from 'os';
 
+import tailwindcss from '@tailwindcss/vite';
+
 const nets = networkInterfaces();
 const results = Object.create(null); // Or just '{}', an empty object
 
@@ -33,8 +35,13 @@ export default defineConfig({
     mode: 'standalone',
   }),
 
-  integrations: [tailwind(), react()],
   server: () => (
     { port: 5322, host: results["Wi-Fi"][0] }
-  )
+  ),
+
+  vite: {
+    plugins: [tailwindcss()]
+  },
+
+  integrations: [react()]
 });

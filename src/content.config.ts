@@ -1,9 +1,9 @@
 import { z, defineCollection } from 'astro:content';
-import {glob} from 'astro/loaders';
+import { glob } from 'astro/loaders';
 
 
 const awards = defineCollection({
-    loader: glob({ pattern: "**/*.md", base: "./src/data/awards"} ),
+    loader: glob({ pattern: "**/*.md", base: "./src/data/awards" }),
     schema: z.object({
         "title": z.string(),
         "description": z.string(),
@@ -13,7 +13,7 @@ const awards = defineCollection({
 });
 
 const projects = defineCollection({
-    loader: glob({ pattern: "**/*.md", base: "./src/data/projects"} ),
+    loader: glob({ pattern: "**/*.md", base: "./src/data/projects" }),
     schema: z.object({
         "title": z.string(),
         "description": z.string(),
@@ -23,7 +23,7 @@ const projects = defineCollection({
 });
 
 const directives = defineCollection({
-    loader: glob({ pattern: "**/*.md", base: "./src/data/directives"} ),
+    loader: glob({ pattern: "**/*.md", base: "./src/data/directives" }),
     schema: z.object({
         "title": z.string(),
         "description": z.string(),
@@ -33,7 +33,7 @@ const directives = defineCollection({
 });
 
 const blog = defineCollection({
-    loader: glob({ pattern: "**/*.md", base: "./src/data/blog"} ),
+    loader: glob({ pattern: "**/*.md", base: "./src/data/blog" }),
     schema: z.object({
         "url": z.string(),
         "title": z.string(),
@@ -83,11 +83,32 @@ const schedules = defineCollection({
 });
 
 const wishlist = defineCollection({
-    loader: glob({pattern: "**/*.md", base: "./src/data/wishlist"}),
+    loader: glob({ pattern: "**/*.md", base: "./src/data/wishlist" }),
     schema: z.object({
         "title": z.string(),
         "dateLastUpdated": z.coerce.date(),
     })
 });
 
-export const collections = { awards, projects, directives, blog, cards, privacyPolicies, schedules, wishlist };
+const datasets = defineCollection({
+    loader: glob({ pattern: "**/*.json", base: "./src/data/datasets" }),
+    schema: z.object({
+        "description": z.string(),
+        "startDate": z.coerce.date(),
+        "endDate": z.coerce.date(),
+        "dateLastUpdated": z.coerce.date(),
+        "suppress": z.optional(z.array(z.string())),
+        "data": z.record(z.any()), // @TODO make type safety through good schema
+        "totals": z.optional(z.any()), // @TODO make type safety through good schema
+        "constraints": z.optional(z.object({}).extend({}).catchall(z.object({
+            min: z.number(),
+            max: z.number(),
+        }).extend({}).catchall(z.object({
+            min: z.number(),
+            max: z.number(),
+            weight: z.number(),
+        })))),
+    })
+});
+
+export const collections = { awards, projects, directives, blog, cards, privacyPolicies, schedules, wishlist, datasets };

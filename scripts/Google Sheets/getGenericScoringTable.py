@@ -3,6 +3,8 @@
 import os.path
 import json
 import sys
+from datetime import datetime
+from datetime import date
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -13,22 +15,14 @@ from googleapiclient.errors import HttpError
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
-# Open and read the config filepath file
+# Open and read the config file
 with open('config.json', 'r') as file:
     config = json.load(file)
-
-# The ID and range of the spreadsheet.
-SPREADSHEET_ID = config["sheets"]["content"]["id"]
-
-if len(sys.argv) > 1:
-  DATA_SHEET_NAME = sys.argv[1]
-else:
-  DATA_SHEET_NAME = ""
 
 """
 Converts a number to a letter in the format that Google Sheets uses. i.e. 1 -> A, 2 -> B, 27 -> AA, etc.
 """
-def columnIndexToLetter(index):
+def columnIndexToLetter(index: int) -> str:
   index = index + 1
   letter = ""
   while index > 0:
@@ -36,75 +30,32 @@ def columnIndexToLetter(index):
     letter = chr(65 + remainder) + letter
   return letter
 
+"""Gets a cell from the given sheet.
 """
-Returns values of the given range, and notes, too, if you wanted them :)
+def getCell(sheet, row: int, col: int) -> dict:
+  if row < 0:
+    raise ValueError("row must be greater than or equal to 0")
+  if col < 0:
+    raise ValueError("col must be greater than or equal to 0")
+  
+  return sheet["data"][0]["rowData"][row]["values"][col]
+
+"""Gets a value from the given sheet and cell. Uses getCell() in the background.
+  @param sheet: The sheet to get the value from.
+  @param row: The row to get the value from.
+  @param col: The column to get the value from.
+  @param valueType: The type of value to get. Can be "formattedValue", or "effectiveValue".
 """
-def getRange(rangeName, notes):
-  creds = None
-  # The file token.json stores the user's access and refresh tokens, and is
-  # created automatically when the authorization flow completes for the first
-  # time.
-  if os.path.exists(config["sheets"]["token"]):
-    creds = Credentials.from_authorized_user_file(config["sheets"]["token"], SCOPES)
-  # If there are no (valid) credentials available, let the user log in.
-  if not creds or not creds.valid:
-    if creds and creds.expired and creds.refresh_token:
-      creds.refresh(Request())
-    else:
-      flow = InstalledAppFlow.from_client_secrets_file(
-          config["sheets"]["credentials"], SCOPES
-      )
-      creds = flow.run_local_server(port=0)
-    # Save the credentials for the next run
-    with open(config["sheets"]["token"], "w") as token:
-      token.write(creds.to_json())
+def getValue(sheet, row: int, col: int, valueType: str = "formattedValue") -> str:
+  if valueType != "formattedValue" and valueType != "effectiveValue":
+    raise ValueError("valueType must be either 'formattedValue' or 'effectiveValue'")
+  return getCell(sheet, row, col)[valueType]
 
-  try:
-    service = build("sheets", "v4", credentials=creds)
-
-    # Call the Sheets API
-    data = None
-    if (notes):
-      # get ALL THE INFO ABOUT THE CELLS :)))))
-      sheet = service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID, ranges=[rangeName], includeGridData=True).execute()
-      
-      data = []
-      for sheet in sheet.get("sheets", []):
-        for row_data in sheet["data"][0].get('rowData', []):
-          row = []
-          for cell in row_data.get('values', []):
-            note = cell.get('note', '') # fetch cell note
-            value = cell.get('formattedValue', '')
-            # value = cell.get('effectiveValue', {}).get('stringValue', '')
-            row.append({"note": note, "value": value})
-          data.append(row)
-    else:
-      sheet = service.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=rangeName).execute()
-      data = sheet.get("values", [])
-    
-    return data
-  except HttpError as err:
-    return None # error encountered :(
-
-
-"""
-"personalSheet": {
-  "id": "1reqTRELv3O9aNCOr1_wG2pbsL14POf8uvKY2uPpwh-U",
-  "ranges": {
-    "Qualitative": {
-      "dataSheetName": "Daily Data",
-      "range": "B3:J",
-      "notes": ["B3:B", "E3:J"] 
-    },
-  "Quantitative": {
-      "dataSheetName": "Daily Data",
-      "range": "M3:U",
-      "notes": []
-    }
-  }
-}
-"""
-def main():
+def getGenericScoringTable(SHEET: dict, CATEGORY: str) -> None:
+  # quick variables for cnvenience
+  ID = SHEET["sheetId"]
+  SHEET_NAME = SHEET["sheetName"]
+  
   service = None
   creds = None
   output = {
@@ -138,34 +89,44 @@ def main():
     sys.exit(1)  # Explicitly exit with a non-zero code
   
   # grab ALL the data from the entire document (sorry about efficiency!)
-  document = service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID, includeGridData=True).execute()
+  document = service.spreadsheets().get(spreadsheetId=ID, includeGridData=True).execute()
 
   # look for the sheet that you need and assert that it is there
-  matching_sheets = [s for s in document.get("sheets", []) if s["properties"]["title"] == DATA_SHEET_NAME]
+  matching_sheets = [s for s in document.get("sheets", []) if s["properties"]["title"] == SHEET_NAME]
   if len(matching_sheets) == 0:
-    print(f"Error: Sheet '{DATA_SHEET_NAME}' not found", file=sys.stderr)
+    print(f"Error: Sheet '{SHEET_NAME}' not found", file=sys.stderr)
     sys.exit(1)
   
   # look at the first match
   sheet = matching_sheets[0]
   sheet_id = sheet["properties"]["sheetId"]
-  print(f"Sheet '{DATA_SHEET_NAME}' found with ID {sheet_id}")
+  print(f"Sheet '{SHEET_NAME}' found with ID {sheet_id}")
   
+  # Start duplicating merged cell values so that all the merged cells point to the same cell by reference.
+  # print("Duplicating merged cells...")
+  for merge in sheet["merges"]:
+    # I should be good for the start and end indexes to not have any operations on them. https://developers.google.com/workspace/sheets/api/reference/rest/v4/spreadsheets/other#GridRange
+    for row in range(merge["startRowIndex"], merge["endRowIndex"]):
+      for col in range(merge["startColumnIndex"], merge["endColumnIndex"]):
+        # duplicate cells!
+        sheet["data"][0]["rowData"][row]["values"][col] = getCell(sheet, merge["startRowIndex"], merge["startColumnIndex"])
   
   # time to get data from the sheet!
   # map each subscore to the original scores
-  subscoreRef = {}
+  # subscoreRef = {}
   
-  # loop through row 1, ignoring cell A1
-  for col_index, cell in enumerate(sheet["data"][0].get("rowData", [])[0].get("values", [])):
-    value = cell.get("formattedValue", "")
-    # ignore notes
-    if value.lower() == "subscore":
-      # look at second and third row, which are just below it:
-      # TODO deal with merged cells later
-      subscoreRef.update({sheet["data"][0].get("rowData", [])[2].get("values", [])[col_index].get("formattedValue", ""): sheet["data"][0].get("rowData", [])[1].get("values", [])[col_index].get("formattedValue", "")})
+  # print("Looking at row 1...")
+  # # loop through row 1, ignoring cell A1
+  # for col_index, cell in enumerate(sheet["data"][0].get("rowData", [])[0].get("values", [])):
+  #   value = cell.get("formattedValue", "")
+    
+  #   # ignore notes. Find all columns that have "sub" at the start of them (case insensitive).
+  #   if re.match("sub.*", value.lower()):
+  #     # look at second and third row, which are just below it:
+  #     subscoreRef.update({sheet["data"][0].get("rowData", [])[2].get("values", [])[col_index].get("formattedValue", ""): sheet["data"][0].get("rowData", [])[1].get("values", [])[col_index].get("formattedValue", "")})
 
   dataColumns = {}
+  # print("Looking at row 3...")
   # Loop through row 3, looking for non-empty, not capitalized cells. Ignore the first column (indepdenant variable moment).
   for col_index, cell in enumerate(sheet["data"][0].get("rowData", [])[2].get("values", [])):
     # TODO please don't do this, but I really don't know if it's possible not to do this
@@ -174,51 +135,136 @@ def main():
     
     value = cell.get("formattedValue", "")
     # ignore notes
-    
     # not capitalized, non-empty cells.
     if not value.isupper() and value != "":
-      # store this as a recognized column and record its column index (this is a number).
-      dataColumns[col_index] = value
+      # if this is a sub-data, record apprioriately (it's sub data if the first three letters of the string are "sub", case insensitive)
+      if getValue(sheet, 0, col_index)[0:3].lower() == "sub":
+        reference = getValue(sheet, 1, col_index)
+        # avoid empty key errors
+        if not reference in dataColumns:
+          dataColumns[reference] = {}
+        
+        # recognize this column as a subscore of something else
+        """
+        Here is an example:
+        {
+          "Work Performance": {
+            "col": 2,
+            "Work Ethic": 0,
+            "Time Efficiency": 3
+          },
+          "General": {
+            "col": 4,
+            "Hours Slept": 1,
+            Work Performance": 2
+          }
+          "Standalone": {
+            "col": 5
+          }
+        }
+        """
+        # remember that the sheet is responsible for calculating the scores, and this script only needs to communicate the agreed-upon weighting of the scores.
+        dataColumns[reference][value] = col_index
+        
+      # store this as a recognized column and record its column index.
+      dataColumns[value] = {"col": col_index}
   
   # look at every row's data
   for i in range(3, len(sheet["data"][0].get("rowData", []))):
+    # print("Looking at row", i + 1, "...")
     row = sheet["data"][0].get("rowData", [])[i].get("values", [])
     independantValue = row[0].get("formattedValue", "")
     # break out if we're at the end of the data
     if independantValue.isupper():
+      # print("Nope! This is the end of the data.")
       break
+    # skip if the independant value is not there (which should signify that the row is not valid OR signifies that we shouldn't look at it)
+    if independantValue == "":
+      # print("Nope! Row", i + 1, "is not a valid row (independant value must exist and NOT be capitalized).")
+      continue
     
     # look at all recognized columns
     output["data"][independantValue] = {}
     for key in dataColumns.keys():
       # TODO add empty keyword thingy (e.g. "NULL") variable
-      output["data"][independantValue][dataColumns[key]] = {"value": row[key].get("formattedValue", ""), "note": row[key].get("note", "")}
+      # look at the value
+      nextScore = {"value": row[dataColumns[key]["col"]].get("formattedValue", ""), "note": row[dataColumns[key]["col"]].get("note", "")}
+      
+      # look at subscores:
+      for subscoreKey in dataColumns[key].keys():
+        if subscoreKey != "col":
+          # ignore subscore notes
+          nextScore[subscoreKey] = row[dataColumns[key][subscoreKey]].get("formattedValue", "")
+      
+      output["data"][independantValue][key] = nextScore
   
   # look at the totals or bottom of the sheet
   for i in range(len(sheet["data"][0].get("rowData", [])) - 1, 0, -1):
+    # print("Looking at totals... (row " + str(i + 1) + ")")
     row = sheet["data"][0].get("rowData", [])[i].get("values", [])
     independantValue = row[0].get("formattedValue", "")
     # break out if we're at the end of totals
     if not independantValue.isupper():
+      # print("Nope! Row", i + 1, "is not a totals row.")
       break
     
     # look at all recognized columns
     output["totals"][independantValue] = {}
     for key in dataColumns.keys():
       # TODO add empty keyword thingy (e.g. "NULL") variable
-      output["totals"][independantValue][dataColumns[key]] = row[key].get("formattedValue", "")
+      # look at the value
+      nextScore = {"value": row[dataColumns[key]["col"]].get("formattedValue", ""), "note": row[dataColumns[key]["col"]].get("note", "")}
+      
+      # look at subscores
+      for subscoreKey in dataColumns[key].keys():
+        if subscoreKey != "col":
+          # ignore subscore notes
+          nextScore[subscoreKey] = row[dataColumns[key][subscoreKey]].get("formattedValue", "")
+      
+      output["totals"][independantValue][key] = nextScore
   
-  print(subscoreRef)
-  print(dataColumns)
-  
+  # ?? unimplemented?? @TODO
+  # @TODO separate ranges of the first column and the rest of the sheet to make runtime hopefully lower/faster
   # look at the head column to see if the data should be tracked or not
   # ignore the first column, as it is the independent variable
   
-  a = open("data\\daily.json", "w")
-  a.write(json.dumps(output))
-  a.close()
+  # copy down the constraints, description (optional), start date, end date, and supressed columns all according to the config
+  output["description"] = config["sheets"]["content"][CATEGORY].get("description", "")
+  output["suppress"] = config["sheets"]["content"][CATEGORY].get("suppress", [])
   
-
+  try:
+    # print("Column Relationships: ", dataColumns)
+    output["constraints"] = config["sheets"]["content"][CATEGORY]["constraints"]
+    # remember to convert to ISO format
+    output["startDate"] = datetime.strptime(SHEET["startDate"], "%Y-%m-%d").date().isoformat()
+    output["endDate"] = datetime.strptime(SHEET["endDate"], "%Y-%m-%d").date().isoformat()
+  except KeyError as e:
+    raise ValueError(f"Invalid config file (requires constraints, start date, end date):\n{e}")
+  
+  # store the approximate current time that this output is written
+  currentTime = datetime.now()
+  output["dateLastUpdated"] = date(currentTime.year, currentTime.month, currentTime.day).isoformat()
+  
+  # avoid FileNotFoundError errors due to subdirectories not existing:
+  if not os.path.exists(config["sheets"]["outputPath"] + "\\" + CATEGORY):
+    os.makedirs(config["sheets"]["outputPath"] + "\\" + CATEGORY)
+  outputWriter = open(config["sheets"]["outputPath"] + "\\" + CATEGORY + "\\" + SHEET_NAME + ".json", "w+")
+  outputWriter.write(json.dumps(output, separators=(',', ':')))
+  outputWriter.close()
+  
+def main():
+  # loop through all the generic scoring tables in the config
+  for CATEGORY in config["sheets"]["content"].keys():
+    if config["sheets"]["content"][CATEGORY]["type"] != "generic":
+      continue
+    
+    for SHEET in config["sheets"]["content"][CATEGORY]["sheets"]:
+      try:
+        getGenericScoringTable(SHEET, CATEGORY)
+      except ValueError as e:
+        print(f"WARNING: Skipping table due to invalid config:\n{e}")
+      except HttpError as e:
+        print("We're having issues with the Google Sheets API (HttpError). Please try again later.", file=sys.stderr)
 
 if __name__ == "__main__":
   main()
