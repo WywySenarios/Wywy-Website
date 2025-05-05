@@ -52,7 +52,7 @@ def investigateAppName(appPath: str) -> str:
         return name
     else:
         # prompt user for input.
-        name = input(f"What is the name of the app found at {appPath}? This will be used for future reference. You can change the name of the app in the config file at any time.")
+        name = input(f"What is the name of the app found at {appPath}? This will be used for future reference. You can change the name of the app in the config file at any time.: ")
         
         # remember the input for future reference.
         config["dataHarvesting"]["appNames"][appPath] = name
@@ -111,19 +111,19 @@ def getAppStats(startDate: Optional[int]=None, endDate: Optional[int]=None) -> d
     startDate = startDate if startDate else dateToUnixTimestamp(datetime.date.today()) # 12:00AM
     endDate = endDate if endDate else dateToUnixTimestamp(datetime.datetime.now()) + 61 # 1 minute and 1 second
     output = {}
-    
-    print(startDate, endDate)
+
     db = sqlite3.connect(APP_DB_PATH)
     cursor = db.cursor()
     
-    # loop through every single entry.
+    # loop through every single entry within the specified time frame
     data = cursor.execute("SELECT date, file, seconds FROM statsApp where date >= ? and date <= ?", (startDate, endDate)).fetchall()
     for row in data:
         appName = investigateAppName(row[1])
+        date = datetime.datetime.fromtimestamp(row[0]).date().isoformat()
         
         # store the entry in the output, keeping in mind the ISO date and the app names.
-        if "" in output:
-            day = output[datetime.datetime.fromtimestamp(row[0]).date().isoformat()]
+        if date in output:
+            day = output[date]
             
             # check if this application is already in the list of applications for this day.
             if appName in day:
@@ -131,7 +131,7 @@ def getAppStats(startDate: Optional[int]=None, endDate: Optional[int]=None) -> d
             else:
                 day[appName] = row[2]
         else:
-            output[datetime.datetime.fromtimestamp(row[0]).date().isoformat()] = {appName: row[2]}
+            output[date] = {appName: row[2]}
     
     print(output)
     return output
