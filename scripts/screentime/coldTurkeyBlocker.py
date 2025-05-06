@@ -73,20 +73,36 @@ def getWebsiteStats(startDate: Optional[int]=None, endDate: Optional[int]=None) 
     Returns:
         dict: {
             "2024-12-01": {
-                "value1": 1234,
-                "value2": 5678,
+                "site1": 1234,
+                "site2": 5678,
                 etc.
             },
             etc.,
         }
     """
-    startDate = startDate if startDate else dateToUnixTimestamp(datetime.datetime(datetime.date.today())) # 12:00AM
+    startDate = startDate if startDate else dateToUnixTimestamp(datetime.date.today()) # 12:00AM
     endDate = endDate if endDate else dateToUnixTimestamp(datetime.datetime.now()) + 61 # 1 minute and 1 second
     output = {}
     
-    print(startDate, endDate)
     db = sqlite3.connect(BROWSER_DB_PATH)
     cursor = db.cursor()
+    
+    # loop through every single entry within the specified time frame
+    data = cursor.execute("SELECT date, domain, seconds FROM stats where date >= ? and date <= ?", (startDate, endDate)).fetchall()
+    for row in data:
+        date = datetime.datetime.fromtimestamp(row[0]).date().isoformat()
+        
+        # store the entry in the output, keeping in mind the ISO date and the app names.
+        if date in output:
+            day = output[date]
+            
+            # check if this application is already in the list of applications for this day.
+            if row[1] in day:
+                day[row[1]] += row[2]
+            else:
+                day[row[1]] = row[2]
+        else:
+            output[date] = {row[1]: row[2]}
     
     return output
 
@@ -101,8 +117,8 @@ def getAppStats(startDate: Optional[int]=None, endDate: Optional[int]=None) -> d
     Returns:
         dict: {
             "2024-12-01": {
-                "value1": 1234 (in seconds),
-                "value2": 5678 (in seconds),
+                "app1": 1234 (in seconds),
+                "app2": 5678 (in seconds),
                 etc.
             },
             etc.,
@@ -133,11 +149,11 @@ def getAppStats(startDate: Optional[int]=None, endDate: Optional[int]=None) -> d
         else:
             output[date] = {appName: row[2]}
     
-    print(output)
     return output
 
 def main():
-    getAppStats()
+    print(getAppStats())
+    print(getWebsiteStats())
 
 if __name__ == "__main__":
   main()
