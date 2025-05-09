@@ -92,4 +92,7 @@ TEMPORARY_CLONE_astro.config.mjs
 startup.*
 
 # Obsidian Workspace
-.obsidian/*
+.obsidian/
+
+# ignore pychache
+__pycache__/
