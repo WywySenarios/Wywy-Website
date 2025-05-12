@@ -5,10 +5,8 @@ import json
 import sys
 from datetime import datetime
 from datetime import date
-
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
+from scripts.Google.creds import getCreds
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
@@ -57,29 +55,16 @@ def getGenericScoringTable(SHEET: dict, CATEGORY: str) -> None:
   SHEET_NAME = SHEET["sheetName"]
   
   service = None
-  creds = None
+  creds = getCreds()
   output = {
     "data": {},
     "totals": {},
     } # a single variable for ALL the data. I'm so sorry XD
   
-  # The file token.json stores the user's access and refresh tokens, and is
-  # created automatically when the authorization flow completes for the first
-  # time.
-  if os.path.exists(config["sheets"]["token"]):
-    creds = Credentials.from_authorized_user_file(config["sheets"]["token"], SCOPES)
-  # If there are no (valid) credentials available, let the user log in.
   if not creds or not creds.valid:
-    if creds and creds.expired and creds.refresh_token:
-      creds.refresh(Request())
-    else:
-      flow = InstalledAppFlow.from_client_secrets_file(
-          config["sheets"]["credentials"], SCOPES
-      )
-      creds = flow.run_local_server(port=0)
-    # Save the credentials for the next run
-    with open(config["sheets"]["token"], "w") as token:
-      token.write(creds.to_json())
+    print("Failed to find valid credentials. Aborting...")
+    sys.exit(1)
+    
   
   # attempt and assert that the Google Sheets service is ready to go
   try:
