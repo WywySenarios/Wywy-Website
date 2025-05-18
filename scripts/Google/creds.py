@@ -12,7 +12,7 @@ from typing import Optional
 # After modify the scopes, delete the token. In ideal scenarios, the token's location should be specified in the config file.
 FEATURESSCOPES = {
     "dataHarvesting": {
-        "main": ['https://www.googleapis.com/auth/drive.file']
+        "main": ['https://www.googleapis.com/auth/spreadsheets']
     }
 }
 
@@ -37,9 +37,9 @@ def getAllScopes() -> list[str]:
     """
     
     scopes = []
-    for feature in config["features"]:
+    for feature, enabled in config["features"].items():
         # if the feature is enabled,
-        if config["features"][feature]:
+        if enabled:
             scopes.extend(FEATURESSCOPES[feature]["main"])
     
     return scopes
@@ -61,22 +61,23 @@ def getScopes(feature: str) -> list[str]:
 
 def getToken(deleteOldToken: bool = False) -> Optional[Credentials]:
     """
-    Fetches a fresh token. Optionally deletes the old token. This function assumes that the credentials and tokens file should be in the location specified in the config file. It also assumes that all the requested features are stored in the config file.
+    Fetches a token. Optionally deletes the old token and fetches a fresh one. This function assumes that the credentials and tokens file should be in the location specified in the config file. It also assumes that all the requested features are stored in the config file.
     
-    @deleteOldToken (bool): If True, deletes the old token before fetching a new one.
+    @deleteOldToken (bool): If True, deletes the old token before fetching a fresh one. Otherwise, it looks for a valid previously used token.
     
     Returns:
         Credentials: Returns a new, valid token if possible, and None if not.
     """
     creds = None
     
-    if deleteOldToken:
-        # delete the old token if it exists
-        if os.path.exists(config["Google"]["token"]):
-            # Delete the old token file
-            os.remove('data/token.json')
-    else:
-        creds = Credentials.from_authorized_user_file(config["Google"]["credentials"], getAllScopes())
+    if os.path.exists(config["Google"]["token"]):
+        if deleteOldToken:
+            os.remove(config["Google"]["token"])
+        else:
+            creds = Credentials.from_authorized_user_file(config["Google"]["token"], getAllScopes())
+
+            if creds and creds.valid:
+                return creds
     
     # Request to refresh the token if it is expired
     # (make sure that the refresh token is available to use)

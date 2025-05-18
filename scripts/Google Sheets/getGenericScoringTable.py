@@ -17,10 +17,10 @@ SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 with open('config.json', 'r') as file:
     config = json.load(file)
 
-"""
-Converts a number to a letter in the format that Google Sheets uses. i.e. 1 -> A, 2 -> B, 27 -> AA, etc.
-"""
 def columnIndexToLetter(index: int) -> str:
+  """
+  Converts a number to a letter in the format that Google Sheets uses. i.e. 1 -> A, 2 -> B, 27 -> AA, etc.
+  """
   index = index + 1
   letter = ""
   while index > 0:
@@ -28,9 +28,10 @@ def columnIndexToLetter(index: int) -> str:
     letter = chr(65 + remainder) + letter
   return letter
 
-"""Gets a cell from the given sheet.
-"""
 def getCell(sheet, row: int, col: int) -> dict:
+  """
+  Gets a cell from the given sheet.
+  """
   if row < 0:
     raise ValueError("row must be greater than or equal to 0")
   if col < 0:
@@ -38,13 +39,14 @@ def getCell(sheet, row: int, col: int) -> dict:
   
   return sheet["data"][0]["rowData"][row]["values"][col]
 
-"""Gets a value from the given sheet and cell. Uses getCell() in the background.
+def getValue(sheet, row: int, col: int, valueType: str = "formattedValue") -> str:
+  """
+  Gets a value from the given sheet and cell. Uses getCell() in the background.
   @param sheet: The sheet to get the value from.
   @param row: The row to get the value from.
   @param col: The column to get the value from.
   @param valueType: The type of value to get. Can be "formattedValue", or "effectiveValue".
-"""
-def getValue(sheet, row: int, col: int, valueType: str = "formattedValue") -> str:
+  """
   if valueType != "formattedValue" and valueType != "effectiveValue":
     raise ValueError("valueType must be either 'formattedValue' or 'effectiveValue'")
   return getCell(sheet, row, col)[valueType]
@@ -59,7 +61,7 @@ def getGenericScoringTable(SHEET: dict, CATEGORY: str) -> None:
   output = {
     "data": {},
     "totals": {},
-    } # a single variable for ALL the data. I'm so sorry XD
+  } # a single variable for ALL the data. I'm so sorry XD
   
   if not creds or not creds.valid:
     print("Failed to find valid credentials. Aborting...")
