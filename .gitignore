@@ -41,6 +41,7 @@ public/favicon.svg
 
 ## ignore config
 config.json
+config/config.yaml
 
 
 

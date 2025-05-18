@@ -34,6 +34,7 @@
         "ua-parser-js": "^2.0.0"
     },
     "devDependencies": {
+        "@rollup/plugin-yaml": "^4.1.2",
         "@tailwindcss/postcss": "^4.1.4",
         "@types/animejs": "^3.1.12",
         "vite": "^6.0.1"
