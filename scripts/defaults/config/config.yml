@@ -13,7 +13,7 @@ features:
   dataHarvesting: true
 
 # Toggle/modify what data is shown on the website.
-webpageData:
+websiteData:
   # the schedule to be shown.
   schedule: "default"
 

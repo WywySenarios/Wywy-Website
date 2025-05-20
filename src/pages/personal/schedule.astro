@@ -3,14 +3,14 @@ export const prerender = true;
 import { getCollection } from 'astro:content';
 import Layout from "@/layouts/Layout.astro";
 import ScheduleTable from "@/components/ScheduleTable.astro";
-import config from "@root/config.json";
+import config from "@root/config/config.yml";
 
 let schedules: {[key: string]: any}[] = [];
 await getCollection('schedules', ({ data }) => {
 	schedules.push(data);
 });
 
-const scheduleToFind: string = config.schedule.current_schedule
+const scheduleToFind: string = config["websiteData"]["schedule"];
 
 let timeslots = [
   {
