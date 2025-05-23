@@ -1,3 +1,4 @@
+@REM @deprecated
 @echo off
 cd ..
 

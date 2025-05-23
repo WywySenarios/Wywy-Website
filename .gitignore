@@ -40,15 +40,11 @@ public/schedules
 public/favicon.svg
 
 ## ignore config
-config.json
+config/config.yml
 
 
 
-
-# ignore pacakages and runtime environment
 ## ignore node packages
-package-lock.json
-package.json
 node_modules
 
 ## ignore python virtual environment & packages

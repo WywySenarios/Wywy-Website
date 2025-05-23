@@ -14,6 +14,8 @@ Install python through their official website: https://www.python.org/
 I wrote a python script to help you install this website, and it's a super useful programming language, too!
 
 ## Install Astro, Astro & Node packages
+? not tested ? -> Run npm install
+
 Run "installServer.bat" to install Astro & most dependancies.
 You can navigate to the root directory's folder, open CMD, and run this command to run the batch file: ".\installServer.bat"
 DO NOT override any files when installing ShadCN.

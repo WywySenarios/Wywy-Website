@@ -1,0 +1,55 @@
+---
+# The title of the website to appear by default. For example, the title of "google.com" is "Google".
+websiteTitle: "My Website Title"
+
+# The file path of the icon file relative to the public folder.
+websiteIcon: "/favicon.svg"
+
+# The location of python that you wish to run
+python: ".venv\\Scripts\\python.exe"
+
+# List of active features
+features:
+  dataHarvesting: true
+
+# Toggle/modify what data is shown on the website.
+websiteData:
+  # the schedule to be shown.
+  schedule: "default"
+
+
+  blog:
+    homepage:
+      # Pinned blog posts on the homepage.
+      pinned: []
+  
+
+  Senarios:
+    cards:
+      # @TODO explain
+      pinned: []
+
+
+
+# Data harvesting settings
+dataHarvesting:
+  appNames: {}
+
+
+
+Google:
+  # Path to the Google credentials file (should be JSON?)
+  credentials-path: ~
+
+  # Path to the Google token file (should be JSON?)
+  token-path: ~
+
+
+# 
+# wywy-commands:
+#   run:
+#     type: "shell"
+#     comments: ~
+#     commands: []
+
+

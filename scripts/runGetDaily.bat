@@ -1,3 +1,4 @@
+@REM @deprecated
 @echo off
 set configJSON = ConvertFrom-Json Get-Content config.json
 set pyPath = %configJSON.python%
