@@ -32,7 +32,8 @@ websiteData:
 
 
 # Data harvesting settings
-dataHarvesting: ~
+dataHarvesting:
+  appNames: {}
 
 
 

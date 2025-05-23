@@ -7,15 +7,15 @@ Requires file path -> Application name mapping inside the config file.
 from typing import Optional
 import sqlite3
 import datetime
-import json
+import yaml
 
 # Constants
 BROWSER_DB_PATH = r"C:\ProgramData\Cold Turkey\data-browser.db"
 APP_DB_PATH = r"C:\ProgramData\Cold Turkey\data-helper.db"
 
 # config
-with open('config.json', 'r') as file:
-    config = json.load(file)
+with open('config/config.yml', 'r') as file:
+    config = yaml.load(file)
     
 def dateToUnixTimestamp(date_obj: datetime.datetime | datetime.date) -> int:
     """
@@ -56,8 +56,8 @@ def investigateAppName(appPath: str) -> str:
         
         # remember the input for future reference.
         config["dataHarvesting"]["appNames"][appPath] = name
-        with open('config.json', 'w') as file:
-            json.dump(config, file, indent=4)
+        with open('config/config.yml', 'w') as file:
+            yaml.dump(config, file, indent=4)
         
         return name
 

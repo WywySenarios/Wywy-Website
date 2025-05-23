@@ -1,3 +1,4 @@
+:: @deprecated
 :: disable echo to save your braincells when reading the CMD XD
 @echo off
 

@@ -7,11 +7,11 @@ import cmd # Say hi to Wywy!
 import sys
 from subprocess import Popen
 import subprocess
-import json
+import yaml
 
 # peak at config
-with open("config.json", "r") as file:
-    config = json.load(file)
+with open("config/config.yml", "r") as file:
+    config = yaml.load(file)
     
 
 class Wywy(cmd.Cmd):

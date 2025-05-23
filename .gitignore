@@ -40,7 +40,6 @@ public/schedules
 public/favicon.svg
 
 ## ignore config
-config.json
 config/config.yml
 
 
