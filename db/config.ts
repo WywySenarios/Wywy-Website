@@ -26,6 +26,7 @@ const time = defineTable({
     "Non-useful Hobby": column.json(),
     "Social": column.json(),
     "Errands & Maintenance": column.json(),
+    "Commute": column.json(),
     "Exercise": column.json(),
     "Bedtime": column.date(),
     "Awakening": column.date(),
