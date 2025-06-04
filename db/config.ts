@@ -1,5 +1,4 @@
-import type { OutputColumnsConfig } from '@astrojs/db/types';
-import type { MainConfigSchema } from '@root/src/config';
+import type { MainConfigSchema } from '@root/src/env';
 import { defineDb, defineTable, column } from 'astro:db';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
