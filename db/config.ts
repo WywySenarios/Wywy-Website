@@ -1,44 +1,55 @@
+import type { OutputColumnsConfig } from '@astrojs/db/types';
+import type { MainConfigSchema } from '@root/src/config';
 import { defineDb, defineTable, column } from 'astro:db';
+import * as fs from 'fs';
+import * as yaml from 'js-yaml';
 
-const main = defineTable({
-  columns: {
-    id: column.number({ primaryKey: true, autoIncrement: true }),
-    "Date": column.date(),
-    "Work Ethic": column.number(),
-    "Time Efficiency": column.number(),
-    "General Performance": column.number(),
-    "Happiness": column.number(),
-    "Awareness": column.number(),
-    "Sleep Quality": column.number(),
-    "Sleep Behaviour": column.number(),
-    "School Courses": column.json(),
-    "Comments": column.json(),
+function loadYamlFile<T>(filePath: string): T {
+  const fileContents = fs.readFileSync(filePath, 'utf-8');
+  return yaml.load(fileContents) as T
+}
+
+const config = loadYamlFile<MainConfigSchema>("./config/config.yml");
+
+// maps strings to the Astro datatypes accepted for Astro DB.
+const astroDatatypes: Record<string, (params?: Record<any, any>) => any> = {
+  "date": column.date,
+  "integer": column.number,
+  "int": column.number,
+  "float": column.number,
+  "number": column.number,
+  "string": column.text,
+  "str": column.text,
+  "text": column.text,
+  "json": column.json,
+  "JSON": column.json,
+  "bool": column.boolean,
+  "boolean": column.boolean,
+}
+
+var tables: Record<string, any> = {};
+
+// construct the schema for every table
+
+// console.log(config)
+for (const [tableName, table] of Object.entries(config.data.databases)) {
+  // construct the schema for one table
+  let currentColumns: Record<string, any> = {};
+
+  // for every column,
+  for (const [columnName, columnSchema] of Object.entries(table.schema)) {
+    // take note of what the column schema is like, inserting the params if specified.
+    //@ts-ignore
+    currentColumns[columnName] = astroDatatypes[columnSchema.datatype](columnSchema?.params);
   }
-});
 
-const time = defineTable({
-  columns: {
-    id: column.number({ primaryKey: true, autoIncrement: true }),
-    "Date": column.date(),
-    "Computer": column.json(),
-    "Phone": column.json(),
-    "School & Career": column.json(),
-    "Non-useful Hobby": column.json(),
-    "Social": column.json(),
-    "Errands & Maintenance": column.json(),
-    "Commute": column.json(),
-    "Exercise": column.json(),
-    "Bedtime": column.date(),
-    "Awakening": column.date(),
-    "Awake Sleep": column.number(),
-    "Light Sleep": column.number(),
-    "Deep Sleep": column.number(),
-    "Comments": column.json(),
-  }
-})
-
+  // define the table using the given column schemas.
+  tables[tableName] = defineTable({
+    columns: currentColumns
+  });
+}
 
 // https://astro.build/db/config
 export default defineDb({
-  tables: { main, time }
+  tables: tables
 });
