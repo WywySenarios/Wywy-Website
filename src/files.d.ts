@@ -5,3 +5,11 @@ declare module "*.yml" {
   const value: any;
   export default value;
 }
+
+
+declare module "config/config.yml" {
+  import type { MainConfigSchema } from "@/env";
+
+  const value: MainConfigSchema;
+  export default value;
+}
