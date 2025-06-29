@@ -1,0 +1,42 @@
+---
+/*
+ * Statically generate a webpage 
+ * 
+ * @TODO redirect if dataHarvesting is disabled
+ */
+import type { DataColumn, JsonColumn, DatabaseInfo } from 'src/env';
+import config from "@root/config/config.yml";
+import Layout from "@/layouts/Layout.astro";
+
+import { TestTest } from '@/components/data/test';
+import { ErrorBoundary } from '@/components/utils/ErrorBoundary'
+import { DataEntryForm } from '@/components/data/dataEntryForm';
+
+export const prerender = true;
+export function getStaticPaths() {
+    return (Object.values(config.data.databases) as DatabaseInfo[]).map((dbinfo: DatabaseInfo) => ({params: {databaseName: dbinfo.databaseName}}));
+} // It's crucial that this page loads as quickly as possible to provide the best experience.
+
+const {databaseName} = Astro.params;
+
+// const fieldsToEnter: Array<DataColumn | JsonColumn> = Object.values(config.data.databases[databaseName].schema);
+
+const pageTitle: string = String(databaseName).charAt(0).toUpperCase() + String(databaseName).slice(1) + " Data Entry";
+
+// console.log(fieldsToEnter)
+---
+
+<Layout title={pageTitle} css_color_palette="light_mode" useAstroDefaultCSS={false}>
+<!-- <Layout title={"lkjhasdf"} css_color_palette="light_mode" useAstroDefaultCSS={false}> -->
+    <!-- {fieldsToEnter.map((column: DataColumn | JsonColumn) => {
+        
+    })} -->
+    <ErrorBoundary client:load>
+        <div slot="fallback">Loading...</div>
+        <DataEntryForm fieldsToEnter={config.data.databases[databaseName].schema} databaseName={databaseName} client:load/>
+    </ErrorBoundary>
+    <TestTest client:only="react">
+        <div slot="fallback">Loading...</div>
+    </TestTest>
+</Layout>
+

@@ -30,30 +30,59 @@ export interface MainConfigSchema {
 export interface DatabaseInfo {
     databaseName: string,
     schema: {
-        [columnName: string]: ColumnSchema
+        [columnName: string]: DataColumn | JsonColumn
     }
 }
 
-export interface ColumnSchema {
+type IntegerColumn = {
+    datatype: "int" | "integer"
+    defaultValue?: number
+    entrytype: string
+}
+type FloatColumn = {
+    datatype: "float" | "number"
+    defaultValue?: number
+    entrytype: string
+}
+type StringColumn = {
+    datatype: "string" | "str" | "text"
+    defaultValue?: string
+    entrytype: string
+}
+type BooleanColumn = {
+    datatype: "bool" | "boolean"
+    defaultValue?: boolean
+    entrytype: string
+}
+type DateColumn = {
+    datatype: "date"
+    defaultValue?: Date
+    entrytype: string
+}
 
-    [columnName: string]: {
-        datatype: "date" | "int" | "integer" | "float" | "number" | "string" | "str" | "text" | "json" | "JSON" | "bool" | "boolean",
-        //@TODO ensure the entry method is valid
-        entrytype: "linearSlider" | "radialSlider" | "textbox" | "radio" | "bigButton" | "entries" | "none",
-        //@TODO ensure these are here when needed
-        whitelist?: Array<string>,
-        constituents?: {
-            [constituentName: string]: ColumnSchema
-        }
-        // Definitely optional:
-        //@TODO add regex restrictions
-        restrictions?: Array<[number, number]>
-        comments?: boolean,
-        prompt?: string,
-        params: {
-            primaryKey?: boolean,
-            autoIncrement?: boolean,
-        }
-    },
+export type DataColumn = {
+    //@TODO ensure the entry method is valid
+    // entrytype: "linearSlider" | "radialSlider" | "textbox" | "radio" | "bigButton" | "none"
+    //@TODO ensure these are here when needed
+    whitelist?: Array<string>
+    // defaultValue?: string
+    // Definitely optional:
+    //@TODO add regex restrictions
+    restrictions?: Array<[number, number]>
+    invalidInputMessage?: string
+    comments?: boolean
+    prompt?: string
+    params: {
+        primaryKey?: boolean
+        autoIncrement?: boolean
+    }
+} & (IntegerColumn | FloatColumn | StringColumn | BooleanColumn | DateColumn)
+
+export interface JsonColumn {
+    datatype: "json" | "JSON"
+    entrytype: "entries" | "none"
+    constituents: {
+        [constitutentName: string]: DataColumn
+    }
 }
 // END - Database Related

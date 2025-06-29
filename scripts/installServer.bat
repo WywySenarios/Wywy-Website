@@ -68,12 +68,6 @@ py scripts/addCommands.py
 echo "Succesfully added commands to package.json."
 pause
 
-:: remove tailwind config imposter
-py scripts/removeTailwindConfig.py
-
-echo "Tailwind config imposter removed."
-pause
-
 :: instate default files to prevent errors and give the user a template to learn from
 py scripts/instateDefaults.py
 
