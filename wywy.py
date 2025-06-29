@@ -11,7 +11,7 @@ import yaml
 
 # peak at config
 with open("config/config.yml", "r") as file:
-    config = yaml.load(file)
+    config = yaml.safe_load(file)
     
 
 class Wywy(cmd.Cmd):
