@@ -34,26 +34,54 @@ export interface DatabaseInfo {
     }
 }
 
+// look at the restrictions for different entry types
+type NoRestrictions = {
+    entrytype: "none",
+}
+
+type TextboxRestrictiions = {
+    entrytype: "textbox",
+}
+
+type SliderRestrictions = {
+    entrytype: "linearSlider",
+    min?: number,
+    max?: number,
+}
+
+type RadioRestrictions = {
+    entrytype: "radio",
+    whitelist: Array<string>,
+}
+
+type BigButtonRestrictions = {
+    entrytype: "bigButton",
+}
+
+// look at different datatypes
 type IntegerColumn = {
     datatype: "int" | "integer"
     defaultValue?: number
-    entrytype: string
-}
+} & (TextboxRestrictiions | SliderRestrictions | RadioRestrictions | NoRestrictions)
+
 type FloatColumn = {
     datatype: "float" | "number"
     defaultValue?: number
-    entrytype: string
-}
+    entrytype: "linearSlider" | "radialSlider" | "textbox" | "radio" | "none"
+} & (SliderRestrictions | TextboxRestrictiions | RadioRestrictions | NoRestrictions)
+
 type StringColumn = {
     datatype: "string" | "str" | "text"
     defaultValue?: string
-    entrytype: string
-}
+    entrytype: "textbox" | "radio" | "none"
+} & (TextboxRestrictiions | RadioRestrictions | NoRestrictions)
+
 type BooleanColumn = {
     datatype: "bool" | "boolean"
     defaultValue?: boolean
-    entrytype: string
-}
+    entrytype: "radio" | "bigButton" | "none"
+} & (RadioRestrictions | BigButtonRestrictions | NoRestrictions)
+
 type DateColumn = {
     datatype: "date"
     defaultValue?: Date
@@ -61,14 +89,9 @@ type DateColumn = {
 }
 
 export type DataColumn = {
-    //@TODO ensure the entry method is valid
-    // entrytype: "linearSlider" | "radialSlider" | "textbox" | "radio" | "bigButton" | "none"
-    //@TODO ensure these are here when needed
-    whitelist?: Array<string>
-    // defaultValue?: string
     // Definitely optional:
     //@TODO add regex restrictions
-    restrictions?: Array<[number, number]>
+    // restrictions?: Array<[number, number]>
     invalidInputMessage?: string
     comments?: boolean
     prompt?: string
