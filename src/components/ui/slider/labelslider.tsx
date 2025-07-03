@@ -18,12 +18,12 @@ type SliderProps = {
 export function Slider({onChange, defaultVal = 0, min, max, className = "", ...props}: SliderProps) {
   const [progress, setProgress] = useState([defaultVal]);
   return (
-    <div className={cn("w-full max-w-sm flex items-center gap-2", className)}>
+    <div className={cn("w-full flex items-center gap-2", className)}>
       <BasicSlider min={min} max={max} value={progress} onValueChange={(val) => {
         setProgress(val)
         onChange(val[0])
         }}  {...props}/>
-      <Input className="w-[10ch] text-center" min={min} max={max} placeholder={0} type="number" value={progress[0]} onChange={(val) => {
+      <Input className="h-full h-min-4 w-[10ch] text-center" min={min} max={max} placeholder={0} type="number" value={progress[0]} onChange={(val) => {
         setProgress([val ?? defaultVal])
         onChange(val ?? defaultVal)
       }}/>

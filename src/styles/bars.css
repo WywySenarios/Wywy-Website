@@ -1,11 +1,5 @@
 /* Universal */
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 html {
     --top-bar-height: 75px;
     font-family: var(--globalfontfamilies);

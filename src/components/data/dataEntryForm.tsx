@@ -19,9 +19,12 @@ import type { DataColumn, JsonColumn } from "@root/src/env"
 import { getFallbackValue, zodDatatypes } from "@/utils/reactConstants"
 import type { ZodTypeAny } from "astro:schema"
 import type { ReactNode } from "react"
+
+// Input elements!
 import { Input } from "@/components/ui/formInput"
 import { Slider } from "@/components/ui/slider/labelslider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radioGroup"
+import { Switch } from "@/components/ui/switch"
 
 // const inputElementsAliases: Record<string, "textbox" | "linearSlider" | "radio"> = {
 //   "textbox": "textbox",
@@ -43,25 +46,36 @@ const inputElements: Record<string, inputElementFunction> = {
     field.field.onChange(val)
   }} placeholder={defaultValue} {...field} />,
   //@ts-ignore
-  "linearSlider": (field, defaultValue, columnName, fields) => <Slider className="w-screen" defaultVal={field.field.value} min={fields[columnName]["min"] ?? 0} max={fields[columnName]["max"] ?? 100} step={1} onChange={field.field.onChange} {...field}
-  />,
+  "linearSlider": (field, defaultValue, columnName, fields) => <div className="w-full flex flex-col items-center gap-4">
+    <FormLabel className="text-md">{columnName}</FormLabel>
+    <FormControl>
+      <Slider defaultVal={field.field.value} min={fields[columnName]["min"] ?? 0} max={fields[columnName]["max"] ?? 100} step={fields[columnName]["step"] ?? 1} onChange={field.field.onChange} {...field} />
+    </FormControl>
+  </div>,
   "radio": (field, defaultValue, columnName, fields) =>
-    <RadioGroup onValueChange={field.field.onChange} defaultValue={field.field.value} className="flex flex-col">
-      {
-        //@ts-ignore
-        fields[columnName].whitelist.map((option: string) => (
-          <FormItem className="flex items-center gap-3" key={columnName + "-" + option + "-radio"}>
-            <FormControl>
-              <RadioGroupItem
-                value={option}
-              />
-            </FormControl>
-            <FormLabel>{option}</FormLabel>
-          </FormItem>
-        ))
-      }
-      <FormMessage />
-    </RadioGroup>,
+    <div className="w-full flex flex-col items-center">
+      <FormLabel className="text-lg font-semibold">{columnName}</FormLabel>
+      <FormControl>
+        <RadioGroup onValueChange={field.field.onChange} defaultValue={field.field.value}>
+          {
+            //@ts-ignore
+            fields[columnName].whitelist.map((option: string) => (
+              // note that if two options have the same key, they will also have the same values. Pretty strange, huh?
+              <FormItem className="flex items-center gap-3 w-full" key={columnName + "-" + option + "-radio"}>
+                <FormControl>
+                  <RadioGroupItem
+                    value={option}
+                  />
+                </FormControl>
+                <FormLabel>{option}</FormLabel>
+              </FormItem>
+            ))
+          }
+          <FormMessage />
+        </RadioGroup>
+      </FormControl>
+    </div >,
+  "switch": (field, defaultValue, columnName, fields) => <Switch />,
 }
 
 export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: Record<string, DataColumn | JsonColumn>, databaseName: string }) {
@@ -137,7 +151,7 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
         {(Object.entries(elementSchema) as [string, inputElementFunction][]).map(([columnName, inputElement]: [string, inputElementFunction]) => {
           if (inputElement === undefined) { return } else {
             return (
@@ -147,12 +161,8 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
                 key={columnName + "-field"}
                 render={(field) => {
                   return (
-                    <FormItem>
-                      <FormLabel>{columnName}</FormLabel>
-                      <FormControl>
-                        {inputElement(field, defaultValues[columnName], columnName, fieldsToEnter)}
-
-                      </FormControl>
+                    <FormItem className="flex flex-col items-center rounded-lg border p-8 shadow-sm">
+                      {inputElement(field, defaultValues[columnName], columnName, fieldsToEnter)}
                     </FormItem>
                   )
                 }}
