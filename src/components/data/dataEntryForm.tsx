@@ -18,13 +18,14 @@ import {
 import type { DataColumn, JsonColumn } from "@root/src/env"
 import { getFallbackValue, zodDatatypes } from "@/utils/reactConstants"
 import type { ZodTypeAny } from "astro:schema"
-import type { ReactNode } from "react"
+import type { JSXElementConstructor, ReactElement } from "react"
 
 // Input elements!
-import { Input } from "@/components/ui/formInput"
+import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider/labelslider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radioGroup"
 import { Switch } from "@/components/ui/switch"
+import type { zodPrimaryDatatypes } from "@root/src/constants"
 
 // const inputElementsAliases: Record<string, "textbox" | "linearSlider" | "radio"> = {
 //   "textbox": "textbox",
@@ -39,20 +40,23 @@ import { Switch } from "@/components/ui/switch"
 // defaultValue: the default value for the field
 // columnName: the name of the column in the database
 // fields: contains all desired information about each column
-type inputElementFunction = (field: any, defaultValue: any, columnName: string, fields: Record<string, DataColumn | JsonColumn>) => ReactNode
+type inputElementFunction = (field: any, defaultValue: any, columnName: string, fields: Record<string, DataColumn | JsonColumn>) => ReactElement<unknown, string | JSXElementConstructor<any>>
 
 const inputElements: Record<string, inputElementFunction> = {
-  "textbox": (field, defaultValue, columnName, fields) => <Input onChange={(val: any) => {
-    field.field.onChange(val)
-  }} placeholder={defaultValue} {...field} />,
-  //@ts-ignore
-  "linearSlider": (field, defaultValue, columnName, fields) => <div className="w-full flex flex-col items-center gap-4">
-    <FormLabel className="text-md">{columnName}</FormLabel>
+  "textbox": (field, defaultValue, columnName, fields) => <FormItem className="rounded-lg border p-3 shadow-sm">
+      <FormControl>
+        <Textarea placeholder={defaultValue} {...field.field}/>
+      </FormControl>
+    </FormItem>,
+  "linearSlider": (field, defaultValue, columnName, fields) => <FormItem className="rounded-lg border p-3 shadow-sm">
+    <div className="w-full flex flex-col items-center gap-4">
+      <FormLabel className="text-lg font-semibold">{columnName}</FormLabel>
+    </div>
     <FormControl>
       <Slider defaultVal={field.field.value} min={fields[columnName]["min"] ?? 0} max={fields[columnName]["max"] ?? 100} step={fields[columnName]["step"] ?? 1} onChange={field.field.onChange} {...field} />
     </FormControl>
-  </div>,
-  "radio": (field, defaultValue, columnName, fields) =>
+  </FormItem>,
+  "radio": (field, defaultValue, columnName, fields) => <FormItem className="rounded-lg border p-3 shadow-sm">
     <div className="w-full flex flex-col items-center">
       <FormLabel className="text-lg font-semibold">{columnName}</FormLabel>
       <FormControl>
@@ -74,8 +78,21 @@ const inputElements: Record<string, inputElementFunction> = {
           <FormMessage />
         </RadioGroup>
       </FormControl>
-    </div >,
-  "switch": (field, defaultValue, columnName, fields) => <Switch />,
+    </div ></FormItem>,
+  "switch": (field, defaultValue, columnName, fields) => <FormItem className="w-full flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+    <div className="w-full space-y-0.5">
+      <FormLabel className="space-y-0.5 text-lg font-semibold"><p>{columnName}</p>
+        {/* <FormDescription className="text-sm text-gray-500">: Toggle {columnName}</FormDescription> */}
+      </FormLabel>
+    </div>
+    <FormControl>
+      <Switch
+        checked={field.field.value}
+        onCheckedChange={field.field.onChange}
+      // className="w-2/12"
+      />
+    </FormControl>
+  </FormItem>,
 }
 
 export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: Record<string, DataColumn | JsonColumn>, databaseName: string }) {
@@ -102,7 +119,7 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
       case "JSON":
         break;
       default:
-        zodSchema[columnName] = zodDatatypes[columnSchema.datatype]
+        zodSchema[columnName] = zodDatatypes[columnSchema.datatype as zodPrimaryDatatypes]
         // look for any restrictions
         //@ts-ignore thanks to the ColumnData type, this is guarenteed to be OK.
         if ("min" in columnSchema) { zodSchema[columnName] = zodSchema[columnName].min(columnSchema.min) }
@@ -153,19 +170,17 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
         {(Object.entries(elementSchema) as [string, inputElementFunction][]).map(([columnName, inputElement]: [string, inputElementFunction]) => {
-          if (inputElement === undefined) { return } else {
+          if (inputElement === undefined) {
+            console.warn(`No input element found for column ${columnName}. This is likely a bug.`)
+            return
+          } else {
             return (
               <FormField
                 control={form.control}
                 name={columnName}
                 key={columnName + "-field"}
-                render={(field) => {
-                  return (
-                    <FormItem className="flex flex-col items-center rounded-lg border p-8 shadow-sm">
-                      {inputElement(field, defaultValues[columnName], columnName, fieldsToEnter)}
-                    </FormItem>
-                  )
-                }}
+                render={(field) => inputElement(field, defaultValues[columnName], columnName, fieldsToEnter)}
+              // className="flex flex-col items-center rounded-lg border p-8 shadow-sm"}
               />
             )
           }

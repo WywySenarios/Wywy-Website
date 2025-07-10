@@ -1,9 +1,29 @@
 "use client";
 import { Slider as BasicSlider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/formInput";
 
 import { cn } from "@root/lib/utils"
 import { useState } from "react";
+
+"use client"
+
+import { Input as BasicInput } from "@/components/ui/input"
+type InputProps = {
+    onChange: (val: number) => void
+    defaultVal?: string
+    [key: string]: any
+}
+
+function Input({onChange, defaultVal, ...props}: InputProps) {
+    const [value, setValue] = useState<string>(defaultVal || "")
+    
+    return (
+        <BasicInput onChange={(e) => {
+            setValue(e.target.value)
+            onChange(parseInt(e.target.value, 0))
+        }} {...props}
+        />
+    )
+}
 
 type SliderProps = {
     onChange: (val: number) => void;
