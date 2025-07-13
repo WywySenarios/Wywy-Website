@@ -21,6 +21,7 @@ import type { ZodTypeAny } from "astro:schema"
 import type { JSXElementConstructor, ReactElement } from "react"
 
 // Input elements!
+import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider/labelslider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radioGroup"
@@ -44,16 +45,17 @@ type inputElementFunction = (field: any, defaultValue: any, columnName: string, 
 
 const inputElements: Record<string, inputElementFunction> = {
   "textbox": (field, defaultValue, columnName, fields) => <FormItem className="rounded-lg border p-3 shadow-sm">
-      <FormControl>
-        <Textarea placeholder={defaultValue} {...field.field}/>
-      </FormControl>
-    </FormItem>,
+    <FormControl>
+      <Textarea placeholder={defaultValue} {...field.field} />
+    </FormControl>
+  </FormItem>,
   "linearSlider": (field, defaultValue, columnName, fields) => <FormItem className="rounded-lg border p-3 shadow-sm">
     <div className="w-full flex flex-col items-center gap-4">
       <FormLabel className="text-lg font-semibold">{columnName}</FormLabel>
     </div>
     <FormControl>
       <Slider defaultVal={field.field.value} min={fields[columnName]["min"] ?? 0} max={fields[columnName]["max"] ?? 100} step={fields[columnName]["step"] ?? 1} onChange={field.field.onChange} {...field} />
+      {/* <Input type="range" min={fields[columnName]["min"] ?? 0} max={fields[columnName]["max"] ?? 100} step={fields[columnName]["step"] ?? 1} className="w-full bg-background appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md" {...field.field} /> */}
     </FormControl>
   </FormItem>,
   "radio": (field, defaultValue, columnName, fields) => <FormItem className="rounded-lg border p-3 shadow-sm">
@@ -92,6 +94,21 @@ const inputElements: Record<string, inputElementFunction> = {
       // className="w-2/12"
       />
     </FormControl>
+  </FormItem>,
+  "time": (field, defaultValue, columnName, fields) => <FormItem className="rounded-lg border p-3 shadow-sm">
+    <div className="w-full flex flex-col items-center gap-4">
+      <FormLabel className="text-lg font-semibold">{columnName}</FormLabel>
+      <FormControl>
+        <Input
+          type="time"
+          className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+          onChange={((val) => {
+            field.field.onChange()
+          })}
+          {...field.field}
+        />
+      </FormControl>
+    </div>
   </FormItem>,
 }
 
