@@ -12,7 +12,12 @@ export function parseAny<T extends "string" | "int" | "integer" | "float" | "num
             return value as any;
         case "int":
         case "integer":
-            return parseInt(value) as any;
+            const result = parseInt(value)
+            if (isNaN(result)) {
+                // console.warn(`parseAny received an invalid integer string: "${value}"`);
+                return undefined as any; // Return undefined if parsing fails
+            }
+            return result as any;
         case "number":
             return parseFloat(value) as any;
         case "boolean":

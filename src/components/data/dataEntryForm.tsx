@@ -136,9 +136,7 @@ const inputElements: Record<string, inputElementFunction> = {
       </Popover>
     </div>
   </FormItem>,
-  "time": (field, defaultValue, columnName, fields) => {
-    console.log(field.field)
-    return(<FormItem className="rounded-lg border p-3 shadow-sm">
+  "time": (field, defaultValue, columnName, fields) => <FormItem className="rounded-lg border p-3 shadow-sm">
     <div className="w-full flex flex-col items-center gap-4">
       <FormLabel className="text-lg font-semibold">{columnName}</FormLabel>
       <FormControl>
@@ -150,7 +148,7 @@ const inputElements: Record<string, inputElementFunction> = {
         />
       </FormControl>
     </div>
-  </FormItem>)},
+  </FormItem>,
 }
 
 export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: Record<string, DataColumn | JsonColumn>, databaseName: string }) {
