@@ -18,10 +18,9 @@ export const astroDatatypes: Record<string, (params?: Record<any, any>) => any> 
 }
 
 // map strings to Zod datatypes
-export type zodPrimaryDatatypes = "int" | "integer" | "float" | "number" | "string" | "str" | "text" | "bool" | "boolean" | "date"
+export type zodPrimaryDatatypes = "int" | "integer" | "float" | "number" | "string" | "str" | "text" | "bool" | "boolean" | "date" | "time"
 
 export const zodDatatypes: Record<zodPrimaryDatatypes, ZodTypeAny> = {
-  "date": z.date(),
   "integer": z.number(),
   "int": z.number(),
   "float": z.number(),
@@ -33,6 +32,10 @@ export const zodDatatypes: Record<zodPrimaryDatatypes, ZodTypeAny> = {
   // "JSON": z.object,
   "bool": z.boolean(),
   "boolean": z.boolean(),
+  "date": z.date(),
+  "time": z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?$/, {
+  message: "Invalid ISO time format",
+}),
 }
 
 export function getFallbackValue(datatype: zodPrimaryDatatypes): number | string | boolean | Date | null | undefined {

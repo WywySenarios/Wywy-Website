@@ -16,9 +16,13 @@ import {
 } from "@/components/ui/form"
 
 import type { DataColumn, JsonColumn } from "@root/src/env"
+import { cn } from "@root/lib/utils"
 import { getFallbackValue, zodDatatypes } from "@/utils/reactConstants"
 import type { ZodTypeAny } from "astro:schema"
 import type { JSXElementConstructor, ReactElement } from "react"
+import { CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
+import { parseTime, parseAny } from "@/utils"
 
 // Input elements!
 import { Input } from "@/components/ui/input"
@@ -27,6 +31,8 @@ import { Slider } from "@/components/ui/slider/labelslider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radioGroup"
 import { Switch } from "@/components/ui/switch"
 import type { zodPrimaryDatatypes } from "@root/src/constants"
+import { Calendar } from "../ui/calendar"
+import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover"
 
 // const inputElementsAliases: Record<string, "textbox" | "linearSlider" | "radio"> = {
 //   "textbox": "textbox",
@@ -64,7 +70,6 @@ const inputElements: Record<string, inputElementFunction> = {
       <FormControl>
         <RadioGroup onValueChange={field.field.onChange} defaultValue={field.field.value}>
           {
-            //@ts-ignore
             fields[columnName].whitelist.map((option: string) => (
               // note that if two options have the same key, they will also have the same values. Pretty strange, huh?
               <FormItem className="flex items-center gap-3 w-full" key={columnName + "-" + option + "-radio"}>
@@ -95,21 +100,57 @@ const inputElements: Record<string, inputElementFunction> = {
       />
     </FormControl>
   </FormItem>,
-  "time": (field, defaultValue, columnName, fields) => <FormItem className="rounded-lg border p-3 shadow-sm">
+  "calendar": (field, defaultValue, columnName, fields) => <FormItem className="rounded-lg border p-3 shadow-sm">
+    <div className="w-full flex flex-col items-center gap-4">
+      <FormLabel className="text-lg font-semibold">{columnName}</FormLabel>
+      <Popover>
+        <PopoverTrigger asChild>
+          <FormControl>
+            <Button
+              variant={"outline"}
+              className={cn(
+                "w-[240px] pl-3 text-left font-normal",
+                !field.field.value && "text-muted-foreground"
+              )}
+            >
+              {field.field.value ? (
+                format(field.field.value, "PPP")
+              ) : (
+                <span>Pick a date</span>
+              )}
+              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+            </Button>
+          </FormControl>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={field.field.value}
+            onSelect={field.field.onChange}
+            disabled={(date) =>
+              date > new Date() || date < new Date("1900-01-01")
+            }
+            captionLayout="dropdown"
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  </FormItem>,
+  "time": (field, defaultValue, columnName, fields) => {
+    console.log(field.field)
+    return(<FormItem className="rounded-lg border p-3 shadow-sm">
     <div className="w-full flex flex-col items-center gap-4">
       <FormLabel className="text-lg font-semibold">{columnName}</FormLabel>
       <FormControl>
         <Input
           type="time"
           className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-          onChange={((val) => {
-            field.field.onChange()
-          })}
-          {...field.field}
+          onChange={(val) => {console.log(parseTime(val.target.value)); field.field.onChange(parseTime(val.target.value))}}
+          placeholder={field.field.value}
         />
       </FormControl>
     </div>
-  </FormItem>,
+  </FormItem>)},
 }
 
 export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: Record<string, DataColumn | JsonColumn>, databaseName: string }) {
@@ -144,7 +185,7 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
         if ("max" in columnSchema) { zodSchema[columnName] = zodSchema[columnName].max(columnSchema.max) }
 
 
-        defaultValues[columnName] = columnSchema.defaultValue ?? getFallbackValue(columnSchema.datatype)
+        defaultValues[columnName] = parseAny(columnSchema.defaultValue, columnSchema.datatype) ?? getFallbackValue(columnSchema.datatype)
         // formElements.push(inputElements[columnSchema])
         // if (inputElementsAliases[columnSchema.entrytype] == "linearSlider") { console.log(defaultValues[columnName]) }
         // elementSchema[columnName] = inputElements[inputElementsAliases[columnSchema.entrytype]]
@@ -181,11 +222,17 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
     console.log(values)
   }
 
+  function onSubmitInvalid(values: z.infer<typeof formSchema>) {
+    // send them over to the database!
+    console.log("SOMETHING BAD HAPPENED.", values)
+  }
+
+
   // console.log(Object.entries(elementSchema) as [string, inputElementFunction][])
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <form onSubmit={form.handleSubmit(onSubmit, onSubmitInvalid)} className="flex flex-col gap-4">
         {(Object.entries(elementSchema) as [string, inputElementFunction][]).map(([columnName, inputElement]: [string, inputElementFunction]) => {
           if (inputElement === undefined) {
             console.warn(`No input element found for column ${columnName}. This is likely a bug.`)

@@ -61,36 +61,46 @@ type SwitchRestrictions = {
     entrytype: "switch",
 }
 
+type DateRestrictions = {
+    entrytype: "calendar",
+    //min?: Date,
+    //max?: Date,
+}
+
+type TimeRestrictions = {
+    entrytype: "time",
+}
+
 // look at different datatypes
 type IntegerColumn = {
     datatype: "int" | "integer"
     defaultValue?: number
-    entrytype: "linearSlider" | "radio" | "none"
 } & (SliderRestrictions | RadioRestrictions | NoRestrictions)
 
 type FloatColumn = {
     datatype: "float" | "number"
     defaultValue?: number
-    entrytype: "linearSlider" | "radialSlider" | "radio" | "none"
 } & (SliderRestrictions | RadioRestrictions | NoRestrictions)
 
 type StringColumn = {
     datatype: "string" | "str" | "text"
     defaultValue?: string
-    entrytype: "textbox" | "radio" | "none"
 } & (TextboxRestrictiions | RadioRestrictions | NoRestrictions)
 
 type BooleanColumn = {
     datatype: "bool" | "boolean"
     defaultValue?: boolean
-    entrytype: "radio" | "switch" | "none"
 } & (RadioRestrictions | BigButtonRestrictions | NoRestrictions)
 
 type DateColumn = {
     datatype: "date"
     defaultValue?: Date
-    entrytype: string
-}
+} & (DateRestrictions | NoRestrictions)
+
+type TimeColumn = {
+    datatype: "time"
+    defaultValue?: Date // @TODO consider switching datatypes?
+} & (TimeRestrictions | NoRestrictions)
 
 export type DataColumn = {
     datatype: zodPrimaryDatatypes
@@ -104,7 +114,7 @@ export type DataColumn = {
         primaryKey?: boolean
         autoIncrement?: boolean
     }
-} & (IntegerColumn | FloatColumn | StringColumn | BooleanColumn | DateColumn)
+} & (IntegerColumn | FloatColumn | StringColumn | BooleanColumn | DateColumn | TimeColumn)
 
 export interface JsonColumn {
     datatype: "json" | "JSON"
