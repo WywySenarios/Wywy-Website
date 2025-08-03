@@ -15,9 +15,13 @@
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <libpq-fe.h>
+#include <readconfig.h>
 
 #define PORT 2523
 #define BUFFER_SIZE 104857600 - 1
+#define POSTGRE_PORT 5432
+#define AUTH_DB_NAME "auth"
 
 const char *get_file_extension(const char *file_name) {
     const char *dot = strrchr(file_name, '.');
@@ -28,7 +32,7 @@ const char *get_file_extension(const char *file_name) {
 }
 
 const char *get_mime_type(const char *file_ext) {
-    if (strcasecmp(file_ext, "html") == 0 || strcasecmp(file_ext, "htm") == 0) {
+    if (strcasecmp(file_ext, "html") == 0 || strcasecmp(file_ext, "htm") == 0) { 
         return "text/html";
     } else if (strcasecmp(file_ext, "txt") == 0) {
         return "text/plain";
@@ -116,7 +120,7 @@ void build_http_response(const char *file_name, const char *file_ext, char *resp
         return;
     }
 
-    // get file sizze for Content-Length
+    // get file size for Content-Length
     struct stat file_stat;
     fstat(file_fd, &file_stat);
     off_t file_size = file_stat.st_size;
