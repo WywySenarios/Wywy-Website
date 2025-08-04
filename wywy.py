@@ -21,7 +21,7 @@ def toUnderscoreNotation(target: str) -> str:
     @param target
     @return Returns underscore notation string. e.g. "hi I am Wywy" -> "hi_I_am_Wywy"
     """
-    stringFrags: List[str] = re.split(r"\.\s", target)
+    stringFrags: List[str] = re.split(r"[\.\s]", target)
     
     output: str = ""
     
@@ -95,13 +95,13 @@ class Wywy(cmd.Cmd):
                     with conn.cursor() as cur:
                         # @TODO create a function to modify constraints rather than create new tables
                         currentCommand: str = "CREATE TABLE " + tableInfo["tableName"] + " ("
-                        
+
                         # since SQL cannot tolerate trailing commas, I will add the primary key last and never give it a comma.
                         # add in all of the columns
                         for columnName in tableInfo["schema"]:
                             # @TODO verify column validity
                             
-                            columnDisplayName = toUnderscoreNotation(tableName)
+                            columnDisplayName = toUnderscoreNotation(columnName)
                             
                             columnInfo = tableInfo["schema"][columnName]
                             
@@ -133,6 +133,7 @@ class Wywy(cmd.Cmd):
                         
                         # try to execute the command
                         cur.execute(currentCommand)
+                        # print(currentCommand)
         except (psycopg2.DatabaseError) as error:
             print("Database error. Proceed with caution.")
             print(error)
