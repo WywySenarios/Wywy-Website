@@ -16,38 +16,59 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <libpq-fe.h>
-#include <readconfig.h>
+#include <asm-generic/socket.h>
 
 #define PORT 2523
 #define BUFFER_SIZE 104857600 - 1
 #define POSTGRE_PORT 5432
 #define AUTH_DB_NAME "auth"
 
-const char *get_file_extension(const char *file_name) {
+const char *get_file_extension(const char *file_name)
+{
     const char *dot = strrchr(file_name, '.');
-    if (!dot || dot == file_name) {
+    if (!dot || dot == file_name)
+    {
         return "";
     }
     return dot + 1;
 }
 
-const char *get_mime_type(const char *file_ext) {
-    if (strcasecmp(file_ext, "html") == 0 || strcasecmp(file_ext, "htm") == 0) { 
+const char *get_mime_type(const char *file_ext)
+{
+    if (strcasecmp(file_ext, "html") == 0 || strcasecmp(file_ext, "htm") == 0)
+    {
         return "text/html";
-    } else if (strcasecmp(file_ext, "txt") == 0) {
+    }
+    else if (strcasecmp(file_ext, "txt") == 0)
+    {
         return "text/plain";
-    } else if (strcasecmp(file_ext, "jpg") == 0 || strcasecmp(file_ext, "jpeg") == 0) {
+    }
+    else if (strcasecmp(file_ext, "jpg") == 0 || strcasecmp(file_ext, "jpeg") == 0)
+    {
         return "image/jpeg";
-    } else if (strcasecmp(file_ext, "png") == 0) {
+    }
+    else if (strcasecmp(file_ext, "png") == 0)
+    {
         return "image/png";
-    } else {
+    }
+    else
+    {
         return "application/octet-stream";
     }
 }
 
-bool case_insensitive_compare(const char *s1, const char *s2) {
-    while (*s1 && *s2) {
-        if (tolower((unsigned char)*s1) != tolower((unsigned char)*s2)) {
+/**
+ * Compares two series of characters without case sensitivity.
+ * @param s1 A pointer to the first series of characters to compare
+ * @param s2 A pointer to the second series of characters to compare
+ * @return True if the two inputs are the same barring case sensitivity, false otherwise.
+ */
+bool case_insensitive_compare(const char *s1, const char *s2)
+{
+    while (*s1 && *s2)
+    {
+        if (tolower((unsigned char)*s1) != tolower((unsigned char)*s2))
+        {
             return false;
         }
         s1++;
@@ -56,39 +77,29 @@ bool case_insensitive_compare(const char *s1, const char *s2) {
     return *s1 == *s2;
 }
 
-char *get_file_case_insensitive(const char *file_name) {
-    DIR *dir = opendir(".");
-    if (dir == NULL) {
-        perror("opendir");
-        return NULL;
-    }
-
-    struct dirent *entry;
-    char *found_file_name = NULL;
-    while ((entry = readdir(dir)) != NULL) {
-        if (case_insensitive_compare(entry->d_name, file_name)) {
-            found_file_name = entry->d_name;
-            break;
-        }
-    }
-
-    closedir(dir);
-    return found_file_name;
-}
-
-char *url_decode(const char *src) {
+/**
+ * Decodes URLs, like "test%20test" -> "test test"
+ * @param src The encoded URL to decode.
+ * @return A pointer to a series of characters representing the decoded URL.
+ */
+char *url_decode(const char *src)
+{
     size_t src_len = strlen(src);
     char *decoded = malloc(src_len + 1);
     size_t decoded_len = 0;
 
     // decode %2x to hex
-    for (size_t i = 0; i < src_len; i++) {
-        if (src[i] == '%' && i + 2 < src_len) {
+    for (size_t i = 0; i < src_len; i++)
+    {
+        if (src[i] == '%' && i + 2 < src_len)
+        {
             int hex_val;
             sscanf(src + i + 1, "%2x", &hex_val);
             decoded[decoded_len++] = hex_val;
             i += 2;
-        } else {
+        }
+        else
+        {
             decoded[decoded_len++] = src[i];
         }
     }
@@ -141,6 +152,58 @@ void build_http_response(const char *file_name, const char *file_ext, char *resp
     close(file_fd);
 }
 
+/**
+ * @todo
+ */
+void *build_response_200(char *response, size_t *response_len)
+{
+}
+
+/**
+ * Builds a 400 HTTP response (Bad Request).
+ * @param response A pointer to a sequence of characters representing the response
+ * @param response_len The length of the response. IDK if this includes the null terminator.
+ */
+void *build_response_400(char *response, size_t *response_len)
+{
+    snprintf(response, BUFFER_SIZE, "HTTP/1.1 400 Bad Request\r\n"
+                                    "Content-Type: text/plain\r\n"
+                                    "\r\n"
+                                    "400 Bad Request");
+    *response_len = strlen(response);
+}
+
+/**
+ * Builds a 403 HTTP response (Forbidden).
+ * @param response A pointer to a sequence of characters representing the response
+ * @param response_len The length of the response. IDK if this includes the null terminator.
+ */
+void *build_response_403(char *response, size_t *response_len)
+{
+    snprintf(response, BUFFER_SIZE, "HTTP/1.1 403 Forbidden\r\n"
+                                    "Content-Type: text/plain\r\n"
+                                    "\r\n"
+                                    "403 Forbidden");
+    *response_len = strlen(response);
+}
+
+/**
+ * Builds a 404 HTTP response (Not Found).
+ * @param response A pointer to a sequence of characters representing the response
+ * @param response_len The length of the response. IDK if this includes the null terminator.
+ */
+void *build_response_404(char *response, size_t *response_len)
+{
+    snprintf(response, BUFFER_SIZE, "HTTP/1.1 404 Not Found\r\n"
+                                    "Content-Type: text/plain\r\n"
+                                    "\r\n"
+                                    "404 Not Found");
+    *response_len = strlen(response);
+}
+
+/**
+ * Understand the client's request and decide what action to take based on the request.
+ */
 void *handle_client(void *arg)
 {
     int client_fd = *((int *)arg);
@@ -150,33 +213,59 @@ void *handle_client(void *arg)
     ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
     if (bytes_received > 0)
     {
-        // check if request is GET
         regex_t regex;
-        regcomp(&regex, "^GET /([^ ]*) HTTP/1", REG_EXTENDED);
+        regcomp(&regex, "^([A-Z]+) /([^ ]*) HTTP/1", REG_EXTENDED);
 
-        regmatch_t matches[2];
+        regmatch_t matches[3];
 
-        if (regexec(&regex, buffer, 2, matches, 0) == 0)
+        if (regexec(&regex, buffer, 3, matches, 0) == 0)
         {
+            // extract method @todo check if rm_eo should actually be the second term
+            int method_len = matches[1].rm_eo - matches[1].rm_so;
+            char *method = malloc(method_len + 1);
+            strncpy(method, buffer + matches[1].rm_so, method_len);
+            method[method_len] = '\0';
+
             // extract filename from request and decode URL
-            buffer[matches[1].rm_eo] = '\0';
-            const char *url_encoded_file_name = buffer + matches[1].rm_so;
-            char *file_name = url_decode(url_encoded_file_name);
+            int url_len = matches[2].rm_eo - matches[2].rm_so;
+            char *encoded_url = malloc(url_len + 1);
+            strncpy(encoded_url, buffer + matches[2].rm_so, url_len);
+            encoded_url[url_len] = '\0';
+            char *url = url_decode(encoded_url);
+            free(encoded_url);
 
-            // get file extension
-            char file_ext[32];
-            strcpy(file_ext, get_file_extension(file_name));
+            // decode what to do
+            // first ensure that the method is uppercase
+            // @todo verify if this is really needed
+            for (int i = 0; method[i] != '\0'; i++)
+            {
+                method[i] = toupper((unsigned char)method[i]);
+            }
 
-            // build HTTP response
             char *response = (char *)malloc(BUFFER_SIZE * 2 * sizeof(char));
             size_t response_len;
-            build_http_response(file_name, file_ext, response, &response_len);
+            // @todo cookies/tokens
+            if (strcmp(method, "GET") == 0) {
+                // check if the database & table may be accessed freely
+                
+            } else if (strcmp(method, "POST") == 0) {
+                // check if the database & table can be written to freely
+
+            } else {
+                // tell the client I don't understand what's going on
+                build_response_400(response, response_len);
+            }
+
+            // build HTTP response
+            // build_http_response(, response, &response_len);
 
             // send HTTP response to client
             send(client_fd, response, response_len, 0);
 
+            // free variables
             free(response);
-            free(file_name);
+            free(method);
+            free(url);
         }
         regfree(&regex);
     }

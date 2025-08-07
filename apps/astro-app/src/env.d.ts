@@ -90,7 +90,7 @@ type StringColumn = {
 type BooleanColumn = {
     datatype: "bool" | "boolean"
     defaultValue?: boolean
-} & (RadioRestrictions | BigButtonRestrictions | NoRestrictions)
+} & (RadioRestrictions | SwitchRestrictions | NoRestrictions)
 
 type DateColumn = {
     datatype: "date"
@@ -108,14 +108,13 @@ export type DataColumn = {
     //@TODO add regex restrictions
     // restrictions?: Array<[number, number]>
     invalidInputMessage?: string
-    comments?: boolean
+    // comments?: boolean
     prompt?: string
-    params: {
-        primaryKey?: boolean
-        autoIncrement?: boolean
-    }
+    unique?: boolean
 } & (IntegerColumn | FloatColumn | StringColumn | BooleanColumn | DateColumn | TimeColumn)
 
+
+// @TODO deprecate and remove
 export interface JsonColumn {
     datatype: "json" | "JSON"
     entrytype: "entries" | "none"
