@@ -7,3 +7,7 @@ startup.bat
 
 ## ignore VS code folder :P
 .vscode
+
+
+# C build artifacts
+*.out
