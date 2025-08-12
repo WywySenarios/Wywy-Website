@@ -22,6 +22,10 @@
 #define PORT 2523 // @todo make this configurable
 #define BUFFER_SIZE 104857600 - 1
 #define AUTH_DB_NAME "auth" // @todo make this configurable
+#define MAX_URL_SECTIONS 3
+
+// nice global variables!
+static struct config *global_config = NULL;
 
 const char *get_file_extension(const char *file_name)
 {
@@ -208,6 +212,7 @@ void *handle_client(void *arg)
 {
     int client_fd = *((int *)arg);
     char *buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));
+    char *buffer2 = (char *)malloc(BUFFER_SIZE * sizeof(char));
 
     // receive request data from client and store into buffer
     ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
@@ -218,145 +223,228 @@ void *handle_client(void *arg)
 
         regmatch_t matches[3];
 
-        if (regexec(&regex, buffer, 3, matches, 0) == 0)
+        regex_t url_regex;
+        regcomp(&url_regex, "[^/]+", REG_EXTENDED);
+
+        regmatch_t url_matches[MAX_URL_SECTIONS];
+
+        if (regexec(&regex, buffer, 3, matches, 0) == 0 && regexec(&url_regex, buffer2, MAX_URL_SECTIONS, url_matches, 0) == 0)
         {
-            // extract method @todo check if rm_eo should actually be the second term
-            int method_len = matches[1].rm_eo - matches[1].rm_so;
-            char *method = malloc(method_len + 1);
-            strncpy(method, buffer + matches[1].rm_so, method_len);
-            method[method_len] = '\0';
-
-            // extract filename from request and decode URL
-            int url_len = matches[2].rm_eo - matches[2].rm_so;
-            char *encoded_url = malloc(url_len + 1);
-            strncpy(encoded_url, buffer + matches[2].rm_so, url_len);
-            encoded_url[url_len] = '\0';
-            char *url = url_decode(encoded_url);
-            free(encoded_url);
-
-            // decode what to do
-            // first ensure that the method is uppercase
-            // @todo verify if this is really needed
-            for (int i = 0; method[i] != '\0'; i++)
+            // extract database name and table name from request
+            // @todo validate the request
+            if (matches[1].rm_so == -1 || matches[2].rm_so == -1)
             {
-                method[i] = toupper((unsigned char)method[i]);
+                build_response_400(buffer, &bytes_received);
+                send(client_fd, buffer, bytes_received, 0);
+                regfree(&regex);
+                regfree(&url_regex);
+                free(buffer);
+                close(client_fd);
+                free(arg);
+                return NULL;
             }
+            {
+                // extract method @todo check if rm_eo should actually be the second term
+                int method_len = matches[1].rm_eo - matches[1].rm_so;
+                char *method = malloc(method_len + 1);
+                strncpy(method, buffer + matches[1].rm_so, method_len);
+                method[method_len] = '\0';
 
-            char *response = (char *)malloc(BUFFER_SIZE * 2 * sizeof(char));
-            size_t response_len;
-            // @todo cookies/tokens
-            if (strcmp(method, "GET") == 0) {
-                // check if the database & table may be accessed freely
-                
-            } else if (strcmp(method, "POST") == 0) {
-                // check if the database & table can be written to freely
+                // extract filename from request and decode URL
+                int url_len = matches[2].rm_eo - matches[2].rm_so;
+                char *encoded_url = malloc(url_len + 1);
+                strncpy(encoded_url, buffer + matches[2].rm_so, url_len);
+                encoded_url[url_len] = '\0';
+                char *url = url_decode(encoded_url);
+                free(encoded_url);
 
-            } else {
-                // tell the client I don't understand what's going on
-                build_response_400(response, response_len);
+                // decode what to do
+                // first ensure that the method is uppercase
+                // @todo verify if this is really needed
+                for (int i = 0; method[i] != '\0'; i++)
+                {
+                    method[i] = toupper((unsigned char)method[i]);
+                }
+
+                char *response = (char *)malloc(BUFFER_SIZE * 2 * sizeof(char));
+                size_t response_len;
+                // @todo cookies/tokens
+
+                // @todo special/reserved URLs
+                // search for the relevant table & database
+                struct db *db = NULL;
+                struct table *table = NULL;
+
+                int db_name_len = matches[1].rm_eo - matches[1].rm_so;
+                char *db_name = malloc(db_name_len + 1);
+                strncpy(db_name, buffer + matches[1].rm_so, db_name_len);
+                db_name[db_name_len] = '\0';
+                int table_name_len = matches[2].rm_eo - matches[2].rm_so;
+                char *table_name = malloc(table_name_len + 1);
+                strncpy(table_name, buffer + matches[2].rm_so, table_name_len);
+                table_name[table_name_len] = '\0';
+
+                for (unsigned int i = 0; i < global_config->dbs_count; i++)
+                {
+                    db = &global_config->dbs[i];
+                    if (case_insensitive_compare(db->db_name, db_name))
+                    {
+                        for (unsigned int j = 0; j < db->tables_count; j++)
+                        {
+                            if (case_insensitive_compare(db->tables[j].table_name, table_name))
+                            {
+                                table = &db->tables[j];
+                                goto found_table;
+                            }
+                        }
+                    }
+                }
+
+            found_table:
+                // didn't find a table? Tell the client that there's no such table
+                if (table == NULL)
+                {
+                    build_response_400(response, &response_len);
+                }
+                else
+                {
+                    if (strcmp(method, "GET") == 0)
+                    {
+                        // check if the database & table may be accessed freely
+                        if (table->read)
+                        {
+                            //@todo
+                            build_response_200(response, &response_len);
+                        }
+                        else
+                        {
+                            build_response_403(response, &response_len);
+                        }
+                    }
+                    else if (strcmp(method, "POST") == 0)
+                    {
+                        // check if the database & table can be written to freely
+                        if (table->write)
+                        {
+                            //@todo
+                            build_response_200(response, &response_len);
+                        }
+                        else
+                        {
+                            build_response_403(response, &response_len);
+                        }
+                    }
+                    else
+                    {
+                        // tell the client I don't understand what's going on
+                        build_response_400(response, &response_len);
+                    }
+                }
+
+                // send HTTP response to client
+                send(client_fd, response, response_len, 0);
+
+                // free variables
+                free(response);
+                free(method);
+                free(url);
             }
-
-            // build HTTP response
-            // build_http_response(, response, &response_len);
-
-            // send HTTP response to client
-            send(client_fd, response, response_len, 0);
-
-            // free variables
-            free(response);
-            free(method);
-            free(url);
+            regfree(&regex);
+            regfree(&url_regex);
         }
-        regfree(&regex);
-    }
 
-    close(client_fd);
-    free(arg);
-    free(buffer);
+        close(client_fd);
+        free(arg);
+        free(buffer);
+    }
 }
 
-int main(int argc, char const *argv[])
-{
-    struct config *cfg;
-    load_config(&cfg);
-    if (cfg == NULL) {
-        fprintf(stderr, "Failed to load configuration.\n");
-        return EXIT_FAILURE;
-    } else {
-        printf("Successfull loaded config:\n");
-        printf(" * Postgres Settings:\n");
-        printf("   - Host: %s\n", cfg->postgres.host);
-        printf("   - Port: %u\n", cfg->postgres.port);
-        printf("   - User: %s\n", cfg->postgres.user);
-        printf("Recognized %u databases:\n", cfg->dbs_count);
-        for (unsigned int i = 0; i < cfg->dbs_count; i++) {
-            printf(" * %s:\n", cfg->dbs[i].db_name);
-            printf("   - Name: %s\n", cfg->dbs[i].db_name);
-            for (unsigned int j = 0; j < cfg->dbs[i].tables_count; j++) {
-                printf("     - Table %s:\n", cfg->dbs[i].tables[j].table_name);
-                printf("       + Name: %s\n", cfg->dbs[i].tables[j].table_name);
-                printf("       + Read: %s\n", cfg->dbs[i].tables[j].read ? "true" : "false");
-                printf("       + Write: %s\n", cfg->dbs[i].tables[j].write ? "true" : "false");
-            }
-        }
-    }
-
-    int server_fd;
-    size_t valread;
-    struct sockaddr_in address;
-    int opt = 1;
-    socklen_t addrlen = sizeof(address);
-
-    // Creating socket file descriptior
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
+    int main(int argc, char const *argv[])
     {
-        perror("Socket creation failed");
-        exit(EXIT_FAILURE);
-    }
-
-    // Attach socket to the given port
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
-    {
-        perror("setsockopt");
-        exit(EXIT_FAILURE);
-    }
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(PORT);
-
-    // continue attaching socket to the given port
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
-    {
-        perror("Bind failed");
-        exit(EXIT_FAILURE);
-    }
-    if (listen(server_fd, 3) < 0)
-    {
-        perror("Listen failed");
-        exit(EXIT_FAILURE);
-    }
-
-    printf("Listening...\n");
-
-    while (1)
-    {
-        // client info
-        int *client_fd = malloc(sizeof(int));
-
-        // accept client connection?
-        if ((*client_fd = accept(server_fd, (struct sockaddr *)&address, &addrlen)) < 0)
+        load_config(&global_config);
+        if (global_config == NULL)
         {
-            perror("accept");
-            continue;
+            fprintf(stderr, "Failed to load configuration.\n");
+            return EXIT_FAILURE;
+        }
+        else
+        {
+            printf("Successfully loaded config:\n");
+            printf(" * Postgres Settings:\n");
+            printf("   - Host: %s\n", global_config->postgres.host);
+            printf("   - Port: %u\n", global_config->postgres.port);
+            printf("   - User: %s\n", global_config->postgres.user);
+            printf("Recognized %u databases:\n", global_config->dbs_count);
+            for (unsigned int i = 0; i < global_config->dbs_count; i++)
+            {
+                printf(" * %s:\n", global_config->dbs[i].db_name);
+                printf("   - Name: %s\n", global_config->dbs[i].db_name);
+                for (unsigned int j = 0; j < global_config->dbs[i].tables_count; j++)
+                {
+                    printf("     - Table %s:\n", global_config->dbs[i].tables[j].table_name);
+                    printf("       + Name: %s\n", global_config->dbs[i].tables[j].table_name);
+                    printf("       + Read: %s\n", global_config->dbs[i].tables[j].read ? "true" : "false");
+                    printf("       + Write: %s\n", global_config->dbs[i].tables[j].write ? "true" : "false");
+                }
+            }
         }
 
-        // create a new thread to handle client request
-        pthread_t thread_id;
-        pthread_create(&thread_id, NULL, handle_client, (void *)client_fd);
-        pthread_detach(thread_id);
-    }
+        int server_fd;
+        size_t valread;
+        struct sockaddr_in address;
+        int opt = 1;
+        socklen_t addrlen = sizeof(address);
 
-    // close the listening socket
-    close(server_fd);
-    return 0;
-}
+        // Creating socket file descriptior
+        if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+        {
+            perror("Socket creation failed");
+            exit(EXIT_FAILURE);
+        }
+
+        // Attach socket to the given port
+        if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
+        {
+            perror("setsockopt");
+            exit(EXIT_FAILURE);
+        }
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = INADDR_ANY;
+        address.sin_port = htons(PORT);
+
+        // continue attaching socket to the given port
+        if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
+        {
+            perror("Bind failed");
+            exit(EXIT_FAILURE);
+        }
+        if (listen(server_fd, 3) < 0)
+        {
+            perror("Listen failed");
+            exit(EXIT_FAILURE);
+        }
+
+        printf("Listening...\n");
+
+        while (1)
+        {
+            // client info
+            int *client_fd = malloc(sizeof(int));
+
+            // accept client connection?
+            if ((*client_fd = accept(server_fd, (struct sockaddr *)&address, &addrlen)) < 0)
+            {
+                perror("accept");
+                continue;
+            }
+
+            // create a new thread to handle client request
+            pthread_t thread_id;
+            pthread_create(&thread_id, NULL, handle_client, (void *)client_fd);
+            pthread_detach(thread_id);
+        }
+
+        // close the listening socket
+        close(server_fd);
+        return 0;
+    }
