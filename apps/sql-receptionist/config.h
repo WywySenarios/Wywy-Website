@@ -32,12 +32,6 @@ struct db
     unsigned int tables_count;
 };
 
-struct data
-{
-    struct db *dbs;
-    unsigned int dbs_count;
-};
-
 struct config
 {
     struct postgres_config postgres;

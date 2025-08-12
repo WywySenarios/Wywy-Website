@@ -17,11 +17,11 @@
 #include <dirent.h>
 #include <libpq-fe.h>
 #include <asm-generic/socket.h>
+#include "config.h"
 
-#define PORT 2523
+#define PORT 2523 // @todo make this configurable
 #define BUFFER_SIZE 104857600 - 1
-#define POSTGRE_PORT 5432
-#define AUTH_DB_NAME "auth"
+#define AUTH_DB_NAME "auth" // @todo make this configurable
 
 const char *get_file_extension(const char *file_name)
 {
@@ -277,6 +277,30 @@ void *handle_client(void *arg)
 
 int main(int argc, char const *argv[])
 {
+    struct config *cfg;
+    load_config(&cfg);
+    if (cfg == NULL) {
+        fprintf(stderr, "Failed to load configuration.\n");
+        return EXIT_FAILURE;
+    } else {
+        printf("Successfull loaded config:\n");
+        printf(" * Postgres Settings:\n");
+        printf("   - Host: %s\n", cfg->postgres.host);
+        printf("   - Port: %u\n", cfg->postgres.port);
+        printf("   - User: %s\n", cfg->postgres.user);
+        printf("Recognized %u databases:\n", cfg->dbs_count);
+        for (unsigned int i = 0; i < cfg->dbs_count; i++) {
+            printf(" * %s:\n", cfg->dbs[i].db_name);
+            printf("   - Name: %s\n", cfg->dbs[i].db_name);
+            for (unsigned int j = 0; j < cfg->dbs[i].tables_count; j++) {
+                printf("     - Table %s:\n", cfg->dbs[i].tables[j].table_name);
+                printf("       + Name: %s\n", cfg->dbs[i].tables[j].table_name);
+                printf("       + Read: %s\n", cfg->dbs[i].tables[j].read ? "true" : "false");
+                printf("       + Write: %s\n", cfg->dbs[i].tables[j].write ? "true" : "false");
+            }
+        }
+    }
+
     int server_fd;
     size_t valread;
     struct sockaddr_in address;
@@ -284,7 +308,7 @@ int main(int argc, char const *argv[])
     socklen_t addrlen = sizeof(address);
 
     // Creating socket file descriptior
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
     {
         perror("Socket creation failed");
         exit(EXIT_FAILURE);

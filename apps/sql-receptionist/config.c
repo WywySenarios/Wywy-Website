@@ -76,7 +76,7 @@ static const cyaml_schema_field_t table_fields_schema[] = {
     CYAML_FIELD_END};
 
 static const cyaml_schema_value_t table_schema = {
-    CYAML_VALUE_MAPPING(CYAML_FLAG_POINTER, struct table, table_fields_schema)
+    CYAML_VALUE_MAPPING(CYAML_FLAG_DEFAULT, struct table, table_fields_schema)
 };
 
 static const cyaml_schema_field_t db_fields_schema[] = {
@@ -89,7 +89,7 @@ static const cyaml_schema_field_t db_fields_schema[] = {
 };
 
 static const cyaml_schema_value_t db_schema = {
-    CYAML_VALUE_MAPPING(CYAML_FLAG_POINTER, struct db, db_fields_schema)
+    CYAML_VALUE_MAPPING(CYAML_FLAG_DEFAULT, struct db, db_fields_schema)
 };
 
 // top level structure for the config
@@ -114,7 +114,7 @@ static const cyaml_config_t cyaml_config = {
 
 /**
  * Attempts to load the global configuration file.
- * @param cfg Pointer to use for output.
+ * @param cfg Pointer to use for output. This pointer should be empty to prevent memory leaks in the case that the configuration fails to load.
  * @return Null if the configuration could not be loaded, otherwise a pointer to the loaded configuration (struct config).
  */
 void load_config(struct config **cfg) {
@@ -122,6 +122,7 @@ void load_config(struct config **cfg) {
 
     if (err != CYAML_OK) {
         fprintf(stderr, "Failed to load config: %s\n", cyaml_strerror(err));
-        cfg = NULL;
+
+        *cfg = NULL;
     }
 }
