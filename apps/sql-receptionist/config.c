@@ -5,14 +5,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <cyaml/cyaml.h>
-
-struct postgres_config
-{
-    const char *host;        // @todo validation
-    const unsigned int port; // @todo validation
-    const char *user;        // @todo validation
-    const char *password;    // @todo validation
-};
+#include "config.h"
 
 static const cyaml_schema_field_t postgres_config_fields_schema[] = {
     CYAML_FIELD_STRING_PTR(
@@ -31,15 +24,6 @@ static const cyaml_schema_field_t postgres_config_fields_schema[] = {
         "password", CYAML_FLAG_POINTER,
         struct postgres_config, password, 0, CYAML_UNLIMITED),
     CYAML_FIELD_END};
-
-struct data_column
-{
-    const char *name;                  // @todo validation
-    const char *datatype;              // @todo validation
-    const char *invalid_input_message; // optional
-    bool comments;               // optional, ?useless here?
-    const char *entrytype;             // useless here
-};
 
 static const cyaml_schema_field_t data_column_fields_schema[] = {
     CYAML_FIELD_STRING_PTR(
@@ -71,18 +55,6 @@ static const cyaml_schema_field_t data_column_fields_schema[] = {
     )
 };
 
-
-
-struct table
-{
-    const char *table_name; // @todo validation
-    bool read;       // @todo validation
-    bool write;      // @todo validation
-    const char *entrytype;  // @todo validation
-    struct data_column *schema;
-    unsigned int schema_count;
-};
-
 static const cyaml_schema_field_t table_fields_schema[] = {
     CYAML_FIELD_STRING_PTR(
         "tableName", CYAML_FLAG_POINTER,
@@ -107,13 +79,6 @@ static const cyaml_schema_value_t table_schema = {
     CYAML_VALUE_MAPPING(CYAML_FLAG_POINTER, struct table, table_fields_schema)
 };
 
-struct db
-{
-    const char *db_name; // @todo validation
-    struct table *tables;
-    unsigned int tables_count;
-};
-
 static const cyaml_schema_field_t db_fields_schema[] = {
     CYAML_FIELD_STRING_PTR(
         "dbname", CYAML_FLAG_POINTER,
@@ -127,23 +92,7 @@ static const cyaml_schema_value_t db_schema = {
     CYAML_VALUE_MAPPING(CYAML_FLAG_POINTER, struct db, db_fields_schema)
 };
 
-struct data
-{
-    struct db *dbs;
-    unsigned int dbs_count;
-};
-
-// static const cyaml_schema_field_t data_fields_schema[] = {
-//     CYAML_FIELD_SEQUENCE("dbs", CYAML_FLAG_POINTER, struct data, dbs, &db_fields_schema, 0, CYAML_UNLIMITED),
-//     CYAML_FIELD_END};
-
 // top level structure for the config
-struct config
-{
-    struct postgres_config postgres;
-    struct db *dbs;
-    unsigned int dbs_count;
-};
 
 static const cyaml_schema_field_t config_fields_schema[] = {
     CYAML_FIELD_MAPPING("postgres", CYAML_FLAG_DEFAULT, struct config, postgres, postgres_config_fields_schema),
@@ -163,21 +112,16 @@ static const cyaml_config_t cyaml_config = {
     .log_level = CYAML_LOG_WARNING, /* Logging errors and warnings only. */
 };
 
-int main()
-{
-    struct config *config;
-    cyaml_err_t err = cyaml_load_file("config.yml", &cyaml_config, &config_schema, (void **) &config, NULL);
+/**
+ * Attempts to load the global configuration file.
+ * @param cfg Pointer to use for output.
+ * @return Null if the configuration could not be loaded, otherwise a pointer to the loaded configuration (struct config).
+ */
+void load_config(struct config **cfg) {
+    cyaml_err_t err = cyaml_load_file("config.yml", &cyaml_config, &config_schema, (void **)cfg, NULL);
 
-    if (err != CYAML_OK)
-    {
+    if (err != CYAML_OK) {
         fprintf(stderr, "Failed to load config: %s\n", cyaml_strerror(err));
-
-        if (err == CYAML_ERR_BAD_TYPE_IN_SCHEMA) {
-            printf("gottem");
-        }
-        return EXIT_FAILURE;
+        cfg = NULL;
     }
-
-    printf("%s\n", config->postgres.host);
-    printf("%u\n", config->postgres.port);
 }
