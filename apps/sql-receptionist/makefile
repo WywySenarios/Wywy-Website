@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -I/mnt/c/Program\ Files/PostgreSQL/17/include
-LDFLAGS = -L/mnt/c/Program\ Files/PostgreSQL/17/lib -lpq -lcyaml
+CFLAGS = -I/usr/include/postgresql
+LDFLAGS = -L/usr/lib/x86_64-linux-gnu/ -lpq -lcyaml
 TARGET = app.exe
 
 app: $(SRC)

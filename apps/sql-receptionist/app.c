@@ -206,6 +206,41 @@ void *build_response_404(char *response, size_t *response_len)
 }
 
 /**
+ * Attempts to query the database with the given query.
+ * @param query A pointer to a sequence of characters representing the query to execute.
+ * @return bool indicating whether the query was successful or not.
+ */
+bool sql_query(char *dbname, char *query)
+{
+    size_t conninfo_size = 1 + 35 + strlen(dbname) + strlen(global_config->postgres.user) + strlen(global_config->postgres.password) + strlen(global_config->postgres.host) + 5;
+    char *conninfo = malloc(conninfo_size);
+    snprintf(conninfo, conninfo_size,
+             "dbname=%s user=%s password=%s host=%s port=%u",
+             dbname,
+             global_config->postgres.user,
+             global_config->postgres.password,
+             global_config->postgres.host,
+             global_config->postgres.port);
+    
+    PGconn *conn = PQconnectdb(conninfo);
+
+    if (PQstatus(conn) != CONNECTION_OK)
+    {
+        fprintf(stderr, "Connection to database failed: %s\n", PQerrorMessage(conn));
+        PQfinish(conn);
+        free(conninfo);
+        return false;
+    }
+
+    // printf("Connected to database %s successfully.\n", dbname);
+    PQfinish(conn);
+
+    free(conninfo);
+
+    return true;
+}
+
+/**
  * Understand the client's request and decide what action to take based on the request.
  */
 void *handle_client(void *arg)
@@ -359,92 +394,93 @@ void *handle_client(void *arg)
     }
 }
 
-    int main(int argc, char const *argv[])
+int main(int argc, char const *argv[])
+{
+    load_config(&global_config);
+    if (global_config == NULL)
     {
-        load_config(&global_config);
-        if (global_config == NULL)
-        {
-            fprintf(stderr, "Failed to load configuration.\n");
-            return EXIT_FAILURE;
-        }
-        else
-        {
-            printf("Successfully loaded config:\n");
-            printf(" * Postgres Settings:\n");
-            printf("   - Host: %s\n", global_config->postgres.host);
-            printf("   - Port: %u\n", global_config->postgres.port);
-            printf("   - User: %s\n", global_config->postgres.user);
-            printf("Recognized %u databases:\n", global_config->dbs_count);
-            for (unsigned int i = 0; i < global_config->dbs_count; i++)
-            {
-                printf(" * %s:\n", global_config->dbs[i].db_name);
-                printf("   - Name: %s\n", global_config->dbs[i].db_name);
-                for (unsigned int j = 0; j < global_config->dbs[i].tables_count; j++)
-                {
-                    printf("     - Table %s:\n", global_config->dbs[i].tables[j].table_name);
-                    printf("       + Name: %s\n", global_config->dbs[i].tables[j].table_name);
-                    printf("       + Read: %s\n", global_config->dbs[i].tables[j].read ? "true" : "false");
-                    printf("       + Write: %s\n", global_config->dbs[i].tables[j].write ? "true" : "false");
-                }
-            }
-        }
-
-        int server_fd;
-        size_t valread;
-        struct sockaddr_in address;
-        int opt = 1;
-        socklen_t addrlen = sizeof(address);
-
-        // Creating socket file descriptior
-        if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-        {
-            perror("Socket creation failed");
-            exit(EXIT_FAILURE);
-        }
-
-        // Attach socket to the given port
-        if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
-        {
-            perror("setsockopt");
-            exit(EXIT_FAILURE);
-        }
-        address.sin_family = AF_INET;
-        address.sin_addr.s_addr = INADDR_ANY;
-        address.sin_port = htons(PORT);
-
-        // continue attaching socket to the given port
-        if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
-        {
-            perror("Bind failed");
-            exit(EXIT_FAILURE);
-        }
-        if (listen(server_fd, 3) < 0)
-        {
-            perror("Listen failed");
-            exit(EXIT_FAILURE);
-        }
-
-        printf("Listening...\n");
-
-        while (1)
-        {
-            // client info
-            int *client_fd = malloc(sizeof(int));
-
-            // accept client connection?
-            if ((*client_fd = accept(server_fd, (struct sockaddr *)&address, &addrlen)) < 0)
-            {
-                perror("accept");
-                continue;
-            }
-
-            // create a new thread to handle client request
-            pthread_t thread_id;
-            pthread_create(&thread_id, NULL, handle_client, (void *)client_fd);
-            pthread_detach(thread_id);
-        }
-
-        // close the listening socket
-        close(server_fd);
-        return 0;
+        fprintf(stderr, "Failed to load configuration.\n");
+        return EXIT_FAILURE;
     }
+    else
+    {
+        printf("Successfully loaded config:\n");
+        printf(" * Postgres Settings:\n");
+        printf("   - Host: %s\n", global_config->postgres.host);
+        printf("   - Port: %u\n", global_config->postgres.port);
+        printf("   - User: %s\n", global_config->postgres.user);
+        printf("Recognized %u databases:\n", global_config->dbs_count);
+        for (unsigned int i = 0; i < global_config->dbs_count; i++)
+        {
+            printf(" * %s:\n", global_config->dbs[i].db_name);
+            printf("   - Name: %s\n", global_config->dbs[i].db_name);
+            for (unsigned int j = 0; j < global_config->dbs[i].tables_count; j++)
+            {
+                printf("     - Table %s:\n", global_config->dbs[i].tables[j].table_name);
+                printf("       + Name: %s\n", global_config->dbs[i].tables[j].table_name);
+                printf("       + Read: %s\n", global_config->dbs[i].tables[j].read ? "true" : "false");
+                printf("       + Write: %s\n", global_config->dbs[i].tables[j].write ? "true" : "false");
+            }
+        }
+    }
+
+    sql_query("WywyWebsite", "SELECT * FROM daily;");
+    int server_fd;
+    size_t valread;
+    struct sockaddr_in address;
+    int opt = 1;
+    socklen_t addrlen = sizeof(address);
+
+    // Creating socket file descriptior
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        perror("Socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // Attach socket to the given port
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
+    {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
+
+    // continue attaching socket to the given port
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0)
+    {
+        perror("Bind failed");
+        exit(EXIT_FAILURE);
+    }
+    if (listen(server_fd, 3) < 0)
+    {
+        perror("Listen failed");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Listening...\n");
+
+    while (1)
+    {
+        // client info
+        int *client_fd = malloc(sizeof(int));
+
+        // accept client connection?
+        if ((*client_fd = accept(server_fd, (struct sockaddr *)&address, &addrlen)) < 0)
+        {
+            perror("accept");
+            continue;
+        }
+
+        // create a new thread to handle client request
+        pthread_t thread_id;
+        pthread_create(&thread_id, NULL, handle_client, (void *)client_fd);
+        pthread_detach(thread_id);
+    }
+
+    // close the listening socket
+    close(server_fd);
+    return 0;
+}
