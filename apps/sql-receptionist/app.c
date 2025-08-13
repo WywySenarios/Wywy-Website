@@ -417,7 +417,6 @@ int main(int argc, char const *argv[])
             for (unsigned int j = 0; j < global_config->dbs[i].tables_count; j++)
             {
                 printf("     - Table %s:\n", global_config->dbs[i].tables[j].table_name);
-                printf("       + Name: %s\n", global_config->dbs[i].tables[j].table_name);
                 printf("       + Read: %s\n", global_config->dbs[i].tables[j].read ? "true" : "false");
                 printf("       + Write: %s\n", global_config->dbs[i].tables[j].write ? "true" : "false");
             }

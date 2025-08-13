@@ -63,77 +63,76 @@ class Wywy(cmd.Cmd):
                 "user": config["postgres"].get("user", "postgres"),
             }
             
-            # if "host" in config["postgres"]:
-            #     psycopg2config["host"] = config["postgres"]["host"]
             if "password" in config["postgres"]:
                 psycopg2config["password"] = config["postgres"]["password"]
-            if "dbname" in config["postgres"]:
-                psycopg2config["dbname"] = config["postgres"]["dbname"]
             
-            # loop through every table that needs to be created @TODO verify config validity to avoid errors
-            for tableName in config["data"]["tables"]:
-                tableInfo = config["data"]["tables"][tableName]
-                
-                # look for prereqs:
-                valid = True # innocent until proven guilty
-                # there are 1+ columns
-                if not "schema" in tableInfo or type(tableInfo["schema"]) is not dict or not tableInfo["schema"]:
-                    print("Table", tableName, "must have a column schema containing at least 1 column of data to store.")
-                    valid = False
-                if not "schema" in tableInfo or "id" in tableInfo["schema"]:
-                    print("Table", tableName, "must not have a column named \"id\", which is reserved for the table's primary key.")
-                # it has a name that will be recognized by the PostgresSQL database & server
-                if not "tableName" in tableInfo or tableInfo["tableName"] is None or len(tableInfo["tableName"]) == 0:
-                    print("Table", tableName, "must have a non-empty name specified in key \"tableName\"")
-                    valid = False
-                
-                if not valid:
-                    print("Skipping creation of table", tableName, "due to schema violation(s).")
-                    continue
-                
-                with psycopg2.connect(**psycopg2config) as conn:
-                    with conn.cursor() as cur:
-                        # @TODO create a function to modify constraints rather than create new tables
-                        currentCommand: str = "CREATE TABLE " + tableInfo["tableName"] + " ("
+            # loop through every database that has tables to be created
+            for dbInfo in config["data"]:
+                psycopg2config["dbname"] = dbInfo["dbname"]
 
-                        # since SQL cannot tolerate trailing commas, I will add the primary key last and never give it a comma.
-                        # add in all of the columns
-                        for columnName in tableInfo["schema"]:
-                            # @TODO verify column validity
-                            
-                            columnDisplayName = toUnderscoreNotation(columnName)
-                            
-                            columnInfo = tableInfo["schema"][columnName]
-                            
-                            # add in the column's name & datatype @TODO validate datatype
-                            currentCommand += columnDisplayName + " " + columnInfo["datatype"] + ","
-                            
-                            # check out constraints
-                            if columnInfo.get("unique", False) == True:
-                                currentCommand += "CONSTRAINT " + columnDisplayName + "_unique UNIQUE(" + columnDisplayName + "),"
-                            if columnInfo.get("optional", True) == False:
-                                currentCommand += "CONSTRAINT " + columnDisplayName + "_optional NOT NULL,"
-                            # @TODO CHECK (REGEX, number comparisons)
-                            whitelist = columnInfo.get("whitelist", [])
-                            if whitelist is list and len(whitelist) > 0: # @TODO datatype validation
-                                currentCommand += "CONSTRAINT " + columnDisplayName + "_whitelist CHECK (" + columnDisplayName + " IN ("
-                                for item in whitelist:
-                                    if item is None: break # do NOT deal with null values.
-                                    currentCommand += "\'" + str(item) + "\',"
+                # loop through every table that needs to be created @TODO verify config validity to avoid errors
+                for tableInfo in dbInfo.get("tables", []):
+                    # look for prereqs:
+                    valid = True # innocent until proven guilty
+                    # it has a name
+                    if not "tableName" in tableInfo or tableInfo["tableName"] is None or len(tableInfo["tableName"]) == 0:
+                        print("Tables must have a non-empty name specified in key \"tableName\"")
+                        valid = False
+                    # there are 1+ columns
+                    if not "schema" in tableInfo or not (type(tableInfo["schema"]) is List or type(tableInfo["schema"]) is list) or len(tableInfo["schema"]) < 1 or not tableInfo["schema"]:
+                        print("Table", tableInfo["tableName"], "must have a column schema containing at least 1 column of data to store.")
+                        valid = False
+                    if not "schema" in tableInfo or "id" in tableInfo["schema"]:
+                        print("Table", tableInfo["tableName"], "must not have a column named \"id\", which is reserved for the table's primary key.")
+                    # it has a name that will be recognized by the PostgresSQL database & server
+                    
+                    if not valid:
+                        print("Skipping creation of table", tableInfo.get("tableName", "???"), "due to schema violation(s).")
+                        continue
+                    
+                    with psycopg2.connect(**psycopg2config) as conn:
+                        with conn.cursor() as cur:
+                            # @TODO create a function to modify constraints rather than create new tables
+                            currentCommand: str = "CREATE TABLE " + tableInfo["tableName"] + " ("
+
+                            # since SQL cannot tolerate trailing commas, I will add the primary key last and never give it a comma.
+                            # add in all of the columns
+                            for columnInfo in tableInfo["schema"]:
+                                # @TODO verify column validity
+                                if not "name" in columnInfo:
+                                    print("Skipping a column in table", tableInfo["tableName"], "due to missing \"name\" key in column schema.")
                                 
-                                # strip trailing comma & add closing brackets
-                                currentCommand = currentCommand[:-1] + ")),"
-                            # @TODO foreign keys
-                            # @TODO defaults
+                                columnDisplayName = toUnderscoreNotation(columnInfo["name"])
+                                
+                                # add in the column's name & datatype @TODO validate datatype
+                                currentCommand += columnDisplayName + " " + columnInfo["datatype"] + ","
+                                
+                                # check out constraints
+                                if columnInfo.get("unique", False) == True:
+                                    currentCommand += "CONSTRAINT " + columnDisplayName + "_unique UNIQUE(" + columnDisplayName + "),"
+                                if columnInfo.get("optional", True) == False:
+                                    currentCommand += "CONSTRAINT " + columnDisplayName + "_optional NOT NULL,"
+                                # @TODO CHECK (REGEX, number comparisons)
+                                whitelist = columnInfo.get("whitelist", [])
+                                if whitelist is list and len(whitelist) > 0: # @TODO datatype validation
+                                    currentCommand += "CONSTRAINT " + columnDisplayName + "_whitelist CHECK (" + columnDisplayName + " IN ("
+                                    for item in whitelist:
+                                        if item is None: break # do NOT deal with null values.
+                                        currentCommand += "\'" + str(item) + "\',"
+                                    
+                                    # strip trailing comma & add closing brackets
+                                    currentCommand = currentCommand[:-1] + ")),"
+                                # @TODO foreign keys
+                                # @TODO defaults
+                                
+                            # add in ID column
+                            currentCommand += "id SERIAL PRIMARY KEY"
                             
-                        # add in ID column
-                        currentCommand += "id SERIAL PRIMARY KEY"
-                        
-                        currentCommand += ")"
-                        
-                        # try to execute the command
-                        cur.execute(currentCommand)
-                        # print(currentCommand)
+                            currentCommand += ")"
+                            
+                            # try to execute the command
+                            cur.execute(currentCommand)
+                            # print(currentCommand)
         except (psycopg2.DatabaseError) as error:
             print("Database error. Proceed with caution.")
             print(error)
