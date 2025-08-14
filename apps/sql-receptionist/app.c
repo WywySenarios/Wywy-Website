@@ -207,10 +207,10 @@ void *build_response_404(char *response, size_t *response_len)
 
 /**
  * Attempts to query the database with the given query.
- * @param query A pointer to a sequence of characters representing the query to execute.
+ * @param query A pointer to a sequence of characters representing the query to execute. This does NOT free the query if it is successful.
  * @return bool indicating whether the query was successful or not.
  */
-bool sql_query(char *dbname, char *query)
+bool sql_query(char *dbname, char *query, PGresult **res)
 {
     size_t conninfo_size = 1 + 35 + strlen(dbname) + strlen(global_config->postgres.user) + strlen(global_config->postgres.password) + strlen(global_config->postgres.host) + 5;
     char *conninfo = malloc(conninfo_size);
@@ -221,7 +221,7 @@ bool sql_query(char *dbname, char *query)
              global_config->postgres.password,
              global_config->postgres.host,
              global_config->postgres.port);
-    
+
     PGconn *conn = PQconnectdb(conninfo);
 
     if (PQstatus(conn) != CONNECTION_OK)
@@ -232,12 +232,20 @@ bool sql_query(char *dbname, char *query)
         return false;
     }
 
-    // printf("Connected to database %s successfully.\n", dbname);
-    PQfinish(conn);
+    // Submit & Execute query
+    *res = PQexec(conn, query);
+    ExecStatusType status = PQresultStatus(*res);
 
+    // PQfinish(conn);
     free(conninfo);
 
-    return true;
+    // printf("Query Status: %s\n", PQresStatus(status));
+    if (status == PGRES_TUPLES_OK) {
+        return true;
+    } else {
+        PQfinish(conn);
+        return false;
+    }
 }
 
 /**
@@ -423,7 +431,6 @@ int main(int argc, char const *argv[])
         }
     }
 
-    sql_query("WywyWebsite", "SELECT * FROM daily;");
     int server_fd;
     size_t valread;
     struct sockaddr_in address;
