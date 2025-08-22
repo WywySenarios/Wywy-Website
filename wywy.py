@@ -11,6 +11,8 @@ import psycopg2
 import yaml
 import re
 
+RESERVEDCOLUMNNAMES = ["id", "user", "users"]
+
 # peak at config
 with open("config.yml", "r") as file:
     config = yaml.safe_load(file)
@@ -78,12 +80,18 @@ class Wywy(cmd.Cmd):
                     if not "tableName" in tableInfo or tableInfo["tableName"] is None or len(tableInfo["tableName"]) == 0:
                         print("Tables must have a non-empty name specified in key \"tableName\"")
                         valid = False
+                        
                     # there are 1+ columns
                     if not "schema" in tableInfo or not (type(tableInfo["schema"]) is List or type(tableInfo["schema"]) is list) or len(tableInfo["schema"]) < 1 or not tableInfo["schema"]:
                         print("Table", tableInfo["tableName"], "must have a column schema containing at least 1 column of data to store.")
                         valid = False
-                    if not "schema" in tableInfo or "id" in tableInfo["schema"]:
-                        print("Table", tableInfo["tableName"], "must not have a column named \"id\", which is reserved for the table's primary key.")
+                    
+                    # avoid reserved columns
+                    if "schema" in tableInfo:
+                        for i in RESERVEDCOLUMNNAMES:
+                            if i in tableInfo["schema"]:
+                                print("Table", tableInfo["tableName"], "must not have a column named \"" + i + "\", which is a reserved column name.")
+                                valid = False
                     # it has a name that will be recognized by the PostgresSQL database & server
                     
                     if not valid:

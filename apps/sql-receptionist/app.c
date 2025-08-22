@@ -157,10 +157,18 @@ void build_http_response(const char *file_name, const char *file_ext, char *resp
 }
 
 /**
- * @todo
+ * Builds a 200 HTTP response (OK).
+ * @param response A pointer to a sequence of characters representing the response
+ * @param response_len The length of the response. IDK if this includes the null terminator.
+ * @param text The text to include in the response body.
  */
-void *build_response_200(char *response, size_t *response_len)
+void *build_response_200(char *response, size_t *response_len, const char *text)
 {
+    snprintf(response, BUFFER_SIZE, "HTTP/1.1 200 OK\r\n"
+                                    "Content-Type: text/plain\r\n"
+                                    "\r\n"
+                                    "%s", text);
+    *response_len = strlen(response);
 }
 
 /**
@@ -226,7 +234,6 @@ bool sql_query(char *dbname, char *query, PGresult **res)
 
     if (PQstatus(conn) != CONNECTION_OK)
     {
-        fprintf(stderr, "Connection to database failed: %s\n", PQerrorMessage(conn));
         PQfinish(conn);
         free(conninfo);
         return false;
@@ -236,13 +243,14 @@ bool sql_query(char *dbname, char *query, PGresult **res)
     *res = PQexec(conn, query);
     ExecStatusType status = PQresultStatus(*res);
 
-    // PQfinish(conn);
     free(conninfo);
 
-    // printf("Query Status: %s\n", PQresStatus(status));
-    if (status == PGRES_TUPLES_OK) {
+    if (status == PGRES_TUPLES_OK)
+    {
         return true;
-    } else {
+    }
+    else
+    {
         PQfinish(conn);
         return false;
     }
@@ -255,151 +263,192 @@ void *handle_client(void *arg)
 {
     int client_fd = *((int *)arg);
     char *buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));
-    char *buffer2 = (char *)malloc(BUFFER_SIZE * sizeof(char));
+    char *response = (char *)malloc(BUFFER_SIZE * 2 * sizeof(char));
+    size_t response_len;
 
     // receive request data from client and store into buffer
     ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
-    if (bytes_received > 0)
+
+    printf("%s\n", buffer);
+    //
+    if (bytes_received <= 0)
     {
-        regex_t regex;
-        regcomp(&regex, "^([A-Z]+) /([^ ]*) HTTP/1", REG_EXTENDED);
-
-        regmatch_t matches[3];
-
-        regex_t url_regex;
-        regcomp(&url_regex, "[^/]+", REG_EXTENDED);
-
-        regmatch_t url_matches[MAX_URL_SECTIONS];
-
-        if (regexec(&regex, buffer, 3, matches, 0) == 0 && regexec(&url_regex, buffer2, MAX_URL_SECTIONS, url_matches, 0) == 0)
-        {
-            // extract database name and table name from request
-            // @todo validate the request
-            if (matches[1].rm_so == -1 || matches[2].rm_so == -1)
-            {
-                build_response_400(buffer, &bytes_received);
-                send(client_fd, buffer, bytes_received, 0);
-                regfree(&regex);
-                regfree(&url_regex);
-                free(buffer);
-                close(client_fd);
-                free(arg);
-                return NULL;
-            }
-            {
-                // extract method @todo check if rm_eo should actually be the second term
-                int method_len = matches[1].rm_eo - matches[1].rm_so;
-                char *method = malloc(method_len + 1);
-                strncpy(method, buffer + matches[1].rm_so, method_len);
-                method[method_len] = '\0';
-
-                // extract filename from request and decode URL
-                int url_len = matches[2].rm_eo - matches[2].rm_so;
-                char *encoded_url = malloc(url_len + 1);
-                strncpy(encoded_url, buffer + matches[2].rm_so, url_len);
-                encoded_url[url_len] = '\0';
-                char *url = url_decode(encoded_url);
-                free(encoded_url);
-
-                // decode what to do
-                // first ensure that the method is uppercase
-                // @todo verify if this is really needed
-                for (int i = 0; method[i] != '\0'; i++)
-                {
-                    method[i] = toupper((unsigned char)method[i]);
-                }
-
-                char *response = (char *)malloc(BUFFER_SIZE * 2 * sizeof(char));
-                size_t response_len;
-                // @todo cookies/tokens
-
-                // @todo special/reserved URLs
-                // search for the relevant table & database
-                struct db *db = NULL;
-                struct table *table = NULL;
-
-                int db_name_len = matches[1].rm_eo - matches[1].rm_so;
-                char *db_name = malloc(db_name_len + 1);
-                strncpy(db_name, buffer + matches[1].rm_so, db_name_len);
-                db_name[db_name_len] = '\0';
-                int table_name_len = matches[2].rm_eo - matches[2].rm_so;
-                char *table_name = malloc(table_name_len + 1);
-                strncpy(table_name, buffer + matches[2].rm_so, table_name_len);
-                table_name[table_name_len] = '\0';
-
-                for (unsigned int i = 0; i < global_config->dbs_count; i++)
-                {
-                    db = &global_config->dbs[i];
-                    if (case_insensitive_compare(db->db_name, db_name))
-                    {
-                        for (unsigned int j = 0; j < db->tables_count; j++)
-                        {
-                            if (case_insensitive_compare(db->tables[j].table_name, table_name))
-                            {
-                                table = &db->tables[j];
-                                goto found_table;
-                            }
-                        }
-                    }
-                }
-
-            found_table:
-                // didn't find a table? Tell the client that there's no such table
-                if (table == NULL)
-                {
-                    build_response_400(response, &response_len);
-                }
-                else
-                {
-                    if (strcmp(method, "GET") == 0)
-                    {
-                        // check if the database & table may be accessed freely
-                        if (table->read)
-                        {
-                            //@todo
-                            build_response_200(response, &response_len);
-                        }
-                        else
-                        {
-                            build_response_403(response, &response_len);
-                        }
-                    }
-                    else if (strcmp(method, "POST") == 0)
-                    {
-                        // check if the database & table can be written to freely
-                        if (table->write)
-                        {
-                            //@todo
-                            build_response_200(response, &response_len);
-                        }
-                        else
-                        {
-                            build_response_403(response, &response_len);
-                        }
-                    }
-                    else
-                    {
-                        // tell the client I don't understand what's going on
-                        build_response_400(response, &response_len);
-                    }
-                }
-
-                // send HTTP response to client
-                send(client_fd, response, response_len, 0);
-
-                // free variables
-                free(response);
-                free(method);
-                free(url);
-            }
-            regfree(&regex);
-            regfree(&url_regex);
-        }
-
-        close(client_fd);
-        free(arg);
-        free(buffer);
+        // send HTTP response to client
+        build_response_400(response, &response_len);
+        goto end;
     }
+
+    // @todo cookies/tokens
+    // @todo special/reserved URLs
+
+    regex_t regex;
+    regcomp(&regex, "^([A-Z]+) /([^ ]*) HTTP/[12]", REG_EXTENDED);
+
+    regmatch_t matches[3];
+
+    regex_t url_regex;
+    regcomp(&url_regex, "^/([^/]+)/([^/]+)", REG_EXTENDED); // "[^/]+"
+
+    regmatch_t url_matches[MAX_URL_SECTIONS + 1];
+
+    // Does the request have a URL?
+    if (regexec(&regex, buffer, 3, matches, 0) != 0)
+    {
+        build_response_400(response, &response_len);
+        goto unsuccessful_regex_end;
+    }
+
+    // extract database name and table name from request
+    // @todo validate the request
+    if (matches[1].rm_so == -1 || matches[2].rm_so == -1)
+    {
+        // send HTTP response to client
+        build_response_400(response, &response_len);
+        goto unsuccessful_regex_end;
+    }
+    // extract method @todo check if rm_eo should actually be the second term
+    int method_len = matches[1].rm_eo - matches[1].rm_so;
+    char *method = malloc(method_len + 1);
+    strncpy(method, buffer + matches[1].rm_so, method_len);
+    method[method_len] = '\0';
+
+    // extract URL from request and decode URL
+    int url_len = matches[2].rm_eo - matches[2].rm_so;
+    char *encoded_url = malloc(url_len + 1);
+    strncpy(encoded_url, buffer + matches[2].rm_so, url_len); // @todo directly decode buffer
+    encoded_url[url_len] = '\0';
+    char *url = url_decode(encoded_url);
+    free(encoded_url);
+
+    // handle querystring
+    char *querystring = NULL;
+    char *path = url;
+    char *qmark = strchr(url, '?');
+    if (qmark)
+    {
+        *qmark = '\0';           // terminate path at the first '?'
+        querystring = qmark + 1; // everything after is the querystring
+    }
+
+    // does the URL have 2 segments?
+    if (regexec(&url_regex, url, MAX_URL_SECTIONS + 1, url_matches, 0) != 0 || 
+        url_matches[1].rm_so == -1 || url_matches[2].rm_so == -1)
+    {
+        build_response_400(response, &response_len);
+        goto bad_url_end;
+    }
+
+    printf("Received request: %s %s %s\n", method, path, querystring ? querystring : "No query");
+
+    // decide what to do
+    // first ensure that the method is uppercase
+    // @todo verify if this is really needed
+    for (int i = 0; method[i] != '\0'; i++)
+    {
+        method[i] = toupper((unsigned char)method[i]);
+    }
+
+    // search for the relevant table & database
+    struct db *db = NULL;
+    struct table *table = NULL;
+
+    int db_name_len = url_matches[1].rm_eo - url_matches[1].rm_so;
+    char *db_name = malloc(db_name_len + 1);
+    strncpy(db_name, url + url_matches[1].rm_so, db_name_len);
+    db_name[db_name_len] = '\0';
+    int table_name_len = url_matches[2].rm_eo - url_matches[2].rm_so;
+    char *table_name = malloc(table_name_len + 1);
+    strncpy(table_name, url + url_matches[2].rm_so, table_name_len);
+    table_name[table_name_len] = '\0';
+
+    for (unsigned int i = 0; i < global_config->dbs_count; i++)
+    {
+        db = &global_config->dbs[i];
+        if (case_insensitive_compare(db->db_name, db_name))
+        {
+            for (unsigned int j = 0; j < db->tables_count; j++)
+            {
+                if (case_insensitive_compare(db->tables[j].table_name, table_name))
+                {
+                    table = &db->tables[j];
+                    goto found_table;
+                }
+            }
+        }
+    }
+
+found_table:
+    // didn't find a table? Tell the client that there's no such table
+    if (table == NULL)
+    {
+
+        build_response_400(response, &response_len);
+    }
+    else
+    {
+        if (strcmp(method, "GET") == 0)
+        {
+            // check if the database & table may be accessed freely
+            if (table->read)
+            {
+                // try to access the database and query
+
+                PGresult *res = NULL;
+                
+                // @todo allow-list input validation
+                // @todo still vulnerable to changing the config
+
+                // separate different entries by a semicolon and different columns by a comma
+
+                //@todo
+                build_response_200(response, &response_len);
+            }
+            else
+            {
+                build_response_403(response, &response_len);
+            }
+        }
+        else if (strcmp(method, "POST") == 0)
+        {
+            // check if the database & table can be written to freely
+            if (table->write)
+            {
+                //@todo
+                build_response_200(response, &response_len, "");
+            }
+            else
+            {
+                build_response_403(response, &response_len);
+            }
+        }
+        else
+        {
+            // tell the client I don't understand what's going on
+            build_response_400(response, &response_len);
+        }
+    }
+
+    // free memory
+no_table_end:
+    free(db_name);
+    free(table_name);
+
+bad_url_end:
+    free(url);
+    free(method);
+
+unsuccessful_regex_end:
+    regfree(&regex);
+    regfree(&url_regex);
+
+end:
+    // send HTTP response to client
+    send(client_fd, response, response_len, 0);
+
+    close(client_fd);
+    free(response);
+    free(arg);
+    free(buffer);
 }
 
 int main(int argc, char const *argv[])
@@ -466,7 +515,7 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
-    printf("Listening...\n");
+    printf("Listening on Port %u.\n", PORT);
 
     while (1)
     {
