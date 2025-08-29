@@ -1,3 +1,9 @@
+/**
+ * This application attempts to dynamically execute SQL queries to regular databases. This application should not handle more sensitive databases, and should instead ignore them.
+ * @todo create separate file for basic HTTP server functionalities (this file should only handle decision making)
+ * @todo create separate ORM file
+ */
+
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -23,6 +29,49 @@
 #define BUFFER_SIZE 104857600 - 1
 #define AUTH_DB_NAME "auth" // @todo make this configurable
 #define MAX_URL_SECTIONS 3
+#define MAX_REGEX_MATCHES 25
+#define limit 20
+
+struct item_querystring
+{
+    char *key;
+    char *value;
+} typedef item_querystring;
+
+struct dict_querystring
+{
+    item_querystring *pairs;
+    size_t size;
+} typedef dict_querystring;
+
+// @todo log search?
+/**
+ * Attempts to (linear) search through a hashmap-like object (array of key-value pairs) for a pair that has a certain key.
+ * @return The item that was found or NULL if no item was found.
+ */
+item_querystring *linear_search(dict_querystring dict, const char *key)
+{
+    for (unsigned i = 0; i < dict.size; i++)
+    {
+        if (strcmp(dict.pairs[i].key, key) == 0)
+        {
+            return &dict.pairs[i];
+        }
+    }
+
+    return NULL;
+}
+
+// unsigned num_regex_matches(regmatch_t matches, size_t sizeof_matches) {
+//     unsigned num_matches = 0;
+//     for (unsigned i = 0; i < sizeof_matches; i++) {
+//         if (matches[i] != -1) {
+//             num_matches++;
+//         }
+//     }
+
+//     return num_matches;
+// }
 
 // nice global variables!
 static struct config *global_config = NULL;
@@ -167,7 +216,8 @@ void *build_response_200(char *response, size_t *response_len, const char *text)
     snprintf(response, BUFFER_SIZE, "HTTP/1.1 200 OK\r\n"
                                     "Content-Type: text/plain\r\n"
                                     "\r\n"
-                                    "%s", text);
+                                    "%s",
+             text);
     *response_len = strlen(response);
 }
 
@@ -178,7 +228,9 @@ void *build_response_200(char *response, size_t *response_len, const char *text)
  */
 void *build_response_400(char *response, size_t *response_len)
 {
-    snprintf(response, BUFFER_SIZE, "HTTP/1.1 400 Bad Request\r\n"
+    snprintf(response, BUFFER_SIZE, "HTTP/1.1 200 OK\r\n"
+                                    "Content-Type: text/plain\r\n"
+                                    "\r\nHTTP/1.1 400 Bad Request\r\n"
                                     "Content-Type: text/plain\r\n"
                                     "\r\n"
                                     "400 Bad Request");
@@ -192,7 +244,9 @@ void *build_response_400(char *response, size_t *response_len)
  */
 void *build_response_403(char *response, size_t *response_len)
 {
-    snprintf(response, BUFFER_SIZE, "HTTP/1.1 403 Forbidden\r\n"
+    snprintf(response, BUFFER_SIZE, "HTTP/1.1 200 OK\r\n"
+                                    "Content-Type: text/plain\r\n"
+                                    "\r\nHTTP/1.1 403 Forbidden\r\n"
                                     "Content-Type: text/plain\r\n"
                                     "\r\n"
                                     "403 Forbidden");
@@ -206,7 +260,9 @@ void *build_response_403(char *response, size_t *response_len)
  */
 void *build_response_404(char *response, size_t *response_len)
 {
-    snprintf(response, BUFFER_SIZE, "HTTP/1.1 404 Not Found\r\n"
+    snprintf(response, BUFFER_SIZE, "HTTP/1.1 200 OK\r\n"
+                                    "Content-Type: text/plain\r\n"
+                                    "\r\nHTTP/1.1 404 Not Found\r\n"
                                     "Content-Type: text/plain\r\n"
                                     "\r\n"
                                     "404 Not Found");
@@ -214,11 +270,27 @@ void *build_response_404(char *response, size_t *response_len)
 }
 
 /**
- * Attempts to query the database with the given query.
- * @param query A pointer to a sequence of characters representing the query to execute. This does NOT free the query if it is successful.
- * @return bool indicating whether the query was successful or not.
+ * Builds a 500 HTTP response (Internal Server Error).
+ * @param response A pointer to a sequence of characters representing the response
+ * @param response_len The length of the response. IDK if this includes the null terminator.
  */
-bool sql_query(char *dbname, char *query, PGresult **res)
+void *build_response_404(char* response, size_t* response_len)
+{
+    snprintf(response, BUFFER_SIZE, "HTTP/1.1 200 OK\r\n"
+                                    "Content-Type: text/plain\r\n"
+                                    "\r\nHTTP/1.1 500 Internal Server Error\r\n"
+                                    "Content-Type: text/plain\r\n"
+                                    "\r\n"
+                                    "500 Internal Server Error");
+    *response_len = strlen(response);
+}
+
+/**
+ * Attempts to query the database with the given query.
+ * @param query A pointer to a sequence of characters representing the query to execute. This function does NOT free query.
+ * @return bool indicating whether the query was successful or not. Memory (exluding query) is freed if this function returns false.
+ */
+bool sql_query(char *dbname, char *query, PGresult **res, PGconn** conn)
 {
     size_t conninfo_size = 1 + 35 + strlen(dbname) + strlen(global_config->postgres.user) + strlen(global_config->postgres.password) + strlen(global_config->postgres.host) + 5;
     char *conninfo = malloc(conninfo_size);
@@ -230,7 +302,7 @@ bool sql_query(char *dbname, char *query, PGresult **res)
              global_config->postgres.host,
              global_config->postgres.port);
 
-    PGconn *conn = PQconnectdb(conninfo);
+    *conn = PQconnectdb(conninfo);
 
     if (PQstatus(conn) != CONNECTION_OK)
     {
@@ -251,6 +323,7 @@ bool sql_query(char *dbname, char *query, PGresult **res)
     }
     else
     {
+        PQclear(res);
         PQfinish(conn);
         return false;
     }
@@ -306,7 +379,6 @@ void *handle_client(void *arg)
         build_response_400(response, &response_len);
         goto unsuccessful_regex_end;
     }
-    // extract method @todo check if rm_eo should actually be the second term
     int method_len = matches[1].rm_eo - matches[1].rm_so;
     char *method = malloc(method_len + 1);
     strncpy(method, buffer + matches[1].rm_so, method_len);
@@ -331,7 +403,7 @@ void *handle_client(void *arg)
     }
 
     // does the URL have 2 segments?
-    if (regexec(&url_regex, url, MAX_URL_SECTIONS + 1, url_matches, 0) != 0 || 
+    if (regexec(&url_regex, url, MAX_URL_SECTIONS + 1, url_matches, 0) != 0 ||
         url_matches[1].rm_so == -1 || url_matches[2].rm_so == -1)
     {
         build_response_400(response, &response_len);
@@ -393,18 +465,187 @@ found_table:
             {
                 // try to access the database and query
 
-                PGresult *res = NULL;
-                
                 // @todo allow-list input validation
                 // @todo still vulnerable to changing the config
 
-                // separate different entries by a semicolon and different columns by a comma
+                regex_t querystring_regex;
+                // slash all &'s separate, and the first = sign after the start of the string or the last &
+                regcomp(&querystring_regex, "[&?]([^=]+)=([^&]+)", REG_EXTENDED);
 
-                //@todo
-                build_response_200(response, &response_len);
+                regmatch_t querystring_matches[2 + 1];
+
+                // many of these need to be non-null:
+                char *select = NULL;
+                char *order_by = NULL;
+                char *min = NULL;
+                int min_type = -1; // 1 for inclusive, 0 for exclusive
+                char *max = NULL;
+                int max_type = -1; // 1 for inclusive, 0 for exclusive
+
+                // read every querystring value
+                // store every single valid key-value pair.
+                while (regexec(&querystring_regex, querystring, 2 + 1, querystring_matches, 0) != 0)
+                {
+                    int item_name_len = querystring_matches[1].rm_eo - querystring_matches[1].rm_so;
+                    char *item_name = malloc(item_name_len + 1);
+                    strncpy(item_name, querystring + querystring_matches[1].rm_so, item_name_len);
+                    item_name[item_name_len] = '\0';
+
+                    int value_len = querystring_matches[2].rm_eo - querystring_matches[1].rm_so;
+                    char *value = malloc(value_len + 1);
+                    strncpy(value, querystring + querystring_matches[2].rm_so, value_len);
+                    value[value_len] = '\0';
+                    // what type is it?
+                    if (strcmp(item_name, "SELECT"))
+                    {
+                        if (value == "*")
+                        {
+                            select = "*";
+                        }
+
+                        for (unsigned i = 0; i < table->schema_count; i++)
+                        {
+                            if (strcmp(value, (*table).schema[i].name))
+                            {
+                                select = value;
+                                break;
+                            }
+                        }
+                    }
+                    else if (strcmp(item_name, "ORDER BY"))
+                    {
+                        if (strcmp(value, "ASC"))
+                        {
+                            order_by = "ASC";
+                        }
+                        else if (strcmp(value, "DSC"))
+                        {
+                            order_by = "DSC";
+                        }
+                    }
+                    else if (strcmp(item_name, "MIN_INCLUSIVE"))
+                    {
+                        regex_t minmax_regex;
+                        regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
+
+                        regmatch_t minmax_matches[2];
+                        if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 && min_type == -1)
+                        {
+                            min = value;
+                            min_type = 1;
+                        }
+                        regfree(&minmax_regex);
+                    }
+                    else if (strcmp(item_name, "MAX_INCLUSIVE"))
+                    {
+                        regex_t minmax_regex;
+                        regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
+
+                        regmatch_t minmax_matches[2];
+                        if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 && min_type == -1)
+                        {
+                            max = value;
+                            max_type = 1;
+                        }
+                        regfree(&minmax_regex);
+                    }
+                    else if (strcmp(item_name, "MIN_EXCLUSIVE"))
+                    {
+                        regex_t minmax_regex;
+                        regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
+
+                        regmatch_t minmax_matches[2];
+                        if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 && min_type == -1)
+                        {
+                            min = value;
+                            min_type = 0;
+                        }
+                        regfree(&minmax_regex);
+                    }
+                    else if (strcmp(item_name, "MAX_EXCLUSIVE"))
+                    {
+                        regex_t minmax_regex;
+                        regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
+
+                        regmatch_t minmax_matches[2];
+                        if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 && min_type == -1)
+                        {
+                            max = value;
+                            max_type = 0;
+                        }
+                        regfree(&minmax_regex);
+                    }
+
+                    // } else if (strcmp(item_name, "INDEX_BY")) {
+                    free(item_name);
+                    free(value);
+                }
+
+                // are the mandatory request params valid? We need something to select and an order to sort it by.
+                if (select && order_by)
+                {
+                    PGconn* conn;
+                    PGresult* res;
+                    char* query;
+                    char* output;
+
+                    // decide the SQL query:
+                    snprintf(query, BUFFER_SIZE, "SELECT %s\nORDER BY %s\nLIMIT %d", select, order_by, limit);
+                    // add in the optional request params
+                    // @todo min/max
+                    // add in the last thing
+                    memcpy(query, ";", strlen(";"));
+
+                    // attempt to query the database
+                    if (sql_query(db_name, query, &res, &conn)) { // if the query is successful,
+                        // convert the query information into JSON
+                        char* output_arrs = "";
+
+                        // add in "[...]," for all the arrays
+                        for (int row = 0; row < PQntuples(res); row++) {
+                            char* entry_arr = "[";
+                            
+                            for (int col = 0; col < PQnfields(res); col++) {
+                                strcat(entry_arr, PQgetvalue(res, row, col));
+                                strcat(entry_arr, ",");
+                            }
+                            // remove trailing comma
+                            entry_arr[strlen(entry_arr) - 1] = ']';
+
+                            strcat(entry_arr, ",");
+
+                            strcat(output_arrs, entry_arr);
+                            free(entry_arr);
+                        }
+                        // remove the trailing comma
+                        output_arrs[strlen(output_arrs) - 1] = '\0';
+
+                        snprintf(output, BUFFER_SIZE, "{\"data\":[%s]}", output_arrs);
+                        build_response_200(response, &response_len, output);
+                        free(output_arrs);
+                        free(output);
+                    } else {
+                        // @todo determine if it's the client's fault or the server's fault
+                        build_response_500(response, &response_len);
+                    }
+
+                    free(query);
+                    PQclear(res);
+                }
+                else
+                {
+                    build_response_400(response, &response_len);
+                }
+
+                regfree(&querystring_regex);
+                free(select);
+                free(order_by);
+                free(min);
+                free(max);
             }
             else
             {
+                // user does not have read access to the respective table
                 build_response_403(response, &response_len);
             }
         }
@@ -418,6 +659,7 @@ found_table:
             }
             else
             {
+                // user does not have write access to the respective table
                 build_response_403(response, &response_len);
             }
         }
@@ -427,6 +669,8 @@ found_table:
             build_response_400(response, &response_len);
         }
     }
+
+    free(table);
 
     // free memory
 no_table_end:
