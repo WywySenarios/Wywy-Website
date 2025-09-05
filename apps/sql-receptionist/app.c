@@ -27,10 +27,12 @@
 
 #define PORT 2523 // @todo make this configurable
 #define BUFFER_SIZE 104857600 - 1
+#define MAX_ENTRY_SIZE 1048576 - 1
 #define AUTH_DB_NAME "auth" // @todo make this configurable
 #define MAX_URL_SECTIONS 3
 #define MAX_REGEX_MATCHES 25
-#define limit 20
+#define limit "20"
+#define HTTP_PLAIN_HEADER strlen("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n")
 
 struct item_querystring
 {
@@ -162,63 +164,21 @@ char *url_decode(const char *src)
     return decoded;
 }
 
-void build_http_response(const char *file_name, const char *file_ext, char *response, size_t *response_len)
-{
-    // build HTTP header
-    const char *mime_type = get_mime_type(file_ext);
-    char *header = (char *)malloc(BUFFER_SIZE * sizeof(char));
-    snprintf(header, BUFFER_SIZE, "HTTP/1.1 200 OK\r\n"
-                                  "Content-Type: %s\r\n"
-                                  "\r\n",
-             mime_type);
-
-    // if file does not exist, response is 404 Not Found
-    int file_fd = open(file_name, O_RDONLY);
-    if (file_fd == -1)
-    {
-        snprintf(response, BUFFER_SIZE, "HTTP/1.1 404 Not Found\r\n"
-                                        "Content-Type: text/plain\r\n"
-                                        "\r\n"
-                                        "404 Not Found");
-        *response_len = strlen(response);
-        return;
-    }
-
-    // get file size for Content-Length
-    struct stat file_stat;
-    fstat(file_fd, &file_stat);
-    off_t file_size = file_stat.st_size;
-
-    // copy header to response buffer
-    *response_len = 0;
-    memcpy(response, header, strlen(header));
-    *response_len += strlen(header);
-
-    // copyy file to response buffer
-    ssize_t bytes_read;
-    while ((bytes_read = read(file_fd, response + *response_len, BUFFER_SIZE - *response_len)) > 0)
-    {
-        *response_len += bytes_read;
-    }
-
-    free(header);
-    close(file_fd);
-}
-
 /**
  * Builds a 200 HTTP response (OK).
  * @param response A pointer to a sequence of characters representing the response
  * @param response_len The length of the response. IDK if this includes the null terminator.
  * @param text The text to include in the response body.
  */
-void *build_response_200(char *response, size_t *response_len, const char *text)
+void build_response_200(char **response, size_t *response_len, const char *text)
 {
-    snprintf(response, BUFFER_SIZE, "HTTP/1.1 200 OK\r\n"
-                                    "Content-Type: text/plain\r\n"
-                                    "\r\n"
-                                    "%s",
+    *response_len = HTTP_PLAIN_HEADER + strlen(text);
+    *response = malloc(*response_len + 1);
+    snprintf(*response, *response_len + 1, "HTTP/1.1 200 OK\r\n"
+                                          "Content-Type: text/plain\r\n"
+                                          "\r\n"
+                                          "%s",
              text);
-    *response_len = strlen(response);
 }
 
 /**
@@ -274,7 +234,7 @@ void *build_response_404(char *response, size_t *response_len)
  * @param response A pointer to a sequence of characters representing the response
  * @param response_len The length of the response. IDK if this includes the null terminator.
  */
-void *build_response_404(char* response, size_t* response_len)
+void *build_response_500(char *response, size_t *response_len)
 {
     snprintf(response, BUFFER_SIZE, "HTTP/1.1 200 OK\r\n"
                                     "Content-Type: text/plain\r\n"
@@ -286,16 +246,16 @@ void *build_response_404(char* response, size_t* response_len)
 }
 
 /**
- * Attempts to query the database with the given query.
+ * Attempts to query the database with the given query. Memory is not freed by this function.
  * @param query A pointer to a sequence of characters representing the query to execute. This function does NOT free query.
- * @return bool indicating whether the query was successful or not. Memory (exluding query) is freed if this function returns false.
+ * @return bool indicating whether the query was successful or not.
  */
-bool sql_query(char *dbname, char *query, PGresult **res, PGconn** conn)
+bool sql_query(char *dbname, char *query, PGresult **res, PGconn **conn)
 {
-    size_t conninfo_size = 1 + 35 + strlen(dbname) + strlen(global_config->postgres.user) + strlen(global_config->postgres.password) + strlen(global_config->postgres.host) + 5;
+    size_t conninfo_size = 1 + strlen("dbname= user= password= host= port=") + strlen(dbname) + strlen(global_config->postgres.user) + strlen(global_config->postgres.password) + strlen(global_config->postgres.host) + 5;
     char *conninfo = malloc(conninfo_size);
     snprintf(conninfo, conninfo_size,
-             "dbname=%s user=%s password=%s host=%s port=%u",
+             "dbname=%s user=%s password=%s host=%s port=%d",
              dbname,
              global_config->postgres.user,
              global_config->postgres.password,
@@ -304,15 +264,15 @@ bool sql_query(char *dbname, char *query, PGresult **res, PGconn** conn)
 
     *conn = PQconnectdb(conninfo);
 
-    if (PQstatus(conn) != CONNECTION_OK)
+    if (PQstatus(*conn) != CONNECTION_OK)
     {
-        PQfinish(conn);
+        PQfinish(*conn);
         free(conninfo);
         return false;
     }
 
     // Submit & Execute query
-    *res = PQexec(conn, query);
+    *res = PQexec(*conn, query);
     ExecStatusType status = PQresultStatus(*res);
 
     free(conninfo);
@@ -323,8 +283,6 @@ bool sql_query(char *dbname, char *query, PGresult **res, PGconn** conn)
     }
     else
     {
-        PQclear(res);
-        PQfinish(conn);
         return false;
     }
 }
@@ -342,11 +300,10 @@ void *handle_client(void *arg)
     // receive request data from client and store into buffer
     ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
 
-    printf("%s\n", buffer);
+    // printf("%s\n", buffer);
     //
     if (bytes_received <= 0)
     {
-        // send HTTP response to client
         build_response_400(response, &response_len);
         goto end;
     }
@@ -360,12 +317,12 @@ void *handle_client(void *arg)
     regmatch_t matches[3];
 
     regex_t url_regex;
-    regcomp(&url_regex, "^/([^/]+)/([^/]+)", REG_EXTENDED); // "[^/]+"
+    regcomp(&url_regex, "([^/]+)/([^/]+)", REG_EXTENDED); // "[^/]+"
 
     regmatch_t url_matches[MAX_URL_SECTIONS + 1];
 
     // Does the request have a URL?
-    if (regexec(&regex, buffer, 3, matches, 0) != 0)
+    if (regexec(&regex, buffer, 3, matches, 0) == REG_NOMATCH)
     {
         build_response_400(response, &response_len);
         goto unsuccessful_regex_end;
@@ -375,7 +332,6 @@ void *handle_client(void *arg)
     // @todo validate the request
     if (matches[1].rm_so == -1 || matches[2].rm_so == -1)
     {
-        // send HTTP response to client
         build_response_400(response, &response_len);
         goto unsuccessful_regex_end;
     }
@@ -403,14 +359,20 @@ void *handle_client(void *arg)
     }
 
     // does the URL have 2 segments?
-    if (regexec(&url_regex, url, MAX_URL_SECTIONS + 1, url_matches, 0) != 0 ||
+    if (regexec(&url_regex, url, MAX_URL_SECTIONS + 1, url_matches, 0) == REG_NOMATCH)
+    {
+        build_response_400(response, &response_len);
+        goto bad_url_end;
+    }
+
+    if (
         url_matches[1].rm_so == -1 || url_matches[2].rm_so == -1)
     {
         build_response_400(response, &response_len);
         goto bad_url_end;
     }
 
-    printf("Received request: %s %s %s\n", method, path, querystring ? querystring : "No query");
+    // printf("Received request: %s %s %s\n", method, path, querystring ? querystring : "No query");
 
     // decide what to do
     // first ensure that the method is uppercase
@@ -448,61 +410,68 @@ void *handle_client(void *arg)
             }
         }
     }
-
-found_table:
     // didn't find a table? Tell the client that there's no such table
     if (table == NULL)
     {
 
         build_response_400(response, &response_len);
+        goto no_table_end;
     }
-    else
+
+found_table:
+    if (strcmp(method, "GET") == 0)
     {
-        if (strcmp(method, "GET") == 0)
+        // check if the database & table may be accessed freely
+        if (table->read)
         {
-            // check if the database & table may be accessed freely
-            if (table->read)
+            // try to access the database and query
+
+            // @todo allow-list input validation
+            // @todo still vulnerable to changing the config
+
+            regex_t querystring_regex;
+            // slash all &'s separate, and the first = sign after the start of the string or the last &
+            regcomp(&querystring_regex, "[&]?([^=]+)=([^&]+)", REG_EXTENDED);
+
+            regmatch_t querystring_matches[2 + 1];
+
+            // many of these need to be non-null:
+            char *select = NULL;
+            char *order_by = NULL;
+            char *min = NULL;
+            int min_type = -1; // 1 for inclusive, 0 for exclusive
+            char *max = NULL;
+            int max_type = -1; // 1 for inclusive, 0 for exclusive
+
+            char *querystring_copy = querystring;
+
+            // read every querystring value
+            // store every single valid key-value pair.
+            while (regexec(&querystring_regex, querystring_copy, 2 + 1, querystring_matches, 0) != REG_NOMATCH)
             {
-                // try to access the database and query
+                int item_name_len = querystring_matches[1].rm_eo - querystring_matches[1].rm_so;
+                char *item_name = malloc(item_name_len + 1);
+                strncpy(item_name, querystring_copy + querystring_matches[1].rm_so, item_name_len);
+                item_name[item_name_len] = '\0';
 
-                // @todo allow-list input validation
-                // @todo still vulnerable to changing the config
+                int value_len = querystring_matches[2].rm_eo - querystring_matches[2].rm_so;
+                char *value = malloc(value_len + 1);
+                strncpy(value, querystring_copy + querystring_matches[2].rm_so, value_len);
+                value[value_len] = '\0';
 
-                regex_t querystring_regex;
-                // slash all &'s separate, and the first = sign after the start of the string or the last &
-                regcomp(&querystring_regex, "[&?]([^=]+)=([^&]+)", REG_EXTENDED);
+                // change the querystring pointer so that it now looks for the next match in the string
+                // @todo please don't brute force by copying most of the string, just edit the pointer value or something...
+                querystring_copy = querystring_copy + querystring_matches[2].rm_eo;
 
-                regmatch_t querystring_matches[2 + 1];
-
-                // many of these need to be non-null:
-                char *select = NULL;
-                char *order_by = NULL;
-                char *min = NULL;
-                int min_type = -1; // 1 for inclusive, 0 for exclusive
-                char *max = NULL;
-                int max_type = -1; // 1 for inclusive, 0 for exclusive
-
-                // read every querystring value
-                // store every single valid key-value pair.
-                while (regexec(&querystring_regex, querystring, 2 + 1, querystring_matches, 0) != 0)
+                // what type is it?
+                if (strcmp(item_name, "SELECT") == 0)
                 {
-                    int item_name_len = querystring_matches[1].rm_eo - querystring_matches[1].rm_so;
-                    char *item_name = malloc(item_name_len + 1);
-                    strncpy(item_name, querystring + querystring_matches[1].rm_so, item_name_len);
-                    item_name[item_name_len] = '\0';
-
-                    int value_len = querystring_matches[2].rm_eo - querystring_matches[1].rm_so;
-                    char *value = malloc(value_len + 1);
-                    strncpy(value, querystring + querystring_matches[2].rm_so, value_len);
-                    value[value_len] = '\0';
-                    // what type is it?
-                    if (strcmp(item_name, "SELECT"))
+                    if (strcmp(value, "*") == 0)
                     {
-                        if (value == "*")
-                        {
-                            select = "*";
-                        }
-
+                        select = "*";
+                    }
+                    else
+                    {
                         for (unsigned i = 0; i < table->schema_count; i++)
                         {
                             if (strcmp(value, (*table).schema[i].name))
@@ -512,165 +481,176 @@ found_table:
                             }
                         }
                     }
-                    else if (strcmp(item_name, "ORDER BY"))
+                }
+                else if (strcmp(item_name, "ORDER BY") == 0)
+                {
+                    if (strcmp(value, "ASC") == 0)
                     {
-                        if (strcmp(value, "ASC"))
-                        {
-                            order_by = "ASC";
-                        }
-                        else if (strcmp(value, "DSC"))
-                        {
-                            order_by = "DSC";
-                        }
+                        order_by = "ASC";
                     }
-                    else if (strcmp(item_name, "MIN_INCLUSIVE"))
+                    else if (strcmp(value, "DSC") == 0)
                     {
-                        regex_t minmax_regex;
-                        regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
-
-                        regmatch_t minmax_matches[2];
-                        if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 && min_type == -1)
-                        {
-                            min = value;
-                            min_type = 1;
-                        }
-                        regfree(&minmax_regex);
+                        order_by = "DSC";
                     }
-                    else if (strcmp(item_name, "MAX_INCLUSIVE"))
+                }
+                else if (strcmp(item_name, "MIN_INCLUSIVE") == 0)
+                {
+                    regex_t minmax_regex;
+                    regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
+
+                    regmatch_t minmax_matches[2];
+                    if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 && min_type == -1)
                     {
-                        regex_t minmax_regex;
-                        regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
-
-                        regmatch_t minmax_matches[2];
-                        if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 && min_type == -1)
-                        {
-                            max = value;
-                            max_type = 1;
-                        }
-                        regfree(&minmax_regex);
+                        min = value;
+                        min_type = 1;
                     }
-                    else if (strcmp(item_name, "MIN_EXCLUSIVE"))
+                    regfree(&minmax_regex);
+                }
+                else if (strcmp(item_name, "MAX_INCLUSIVE") == 0)
+                {
+                    regex_t minmax_regex;
+                    regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
+
+                    regmatch_t minmax_matches[2];
+                    if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 && min_type == -1)
                     {
-                        regex_t minmax_regex;
-                        regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
-
-                        regmatch_t minmax_matches[2];
-                        if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 && min_type == -1)
-                        {
-                            min = value;
-                            min_type = 0;
-                        }
-                        regfree(&minmax_regex);
+                        max = value;
+                        max_type = 1;
                     }
-                    else if (strcmp(item_name, "MAX_EXCLUSIVE"))
+                    regfree(&minmax_regex);
+                }
+                else if (strcmp(item_name, "MIN_EXCLUSIVE") == 0)
+                {
+                    regex_t minmax_regex;
+                    regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
+
+                    regmatch_t minmax_matches[2];
+                    if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 && min_type == -1)
                     {
-                        regex_t minmax_regex;
-                        regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
-
-                        regmatch_t minmax_matches[2];
-                        if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 && min_type == -1)
-                        {
-                            max = value;
-                            max_type = 0;
-                        }
-                        regfree(&minmax_regex);
+                        min = value;
+                        min_type = 0;
                     }
+                    regfree(&minmax_regex);
+                }
+                else if (strcmp(item_name, "MAX_EXCLUSIVE") == 0)
+                {
+                    regex_t minmax_regex;
+                    regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
 
-                    // } else if (strcmp(item_name, "INDEX_BY")) {
-                    free(item_name);
-                    free(value);
+                    regmatch_t minmax_matches[2];
+                    if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 && min_type == -1)
+                    {
+                        max = value;
+                        max_type = 0;
+                    }
+                    regfree(&minmax_regex);
                 }
 
-                // are the mandatory request params valid? We need something to select and an order to sort it by.
-                if (select && order_by)
-                {
-                    PGconn* conn;
-                    PGresult* res;
-                    char* query;
-                    char* output;
+                // } else if (strcmp(item_name, "INDEX_BY")) {
+                free(item_name);
+                free(value);
+            }
 
-                    // decide the SQL query:
-                    snprintf(query, BUFFER_SIZE, "SELECT %s\nORDER BY %s\nLIMIT %d", select, order_by, limit);
-                    // add in the optional request params
-                    // @todo min/max
-                    // add in the last thing
-                    memcpy(query, ";", strlen(";"));
+            // are the mandatory request params valid? We need something to select and an order to sort it by.
+            if (select && order_by)
+            {
+                PGconn *conn;
+                PGresult *res;
+                char *query = malloc(strlen("SELECT \nFROM \nORDER BY id \nLIMIT;") + strlen(select) + strlen(table_name) + strlen(order_by) + strlen(limit) + 1);
+                char *output = malloc(BUFFER_SIZE); // @todo be more specific
 
-                    // attempt to query the database
-                    if (sql_query(db_name, query, &res, &conn)) { // if the query is successful,
-                        // convert the query information into JSON
-                        char* output_arrs = "";
+                // decide the SQL query:
+                snprintf(query, BUFFER_SIZE, "SELECT %s\nFROM %s\nORDER BY id %s\nLIMIT %s", select, table_name, order_by, limit);
+                // add in the optional request params
+                // @todo min/max
+                // add in the last thing
+                strcat(query, ";");
 
-                        // add in "[...]," for all the arrays
-                        for (int row = 0; row < PQntuples(res); row++) {
-                            char* entry_arr = "[";
-                            
-                            for (int col = 0; col < PQnfields(res); col++) {
-                                strcat(entry_arr, PQgetvalue(res, row, col));
-                                strcat(entry_arr, ",");
-                            }
-                            // remove trailing comma
-                            entry_arr[strlen(entry_arr) - 1] = ']';
+                // attempt to query the database
+                if (sql_query(db_name, query, &res, &conn))
+                { // if the query is successful,
+                    // convert the query information into JSON
+                    char *output_arrs = malloc(BUFFER_SIZE); // @todo be more specific
+                    output_arrs[0] = '\0';
 
+                    // add in "[...]," for all the arrays
+                    for (int row = 0; row < PQntuples(res); row++)
+                    {
+                        char *entry_arr = malloc(MAX_ENTRY_SIZE);
+                        strcpy(entry_arr, "[");
+
+                        for (int col = 0; col < PQnfields(res); col++)
+                        {
+                            strcat(entry_arr, PQgetvalue(res, row, col));
                             strcat(entry_arr, ",");
-
-                            strcat(output_arrs, entry_arr);
-                            free(entry_arr);
                         }
-                        // remove the trailing comma
-                        output_arrs[strlen(output_arrs) - 1] = '\0';
+                        // remove trailing comma
+                        entry_arr[strlen(entry_arr) - 1] = ']';
 
-                        snprintf(output, BUFFER_SIZE, "{\"data\":[%s]}", output_arrs);
-                        build_response_200(response, &response_len, output);
-                        free(output_arrs);
-                        free(output);
-                    } else {
-                        // @todo determine if it's the client's fault or the server's fault
-                        build_response_500(response, &response_len);
+                        strcat(entry_arr, ",");
+
+                        strcat(output_arrs, entry_arr);
+                        free(entry_arr);
                     }
+                    // remove the trailing comma
+                    output_arrs[strlen(output_arrs) - 1] = '\0';
 
-                    free(query);
-                    PQclear(res);
+                    snprintf(output, BUFFER_SIZE, "{\"data\":[%s]}", output_arrs);
+                    build_response_200(&response, &response_len, output);
+                    free(output_arrs);
+                    free(output);
                 }
                 else
                 {
-                    build_response_400(response, &response_len);
+                    // @todo determine if it's the client's fault or the server's fault
+                    build_response_500(response, &response_len);
                 }
 
-                regfree(&querystring_regex);
-                free(select);
-                free(order_by);
+                free(query);
+                PQclear(res);
+            }
+            else
+            {
+                build_response_400(response, &response_len);
+            }
+
+            regfree(&querystring_regex);
+            // free(select);
+            // free(order_by);
+            if (min)
+            {
                 free(min);
+            }
+            if (max)
+            {
                 free(max);
-            }
-            else
-            {
-                // user does not have read access to the respective table
-                build_response_403(response, &response_len);
-            }
-        }
-        else if (strcmp(method, "POST") == 0)
-        {
-            // check if the database & table can be written to freely
-            if (table->write)
-            {
-                //@todo
-                build_response_200(response, &response_len, "");
-            }
-            else
-            {
-                // user does not have write access to the respective table
-                build_response_403(response, &response_len);
             }
         }
         else
         {
-            // tell the client I don't understand what's going on
-            build_response_400(response, &response_len);
+            // user does not have read access to the respective table
+            build_response_403(response, &response_len);
         }
     }
-
-    free(table);
+    else if (strcmp(method, "POST") == 0)
+    {
+        // check if the database & table can be written to freely
+        if (table->write)
+        {
+            //@todo
+            build_response_200(&response, &response_len, "");
+        }
+        else
+        {
+            // user does not have write access to the respective table
+            build_response_403(response, &response_len);
+        }
+    }
+    else
+    {
+        // tell the client I don't understand what's going on
+        build_response_400(response, &response_len);
+    }
 
     // free memory
 no_table_end:
