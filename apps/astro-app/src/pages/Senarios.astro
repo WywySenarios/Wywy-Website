@@ -4,7 +4,7 @@ import { getEntry } from "astro:content";
 import Layout from "@/layouts/base/LayoutFallingBgWywy.astro";
 import Card from "@/components/Card.astro";
 import SenariosCard from "@/components/Senarios/SenariosCard.astro";
-import config from "@root/config/config.yml";
+import config from "@universal_root/config.yml";
 
 let pinnedCards = [];
 for (let i of config["websiteData"]["Senarios"]["cards"]["pinned"]) {

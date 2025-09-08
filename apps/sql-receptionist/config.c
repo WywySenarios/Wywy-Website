@@ -118,7 +118,7 @@ static const cyaml_config_t cyaml_config = {
  * @return Null if the configuration could not be loaded, otherwise a pointer to the loaded configuration (struct config).
  */
 void load_config(struct config **cfg) {
-    cyaml_err_t err = cyaml_load_file("config.yml", &cyaml_config, &config_schema, (void **)cfg, NULL);
+    cyaml_err_t err = cyaml_load_file("../../config.yml", &cyaml_config, &config_schema, (void **)cfg, NULL);
 
     if (err != CYAML_OK) {
         fprintf(stderr, "Failed to load config: %s\n", cyaml_strerror(err));

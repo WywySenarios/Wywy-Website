@@ -3,8 +3,9 @@
     "compilerOptions": {
       "baseUrl": ".",
       "paths": {
-        "@root/*": ["./*"],
-        "@/*": ["./src/*"],
+        "@universal_root": ["./../*"], // root for all the WywyWebsite apps.
+        "@root/*": ["./*"], // root for this Astro app
+        "@/*": ["./src/*"], // src for this Astro app
         "@pages/*": ["./pages/*"],
         "@public/*": ["./public/*"],
         "@data/*": ["./data/*"]

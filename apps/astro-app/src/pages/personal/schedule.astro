@@ -3,7 +3,7 @@ export const prerender = true;
 import { getCollection } from 'astro:content';
 import Layout from "@/layouts/Layout.astro";
 import ScheduleTable from "@/components/ScheduleTable.astro";
-import config from "@root/config/config.yml";
+import config from "@universal_root/config.yml";
 
 let schedules: {[key: string]: any}[] = [];
 await getCollection('schedules', ({ data }) => {
