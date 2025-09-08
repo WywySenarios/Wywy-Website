@@ -8,8 +8,6 @@ import yaml from '@rollup/plugin-yaml';
 
 import tailwindcss from '@tailwindcss/vite';
 
-import db from '@astrojs/db';
-
 const nets = networkInterfaces();
 const results = Object.create(null); // Or just '{}', an empty object
 
@@ -47,5 +45,5 @@ export default defineConfig({
     plugins: [tailwindcss(), yaml()]
   },
 
-  integrations: [react(), db()]
+  integrations: [react()]
 });
