@@ -3,7 +3,7 @@
     "compilerOptions": {
       "baseUrl": ".",
       "paths": {
-        "@universal_root": ["./../*"], // root for all the WywyWebsite apps.
+        "@universal_root/*": ["./../../*"], // root for all the WywyWebsite apps.
         "@root/*": ["./*"], // root for this Astro app
         "@/*": ["./src/*"], // src for this Astro app
         "@pages/*": ["./pages/*"],
@@ -14,6 +14,6 @@
       "jsxImportSource": "react",
       "verbatimModuleSyntax": true,
     },
-    "include": ["src", "src/**/*.ts", ".astro/types.d.ts", "**/*"],
+    "include": ["src", "src/**/*.ts", ".astro/types.d.ts", "**/*", "../../config.yml"],
     "exclude": ["dist"],
   }
