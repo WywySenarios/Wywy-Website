@@ -21,7 +21,7 @@ data:
         write: true
         entrytype: form # !!!! this is important I'M NOT SQUIDDING
         schema:
-          - name: date
+          - name: Date
             datatype: date
             entrytype: calendar
             unique: true

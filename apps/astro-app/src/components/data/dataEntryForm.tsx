@@ -125,9 +125,9 @@ const inputElements: Record<string, inputElementFunction> = {
             mode="single"
             selected={field.field.value}
             onSelect={field.field.onChange}
-            disabled={(date) =>
-              date > new Date() || date < new Date("1900-01-01")
-            }
+            // disabled={(date) =>
+            //   date > new Date() || date < new Date("1900-01-01")
+            // }
             captionLayout="dropdown"
           />
         </PopoverContent>
@@ -163,11 +163,15 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
 
     // throw things into the schema, adding in restrictions as necessary
     // @TODO add restrictions
-
-
-    // find a default value and create the form element
     zodSchema[columnInfo.name] = zodDatatypes[columnInfo.datatype as zodPrimaryDatatypes]
+    // find a default value and create the form element
     defaultValues[columnInfo.name] = columnInfo.defaultValue ?? getFallbackValue(columnInfo.datatype)
+
+    // update schema if there should be comments for this column
+    // @TODO add length restriction
+    zodSchema[columnInfo.name + "-comments"] = z.string().optional()
+    defaultValues[columnInfo.name + "-comments"] = undefined
+    
     // look for any restrictions
     // @ts-ignore thanks to the ColumnData type, this is guarenteed to be OK.
     if ("min" in columnInfo) { zodSchema[columnInfo.name] = zodSchema[columnInfo.name].min(columnInfo.min) }
@@ -199,7 +203,7 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
   function onSubmitInvalid(values: z.infer<typeof formSchema>) {
     // send them over to the database!
     for (let erroringField in values) {
-      toast(values[erroringField]["message"])
+      toast(erroringField + ": " + values[erroringField]["message"])
     }
   }
 
@@ -217,14 +221,38 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
             console.warn(`No input element found for column ${columnInfo.name}. This is likely a bug.`)
             return
           } else {
-            return (
-              <FormField
-                control={form.control}
-                name={columnInfo.name}
-                key={columnInfo.name + "-field"}
-                render={(field) => inputElement(field, columnInfo)}
-              />
+            if (columnInfo.comments) {
+              return (
+                <div className="rounded-lg border p-3 shadow-sm">
+                  <FormField
+                    control={form.control}
+                    name={columnInfo.name}
+                    key={columnInfo.name + "-field"}
+                    render={(field) => inputElement(field, columnInfo)}
+                  />
+                  <div className="w-full flex flex-col items-center gap-4">
+      <FormLabel className="text-base">Comments</FormLabel>
+    </div>
+                  {columnInfo.comments ? <FormField
+                    control={form.control}
+                    name={columnInfo.name + "-comments"}
+                    key={columnInfo.name + "-comments-field"}
+                    render={(field) => <FormControl>
+                      <Textarea {...field.field} />
+                    </FormControl>}
+                  /> : null}
+                </div>
+              )
+            } else {
+              return (
+                <FormField
+                  control={form.control}
+                  name={columnInfo.name}
+                  key={columnInfo.name + "-field"}
+                  render={(field) => inputElement(field, columnInfo)}
+                />
             )
+            }
           }
         }
         )

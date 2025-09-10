@@ -86,14 +86,20 @@ class Wywy(cmd.Cmd):
                         print("Table", tableInfo["tableName"], "must have a column schema containing at least 1 column of data to store.")
                         valid = False
                     
+                    # ensure that column names will not interfere with comments in the Astro schema (see apps/astro-app/src/components/data/dataEntryForm.tsx)
+                    if "schema" in tableInfo:
+                        for columnName in tableInfo["schema"]:
+                            if columnName[-9:] == "-comments":
+                                print("Table", tableInfo["tableName"], "must not have a column with a name that ends in \"-comments\".")
+
                     # avoid reserved columns
                     if "schema" in tableInfo:
                         for i in RESERVEDCOLUMNNAMES:
                             if i in tableInfo["schema"]:
                                 print("Table", tableInfo["tableName"], "must not have a column named \"" + i + "\", which is a reserved column name.")
                                 valid = False
-                    # it has a name that will be recognized by the PostgresSQL database & server
-                    
+                    # @todo it has a name that will be recognized by the PostgresSQL database & server
+
                     if not valid:
                         print("Skipping creation of table", tableInfo.get("tableName", "???"), "due to schema violation(s).")
                         continue
