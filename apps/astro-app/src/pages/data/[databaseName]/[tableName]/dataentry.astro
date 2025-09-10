@@ -1,0 +1,83 @@
+---
+/*
+ * Statically generate a webpage
+ *
+ * @TODO redirect if dataHarvesting is disabled
+ */
+import type { MainConfigSchema, DatabaseInfo, TableInfo } from "src/env";
+// import cfg from "@universal_root/config.yml";
+import config from "@universal_root/config.yml";
+// const config = cfg as MainConfigSchema;
+import Layout from "@/layouts/Layout.astro";
+
+import { TestTest } from "@/components/data/test";
+import { DataEntryForm } from "@/components/data/dataEntryForm";
+
+export const prerender = true;
+export function getStaticPaths() {
+    let output: Array<{params: {databaseName: string, tableName: string}}> = [];
+
+
+    Object.values(config.data as DatabaseInfo[]).map(
+        (dbinfo: DatabaseInfo) => (
+            Object.values(dbinfo.tables).map((tableInfo: TableInfo) => {
+                output.push({params: { databaseName: dbinfo.dbname, tableName: tableInfo.tableName }});
+            })
+        ),
+    );
+
+    return output;
+} // It's crucial that this page loads as quickly as possible to provide the best experience.
+
+const { databaseName, tableName } = Astro.params;
+
+// const fieldsToEnter: Array<DataColumn | JsonColumn> = Object.values(config.data.databases[databaseName].schema);
+
+const pageTitle: string =
+    databaseName.charAt(0).toUpperCase() +
+    databaseName.slice(1) +
+    "/" + 
+    tableName.charAt(0).toUpperCase() +
+    tableName.slice(1) + 
+    " Data Entry";
+
+
+let tableInfo: TableInfo | undefined = undefined;
+for (let i of config.data) {
+    if (i.dbname == databaseName) {
+        for (let j of i.tables) {
+            if (j.tableName == tableName) {
+                tableInfo = j;
+                break;
+            }
+        }
+        break;
+    }
+}
+
+if (!tableInfo) {
+    // @todo say something isn't working
+    return Astro.redirect("/")
+}
+---
+
+<Layout
+    title={pageTitle}
+    css_color_palette="light_mode"
+    useAstroDefaultCSS={false}
+>
+    <!-- <Layout title={"lkjhasdf"} css_color_palette="light_mode" useAstroDefaultCSS={false}> -->
+    <!-- {fieldsToEnter.map((column: DataColumn | JsonColumn) => {
+        
+    })} -->
+    <DataEntryForm
+        fieldsToEnter={tableInfo.schema}
+        databaseName={databaseName}
+        client:load
+    >
+        <div slot="fallback">Loading...</div>
+    </DataEntryForm>
+    <TestTest client:only="react">
+        <div slot="fallback">Loading...</div>
+    </TestTest>
+</Layout>

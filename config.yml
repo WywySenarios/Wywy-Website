@@ -1,0 +1,114 @@
+# UNUSED SO FAR:
+# The location of python that you wish to run.
+python: ".venv\\Scripts\\python.exe"
+
+# Webpage
+websiteTitle: "My Website Title"
+websiteIcon: "/favicon.svg"
+
+# Postgres database
+postgres:
+  # @TODO TCP vs UNIX socket
+  host: 127.0.0.1
+  port: 5432
+  user: postgres
+  password: ~
+data:
+  - dbname: WywyWebsite
+    tables:
+      - tableName: daily
+        read: true
+        write: true
+        entrytype: form # !!!! this is important I'M NOT SQUIDDING
+        schema:
+          - name: date
+            datatype: date
+            entrytype: calendar
+            unique: true
+
+          - name: Work Ethic
+            datatype: int
+            entrytype: linearSlider
+            comments: true
+
+          - name: Time Efficiency
+            datatype: int
+            entrytype: linearSlider
+            comments: true
+
+          - name: General Performance
+            datatype: int
+            entrytype: linearSlider
+            comments: true
+
+          - name: Happiness
+            datatype: int
+            entrytype: linearSlider
+            comments: true
+
+          - name: Awareness
+            datatype: int
+            entrytype: linearSlider
+            comments: true
+
+          - name: Sleep Quality
+            datatype: int
+            entrytype: linearSlider
+            comments: true
+
+          - name: Sleep Behaviour
+            datatype: int
+            entrytype: linearSlider
+            comments: true
+
+          - name: Bedtime
+            datatype: time # @todo fix this for typescript programs
+            entrytype: time
+            defaultValue: 22:30
+            comments: true
+
+          - name: Awakening
+            datatype: time
+            entrytype: time
+            defaultValue: 07:00
+            comments: true
+
+          - name: Awake Sleep
+            datatype: float
+            entrytype: textbox
+            max: 24
+            comments: true
+
+          - name: Light Sleep
+            datatype: float
+            entrytype: linearSlider
+            max: 24
+            comments: true
+
+          - name: Deep Sleep
+            datatype: float
+            entrytype: linearSlider
+            max: 24
+            comments: true
+      - tableName: events
+        read: true
+        write: true
+        entrytype: entries
+        schema:
+          - name: Type
+            datatype: string
+            entrytype: textbox
+            suggestions: [""]
+            comments: false
+
+          - name: Applicable Start
+            datatype: timestamp
+            entrytype: calendar time
+
+          - name: Applicable End
+            datatype: timestamp
+            entrytype: calendar time
+
+          - name: Total Length
+            datatype: float
+            entrytype: textbox

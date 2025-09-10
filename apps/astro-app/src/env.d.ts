@@ -1,6 +1,11 @@
 /// <reference path="../.astro/types.d.ts" />
 
-import type { zodPrimaryDatatypes } from "./constants"
+import type { zodPrimaryDatatypes } from "./utils/data"
+
+declare module  "env" {
+    const config: MainConfigSchema
+    export = config;
+}
 
 export interface MainConfigSchema {
     websiteTitle: string, // Title of the website (e.g. "EZ & Wywy's Website!")
@@ -23,17 +28,21 @@ export interface MainConfigSchema {
             }
         },
     },
-    data: {
-        databases: Record<string, DatabaseInfo>
-    },
+    data: Array<DatabaseInfo>,
 }
 
 // Database Related
 export interface DatabaseInfo {
-    databaseName: string,
-    schema: {
-        [columnName: string]: DataColumn | JsonColumn
-    }
+    dbname: string,
+    tables: Array<TableInfo>
+}
+
+export interface TableInfo {
+    tableName: string,
+    read: bool,
+    write: bool,
+    entrytype: "form" | "entries",
+    schema: Array<DataColumn>
 }
 
 // look at the restrictions for different entry types
@@ -102,24 +111,20 @@ type TimeColumn = {
     defaultValue?: Date // @TODO consider switching datatypes?
 } & (TimeRestrictions | NoRestrictions)
 
+type TimestampColumn = {
+    datatype: "timestamp"
+    defaultValue?: Date // @TODO consider switching datatypes?
+} & (TimeRestrictions | DateRestrictions)
+
 export type DataColumn = {
+    name: string
     datatype: zodPrimaryDatatypes
     // Definitely optional:
     //@TODO add regex restrictions
     // restrictions?: Array<[number, number]>
     invalidInputMessage?: string
-    // comments?: boolean
+    comments?: boolean
     prompt?: string
     unique?: boolean
-} & (IntegerColumn | FloatColumn | StringColumn | BooleanColumn | DateColumn | TimeColumn)
-
-
-// @TODO deprecate and remove
-export interface JsonColumn {
-    datatype: "json" | "JSON"
-    entrytype: "entries" | "none"
-    constituents: {
-        [constitutentName: string]: DataColumn
-    }
-}
+} & (IntegerColumn | FloatColumn | StringColumn | BooleanColumn | DateColumn | TimeColumn | TimestampColumn)
 // END - Database Related
