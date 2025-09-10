@@ -4,14 +4,13 @@
  *
  * @TODO redirect if dataHarvesting is disabled
  */
-import type { MainConfigSchema, DatabaseInfo, TableInfo } from "src/env";
-// import cfg from "@universal_root/config.yml";
+import type { DatabaseInfo, TableInfo } from "src/env";
 import config from "@universal_root/config.yml";
-// const config = cfg as MainConfigSchema;
 import Layout from "@/layouts/Layout.astro";
 
 import { TestTest } from "@/components/data/test";
 import { DataEntryForm } from "@/components/data/dataEntryForm";
+import { Toaster } from "@/components/ui/sonner";
 
 export const prerender = true;
 export function getStaticPaths() {
@@ -77,7 +76,5 @@ if (!tableInfo) {
     >
         <div slot="fallback">Loading...</div>
     </DataEntryForm>
-    <TestTest client:only="react">
-        <div slot="fallback">Loading...</div>
-    </TestTest>
+    <Toaster client:load/>
 </Layout>

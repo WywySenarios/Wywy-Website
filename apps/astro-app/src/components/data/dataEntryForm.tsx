@@ -24,6 +24,9 @@ import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { parseTime, parseAny } from "@/utils"
 
+import { toast } from "sonner"
+
+
 // Input elements!
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -43,11 +46,6 @@ const inputElementsAliases: Record<string, "textbox" | "linearSlider" | "radio" 
   "time": "time",
 }
 
-// give the following pieces of information:
-// field: the field object from react-hook-form
-// defaultValue: the default value for the field
-// columnName: the name of the column in the database
-// fields: contains all desired information about each column
 type inputElementFunction = (field: any, columnInfo: DataColumn) => ReactElement<unknown, string | JSXElementConstructor<any>>
 
 const inputElements: Record<string, inputElementFunction> = {
@@ -200,7 +198,9 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
 
   function onSubmitInvalid(values: z.infer<typeof formSchema>) {
     // send them over to the database!
-    console.log("SOMETHING BAD HAPPENED.", values)
+    for (let erroringField in values) {
+      toast(values[erroringField]["message"])
+    }
   }
 
 
@@ -223,7 +223,6 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
                 name={columnInfo.name}
                 key={columnInfo.name + "-field"}
                 render={(field) => inputElement(field, columnInfo)}
-              // className="flex flex-col items-center rounded-lg border p-8 shadow-sm"}
               />
             )
           }
