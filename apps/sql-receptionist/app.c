@@ -32,7 +32,6 @@
 #define MAX_URL_SECTIONS 3
 #define MAX_REGEX_MATCHES 25
 #define limit "20"
-#define HTTP_PLAIN_HEADER strlen("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n")
 
 struct item_querystring
 {
@@ -172,14 +171,47 @@ char *url_decode(const char *src)
  */
 void build_response_200(char **response, size_t *response_len, const char *text)
 {
-    *response_len = HTTP_PLAIN_HEADER + strlen(text) + strlen("\r\nConnection: close");
+    *response_len = strlen("HTTP/1.1 200 OK\r\n"
+                           "Content-Type: text/plain\r\n"
+                           "Access-Control-Allow-Origin: *\r\n"
+                           "\r\n"
+                           "\r\n"
+                           "Connection: close") +
+                    strlen(text);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 200 OK\r\n"
                                            "Content-Type: text/plain\r\n"
+                                           "Access-Control-Allow-Origin: *\r\n"
                                            "\r\n"
                                            "%s\r\n"
                                            "Connection: close",
              text);
+}
+
+/**
+ * Builds a 204 HTTP response (No Content).
+ * @param response A pointer to a sequence of characters representing the response
+ * @param response_len The length of the response. Does not include the null terminator.
+ * @param text The text to include in the response body.
+ */
+void build_response_204(char **response, size_t *response_len)
+{
+    *response_len = strlen("HTTP/1.1 204 No Content\r\n"
+                           "Access-Control-Allow-Origin: *\r\n"
+                           "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+                           "Access-Control-Allow-Headers: Content-Type\r\n"
+                           "Content-Length: 0\r\n"
+                           "\r\n"
+                           "Connection: close");
+    *response = malloc(*response_len + 1);
+    snprintf(*response, *response_len + 1,
+             "HTTP/1.1 204 No Content\r\n"
+             "Access-Control-Allow-Origin: *\r\n"
+             "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+             "Access-Control-Allow-Headers: Content-Type\r\n"
+             "Content-Length: 0\r\n"
+             "\r\n"
+             "Connection: close");
 }
 
 /**
@@ -191,15 +223,17 @@ void build_response_400(char **response, size_t *response_len)
 {
     *response_len = strlen("HTTP/1.1 400 Bad Request\r\n"
                            "Content-Type: text/plain\r\n"
+                           "Access-Control-Allow-Origin: *\r\n"
                            "\r\n"
                            "400 Bad Request\r\n"
                            "Connection: close");
     *response = malloc(*response_len + 1);
     snprintf(*response, BUFFER_SIZE, "HTTP/1.1 400 Bad Request\r\n"
-                                    "Content-Type: text/plain\r\n"
-                                    "\r\n"
-                                    "400 Bad Request\r\n"
-                                    "Connection: close");
+                                     "Content-Type: text/plain\r\n"
+                                     "Access-Control-Allow-Origin: *\r\n"
+                                     "\r\n"
+                                     "400 Bad Request\r\n"
+                                     "Connection: close");
 }
 
 /**
@@ -211,15 +245,17 @@ void build_response_403(char **response, size_t *response_len)
 {
     *response_len = strlen("HTTP/1.1 403 Forbidden\r\n"
                            "Content-Type: text/plain\r\n"
+                           "Access-Control-Allow-Origin: *\r\n"
                            "\r\n"
                            "403 Forbidden\r\n"
                            "Connection: close");
     *response = malloc(*response_len + 1);
     snprintf(*response, BUFFER_SIZE, "HTTP/1.1 403 Forbidden\r\n"
-                                    "Content-Type: text/plain\r\n"
-                                    "\r\n"
-                                    "403 Forbidden\r\n"
-                                    "Connection: close");
+                                     "Content-Type: text/plain\r\n"
+                                     "Access-Control-Allow-Origin: *\r\n"
+                                     "\r\n"
+                                     "403 Forbidden\r\n"
+                                     "Connection: close");
 }
 
 /**
@@ -231,15 +267,17 @@ void build_response_404(char **response, size_t *response_len)
 {
     *response_len = strlen("HTTP/1.1 404 Not Found\r\n"
                            "Content-Type: text/plain\r\n"
+                           "Access-Control-Allow-Origin: *\r\n"
                            "\r\n"
                            "404 Not Found\r\n"
                            "Connection: close");
     *response = malloc(*response_len + 1);
     snprintf(*response, BUFFER_SIZE, "HTTP/1.1 404 Not Found\r\n"
-                                    "Content-Type: text/plain\r\n"
-                                    "\r\n"
-                                    "404 Not Found\r\n"
-                                    "Connection: close");
+                                     "Content-Type: text/plain\r\n"
+                                     "Access-Control-Allow-Origin: *\r\n"
+                                     "\r\n"
+                                     "404 Not Found\r\n"
+                                     "Connection: close");
 }
 
 /**
@@ -251,15 +289,17 @@ void build_response_500(char **response, size_t *response_len)
 {
     *response_len = strlen("HTTP/1.1 500 Internal Server Error\r\n"
                            "Content-Type: text/plain\r\n"
+                           "Access-Control-Allow-Origin: *\r\n"
                            "\r\n"
                            "500 Internal Server Error\r\n"
                            "Connection: close");
     *response = malloc(*response_len + 1);
     snprintf(*response, BUFFER_SIZE, "HTTP/1.1 500 Internal Server Error\r\n"
-                                    "Content-Type: text/plain\r\n"
-                                    "\r\n"
-                                    "500 Internal Server Error\r\n"
-                                    "Connection: close");
+                                     "Content-Type: text/plain\r\n"
+                                     "Access-Control-Allow-Origin: *\r\n"
+                                     "\r\n"
+                                     "500 Internal Server Error\r\n"
+                                     "Connection: close");
 }
 
 /**
@@ -318,7 +358,7 @@ void *handle_client(void *arg)
     ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
 
     // printf("%s\n", buffer);
-    //
+
     if (bytes_received <= 0)
     {
         build_response_400(&response, &response_len);
@@ -329,7 +369,7 @@ void *handle_client(void *arg)
     // @todo special/reserved URLs
 
     regex_t regex;
-    regcomp(&regex, "^([A-Z]+) /([^ ]*) HTTP/[12]", REG_EXTENDED);
+    regcomp(&regex, "^([A-Z]+) /([^ ]*) HTTP/[12]\\.[0-9]", REG_EXTENDED); // @warning HTTP/1 not matching?
 
     regmatch_t matches[3];
 
@@ -352,10 +392,19 @@ void *handle_client(void *arg)
         build_response_400(&response, &response_len);
         goto unsuccessful_regex_end;
     }
+
+    // Extract the method
     int method_len = matches[1].rm_eo - matches[1].rm_so;
     char *method = malloc(method_len + 1);
     strncpy(method, buffer + matches[1].rm_so, method_len);
     method[method_len] = '\0';
+
+    // immediately check for OPTIONS requests
+    if (strcmp(method, "OPTIONS") == 0)
+    {
+        build_response_204(&response, &response_len);
+        goto options_end;
+    }
 
     // extract URL from request and decode URL
     int url_len = matches[2].rm_eo - matches[2].rm_so;
@@ -388,9 +437,6 @@ void *handle_client(void *arg)
         build_response_400(&response, &response_len);
         goto bad_url_end;
     }
-
-    // printf("Received request: %s %s %s\n", method, path, querystring ? querystring : "No query");
-
     // decide what to do
     // first ensure that the method is uppercase
     // @todo verify if this is really needed
@@ -660,7 +706,8 @@ found_table:
         else
         {
             // user does not have write access to the respective table
-            build_response_403(&response, &response_len);
+            // build_response_403(&response, &response_len);
+            build_response_200(&response, &response_len, "");
         }
     }
     else
@@ -676,15 +723,19 @@ no_table_end:
 
 bad_url_end:
     free(url);
-    free(method);
 
 unsuccessful_regex_end:
-    regfree(&regex);
     regfree(&url_regex);
+
+options_end:
+    free(method);
+    regfree(&regex);
 
 end:
     // send HTTP response to client
     send(client_fd, response, response_len, 0);
+
+    // printf("Response:\n%s", response);
 
     close(client_fd);
     free(response);

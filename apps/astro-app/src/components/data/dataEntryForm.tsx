@@ -35,7 +35,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radioGroup"
 import { Switch } from "@/components/ui/switch"
 import { Calendar } from "../ui/calendar"
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover"
-import { text } from "node:stream/consumers"
 
 const inputElementsAliases: Record<string, "textbox" | "linearSlider" | "radio" | "calendar" | "time"> = {
   "textbox": "textbox",
@@ -87,8 +86,8 @@ const inputElements: Record<string, inputElementFunction> = {
     </div ></FormItem>,
   "switch": (field, columnInfo) => <FormItem className="w-full flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
     <div className="w-full space-y-0.5">
-      <FormLabel className="space-y-0.5 text-lg font-semibold"><p>{columnInfo.name}</p>
-        {/* <FormDescription className="text-sm text-gray-500">: Toggle {columnName}</FormDescription> */}
+      <FormLabel className="space-y-0.5 text-lg font-semibold">
+        <p>{columnInfo.name}</p>
       </FormLabel>
     </div>
     <FormControl>
@@ -181,40 +180,35 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
   }
 
   const formSchema = z.object(zodSchema)
-  // const formSchema = z.object({
-  //   first: z.string().min(0, {
-  //     message: "Username must be at least 2 characters.",
-  //   }),
-  // })
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    // defaultValues: {
-    //   first: "asdasd",
-    // }
     defaultValues,
   })
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
     // POST them to the SQL Receptionist!
-    const response = fetch(dbURL + "/" + databaseName + "/" + tableName, {
+    console.log(`${dbURL + "/" + databaseName + "/" + tableName}`)
+    fetch(dbURL + "/" + databaseName + "/" + tableName, {
       method: "POST",
       body: JSON.stringify(values),
+      mode: "cors",
       headers: {
-        "Content-type": "application/json; charset=UTF-8"
+        "Content-type": "application/json; charset=UTF-8",
       }
-    })
-    const reaction = response.then((response) => {
-      if (response.ok) {
-        if (response.headers.get("Content-Type") == "text/plain") {
-          toast(`Successfully submitted form! ${response.text}`)
+    }).then((response) => {
+      response.text().then((text: string) => {
+        if (response.ok) {
+          if (response.headers.get("Content-Type") == "text/plain") {
+            toast(`Successfully submitted form!`)
+          } else {
+            toast(`The server has returned an unexpected response. Wywy is sad. ${text}`)
+          }
         } else {
-          toast(`The server has returned an unexpected response. Wywy is sad. ${response.text}`)
+          toast(`HTTP Error. ${text}`)
         }
-      } else {
-        toast(`HTTP Error. ${response.text}`)
-      }
+      })
     })
   }
 
@@ -237,7 +231,7 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
           } else {
             if (columnInfo.comments) {
               return (
-                <div className="rounded-lg border p-3 shadow-sm">
+                <div className="rounded-lg border p-5 shadow-md" key={columnInfo.name}>
                   <FormField
                     control={form.control}
                     name={columnInfo.name}
