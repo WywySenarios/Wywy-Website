@@ -1,3 +1,7 @@
+referenceUrls:
+  main: https://www.ericzhu.me
+  db: https://db.ericzhu.me
+
 # UNUSED SO FAR:
 # The location of python that you wish to run.
 python: ".venv\\Scripts\\python.exe"

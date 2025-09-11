@@ -35,6 +35,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radioGroup"
 import { Switch } from "@/components/ui/switch"
 import { Calendar } from "../ui/calendar"
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover"
+import { text } from "node:stream/consumers"
 
 const inputElementsAliases: Record<string, "textbox" | "linearSlider" | "radio" | "calendar" | "time"> = {
   "textbox": "textbox",
@@ -150,7 +151,7 @@ const inputElements: Record<string, inputElementFunction> = {
   </FormItem>,
 }
 
-export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: Array<DataColumn>, databaseName: string }) {
+export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }: { fieldsToEnter: Array<DataColumn>, databaseName: string, tableName: string, dbURL: string }) {
   // start creating the schema based on the given database
   let zodSchema: Record<string, ZodTypeAny> = {}
   // give Zod some default values to work with
@@ -171,7 +172,7 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
     // @TODO add length restriction
     zodSchema[columnInfo.name + "-comments"] = z.string().optional()
     defaultValues[columnInfo.name + "-comments"] = undefined
-    
+
     // look for any restrictions
     // @ts-ignore thanks to the ColumnData type, this is guarenteed to be OK.
     if ("min" in columnInfo) { zodSchema[columnInfo.name] = zodSchema[columnInfo.name].min(columnInfo.min) }
@@ -196,21 +197,34 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // send them over to the database!
-    console.log(values)
+    // POST them to the SQL Receptionist!
+    const response = fetch(dbURL + "/" + databaseName + "/" + tableName, {
+      method: "POST",
+      body: JSON.stringify(values),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8"
+      }
+    })
+    const reaction = response.then((response) => {
+      if (response.ok) {
+        if (response.headers.get("Content-Type") == "text/plain") {
+          toast(`Successfully submitted form! ${response.text}`)
+        } else {
+          toast(`The server has returned an unexpected response. Wywy is sad. ${response.text}`)
+        }
+      } else {
+        toast(`HTTP Error. ${response.text}`)
+      }
+    })
   }
 
   function onSubmitInvalid(values: z.infer<typeof formSchema>) {
-    // send them over to the database!
+    // Create some toasts to let to user know what went wrong.
     for (let erroringField in values) {
       toast(erroringField + ": " + values[erroringField]["message"])
     }
   }
 
-
-  // console.log(Object.entries(elementSchema) as [string, inputElementFunction][])
-
-  // @todo optimize by just yeeting in a second pass of the let columnInfo of fieldsToEnter
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onSubmitInvalid)} className="flex flex-col gap-4">
@@ -231,8 +245,8 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
                     render={(field) => inputElement(field, columnInfo)}
                   />
                   <div className="w-full flex flex-col items-center gap-4">
-      <FormLabel className="text-base">Comments</FormLabel>
-    </div>
+                    <FormLabel className="text-base">Comments</FormLabel>
+                  </div>
                   {columnInfo.comments ? <FormField
                     control={form.control}
                     name={columnInfo.name + "-comments"}
@@ -251,7 +265,7 @@ export function DataEntryForm({ fieldsToEnter, databaseName }: { fieldsToEnter: 
                   key={columnInfo.name + "-field"}
                   render={(field) => inputElement(field, columnInfo)}
                 />
-            )
+              )
             }
           }
         }

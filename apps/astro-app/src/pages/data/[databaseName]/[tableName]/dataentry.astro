@@ -72,6 +72,8 @@ if (!tableInfo) {
     <DataEntryForm
         fieldsToEnter={tableInfo.schema}
         databaseName={databaseName}
+        tableName={tableName}
+        dbURL={config.referenceUrls.db}
         client:load
     >
         <div slot="fallback">Loading...</div>
