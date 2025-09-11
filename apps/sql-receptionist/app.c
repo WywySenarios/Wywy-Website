@@ -167,82 +167,99 @@ char *url_decode(const char *src)
 /**
  * Builds a 200 HTTP response (OK).
  * @param response A pointer to a sequence of characters representing the response
- * @param response_len The length of the response. IDK if this includes the null terminator.
+ * @param response_len The length of the response. Does not include the null terminator.
  * @param text The text to include in the response body.
  */
 void build_response_200(char **response, size_t *response_len, const char *text)
 {
-    *response_len = HTTP_PLAIN_HEADER + strlen(text);
+    *response_len = HTTP_PLAIN_HEADER + strlen(text) + strlen("\r\nConnection: close");
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 200 OK\r\n"
-                                          "Content-Type: text/plain\r\n"
-                                          "\r\n"
-                                          "%s",
+                                           "Content-Type: text/plain\r\n"
+                                           "\r\n"
+                                           "%s\r\n"
+                                           "Connection: close",
              text);
 }
 
 /**
  * Builds a 400 HTTP response (Bad Request).
  * @param response A pointer to a sequence of characters representing the response
- * @param response_len The length of the response. IDK if this includes the null terminator.
+ * @param response_len The length of the response. Does not include the null terminator.
  */
-void *build_response_400(char *response, size_t *response_len)
+void build_response_400(char **response, size_t *response_len)
 {
-    snprintf(response, BUFFER_SIZE, "HTTP/1.1 200 OK\r\n"
-                                    "Content-Type: text/plain\r\n"
-                                    "\r\nHTTP/1.1 400 Bad Request\r\n"
+    *response_len = strlen("HTTP/1.1 400 Bad Request\r\n"
+                           "Content-Type: text/plain\r\n"
+                           "\r\n"
+                           "400 Bad Request\r\n"
+                           "Connection: close");
+    *response = malloc(*response_len + 1);
+    snprintf(*response, BUFFER_SIZE, "HTTP/1.1 400 Bad Request\r\n"
                                     "Content-Type: text/plain\r\n"
                                     "\r\n"
-                                    "400 Bad Request");
-    *response_len = strlen(response);
+                                    "400 Bad Request\r\n"
+                                    "Connection: close");
 }
 
 /**
  * Builds a 403 HTTP response (Forbidden).
  * @param response A pointer to a sequence of characters representing the response
- * @param response_len The length of the response. IDK if this includes the null terminator.
+ * @param response_len The length of the response. Does not include the null terminator.
  */
-void *build_response_403(char *response, size_t *response_len)
+void build_response_403(char **response, size_t *response_len)
 {
-    snprintf(response, BUFFER_SIZE, "HTTP/1.1 200 OK\r\n"
-                                    "Content-Type: text/plain\r\n"
-                                    "\r\nHTTP/1.1 403 Forbidden\r\n"
+    *response_len = strlen("HTTP/1.1 403 Forbidden\r\n"
+                           "Content-Type: text/plain\r\n"
+                           "\r\n"
+                           "403 Forbidden\r\n"
+                           "Connection: close");
+    *response = malloc(*response_len + 1);
+    snprintf(*response, BUFFER_SIZE, "HTTP/1.1 403 Forbidden\r\n"
                                     "Content-Type: text/plain\r\n"
                                     "\r\n"
-                                    "403 Forbidden");
-    *response_len = strlen(response);
+                                    "403 Forbidden\r\n"
+                                    "Connection: close");
 }
 
 /**
  * Builds a 404 HTTP response (Not Found).
  * @param response A pointer to a sequence of characters representing the response
- * @param response_len The length of the response. IDK if this includes the null terminator.
+ * @param response_len The length of the response. Does not include the null terminator.
  */
-void *build_response_404(char *response, size_t *response_len)
+void build_response_404(char **response, size_t *response_len)
 {
-    snprintf(response, BUFFER_SIZE, "HTTP/1.1 200 OK\r\n"
-                                    "Content-Type: text/plain\r\n"
-                                    "\r\nHTTP/1.1 404 Not Found\r\n"
+    *response_len = strlen("HTTP/1.1 404 Not Found\r\n"
+                           "Content-Type: text/plain\r\n"
+                           "\r\n"
+                           "404 Not Found\r\n"
+                           "Connection: close");
+    *response = malloc(*response_len + 1);
+    snprintf(*response, BUFFER_SIZE, "HTTP/1.1 404 Not Found\r\n"
                                     "Content-Type: text/plain\r\n"
                                     "\r\n"
-                                    "404 Not Found");
-    *response_len = strlen(response);
+                                    "404 Not Found\r\n"
+                                    "Connection: close");
 }
 
 /**
  * Builds a 500 HTTP response (Internal Server Error).
  * @param response A pointer to a sequence of characters representing the response
- * @param response_len The length of the response. IDK if this includes the null terminator.
+ * @param response_len The length of the response. Does not include the null terminator.
  */
-void *build_response_500(char *response, size_t *response_len)
+void build_response_500(char **response, size_t *response_len)
 {
-    snprintf(response, BUFFER_SIZE, "HTTP/1.1 200 OK\r\n"
-                                    "Content-Type: text/plain\r\n"
-                                    "\r\nHTTP/1.1 500 Internal Server Error\r\n"
+    *response_len = strlen("HTTP/1.1 500 Internal Server Error\r\n"
+                           "Content-Type: text/plain\r\n"
+                           "\r\n"
+                           "500 Internal Server Error\r\n"
+                           "Connection: close");
+    *response = malloc(*response_len + 1);
+    snprintf(*response, BUFFER_SIZE, "HTTP/1.1 500 Internal Server Error\r\n"
                                     "Content-Type: text/plain\r\n"
                                     "\r\n"
-                                    "500 Internal Server Error");
-    *response_len = strlen(response);
+                                    "500 Internal Server Error\r\n"
+                                    "Connection: close");
 }
 
 /**
@@ -304,7 +321,7 @@ void *handle_client(void *arg)
     //
     if (bytes_received <= 0)
     {
-        build_response_400(response, &response_len);
+        build_response_400(&response, &response_len);
         goto end;
     }
 
@@ -324,7 +341,7 @@ void *handle_client(void *arg)
     // Does the request have a URL?
     if (regexec(&regex, buffer, 3, matches, 0) == REG_NOMATCH)
     {
-        build_response_400(response, &response_len);
+        build_response_400(&response, &response_len);
         goto unsuccessful_regex_end;
     }
 
@@ -332,7 +349,7 @@ void *handle_client(void *arg)
     // @todo validate the request
     if (matches[1].rm_so == -1 || matches[2].rm_so == -1)
     {
-        build_response_400(response, &response_len);
+        build_response_400(&response, &response_len);
         goto unsuccessful_regex_end;
     }
     int method_len = matches[1].rm_eo - matches[1].rm_so;
@@ -361,14 +378,14 @@ void *handle_client(void *arg)
     // does the URL have 2 segments?
     if (regexec(&url_regex, url, MAX_URL_SECTIONS + 1, url_matches, 0) == REG_NOMATCH)
     {
-        build_response_400(response, &response_len);
+        build_response_400(&response, &response_len);
         goto bad_url_end;
     }
 
     if (
         url_matches[1].rm_so == -1 || url_matches[2].rm_so == -1)
     {
-        build_response_400(response, &response_len);
+        build_response_400(&response, &response_len);
         goto bad_url_end;
     }
 
@@ -414,7 +431,7 @@ void *handle_client(void *arg)
     if (table == NULL)
     {
 
-        build_response_400(response, &response_len);
+        build_response_400(&response, &response_len);
         goto no_table_end;
     }
 
@@ -603,7 +620,7 @@ found_table:
                 else
                 {
                     // @todo determine if it's the client's fault or the server's fault
-                    build_response_500(response, &response_len);
+                    build_response_500(&response, &response_len);
                 }
 
                 free(query);
@@ -611,7 +628,7 @@ found_table:
             }
             else
             {
-                build_response_400(response, &response_len);
+                build_response_400(&response, &response_len);
             }
 
             regfree(&querystring_regex);
@@ -629,7 +646,7 @@ found_table:
         else
         {
             // user does not have read access to the respective table
-            build_response_403(response, &response_len);
+            build_response_403(&response, &response_len);
         }
     }
     else if (strcmp(method, "POST") == 0)
@@ -643,13 +660,13 @@ found_table:
         else
         {
             // user does not have write access to the respective table
-            build_response_403(response, &response_len);
+            build_response_403(&response, &response_len);
         }
     }
     else
     {
         // tell the client I don't understand what's going on
-        build_response_400(response, &response_len);
+        build_response_400(&response, &response_len);
     }
 
     // free memory
