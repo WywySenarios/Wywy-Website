@@ -23,6 +23,7 @@
 #include <dirent.h>
 #include <libpq-fe.h>
 #include <asm-generic/socket.h>
+#include <jansson.h>
 #include "config.h"
 
 #define PORT 2523 // @todo make this configurable
@@ -32,25 +33,26 @@
 #define MAX_URL_SECTIONS 3
 #define MAX_REGEX_MATCHES 25
 #define limit "20"
+#define NUM_DATATYPES_KEYS 1
 
-struct item_querystring
+struct dict_item
 {
     char *key;
-    char *value;
-} typedef item_querystring;
+    void *value;
+} typedef dict_item;
 
-struct dict_querystring
+struct dict
 {
-    item_querystring *pairs;
+    dict_item *pairs;
     size_t size;
-} typedef dict_querystring;
+} typedef dict;
 
 // @todo log search?
 /**
  * Attempts to (linear) search through a hashmap-like object (array of key-value pairs) for a pair that has a certain key.
  * @return The item that was found or NULL if no item was found.
  */
-item_querystring *linear_search(dict_querystring dict, const char *key)
+dict_item *linear_search(dict dict, const char *key)
 {
     for (unsigned i = 0; i < dict.size; i++)
     {
@@ -63,19 +65,218 @@ item_querystring *linear_search(dict_querystring dict, const char *key)
     return NULL;
 }
 
-// unsigned num_regex_matches(regmatch_t matches, size_t sizeof_matches) {
-//     unsigned num_matches = 0;
-//     for (unsigned i = 0; i < sizeof_matches; i++) {
-//         if (matches[i] != -1) {
-//             num_matches++;
-//         }
-//     }
+typedef int (*json_datatype_check_function)(const json_t *json);
+static int check_integer(const json_t *json)
+{
+    return json_is_integer(json);
+}
+static int check_string(const json_t *json)
+{
+    return json_is_string(json);
+}
+static int check_real(const json_t *json)
+{
+    return json_is_real(json);
+}
+static int check_bool(const json_t *json)
+{
+    return json_is_boolean(json);
+}
+/**
+ * Checks whether or not a given value is in the format xxxx-xx-xx
+ * @param json The value to validate.
+ * @return 0 if it is not a valid date, 1 if it's date-like
+ */
+static int check_datelike(const json_t *json)
+{
+    if (json_is_string(json))
+    {
+        const char *text = json_string_value(json);
+        regex_t check_regex;
+        regcomp(&check_regex, "[0-9]{1,4}-[0-9]{2}-[0-9]{2}", REG_EXTENDED);
+        // Alternative pattern (does not account for february 29): xxxx-[1<=num<=12]-[valid date within that month]: ([0-9]{1,4})-?((02)-?([0]|[12][0-9])|(01|03|05|07|08|10|12)-?(0[1-9]|[12][0-9]|3[01])|(04|06|09|11)-?(0[1-9]|[12][0-9]|30))
 
-//     return num_matches;
-// }
+        regmatch_t check_matches[4];
+
+        if (regexec(&check_regex, text, 4, check_matches, 0) == REG_NOMATCH)
+        {
+            regfree(&check_regex);
+            return 0;
+        }
+
+        if (check_matches[0].rm_eo == -1 || check_matches[0].rm_so == -1)
+        {
+            regfree(&check_regex);
+            return 0;
+        }
+
+        // make sure it's just a datelike string and nothing else is after that.
+        int match_size = check_matches[0].rm_eo - check_matches[0].rm_so;
+        if (match_size == strlen(text) - 1)
+        {
+            regfree(&check_regex);
+            return 1;
+        }
+        else
+        {
+            regfree(&check_regex);
+            return 0;
+        }
+    }
+    else
+    {
+        return 0;
+    }
+}
+/**
+ * Checks whether or not a given value is in the format of xx:xx:xxZ or TxxxxxxZ or xx:xx:xx.x... or Txxxxxx...
+ */
+static int check_timelike(const json_t *json)
+{
+    if (json_is_string(json))
+    {
+        const char *text = json_string_value(json);
+        regex_t check_regex;
+        regcomp(&check_regex, "[0-9]{2}:[0-9]{2}:[0-9]{2}Z|[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{1,6}Z|T[0-9]{6}Z|T[0-9]{6}.[0-9]{1,6}Z", REG_EXTENDED);
+
+        regmatch_t check_matches[2];
+
+        if (regexec(&check_regex, text, 2, check_matches, 0) == REG_NOMATCH)
+        {
+            regfree(&check_regex);
+            return 0;
+        }
+
+        if (check_matches[0].rm_eo == -1 || check_matches[0].rm_so == -1)
+        {
+            regfree(&check_regex);
+            return 0;
+        }
+
+        // make sure it's just a timelike string and nothing else is after that.
+        int match_size = check_matches[0].rm_eo - check_matches[0].rm_so;
+        if (match_size == strlen(text) - 1)
+        {
+            regfree(&check_regex);
+            return 1;
+        }
+        else
+        {
+            regfree(&check_regex);
+            return 0;
+        }
+    }
+    else
+    {
+        return 0;
+    }
+}
+static int check_timestamplike(const json_t *json)
+{
+    if (json_is_string(json))
+    {
+        const char *text = json_string_value(json);
+        regex_t check_regex;
+        regcomp(&check_regex, "([0-9]{1,4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2}:[0-9]{2}Z|[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{1,6}Z|T[0-9]{6}Z|T[0-9]{6}.[0-9]{1,6}Z)", REG_EXTENDED);
+
+        regmatch_t check_matches[2];
+
+        if (regexec(&check_regex, text, 2, check_matches, 0) == REG_NOMATCH)
+        {
+            regfree(&check_regex);
+            return 0;
+        }
+
+        if (check_matches[0].rm_eo == -1 || check_matches[0].rm_so == -1)
+        {
+            regfree(&check_regex);
+            return 0;
+        }
+
+        // make sure it's just a timelike string and nothing else is after that.
+        int match_size = check_matches[0].rm_eo - check_matches[0].rm_so;
+        if (match_size == strlen(text) - 1)
+        {
+            regfree(&check_regex);
+            return 1;
+        }
+        else
+        {
+            regfree(&check_regex);
+            return 0;
+        }
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+/**
+ * 
+ */
+static char *json_to_string(const json_t *value) {
+    char *output;
+    if (!value) {
+        return NULL;
+    }
+
+    switch (json_typeof(value)) {
+        case JSON_STRING:
+            output = malloc(strlen(json_string_value(value)) + 1);
+            strcpy(output, json_string_value(value));
+            return output;
+        case JSON_INTEGER:
+            output = malloc(32 + 1);
+            snprintf(output, 32 + 1, "%lld", (long long)json_integer_value(value));
+            return output;
+        case JSON_REAL:
+            output = malloc(64 + 1);
+            snprintf(output, 64 + 1, "%.17g", json_real_value(value));
+            return output;
+        case JSON_TRUE:
+            output = malloc(5);
+            snprintf(output, 5, "true");
+            return output;
+        case JSON_FALSE:
+            output = malloc(6);
+            snprintf(output, 6, "false");
+            return output;
+        default:
+            return NULL;
+    }
+}
 
 // nice global variables!
 static struct config *global_config = NULL;
+char *schema_datatypes_keys[] = {
+    "int",
+    "integer",
+    "float",
+    "number",
+    "string",
+    "str",
+    "text",
+    "bool",
+    "boolean",
+    "date",
+    "time",
+    "timestamp"};
+json_datatype_check_function schema_datatypes_values[] = {
+    check_integer,
+    check_integer,
+    check_real,
+    check_real,
+    check_string,
+    check_string,
+    check_string,
+    check_bool,
+    check_bool,
+    check_datelike,
+    check_timelike,
+    check_timestamplike,
+};
+static dict schema_datatypes;
 
 const char *get_file_extension(const char *file_name)
 {
@@ -174,17 +375,16 @@ void build_response_200(char **response, size_t *response_len, const char *text)
     *response_len = strlen("HTTP/1.1 200 OK\r\n"
                            "Content-Type: text/plain\r\n"
                            "Access-Control-Allow-Origin: *\r\n"
-                           "\r\n"
-                           "\r\n"
-                           "Connection: close") +
+                           "Connection: close\r\n"
+                           "\r\n") +
                     strlen(text);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 200 OK\r\n"
                                            "Content-Type: text/plain\r\n"
                                            "Access-Control-Allow-Origin: *\r\n"
+                                           "Connection: close\r\n"
                                            "\r\n"
-                                           "%s\r\n"
-                                           "Connection: close",
+                                           "%s",
              text);
 }
 
@@ -201,8 +401,8 @@ void build_response_204(char **response, size_t *response_len)
                            "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
                            "Access-Control-Allow-Headers: Content-Type\r\n"
                            "Content-Length: 0\r\n"
-                           "\r\n"
-                           "Connection: close");
+                           "Connection: close\r\n"
+                           "\r\n");
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1,
              "HTTP/1.1 204 No Content\r\n"
@@ -210,8 +410,8 @@ void build_response_204(char **response, size_t *response_len)
              "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
              "Access-Control-Allow-Headers: Content-Type\r\n"
              "Content-Length: 0\r\n"
-             "\r\n"
-             "Connection: close");
+             "Connection: close\r\n"
+             "\r\n");
 }
 
 /**
@@ -224,16 +424,16 @@ void build_response_400(char **response, size_t *response_len)
     *response_len = strlen("HTTP/1.1 400 Bad Request\r\n"
                            "Content-Type: text/plain\r\n"
                            "Access-Control-Allow-Origin: *\r\n"
+                           "Connection: close\r\n"
                            "\r\n"
-                           "400 Bad Request\r\n"
-                           "Connection: close");
+                           "400 Bad Request");
     *response = malloc(*response_len + 1);
-    snprintf(*response, BUFFER_SIZE, "HTTP/1.1 400 Bad Request\r\n"
+    snprintf(*response, *response_len + 1, "HTTP/1.1 400 Bad Request\r\n"
                                      "Content-Type: text/plain\r\n"
                                      "Access-Control-Allow-Origin: *\r\n"
+                                     "Connection: close\r\n"
                                      "\r\n"
-                                     "400 Bad Request\r\n"
-                                     "Connection: close");
+                                     "400 Bad Request");
 }
 
 /**
@@ -246,16 +446,16 @@ void build_response_403(char **response, size_t *response_len)
     *response_len = strlen("HTTP/1.1 403 Forbidden\r\n"
                            "Content-Type: text/plain\r\n"
                            "Access-Control-Allow-Origin: *\r\n"
+                           "Connection: close\r\n"
                            "\r\n"
-                           "403 Forbidden\r\n"
-                           "Connection: close");
+                           "403 Forbidden");
     *response = malloc(*response_len + 1);
-    snprintf(*response, BUFFER_SIZE, "HTTP/1.1 403 Forbidden\r\n"
+    snprintf(*response, *response_len + 1, "HTTP/1.1 403 Forbidden\r\n"
                                      "Content-Type: text/plain\r\n"
                                      "Access-Control-Allow-Origin: *\r\n"
+                                     "Connection: close\r\n"
                                      "\r\n"
-                                     "403 Forbidden\r\n"
-                                     "Connection: close");
+                                     "403 Forbidden");
 }
 
 /**
@@ -268,16 +468,16 @@ void build_response_404(char **response, size_t *response_len)
     *response_len = strlen("HTTP/1.1 404 Not Found\r\n"
                            "Content-Type: text/plain\r\n"
                            "Access-Control-Allow-Origin: *\r\n"
+                           "Connection: close\r\n"
                            "\r\n"
-                           "404 Not Found\r\n"
-                           "Connection: close");
+                           "404 Not Found");
     *response = malloc(*response_len + 1);
-    snprintf(*response, BUFFER_SIZE, "HTTP/1.1 404 Not Found\r\n"
+    snprintf(*response, *response_len + 1, "HTTP/1.1 404 Not Found\r\n"
                                      "Content-Type: text/plain\r\n"
                                      "Access-Control-Allow-Origin: *\r\n"
+                                     "Connection: close\r\n"
                                      "\r\n"
-                                     "404 Not Found\r\n"
-                                     "Connection: close");
+                                     "404 Not Found");
 }
 
 /**
@@ -290,16 +490,16 @@ void build_response_500(char **response, size_t *response_len)
     *response_len = strlen("HTTP/1.1 500 Internal Server Error\r\n"
                            "Content-Type: text/plain\r\n"
                            "Access-Control-Allow-Origin: *\r\n"
+                           "Connection: close\r\n"
                            "\r\n"
-                           "500 Internal Server Error\r\n"
-                           "Connection: close");
+                           "500 Internal Server Error");
     *response = malloc(*response_len + 1);
-    snprintf(*response, BUFFER_SIZE, "HTTP/1.1 500 Internal Server Error\r\n"
+    snprintf(*response, *response_len + 1, "HTTP/1.1 500 Internal Server Error\r\n"
                                      "Content-Type: text/plain\r\n"
                                      "Access-Control-Allow-Origin: *\r\n"
+                                     "Connection: close\r\n"
                                      "\r\n"
-                                     "500 Internal Server Error\r\n"
-                                     "Connection: close");
+                                     "500 Internal Server Error");
 }
 
 /**
@@ -700,14 +900,128 @@ found_table:
         // check if the database & table can be written to freely
         if (table->write)
         {
-            //@todo
+            // verify the schema
+            regex_t body_regex;
+            regcomp(&body_regex, "\r\n\r\n(.+)", REG_EXTENDED);
+
+            regmatch_t body_matches[1 + 1];
+
+            if (regexec(&body_regex, buffer, 1 + 1, body_matches, 0) == REG_NOMATCH)
+            {
+                build_response_400(&response, &response_len);
+                goto bad_body_end;
+            }
+
+            int body_len = body_matches[1].rm_eo - body_matches[1].rm_so;
+            char *body = malloc(body_len + 1);
+            strncpy(body, buffer + body_matches[1].rm_so, body_len);
+            body[body_len] = '\0';
+
+            printf("Body: %s\n\n", body);
+
+            json_t *entry;
+            json_error_t entry_error;
+            entry = json_loads(body, 0, &entry_error);
+
+            if (!entry)
+            {
+                build_response_400(&response, &response_len);
+            }
+
+            const char *key;
+            const json_t *value;
+
+            int total_value_len = 0;
+            int total_key_len = 0;
+            int separator_len = 0;
+
+            json_object_foreach(entry, key, value)
+            {
+                bool valid = false;
+
+                for (int i = 0; i < table->schema_count; i++)
+                {
+                    // find which entry in the schema matches
+                    if (strcmp(key, table->schema[i].name) == 0)
+                    {
+                        json_datatype_check_function *related_datatype_checker = linear_search(schema_datatypes, table->schema[i].datatype)->value;
+                        // check if the input is bad
+                        if (!related_datatype_checker)
+                        {
+                            break;
+                        } else if ((*related_datatype_checker)(value) == 0) {
+                            printf("HEY!!!: %s\n", json_to_string(value));
+                            break;
+                        }
+
+                        valid = true;
+
+                        // char *key_string = json_to_string(key);
+                        char *value_string = json_to_string(value);
+                        total_value_len += strlen(key); // @todo optimize
+                        total_key_len += strlen(value_string);
+                        separator_len++;
+
+                        // free(key_string);
+                        free(value_string);
+                    }
+                }
+
+                // also remember to catch when the key is not inside the table's schema
+                if (! valid) {
+                    build_response_400(&response, &response_len);
+                    goto post_bad_input_end;
+                }
+            }
+
+            separator_len--;
+            // get ready and put in all the correct values
+            char *column_names = malloc(total_key_len + separator_len + 1 + 1);
+            char *values = malloc(total_value_len + separator_len + 1 + 1);
+
+            json_object_foreach(entry, key, value) {
+                // char *key_string = json_to_string(key);
+                char *value_string = json_to_string(value);
+
+                strcat(column_names, key);
+                strcat(column_names, ",");
+                strcat(values, value_string);
+                strcat(values, ",");
+
+                // free(key_string);
+                free(value_string);
+            }
+
+            // remove trailing commas
+            column_names[strlen(column_names) - 1] = '\0';
+            values[strlen(values) - 1] = '\0';
+
+            int query_len = strlen("INSERT INTO  ()\nVALUES ();") + total_value_len + total_key_len + 2 * separator_len + 1;
+            char *query = malloc(query_len);
+            // strcat(query, "INSERT INTO (");
+            // memcpy(query, column_names, total_key_len + separator_len);
+            // strcat(query, ")\nVALUES (");
+            // memcpy(query, values, total_value_len + separator_len);
+            // strcat(query, ");");
+            snprintf(query, query_len,"INSERT INTO %s (%s)\nVALUES(%s);", table_name, column_names, values);
+
+            PGconn *conn;
+            PGresult *res;
+            sql_query(db_name, query, &res, &conn);
+
             build_response_200(&response, &response_len, "");
+
+            // free memory
+        post_bad_input_end:
+            free(body);
+        bad_body_end:
+            regfree(&body_regex);
+            // free json object??? how ???
         }
         else
         {
             // user does not have write access to the respective table
-            // build_response_403(&response, &response_len);
-            build_response_200(&response, &response_len, "");
+            build_response_403(&response, &response_len);
         }
     }
     else
@@ -735,7 +1049,7 @@ end:
     // send HTTP response to client
     send(client_fd, response, response_len, 0);
 
-    // printf("Response:\n%s", response);
+    printf("Response:\n%s\n\n", response);
 
     close(client_fd);
     free(response);
@@ -745,6 +1059,7 @@ end:
 
 int main(int argc, char const *argv[])
 {
+    // populate global variables
     load_config(&global_config);
     if (global_config == NULL)
     {
@@ -771,7 +1086,17 @@ int main(int argc, char const *argv[])
             }
         }
     }
+    schema_datatypes.size = sizeof(schema_datatypes_keys) / sizeof(schema_datatypes_keys[0]);
+    schema_datatypes.pairs = malloc(sizeof(schema_datatypes_keys) / sizeof(schema_datatypes_keys[0]) * sizeof(dict_item));
+    // populate the dictionary
+    for (int i = 0; i < sizeof(schema_datatypes_keys) / sizeof(schema_datatypes_keys[0]); i++)
+    {
+        schema_datatypes.pairs[i].key = schema_datatypes_keys[i];
+        // funny pointer business with functions
+        schema_datatypes.pairs[i].value = &schema_datatypes_values[i];
+    }
 
+    // Set up the server
     int server_fd;
     size_t valread;
     struct sockaddr_in address;
@@ -823,8 +1148,13 @@ int main(int argc, char const *argv[])
 
         // create a new thread to handle client request
         pthread_t thread_id;
-        pthread_create(&thread_id, NULL, handle_client, (void *)client_fd);
-        pthread_detach(thread_id);
+        if (pthread_create(&thread_id, NULL, handle_client, (void *)client_fd) != 0) {
+            perror("thread create");
+            close(*client_fd);
+            // @todo send a nice error msg
+        } else {
+            pthread_detach(thread_id);
+        }
     }
 
     // close the listening socket

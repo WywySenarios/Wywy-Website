@@ -14,3 +14,4 @@ networkingMode=mirrored
 # Required Libraries
 * libcyaml
 * libpq-dev
+* jansson
