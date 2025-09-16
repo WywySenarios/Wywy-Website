@@ -13,12 +13,11 @@ export const zodDatatypes: Record<zodPrimaryDatatypes, ZodTypeAny> = {
   "text": z.string(),
   "bool": z.boolean(),
   "boolean": z.boolean(),
-  "date": z.date(),
   "time": z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?$/, {message: "Invalid ISO time format",}),
   // THIS IS BY NO MEANS ROBUST
-  // "date": z.string().regex(/^(3[01]|[12][0-9]|0?[1-9])(\/|-)(1[0-2]|0?[1-9])\2([0-9]{2})?[0-9]{2}$/, {
-  //   message: "Invalid Date format",
-  // }),
+  "date": z.string().regex(/^[0-9]{1,4}-[0-9]{2}-[0-9]{2}$/, {
+    message: "Invalid Date format",
+  }),
   // THIS IS BY NO MEANS ROBUST
   "timestamp": z.string().regex(/^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$/, {message: "Invalid ISO timestamp format"}),
 }
@@ -38,11 +37,11 @@ export function getFallbackValue(datatype: zodPrimaryDatatypes): number | string
     case "boolean":
       return false;
     case "date":
-      return new Date();
-    // case "time":
-      // return new Time();
-    // case "timestamp":
-      // return new
+      return "0001-01-01";
+    case "time":
+      return "01:00:00Z";
+    case "timestamp":
+      return "0001-01-01T01:00:00Z";
     default:
       return null;  
   }

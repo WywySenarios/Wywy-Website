@@ -112,7 +112,7 @@ static int check_datelike(const json_t *json)
 
         // make sure it's just a datelike string and nothing else is after that.
         int match_size = check_matches[0].rm_eo - check_matches[0].rm_so;
-        if (match_size == strlen(text) - 1)
+        if (match_size == strlen(text))
         {
             regfree(&check_regex);
             return 1;
@@ -155,7 +155,7 @@ static int check_timelike(const json_t *json)
 
         // make sure it's just a timelike string and nothing else is after that.
         int match_size = check_matches[0].rm_eo - check_matches[0].rm_so;
-        if (match_size == strlen(text) - 1)
+        if (match_size == strlen(text))
         {
             regfree(&check_regex);
             return 1;
@@ -195,7 +195,7 @@ static int check_timestamplike(const json_t *json)
 
         // make sure it's just a timelike string and nothing else is after that.
         int match_size = check_matches[0].rm_eo - check_matches[0].rm_so;
-        if (match_size == strlen(text) - 1)
+        if (match_size == strlen(text))
         {
             regfree(&check_regex);
             return 1;
@@ -964,6 +964,7 @@ found_table:
 
                         // free(key_string);
                         free(value_string);
+                        break;
                     }
                 }
 

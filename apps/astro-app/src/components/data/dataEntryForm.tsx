@@ -22,7 +22,7 @@ import type { ZodTypeAny } from "astro:schema"
 import type { JSXElementConstructor, ReactElement } from "react"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
-import { parseTime, parseAny } from "@/utils"
+import { prettifyTimeString, prettyParseAny, parseAny } from "@/utils"
 
 import { toast } from "sonner"
 
@@ -33,8 +33,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider/labelslider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radioGroup"
 import { Switch } from "@/components/ui/switch"
-import { Calendar } from "../ui/calendar"
-import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 
 const inputElementsAliases: Record<string, "textbox" | "linearSlider" | "radio" | "calendar" | "time"> = {
   "textbox": "textbox",
@@ -51,7 +51,7 @@ type inputElementFunction = (field: any, columnInfo: DataColumn) => ReactElement
 const inputElements: Record<string, inputElementFunction> = {
   "textbox": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
     <FormControl>
-      <Textarea placeholder={columnInfo.defaultValue} {...field.field} onChange={(val) => { field.field.onChange(parseAny(val.target.value, columnInfo.datatype)) }} />
+      <Textarea placeholder={columnInfo.defaultValue} {...field.field} />
     </FormControl>
   </FormItem>,
   "linearSlider": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
@@ -125,9 +125,6 @@ const inputElements: Record<string, inputElementFunction> = {
             mode="single"
             selected={field.field.value}
             onSelect={field.field.onChange}
-            // disabled={(date) =>
-            //   date > new Date() || date < new Date("1900-01-01")
-            // }
             captionLayout="dropdown"
           />
         </PopoverContent>
@@ -141,8 +138,8 @@ const inputElements: Record<string, inputElementFunction> = {
         <Input
           type="time"
           className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-          onChange={(val) => { field.field.onChange(parseTime(val.target.value)) }}
-          placeholder={field.field.value}
+          onChange={(val) => { field.field.onChange(prettifyTimeString(val.target.value)) }}
+          placeholder={prettifyTimeString(field.field.value)}
           {...field.field}
         />
       </FormControl>
@@ -186,8 +183,26 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
     defaultValues,
   })
 
-  // 2. Define a submit handler.
+  /*
+   * Form submit handler.
+   * Parses the schema into something the sql-receptionist will recognize.
+   */
   function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log(values);
+
+    let formattedValues: Record<string, any> = {}
+    for (let field of fieldsToEnter) {
+      // check if the user really wanted to submit that or not
+      if (!values[field.name]) {
+        continue;
+      }
+
+      let valueToInsert = parseAny(values[field.name], field.datatype);
+      if (valueToInsert != undefined) {
+        formattedValues[field.name] = valueToInsert;
+      }
+    }
+
     // POST them to the SQL Receptionist!
     console.log(`${dbURL + "/" + databaseName + "/" + tableName}`)
     fetch(dbURL + "/" + databaseName + "/" + tableName, {
@@ -213,7 +228,7 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
   }
 
   function onSubmitInvalid(values: z.infer<typeof formSchema>) {
-    // Create some toasts to let to user know what went wrong.
+    // Create toast(s) to let to user know what went wrong.
     for (let erroringField in values) {
       toast(erroringField + ": " + values[erroringField]["message"])
     }
