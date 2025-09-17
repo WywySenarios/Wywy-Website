@@ -13,7 +13,7 @@ export const zodDatatypes: Record<zodPrimaryDatatypes, ZodTypeAny> = {
   "text": z.string(),
   "bool": z.boolean(),
   "boolean": z.boolean(),
-  "time": z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?$/, {message: "Invalid ISO time format",}),
+  "time": z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?Z?$/, {message: "Invalid ISO time format",}),
   // THIS IS BY NO MEANS ROBUST
   "date": z.string().regex(/^[0-9]{1,4}-[0-9]{2}-[0-9]{2}$/, {
     message: "Invalid Date format",
@@ -46,3 +46,5 @@ export function getFallbackValue(datatype: zodPrimaryDatatypes): number | string
       return null;  
   }
 }
+
+export {}

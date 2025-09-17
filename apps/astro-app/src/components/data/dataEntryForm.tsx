@@ -30,25 +30,31 @@ import { toast } from "sonner"
 // Input elements!
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Slider } from "@/components/ui/slider/labelslider";
+import { Slider } from "@/components/ui/slider/labelslider"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radioGroup"
 import { Switch } from "@/components/ui/switch"
 import { Calendar } from "@/components/ui/calendar"
+import { Calendar24 } from "@/components/ui/dateTimePicker"
+import { TimePicker } from "@/components/ui/timePicker"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 
-const inputElementsAliases: Record<string, "textbox" | "linearSlider" | "radio" | "calendar" | "time"> = {
+type inputElementName = "textbox" | "linearSlider" | "switch" | "radio" | "calendar" | "time" | "timestamp";
+
+const inputElementsAliases: Record<string, inputElementName> = {
   "textbox": "textbox",
   "textarea": "textbox",
   "linearSlider": "linearSlider",
   "slider": "linearSlider",
+  "switch": "switch",
   "radio": "radio",
   "calendar": "calendar",
   "time": "time",
+  "timestamp": "timestamp",
 }
 
 type inputElementFunction = (field: any, columnInfo: DataColumn) => ReactElement<unknown, string | JSXElementConstructor<any>>
 
-const inputElements: Record<string, inputElementFunction> = {
+const inputElements: Record<inputElementName, inputElementFunction> = {
   "textbox": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
     <FormControl>
       <Textarea placeholder={columnInfo.defaultValue} {...field.field} />
@@ -59,7 +65,10 @@ const inputElements: Record<string, inputElementFunction> = {
       <FormLabel className="text-lg font-semibold">{columnInfo.name}</FormLabel>
     </div>
     <FormControl>
-      <Slider defaultVal={field.field.value} min={columnInfo.min ?? 0} max={columnInfo.max ?? 100} step={columnInfo.step ?? 1} onChange={field.field.onChange} {...field} />
+      {
+        // @ts-ignore
+        <Slider defaultVal={field.field.value} min={columnInfo.min ?? 0} max={columnInfo.max ?? 100} step={columnInfo.step ?? 1} onChange={field.field.onChange} {...field} />
+      }
     </FormControl>
   </FormItem>,
   "radio": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
@@ -68,6 +77,7 @@ const inputElements: Record<string, inputElementFunction> = {
       <FormControl>
         <RadioGroup onValueChange={field.field.onChange} defaultValue={field.field.value}>
           {
+            // @ts-ignore
             columnInfo.whitelist.map((option: string) => (
               // note that if two options have the same key, they will also have the same values. Pretty strange, huh?
               <FormItem className="flex items-center gap-3 w-full" key={columnInfo.name + "-" + option + "-radio"}>
@@ -135,13 +145,21 @@ const inputElements: Record<string, inputElementFunction> = {
     <div className="w-full flex flex-col items-center gap-4">
       <FormLabel className="text-lg font-semibold">{columnInfo.name}</FormLabel>
       <FormControl>
-        <Input
-          type="time"
-          className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-          onChange={(val) => { field.field.onChange(prettifyTimeString(val.target.value)) }}
-          placeholder={prettifyTimeString(field.field.value)}
-          {...field.field}
+        <TimePicker
+          // @ts-ignore
+          defaultValue={columnInfo.defaultValue}
+          onChange={field.field.onChange}
         />
+      </FormControl>
+    </div>
+  </FormItem>,
+  "timestamp": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
+    <div className="w-full flex flex-col items-center gap-4">
+      <FormLabel className="text-lg font-semibold">{columnInfo.name}</FormLabel>
+      <FormControl>
+        <Calendar24 onChange={(val) => {
+          field.field.onChange(val);
+        }} {...field.field} />
       </FormControl>
     </div>
   </FormItem>,
@@ -188,18 +206,19 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
    * Parses the schema into something the sql-receptionist will recognize.
    */
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    console.log(values)
 
     let formattedValues: Record<string, any> = {}
     for (let field of fieldsToEnter) {
       // check if the user really wanted to submit that or not
       if (!values[field.name]) {
-        continue;
+        continue
       }
 
-      let valueToInsert = parseAny(values[field.name], field.datatype);
+      // let valueToInsert = parseAny(values[field.name], field.datatype);
+      let valueToInsert = values[field.name]
       if (valueToInsert != undefined) {
-        formattedValues[field.name] = valueToInsert;
+        formattedValues[field.name] = valueToInsert
       }
     }
 
