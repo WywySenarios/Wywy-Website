@@ -124,7 +124,7 @@ export type DataColumn = {
     // restrictions?: Array<[number, number]>
     invalidInputMessage?: string
     comments?: boolean
-    prompt?: string
+    description?: string
     unique?: boolean
 } & (IntegerColumn | FloatColumn | StringColumn | BooleanColumn | DateColumn | TimeColumn | TimestampColumn)
 // END - Database Related

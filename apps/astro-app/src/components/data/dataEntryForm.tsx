@@ -161,6 +161,7 @@ const inputElements: Record<inputElementName, inputElementFunction> = {
           field.field.onChange(val);
         }} {...field.field} />
       </FormControl>
+      {columnInfo.description && <FormDescription>columnInfo.description</FormDescription>}
     </div>
   </FormItem>,
 }
