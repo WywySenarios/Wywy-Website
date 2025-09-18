@@ -58,7 +58,7 @@ data:
             datatype: int
             entrytype: linearSlider
             comments: true
-            description: How
+            description: How would you rate you sleep quality?
 
           - name: Sleep Behaviour
             datatype: int
@@ -78,7 +78,7 @@ data:
             entrytype: time
             defaultValue: "07:00:00"
             comments: true
-            description: When did you get out of bed, put your clothes on, and are ready to start the
+            description: When were you ready to begin the first task (prehaps as simple as brushing teeth) of the day?
       - tableName: events
         read: true
         write: true

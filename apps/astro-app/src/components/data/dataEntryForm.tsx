@@ -28,7 +28,6 @@ import { toast } from "sonner"
 
 
 // Input elements!
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider/labelslider"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radioGroup"
@@ -59,17 +58,19 @@ const inputElements: Record<inputElementName, inputElementFunction> = {
     <FormControl>
       <Textarea placeholder={columnInfo.defaultValue} {...field.field} />
     </FormControl>
+    {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
   </FormItem>,
   "linearSlider": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
     <div className="w-full flex flex-col items-center gap-4">
       <FormLabel className="text-lg font-semibold">{columnInfo.name}</FormLabel>
+      <FormControl>
+        {
+          // @ts-ignore
+          <Slider defaultVal={field.field.value} min={columnInfo.min ?? 0} max={columnInfo.max ?? 100} step={columnInfo.step ?? 1} onChange={field.field.onChange} {...field} />
+        }
+      </FormControl>
+      {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
     </div>
-    <FormControl>
-      {
-        // @ts-ignore
-        <Slider defaultVal={field.field.value} min={columnInfo.min ?? 0} max={columnInfo.max ?? 100} step={columnInfo.step ?? 1} onChange={field.field.onChange} {...field} />
-      }
-    </FormControl>
   </FormItem>,
   "radio": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
     <div className="w-full flex flex-col items-center">
@@ -93,6 +94,7 @@ const inputElements: Record<inputElementName, inputElementFunction> = {
           <FormMessage />
         </RadioGroup>
       </FormControl>
+      {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
     </div ></FormItem>,
   "switch": (field, columnInfo) => <FormItem className="w-full flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
     <div className="w-full space-y-0.5">
@@ -107,6 +109,7 @@ const inputElements: Record<inputElementName, inputElementFunction> = {
       // className="w-2/12"
       />
     </FormControl>
+    {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
   </FormItem>,
   "calendar": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
     <div className="w-full flex flex-col items-center gap-4">
@@ -129,6 +132,7 @@ const inputElements: Record<inputElementName, inputElementFunction> = {
               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
             </Button>
           </FormControl>
+          {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
@@ -151,6 +155,7 @@ const inputElements: Record<inputElementName, inputElementFunction> = {
           onChange={field.field.onChange}
         />
       </FormControl>
+      {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
     </div>
   </FormItem>,
   "timestamp": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
@@ -161,7 +166,7 @@ const inputElements: Record<inputElementName, inputElementFunction> = {
           field.field.onChange(val);
         }} {...field.field} />
       </FormControl>
-      {columnInfo.description && <FormDescription>columnInfo.description</FormDescription>}
+      {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
     </div>
   </FormItem>,
 }
