@@ -950,16 +950,16 @@ found_table:
                         {
                             break;
                         } else if ((*related_datatype_checker)(value) == 0) {
-                            printf("HEY!!!: %s\n", json_to_string(value));
                             break;
                         }
 
                         valid = true;
 
+                        // @todo optimize
                         // char *key_string = json_to_string(key);
                         char *value_string = json_to_string(value);
-                        total_value_len += strlen(key); // @todo optimize
-                        total_key_len += strlen(value_string);
+                        total_value_len += strlen(value_string);
+                        total_key_len += strlen(key);
                         separator_len++;
 
                         // free(key_string);
@@ -980,14 +980,18 @@ found_table:
             char *column_names = malloc(total_key_len + separator_len + 1 + 1);
             char *values = malloc(total_value_len + separator_len + 1 + 1);
 
+            // make them empty strings
+            strncpy(column_names, "", 1);
+            strncpy(values, "", 1);
+
             json_object_foreach(entry, key, value) {
                 // char *key_string = json_to_string(key);
                 char *value_string = json_to_string(value);
 
-                strcat(column_names, key);
-                strcat(column_names, ",");
-                strcat(values, value_string);
-                strcat(values, ",");
+                strncat(column_names, key, strlen(key) + 1);
+                strncat(column_names, ",", 1 + 1);
+                strncat(values, value_string, strlen(value_string) + 1);
+                strncat(values, ",", 1 + 1);
 
                 // free(key_string);
                 free(value_string);
@@ -997,7 +1001,7 @@ found_table:
             column_names[strlen(column_names) - 1] = '\0';
             values[strlen(values) - 1] = '\0';
 
-            int query_len = strlen("INSERT INTO  ()\nVALUES ();") + total_value_len + total_key_len + 2 * separator_len + 1;
+            int query_len = strlen("INSERT INTO  ()\nVALUES();") + total_value_len + total_key_len + 2 * separator_len + 1;
             char *query = malloc(query_len);
             // strcat(query, "INSERT INTO (");
             // memcpy(query, column_names, total_key_len + separator_len);
