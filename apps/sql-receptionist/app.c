@@ -503,15 +503,20 @@ void build_response_500(char **response, size_t *response_len)
 }
 
 /**
- * Attempts to query the database with the given query. Memory is not freed by this function.
+ * Attempts to query the database with the given query.
+ * This function assumes that the global config has the correct information on the 
+ * @param dbname A pointer to a sequence of characters representing the database name to connect to. This function does NOT free dbname.
  * @param query A pointer to a sequence of characters representing the query to execute. This function does NOT free query.
- * @return bool indicating whether the query was successful or not.
+ * @param res A double pointer to a PGresult pointer that will be set to the result of the query. This function does NOT free *res.
+ * @param conn A double pointer to a PGconn pointer that will be set to the connection used. This function does NOT free *conn. This function creates a connection if *conn is NULL, and assumes that the connection is correct if it is not NULL. As a result, this function alone does NOT guarentee that the connection refers to the given database name.
+ * @return The status of the query as per PQstatus().
  */
-bool sql_query(char *dbname, char *query, PGresult **res, PGconn **conn)
+ExecStatusType sql_query(char *dbname, char *query, PGresult **res, PGconn **conn)
 {
-    size_t conninfo_size = 1 + strlen("dbname= user= password= host= port=") + strlen(dbname) + strlen(global_config->postgres.user) + strlen(global_config->postgres.password) + strlen(global_config->postgres.host) + 5;
-    char *conninfo = malloc(conninfo_size);
-    snprintf(conninfo, conninfo_size,
+    if (*conn == NULL) {
+        size_t conninfo_size = 1 + strlen("dbname= user= password= host= port=") + strlen(dbname) + strlen(global_config->postgres.user) + strlen(global_config->postgres.password) + strlen(global_config->postgres.host) + 5;
+        char *conninfo = malloc(conninfo_size);
+        snprintf(conninfo, conninfo_size,
              "dbname=%s user=%s password=%s host=%s port=%d",
              dbname,
              global_config->postgres.user,
@@ -519,29 +524,18 @@ bool sql_query(char *dbname, char *query, PGresult **res, PGconn **conn)
              global_config->postgres.host,
              global_config->postgres.port);
 
-    *conn = PQconnectdb(conninfo);
+        *conn = PQconnectdb(conninfo);
+        free(conninfo);
+    }
 
     if (PQstatus(*conn) != CONNECTION_OK)
     {
-        PQfinish(*conn);
-        free(conninfo);
         return false;
     }
 
     // Submit & Execute query
     *res = PQexec(*conn, query);
     ExecStatusType status = PQresultStatus(*res);
-
-    free(conninfo);
-
-    if (status == PGRES_TUPLES_OK)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
 }
 
 /**
@@ -830,7 +824,7 @@ found_table:
                 strcat(query, ";");
 
                 // attempt to query the database
-                if (sql_query(db_name, query, &res, &conn))
+                if (sql_query(db_name, query, &res, &conn) == PGRES_TUPLES_OK)
                 { // if the query is successful,
                     // convert the query information into JSON
                     char *output_arrs = malloc(BUFFER_SIZE); // @todo be more specific
@@ -871,6 +865,7 @@ found_table:
 
                 free(query);
                 PQclear(res);
+                PQfinish(conn);
             }
             else
             {
@@ -1012,9 +1007,15 @@ found_table:
 
             PGconn *conn;
             PGresult *res;
-            sql_query(db_name, query, &res, &conn);
+            if (sql_query(db_name, query, &res, &conn) != PGRES_TUPLES_OK) {
+                build_response_500(&response, &response_len);
+            } else {
+                build_response_200(&response, &response_len, "");
+            }
+            PQclear(res);
+            PQfinish(conn);
 
-            build_response_200(&response, &response_len, "");
+            free(query);
 
             // free memory
         post_bad_input_end:
