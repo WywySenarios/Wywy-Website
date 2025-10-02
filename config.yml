@@ -25,6 +25,7 @@ data:
         write: true
         entrytype: form # !!!! this is important I'M NOT SQUIDDING
         schema:
+          # Please note that the datatype is what the PostgreSQL database will recognize (e.g. Typescript has no way of differentiating an integer from a float).
           - name: Date
             datatype: timestamp
             entrytype: timestamp
@@ -40,7 +41,7 @@ data:
             datatype: int
             entrytype: linearSlider
             comments: true
-            description: How much % of time did you productivity exploit to achieve your (any type of) goals today?
+            description: How much % of time did you productivity exploit to achieve your (any type of) goals today? Compare to the feasible maximum.
 
           - name: Happiness
             datatype: int

@@ -12,6 +12,21 @@ import yaml
 import re
 
 RESERVEDCOLUMNNAMES = ["id", "user", "users"]
+PSQLDATATYPES = {
+    "int": "integer",
+    "integer": "integer",
+    "float": "real",
+    "number": "real",
+    "double": "double precision",
+    "str": "text",
+    "string": "text",
+    "text": "text",
+    "bool": "boolean",
+    "boolean": "boolean",
+    "date": "date",
+    "time": "time",
+    "timestamp": "timestamp",
+}
 
 # peak at config
 with open("config.yml", "r") as file:
@@ -88,8 +103,9 @@ class Wywy(cmd.Cmd):
                     
                     # ensure that column names will not interfere with comments in the Astro schema (see apps/astro-app/src/components/data/dataEntryForm.tsx)
                     if "schema" in tableInfo:
-                        for columnName in tableInfo["schema"]:
-                            if columnName[-9:] == "-comments":
+                        for columnInfo in tableInfo["schema"]:
+                            # we may guarentee that the column has a name because of earlier checks
+                            if columnInfo.get("name")[-9:] == "-comments":
                                 print("Table", tableInfo["tableName"], "must not have a column with a name that ends in \"-comments\".")
 
                     # avoid reserved columns
@@ -119,7 +135,7 @@ class Wywy(cmd.Cmd):
                                 columnDisplayName = toUnderscoreNotation(columnInfo["name"])
                                 
                                 # add in the column's name & datatype @TODO validate datatype
-                                currentCommand += columnDisplayName + " " + columnInfo["datatype"] + ","
+                                currentCommand += columnDisplayName + " " + PSQLDATATYPES[columnInfo["datatype"]] + ","
                                 
                                 # check out constraints
                                 if columnInfo.get("unique", False) == True:
