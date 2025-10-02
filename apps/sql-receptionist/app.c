@@ -213,37 +213,40 @@ static int check_timestamplike(const json_t *json)
 }
 
 /**
- * 
+ *
  */
-static char *json_to_string(const json_t *value) {
+static char *json_to_string(const json_t *value)
+{
     char *output;
-    if (!value) {
+    if (!value)
+    {
         return NULL;
     }
 
-    switch (json_typeof(value)) {
-        case JSON_STRING:
-            output = malloc(strlen(json_string_value(value)) + 1);
-            strcpy(output, json_string_value(value));
-            return output;
-        case JSON_INTEGER:
-            output = malloc(32 + 1);
-            snprintf(output, 32 + 1, "%lld", (long long)json_integer_value(value));
-            return output;
-        case JSON_REAL:
-            output = malloc(64 + 1);
-            snprintf(output, 64 + 1, "%.17g", json_real_value(value));
-            return output;
-        case JSON_TRUE:
-            output = malloc(5);
-            snprintf(output, 5, "true");
-            return output;
-        case JSON_FALSE:
-            output = malloc(6);
-            snprintf(output, 6, "false");
-            return output;
-        default:
-            return NULL;
+    switch (json_typeof(value))
+    {
+    case JSON_STRING:
+        output = malloc(strlen(json_string_value(value)) + 1);
+        strcpy(output, json_string_value(value));
+        return output;
+    case JSON_INTEGER:
+        output = malloc(32 + 1);
+        snprintf(output, 32 + 1, "%lld", (long long)json_integer_value(value));
+        return output;
+    case JSON_REAL:
+        output = malloc(64 + 1);
+        snprintf(output, 64 + 1, "%.17g", json_real_value(value));
+        return output;
+    case JSON_TRUE:
+        output = malloc(5);
+        snprintf(output, 5, "true");
+        return output;
+    case JSON_FALSE:
+        output = malloc(6);
+        snprintf(output, 6, "false");
+        return output;
+    default:
+        return NULL;
     }
 }
 
@@ -368,7 +371,7 @@ char *url_decode(const char *src)
  * Builds a 200 HTTP response (OK).
  * @param response A pointer to a sequence of characters representing the response
  * @param response_len The length of the response. Does not include the null terminator.
- * @param text The text to include in the response body.
+ * @param text The text to include in the response body. The pointer is not freed.
  */
 void build_response_200(char **response, size_t *response_len, const char *text)
 {
@@ -392,7 +395,6 @@ void build_response_200(char **response, size_t *response_len, const char *text)
  * Builds a 204 HTTP response (No Content).
  * @param response A pointer to a sequence of characters representing the response
  * @param response_len The length of the response. Does not include the null terminator.
- * @param text The text to include in the response body.
  */
 void build_response_204(char **response, size_t *response_len)
 {
@@ -429,11 +431,11 @@ void build_response_400(char **response, size_t *response_len)
                            "400 Bad Request");
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 400 Bad Request\r\n"
-                                     "Content-Type: text/plain\r\n"
-                                     "Access-Control-Allow-Origin: *\r\n"
-                                     "Connection: close\r\n"
-                                     "\r\n"
-                                     "400 Bad Request");
+                                           "Content-Type: text/plain\r\n"
+                                           "Access-Control-Allow-Origin: *\r\n"
+                                           "Connection: close\r\n"
+                                           "\r\n"
+                                           "400 Bad Request");
 }
 
 /**
@@ -451,11 +453,11 @@ void build_response_403(char **response, size_t *response_len)
                            "403 Forbidden");
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 403 Forbidden\r\n"
-                                     "Content-Type: text/plain\r\n"
-                                     "Access-Control-Allow-Origin: *\r\n"
-                                     "Connection: close\r\n"
-                                     "\r\n"
-                                     "403 Forbidden");
+                                           "Content-Type: text/plain\r\n"
+                                           "Access-Control-Allow-Origin: *\r\n"
+                                           "Connection: close\r\n"
+                                           "\r\n"
+                                           "403 Forbidden");
 }
 
 /**
@@ -473,11 +475,11 @@ void build_response_404(char **response, size_t *response_len)
                            "404 Not Found");
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 404 Not Found\r\n"
-                                     "Content-Type: text/plain\r\n"
-                                     "Access-Control-Allow-Origin: *\r\n"
-                                     "Connection: close\r\n"
-                                     "\r\n"
-                                     "404 Not Found");
+                                           "Content-Type: text/plain\r\n"
+                                           "Access-Control-Allow-Origin: *\r\n"
+                                           "Connection: close\r\n"
+                                           "\r\n"
+                                           "404 Not Found");
 }
 
 /**
@@ -495,16 +497,16 @@ void build_response_500(char **response, size_t *response_len)
                            "500 Internal Server Error");
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 500 Internal Server Error\r\n"
-                                     "Content-Type: text/plain\r\n"
-                                     "Access-Control-Allow-Origin: *\r\n"
-                                     "Connection: close\r\n"
-                                     "\r\n"
-                                     "500 Internal Server Error");
+                                           "Content-Type: text/plain\r\n"
+                                           "Access-Control-Allow-Origin: *\r\n"
+                                           "Connection: close\r\n"
+                                           "\r\n"
+                                           "500 Internal Server Error");
 }
 
 /**
  * Attempts to query the database with the given query.
- * This function assumes that the global config has the correct information on the 
+ * This function assumes that the global config has the correct information on the
  * @param dbname A pointer to a sequence of characters representing the database name to connect to. This function does NOT free dbname.
  * @param query A pointer to a sequence of characters representing the query to execute. This function does NOT free query.
  * @param res A double pointer to a PGresult pointer that will be set to the result of the query. This function does NOT free *res.
@@ -513,16 +515,17 @@ void build_response_500(char **response, size_t *response_len)
  */
 ExecStatusType sql_query(char *dbname, char *query, PGresult **res, PGconn **conn)
 {
-    if (*conn == NULL) {
+    if (*conn == NULL)
+    {
         size_t conninfo_size = 1 + strlen("dbname= user= password= host= port=") + strlen(dbname) + strlen(global_config->postgres.user) + strlen(global_config->postgres.password) + strlen(global_config->postgres.host) + 5;
         char *conninfo = malloc(conninfo_size);
         snprintf(conninfo, conninfo_size,
-             "dbname=%s user=%s password=%s host=%s port=%d",
-             dbname,
-             global_config->postgres.user,
-             global_config->postgres.password,
-             global_config->postgres.host,
-             global_config->postgres.port);
+                 "dbname=%s user=%s password=%s host=%s port=%d",
+                 dbname,
+                 global_config->postgres.user,
+                 global_config->postgres.password,
+                 global_config->postgres.host,
+                 global_config->postgres.port);
 
         *conn = PQconnectdb(conninfo);
         free(conninfo);
@@ -944,7 +947,9 @@ found_table:
                         if (!related_datatype_checker)
                         {
                             break;
-                        } else if ((*related_datatype_checker)(value) == 0) {
+                        }
+                        else if ((*related_datatype_checker)(value) == 0)
+                        {
                             break;
                         }
 
@@ -964,7 +969,8 @@ found_table:
                 }
 
                 // also remember to catch when the key is not inside the table's schema
-                if (! valid) {
+                if (!valid)
+                {
                     build_response_400(&response, &response_len);
                     goto post_bad_input_end;
                 }
@@ -979,7 +985,8 @@ found_table:
             strncpy(column_names, "", 1);
             strncpy(values, "", 1);
 
-            json_object_foreach(entry, key, value) {
+            json_object_foreach(entry, key, value)
+            {
                 // char *key_string = json_to_string(key);
                 char *value_string = json_to_string(value);
 
@@ -1003,13 +1010,16 @@ found_table:
             // strcat(query, ")\nVALUES (");
             // memcpy(query, values, total_value_len + separator_len);
             // strcat(query, ");");
-            snprintf(query, query_len,"INSERT INTO %s (%s)\nVALUES(%s);", table_name, column_names, values);
+            snprintf(query, query_len, "INSERT INTO %s (%s)\nVALUES(%s);", table_name, column_names, values);
 
             PGconn *conn;
             PGresult *res;
-            if (sql_query(db_name, query, &res, &conn) != PGRES_TUPLES_OK) {
+            if (sql_query(db_name, query, &res, &conn) != PGRES_TUPLES_OK)
+            {
                 build_response_500(&response, &response_len);
-            } else {
+            }
+            else
+            {
                 build_response_200(&response, &response_len, "");
             }
             PQclear(res);
@@ -1154,11 +1164,14 @@ int main(int argc, char const *argv[])
 
         // create a new thread to handle client request
         pthread_t thread_id;
-        if (pthread_create(&thread_id, NULL, handle_client, (void *)client_fd) != 0) {
+        if (pthread_create(&thread_id, NULL, handle_client, (void *)client_fd) != 0)
+        {
             perror("thread create");
             close(*client_fd);
             // @todo send a nice error msg
-        } else {
+        }
+        else
+        {
             pthread_detach(thread_id);
         }
     }
