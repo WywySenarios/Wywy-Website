@@ -221,6 +221,18 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
         continue
       }
 
+      // single-quote strings, dates, times, and timestamps
+      switch (field.datatype) {
+        case "string":
+        case "str":
+        case "text":
+        case "date":
+        case "time":
+        case "timestamp":
+          values[field.name] = "'" + values[field.name] + "'"
+          break;
+      }
+
       // let valueToInsert = parseAny(values[field.name], field.datatype);
       let valueToInsert = values[field.name]
       if (valueToInsert != undefined) {

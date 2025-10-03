@@ -93,7 +93,7 @@ static int check_datelike(const json_t *json)
     {
         const char *text = json_string_value(json);
         regex_t check_regex;
-        regcomp(&check_regex, "[0-9]{1,4}-[0-9]{2}-[0-9]{2}", REG_EXTENDED);
+        regcomp(&check_regex, "'[0-9]{1,4}-[0-9]{2}-[0-9]{2}'", REG_EXTENDED);
         // Alternative pattern (does not account for february 29): xxxx-[1<=num<=12]-[valid date within that month]: ([0-9]{1,4})-?((02)-?([0]|[12][0-9])|(01|03|05|07|08|10|12)-?(0[1-9]|[12][0-9]|3[01])|(04|06|09|11)-?(0[1-9]|[12][0-9]|30))
 
         regmatch_t check_matches[4];
@@ -112,14 +112,13 @@ static int check_datelike(const json_t *json)
 
         // make sure it's just a datelike string and nothing else is after that.
         int match_size = check_matches[0].rm_eo - check_matches[0].rm_so;
+        regfree(&check_regex);
         if (match_size == strlen(text))
         {
-            regfree(&check_regex);
             return 1;
         }
         else
         {
-            regfree(&check_regex);
             return 0;
         }
     }
@@ -137,7 +136,7 @@ static int check_timelike(const json_t *json)
     {
         const char *text = json_string_value(json);
         regex_t check_regex;
-        regcomp(&check_regex, "[0-9]{2}:[0-9]{2}:[0-9]{2}Z|[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{1,6}Z|T[0-9]{6}Z|T[0-9]{6}.[0-9]{1,6}Z", REG_EXTENDED);
+        regcomp(&check_regex, "'([0-9]{2}:[0-9]{2}:[0-9]{2}Z|[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{1,6}Z|T[0-9]{6}Z|T[0-9]{6}.[0-9]{1,6}Z)'", REG_EXTENDED);
 
         regmatch_t check_matches[2];
 
@@ -155,14 +154,13 @@ static int check_timelike(const json_t *json)
 
         // make sure it's just a timelike string and nothing else is after that.
         int match_size = check_matches[0].rm_eo - check_matches[0].rm_so;
+        regfree(&check_regex);
         if (match_size == strlen(text))
         {
-            regfree(&check_regex);
             return 1;
         }
         else
         {
-            regfree(&check_regex);
             return 0;
         }
     }
@@ -177,7 +175,7 @@ static int check_timestamplike(const json_t *json)
     {
         const char *text = json_string_value(json);
         regex_t check_regex;
-        regcomp(&check_regex, "([0-9]{1,4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2}:[0-9]{2}Z|[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{1,6}Z|T[0-9]{6}Z|T[0-9]{6}.[0-9]{1,6}Z)", REG_EXTENDED);
+        regcomp(&check_regex, "'([0-9]{1,4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2}:[0-9]{2}Z|[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{1,6}Z|T[0-9]{6}Z|T[0-9]{6}.[0-9]{1,6}Z)'", REG_EXTENDED);
 
         regmatch_t check_matches[2];
 
@@ -195,14 +193,13 @@ static int check_timestamplike(const json_t *json)
 
         // make sure it's just a timelike string and nothing else is after that.
         int match_size = check_matches[0].rm_eo - check_matches[0].rm_so;
+        regfree(&check_regex);
         if (match_size == strlen(text))
         {
-            regfree(&check_regex);
             return 1;
         }
         else
         {
-            regfree(&check_regex);
             return 0;
         }
     }
@@ -365,6 +362,26 @@ char *url_decode(const char *src)
     // add null terminator
     decoded[decoded_len] = '\0';
     return decoded;
+}
+
+/**
+ * Attempts to convert a given string to snake case.
+ * @param src The string to convert. This function does not free src, but it does modify it in place.
+ */
+void to_snake_case(char *src)
+{
+    size_t src_len = strlen(src);
+    for (unsigned i = 0; i < src_len; i++)
+    {
+        switch (src[i])
+        {
+        case ' ':
+        case '-':
+        case '.':
+            src[i] = '_';
+            break;
+        }
+    }
 }
 
 /**
@@ -533,12 +550,14 @@ ExecStatusType sql_query(char *dbname, char *query, PGresult **res, PGconn **con
 
     if (PQstatus(*conn) != CONNECTION_OK)
     {
-        return false;
+        return PGRES_FATAL_ERROR;
     }
 
     // Submit & Execute query
     *res = PQexec(*conn, query);
     ExecStatusType status = PQresultStatus(*res);
+
+    return status;
 }
 
 /**
@@ -959,7 +978,7 @@ found_table:
                         // char *key_string = json_to_string(key);
                         char *value_string = json_to_string(value);
                         total_value_len += strlen(value_string);
-                        total_key_len += strlen(key);
+                        total_key_len += strlen(key); // no need to use to_snake_case: it won't change the length of the string.
                         separator_len++;
 
                         // free(key_string);
@@ -989,13 +1008,16 @@ found_table:
             {
                 // char *key_string = json_to_string(key);
                 char *value_string = json_to_string(value);
+                char *snake_case_key = malloc(strlen(key) + 1);
+                strcpy(snake_case_key, key);
+                to_snake_case(snake_case_key);
 
-                strncat(column_names, key, strlen(key) + 1);
+                strncat(column_names, snake_case_key, strlen(key) + 1);
                 strncat(column_names, ",", 1 + 1);
                 strncat(values, value_string, strlen(value_string) + 1);
                 strncat(values, ",", 1 + 1);
 
-                // free(key_string);
+                free(snake_case_key);
                 free(value_string);
             }
 
@@ -1003,7 +1025,7 @@ found_table:
             column_names[strlen(column_names) - 1] = '\0';
             values[strlen(values) - 1] = '\0';
 
-            int query_len = strlen("INSERT INTO  ()\nVALUES();") + total_value_len + total_key_len + 2 * separator_len + 1;
+            int query_len = strlen("INSERT INTO  ()\nVALUES();") + strlen(table_name) + total_value_len + total_key_len + 2 * separator_len + 1;
             char *query = malloc(query_len);
             // strcat(query, "INSERT INTO (");
             // memcpy(query, column_names, total_key_len + separator_len);
@@ -1014,7 +1036,8 @@ found_table:
 
             PGconn *conn;
             PGresult *res;
-            if (sql_query(db_name, query, &res, &conn) != PGRES_TUPLES_OK)
+            ExecStatusType sql_query_status = sql_query(db_name, query, &res, &conn);
+            if (sql_query_status != PGRES_COMMAND_OK && sql_query_status != PGRES_TUPLES_OK)
             {
                 build_response_500(&response, &response_len);
             }

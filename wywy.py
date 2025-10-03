@@ -33,12 +33,12 @@ with open("config.yml", "r") as file:
     config = yaml.safe_load(file)
     
 
-def toUnderscoreNotation(target: str) -> str:
-    """Attempts to convert from regular words/sentences to underscore notation. This will not affect strings already in underscore notation. (Does not work with camelCase)
+def to_snake_case(target: str) -> str:
+    """Attempts to convert from regular words/sentences to snake_case. This will not affect strings already in underscore notation. (Does not work with camelCase)
     @param target
     @return Returns underscore notation string. e.g. "hi I am Wywy" -> "hi_I_am_Wywy"
     """
-    stringFrags: List[str] = re.split(r"[\.\s]", target)
+    stringFrags: List[str] = re.split(r"[\.\ \-]", target)
     
     output: str = ""
     
@@ -132,7 +132,7 @@ class Wywy(cmd.Cmd):
                                 if not "name" in columnInfo:
                                     print("Skipping a column in table", tableInfo["tableName"], "due to missing \"name\" key in column schema.")
                                 
-                                columnDisplayName = toUnderscoreNotation(columnInfo["name"])
+                                columnDisplayName = to_snake_case(columnInfo["name"])
                                 
                                 # add in the column's name & datatype @TODO validate datatype
                                 currentCommand += columnDisplayName + " " + PSQLDATATYPES[columnInfo["datatype"]] + ","
