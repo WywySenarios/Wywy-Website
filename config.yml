@@ -1,0 +1,104 @@
+referenceUrls:
+  main: https://www.ericzhu.me
+  db: https://db.ericzhu.me
+
+# UNUSED SO FAR:
+# The location of python that you wish to run.
+python: ".venv\\Scripts\\python.exe"
+
+# Webpage
+websiteTitle: "My Website Title"
+websiteIcon: "/favicon.svg"
+
+# Postgres database
+postgres:
+  # @TODO TCP vs UNIX socket
+  host: 127.0.0.1
+  port: 5432
+  user: postgres
+  password: ~
+data:
+  - dbname: WywyWebsite
+    tables:
+      - tableName: daily
+        read: true
+        write: true
+        entrytype: form # !!!! this is important I'M NOT SQUIDDING
+        schema:
+          # Please note that the datatype is what the PostgreSQL database will recognize (e.g. Typescript has no way of differentiating an integer from a float).
+          - name: Date
+            datatype: timestamp
+            entrytype: timestamp
+            description: The estimate of when you gained conciousness at the start of this (sleep-based) day.
+
+          - name: Work Ethic
+            datatype: int
+            entrytype: linearSlider
+            comments: true
+            description: How much drive did you have to do work today?
+
+          - name: Time Efficiency
+            datatype: int
+            entrytype: linearSlider
+            comments: true
+            description: How much % of time did you productivity exploit to achieve your (any type of) goals today? Compare to the feasible maximum.
+
+          - name: Happiness
+            datatype: int
+            entrytype: linearSlider
+            comments: true
+            description: What % are you feeling today?
+
+          - name: Awareness
+            datatype: int
+            entrytype: linearSlider
+            comments: true
+            description: How alert are you today? Tired? Focused?
+
+          - name: Sleep Quality
+            datatype: int
+            entrytype: linearSlider
+            comments: true
+            description: How would you rate you sleep quality?
+
+          - name: Sleep Behaviour
+            datatype: int
+            entrytype: linearSlider
+            comments: true
+            description: How well did you actions today facilitate a good night's rest? The importance is less on how good you sleep and moreso about how good the actions are.
+
+          - name: Bedtime
+            datatype: time # @todo fix this for typescript programs
+            entrytype: time
+            defaultValue: "22:30:00"
+            comments: true
+            description: When did you go to bed? This is separate from when you fall asleep.
+
+          - name: Awakening
+            datatype: time
+            entrytype: time
+            defaultValue: "07:00:00"
+            comments: true
+            description: When were you ready to begin the first task (prehaps as simple as brushing teeth) of the day?
+      - tableName: events
+        read: true
+        write: true
+        entrytype: entries
+        schema:
+          - name: Type
+            datatype: string
+            entrytype: textbox
+            suggestions: [""]
+            comments: false
+
+          - name: Applicable Start
+            datatype: timestamp
+            entrytype: calendar time
+
+          - name: Applicable End
+            datatype: timestamp
+            entrytype: calendar time
+
+          - name: Execution Length
+            datatype: float
+            entrytype: textbox

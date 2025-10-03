@@ -1,0 +1,193 @@
+/* Universal */
+
+html {
+    --top-bar-height: 75px;
+    font-family: var(--globalfontfamilies);
+}
+code {
+    font-family:
+        Menlo,
+        Monaco,
+        Lucida Console,
+        Liberation Mono,
+        DejaVu Sans Mono,
+        Bitstream Vera Sans Mono,
+        Courier New,
+        monospace;
+}
+
+/* Astro default CSS styling */
+
+:root {
+    --accent: 136, 58, 234;
+    --accent-light: 224, 204, 250;
+    --accent-dark: 49, 10, 101;
+    --accent-gradient: linear-gradient(
+        45deg,
+        rgb(var(--accent)),
+        rgb(var(--accent-light)) 30%,
+        white 60%
+    );
+}
+
+/* IDK how this works, but it fixes top-bar problem of having a weird "right-shift"! */
+
+/* .buttons {
+    display: flex;
+    gap: 10px; space between buttons 
+} */
+
+/* Main content */
+
+body {
+    margin-top: var(--top-bar-height);
+    padding: 10px;
+    min-height: calc(100vh - var(--top-bar-height));
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+}
+
+/* Top bar */
+
+.top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 20px;
+    height: var(--top-bar-height);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1;
+}
+
+.top-bar img {
+    height: calc(var(--top-bar-height) - 20px - 20px);
+    /* height - padding*/
+    aspect-ratio: 1;
+}
+
+.top-bar input[type="button"] {
+    height: var(--top-bar-height);
+    width: 100px;
+    padding: 0px;
+    border: none;
+    cursor: pointer;
+}
+
+.top-bar input[type="text"] {
+    padding: 20px;
+    width: 100%;
+    display: flex;
+    padding: 10px;
+    /* background-color: #fff; */
+    border: none;
+    color: #000;
+    border-radius: 5px;
+}
+
+/* Footer */
+
+footer {
+    padding: 20px;
+    /* height: 75px; */
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    z-index: 1;
+    overflow: hidden;
+}
+
+address, .footerColumn {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+}
+
+/* mobile support */
+
+@media (orientation: portrait) {
+    * {
+        --top-bar-height: 10vh;
+    }
+
+    .mainContent {
+        padding:20px;
+        font-size: large;
+    }
+
+    .mainContent h1 {
+        font-size: x-large
+    }
+
+    .mainContent input {
+        height: 50px;
+        font-size: large;
+    }
+
+    .mainContent select {
+        height: 50px;
+        font-size: large;
+    }
+
+    .mainContent input[type="checkbox"] {
+        margin-left: 20px;
+        transform: scale(2.5,2.5);
+    }
+
+    .mainContent input[type="range"] {
+        height: 50px;
+        transform: scale(1,3);
+        width: 45vw;
+    }
+
+    /* .top-bar img {
+        width:20vw;
+    } */
+    .top-bar input[type="button"] {
+        width:30vw;
+        font-size: xx-large;
+    }
+
+    .top-bar input[type="text"] {
+        width:100%;
+        height:60%;
+        font-size: xx-large;
+    }
+}
+
+/* Coloring! */
+
+.top-bar {
+    background-color: var(--color4);
+}
+
+.top-bar input[type="button"] {
+    color: var(--textcolor);
+    background-color: unset;
+}
+
+.top-bar input[type="button"]:hover {
+    background-color: var(--color5);
+}
+
+.top-bar input[type="text"] {
+    background-color: var(--color2);
+}
+
+.top-bar input[type="text"]::placeholder {
+    color: var(--textcolor);
+}
+
+footer {
+    background-color: var(--color4);
+    color: var(--textcolor);
+}
+
+.link-card {
+    background-color: var(--color4);
+}

@@ -1,0 +1,95 @@
+---
+import '@/styles/global.css'
+import '@/styles/bars.css'
+import config from "@universal_root/config.yml";
+
+interface Props {
+	title?: string;
+	css_color_palette: string;
+	iconPath?: string;
+	fontPath?: string;
+	useAstroDefaultCSS?: boolean;
+}
+
+let { title = config.websiteTitle, css_color_palette, iconPath = "/favicon.svg", fontPath = "/stylesheets/fonts/main.css", useAstroDefaultCSS = true } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content="Astro description" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href={iconPath} />
+		<link rel="stylesheet" rel="preload" href={fontPath} />
+		{ useAstroDefaultCSS && <link rel="stylesheet" rel="preload" href="/stylesheets/default.css"> }
+		<!-- <link rel="stylesheet" rel="preload" href="stylesheets/animations.css"> -->
+		<link
+			rel="stylesheet"
+			rel="preload"
+			href={
+				"/stylesheets/color_palette/" +
+				css_color_palette +
+				".css"}
+		/>
+
+		<!-- Preconnect to cloudflare. Thanks to Google Lighthouse for pointing this out! NOTE: The value of crossorigin was NOT explicitly set. -->
+		<link rel="preconnect" crossorigin href="https://cdnjs.cloudflare.com">
+
+		<slot name="head"/>
+		
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+	</head>
+	<body>
+		<!-- Top bar -->
+		<nav class="top-bar">
+			<!-- Icon -->
+			<img src={iconPath} alt="Website Icon" />
+
+			<!-- Buttons -->
+			<!-- Made thanks to : https://stackoverflow.com/questions/2906582/how-do-i-create-an-html-button-that-acts-like-a-link -->
+			<a href="/">
+				<input type="button" value="Home" />
+			</a>
+
+			<slot name="top-bar-button2" />
+			<slot name="top-bar-button3" />
+
+			<!-- Search bar -->
+			<!--  <input type="text" placeholder="Search (DOES NOT WORK)" /> -->
+		</nav>
+		<slot />
+	</body>
+</html>
+
+<!-- Footer -->
+<footer>
+	<!-- Contact info -->
+	<address>
+		Website created by: <a href="mailto:wywyericzhu@gmail.com"
+			>Eric Zhu & Wywy</a>
+	</address>
+
+	<!-- Privacy Policy -->
+	<div class="footerColumn">
+		<a href="/privacyPolicy">Privacy Policy</a>
+	</div>
+
+	<!-- Attribution :)) -->
+	<div class="footerColumn">
+		<p>Thanks to Dmitri Simon for helping me create the Webpage Icon!</p>
+	</div>
+
+	<!-- Support me! -->
+	<div class="footerColumn">
+		<p>
+			Support me by starring my <a
+				href="https://github.com/WywySenarios/Wywy-Website"
+				>repository</a
+			>!
+		</p>
+	</div>
+	<!-- Attributions -->
+	<slot class="footerColumn" name="attributions" />
+</footer>
