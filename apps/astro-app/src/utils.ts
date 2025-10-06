@@ -146,7 +146,7 @@ function prettifyTimeString(time: string): string {
     }
 
     console.warn(`parseTime could not parse the time string: "${time}" with any of the formats: ${formatsToTry.join(", ")}`);
-    return undefined; // Return undefined if no valid format is found
+    return "";
 }
 
 /**
