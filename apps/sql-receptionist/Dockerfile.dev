@@ -1,0 +1,40 @@
+FROM gcc:latest AS dev
+WORKDIR /apps/sql-receptionist
+
+# copy all C & header files
+COPY ./apps/sql-receptionist/*.c ./
+COPY ./apps/sql-receptionist/*.h ./
+# copy the makefile
+COPY ./apps/sql-receptionist/makefile ./
+COPY ./config.yml /
+COPY ./config.yml ./
+
+RUN apt-get update && apt-get install -y \
+    cmake \
+    build-essential \
+    libpq-dev \
+    libcyaml-dev \
+    wget \
+    bzip2 \
+    gnupg \
+    # @TODO verification with gnupg
+    # QoL
+    gdb \
+    nano
+RUN wget https://github.com/akheron/jansson/releases/download/v2.14.1/jansson-2.14.1.tar.bz2 \
+    && bunzip2 -c jansson-2.14.1.tar.bz2 | tar xf - \
+    && cd jansson-2.14.1 \
+    && ./configure \
+    && make \
+    && make check \
+    && make install PREFIX=/usr
+
+# RUN wget https://github.com/tlsa/libcyaml/archive/refs/tags/v1.4.2.tar.gz \
+#     && tar -xvzf v1.4.2.tar.gz \
+#     && cd libcyaml-1.4.2 \
+#     && make PREFIX=/usr
+    # && make install VARIANT=release PREFIX=/usr
+
+RUN make
+
+CMD ["./app.exe"]
