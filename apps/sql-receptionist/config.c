@@ -7,6 +7,8 @@
 #include <cyaml/cyaml.h>
 #include "config.h"
 
+#define CONFIG_PATH "../../config.yml" // Change to ../../config.yml if running from apps/sql-receptionist (i.e. outside docker)
+
 static const cyaml_schema_field_t reference_urls_schema[] = {
     CYAML_FIELD_STRING_PTR(
         "main", CYAML_FLAG_POINTER,
@@ -29,7 +31,7 @@ static const cyaml_schema_field_t postgres_config_fields_schema[] = {
         struct postgres_config, user, 0, CYAML_UNLIMITED),
 
     CYAML_FIELD_STRING_PTR(
-        "password", CYAML_FLAG_POINTER,
+        "password", CYAML_FLAG_OPTIONAL,
         struct postgres_config, password, 0, CYAML_UNLIMITED),
     CYAML_FIELD_END};
 
@@ -43,7 +45,7 @@ static const cyaml_schema_field_t data_column_fields_schema[] = {
         struct data_column, datatype, 0, CYAML_UNLIMITED),
 
     CYAML_FIELD_STRING_PTR(
-        "invalidInputMessage", CYAML_FLAG_POINTER | CYAML_FLAG_OPTIONAL,
+        "invalidInputMessage", CYAML_FLAG_OPTIONAL,
         struct data_column, invalid_input_message, 0, CYAML_UNLIMITED),
 
     CYAML_FIELD_BOOL(
@@ -127,7 +129,7 @@ static const cyaml_config_t cyaml_config = {
  * @return Null if the configuration could not be loaded, otherwise a pointer to the loaded configuration (struct config).
  */
 void load_config(struct config **cfg) {
-    cyaml_err_t err = cyaml_load_file("../../config.yml", &cyaml_config, &config_schema, (void **)cfg, NULL);
+    cyaml_err_t err = cyaml_load_file(CONFIG_PATH, &cyaml_config, &config_schema, (void **)cfg, NULL);
 
     if (err != CYAML_OK) {
         fprintf(stderr, "Failed to load config: %s\n", cyaml_strerror(err));
