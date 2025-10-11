@@ -39,5 +39,6 @@ RUN ldconfig
 RUN make
 
 EXPOSE 2523
+EXPOSE 5432
 
 CMD ["./app"]

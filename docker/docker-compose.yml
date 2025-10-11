@@ -6,8 +6,10 @@ services:
       context: ../
       dockerfile: apps/astro-app/Dockerfile.dev
       target: runtime
-    # volumes:
-    #   - astro_node_modules:/apps/astro-app/node_modules
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ../apps/astro-app:/apps/astro-app
     ports:
       - 4321:4321
 
@@ -20,6 +22,6 @@ services:
       target: dev
     ports:
       - 2523:2523
-
-
-    # docker save???
+# volumes:
+#   astro-src:
+#   astro-public:

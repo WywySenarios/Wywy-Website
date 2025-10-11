@@ -1,6 +1,6 @@
 FROM node:lts AS runtime
 
-WORKDIR /apps/astro-app
+WORKDIR /apps/astro-apps
 
 # install packages
 COPY ./apps/astro-app/package*.json ./
