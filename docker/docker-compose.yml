@@ -8,10 +8,13 @@ services:
       target: runtime
     environment:
       - NODE_ENV=development
-    volumes:
-      - ../apps/astro-app:/apps/astro-app
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
     ports:
       - 4321:4321
+    volumes:
+      - ../apps/astro-app:/apps/astro-app
+    command: npm run dev -- --host
 
   sql-receptionist:
     # image: gcc:latest
@@ -22,6 +25,3 @@ services:
       target: dev
     ports:
       - 2523:2523
-# volumes:
-#   astro-src:
-#   astro-public:

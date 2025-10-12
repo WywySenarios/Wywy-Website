@@ -1,18 +1,15 @@
 FROM node:lts AS runtime
 
-WORKDIR /apps/astro-apps
+WORKDIR /apps/astro-app
 
 # install packages
 COPY ./apps/astro-app/package*.json ./
 RUN npm install
 
 # copy over the rest of the files (astro files & global config)
-COPY ./apps/astro-app/. ./
-COPY ./config.yml ./
-# RUN npm start --host
+# COPY ./apps/astro-app/. ./
+COPY ./config.yml ./../../
 
 ENV HOST=0.0.0.0
 ENV PORT=4321
 EXPOSE 4321
-
-CMD ["npm", "run", "dev", "--", "--host"]
