@@ -1,6 +1,8 @@
 services:
   astro-app:
+    container_name: astro-dev-server
     # image: node:lts-alpine
+    restart: always
     working_dir: /apps/astro-app
     build:
       context: ../
@@ -17,6 +19,7 @@ services:
     command: npm run dev -- --host
 
   sql-receptionist:
+    container_name: sql-receptionist-dev-server
     # image: gcc:latest
     working_dir: /apps/sql-receptionist
     build:
@@ -25,3 +28,26 @@ services:
       target: dev
     ports:
       - 2523:2523
+    depends_on:
+      database:
+        condition: service_healthy
+
+  # @TODO secrets for db authentication
+  database:
+    container_name: postgres
+    image: postgres
+    working_dir: /apps/postgres
+    build:
+      context: ../
+      dockerfile: apps/postgres/Dockerfile.dev
+      target: dev
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 60s
+      timeout: 5s # problem with timeout < interval?
+      retries: 10
+    volumes:
+      - ../apps/postgres/data:/var/lib/postgresql/data
+    shm_size: 128mb
