@@ -25,14 +25,6 @@ static const cyaml_schema_field_t postgres_config_fields_schema[] = {
     CYAML_FIELD_UINT(
         "port", CYAML_FLAG_OPTIONAL,
         struct postgres_config, port),
-
-    CYAML_FIELD_STRING_PTR(
-        "user", CYAML_FLAG_POINTER,
-        struct postgres_config, user, 0, CYAML_UNLIMITED),
-
-    CYAML_FIELD_STRING_PTR(
-        "password", CYAML_FLAG_OPTIONAL,
-        struct postgres_config, password, 0, CYAML_UNLIMITED),
     CYAML_FIELD_END};
 
 static const cyaml_schema_field_t data_column_fields_schema[] = {

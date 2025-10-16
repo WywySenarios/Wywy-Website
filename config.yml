@@ -1,6 +1,6 @@
 referenceUrls:
-  main: https://www.ericzhu.me
-  db: https://db.ericzhu.me
+  main: http://localhost:4321
+  db: http://localhost:2523
 
 # UNUSED SO FAR:
 # The location of python that you wish to run.
@@ -15,8 +15,6 @@ postgres:
   # @TODO TCP vs UNIX socket
   host: 127.0.0.1
   port: 5432
-  user: postgres
-  password: ~
 data:
   - dbname: WywyWebsite
     tables:

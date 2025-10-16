@@ -7,8 +7,6 @@ struct postgres_config
 {
     const char *host;        // @todo validation
     const unsigned int port; // @todo validation
-    const char *user;        // @todo validation
-    const char *password;    // @todo validation
 };
 
 struct data_column

@@ -534,13 +534,13 @@ ExecStatusType sql_query(char *dbname, char *query, PGresult **res, PGconn **con
 {
     if (*conn == NULL)
     {
-        size_t conninfo_size = 1 + strlen("dbname= user= password= host= port=") + strlen(dbname) + strlen(global_config->postgres.user) + strlen(global_config->postgres.password) + strlen(global_config->postgres.host) + 5;
+        size_t conninfo_size = 1 + strlen("dbname= user= password= host= port=") + strlen(dbname) + strlen(getenv("DB_USERNAME")) + strlen(getenv("DB_PASSWORD")) + strlen(global_config->postgres.host) + 5;
         char *conninfo = malloc(conninfo_size);
         snprintf(conninfo, conninfo_size,
                  "dbname=%s user=%s password=%s host=%s port=%d",
                  dbname,
-                 global_config->postgres.user,
-                 global_config->postgres.password,
+                 getenv("DB_USERNAME"),
+                 getenv("DB_PASSWORD"),
                  global_config->postgres.host,
                  global_config->postgres.port);
 
@@ -1111,7 +1111,7 @@ int main(int argc, char const *argv[])
         printf(" * Postgres Settings:\n");
         printf("   - Host: %s\n", global_config->postgres.host);
         printf("   - Port: %u\n", global_config->postgres.port);
-        printf("   - User: %s\n", global_config->postgres.user);
+        printf("   - User: %s\n", getenv("DB_USERNAME"));
         printf("Recognized %u databases:\n", global_config->dbs_count);
         for (unsigned int i = 0; i < global_config->dbs_count; i++)
         {
