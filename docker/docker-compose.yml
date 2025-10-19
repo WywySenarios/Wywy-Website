@@ -20,6 +20,7 @@ services:
 
   sql-receptionist:
     container_name: sql-receptionist-dev-server
+    tty: true
     # image: gcc:latest
     working_dir: /apps/sql-receptionist
     build:
@@ -31,11 +32,18 @@ services:
     environment:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_USERNAME: ${DB_USERNAME}
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./../apps/sql-receptionist
+          target: /apps/sql-receptionist
+          initial_sync: true
     ports:
       - 2523:2523
     depends_on:
       database:
         condition: service_healthy
+    command: make
 
   # @TODO secrets for db authentication
   database:
@@ -55,7 +63,7 @@ services:
     ports:
       - 5432:5432
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${DB_USERNAME}"]
+      test: [ "CMD", "pg_isready", "-U", "${DB_USERNAME}" ]
       interval: 60s
       timeout: 5s # problem with timeout < interval?
       retries: 10
