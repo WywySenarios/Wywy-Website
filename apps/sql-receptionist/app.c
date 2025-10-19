@@ -961,13 +961,14 @@ found_table:
                     // find which entry in the schema matches
                     if (strcmp(key, table->schema[i].name) == 0)
                     {
-                        json_datatype_check_function *related_datatype_checker = linear_search(schema_datatypes, table->schema[i].datatype)->value;
+                        dict_item *item = linear_search(schema_datatypes, table->schema[i].datatype);
                         // check if the input is bad
-                        if (!related_datatype_checker)
+                        if (!item)
                         {
                             break;
                         }
-                        else if ((*related_datatype_checker)(value) == 0)
+                        json_datatype_check_function *related_datatype_checker = item->value;
+                        if ((*related_datatype_checker)(value) == 0)
                         {
                             break;
                         }
@@ -1045,8 +1046,10 @@ found_table:
             {
                 build_response_200(&response, &response_len, "");
             }
-            PQclear(res);
-            PQfinish(conn);
+            if (sql_query_status != PGRES_FATAL_ERROR && res)
+                PQclear(res);
+            if (sql_query_status != PGRES_FATAL_ERROR && conn)
+                PQfinish(conn);
 
             free(query);
 
@@ -1056,6 +1059,7 @@ found_table:
         bad_body_end:
             regfree(&body_regex);
             // free json object??? how ???
+            json_decref(entry);
         }
         else
         {
