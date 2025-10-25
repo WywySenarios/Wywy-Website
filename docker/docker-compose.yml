@@ -64,7 +64,8 @@ services:
     healthcheck:
       test: [ "CMD", "pg_isready", "-U", "${DB_USERNAME}" ]
       interval: 60s
-      timeout: 5s # problem with timeout < interval?
+      timeout: 5s
+      start_period: 3s
       retries: 10
     volumes:
       - postgres-db:/var/lib/postgresql
