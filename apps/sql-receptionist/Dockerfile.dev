@@ -1,6 +1,8 @@
 FROM python:3.14.0-bookworm AS builder
 WORKDIR /apps/sql-receptionist
 
+ENV LD_LIBRARY_PATH=/usr/local/lib
+
 COPY ./apps/sql-receptionist .
 COPY ./config.yml /
 
@@ -32,9 +34,6 @@ RUN wget https://github.com/tlsa/libcyaml/archive/refs/tags/v1.4.2.tar.gz \
     && cd libcyaml-1.4.2 \
     && make \
     && make install VARIANT=debug
-
-# make sure the compiler knows where to look for the libcyaml & jansson libraries
-# RUN ldconfig
 
 RUN make
 
