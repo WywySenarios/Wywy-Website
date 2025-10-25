@@ -63,7 +63,7 @@ services:
       - ${POSTGRES_PORT}:5432 #${POSTGRES_PORT}
     healthcheck:
       test: [ "CMD", "pg_isready", "-U", "${DB_USERNAME}" ]
-      interval: 60s
+      interval: 5m
       timeout: 5s
       start_period: 3s
       retries: 10
