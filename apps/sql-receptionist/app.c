@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <regex.h>
@@ -34,6 +35,12 @@
 #define MAX_REGEX_MATCHES 25
 #define limit "20"
 #define NUM_DATATYPES_KEYS 1
+
+int done = 0;
+void handle_sigterm(int signal_num) {
+    printf("Received SIGTERM. Exiting after handling the current requests...\n");
+    done = 1;
+}
 
 struct dict_item
 {
@@ -1129,6 +1136,7 @@ int main(int argc, char const *argv[])
             }
         }
     }
+
     schema_datatypes.size = sizeof(schema_datatypes_keys) / sizeof(schema_datatypes_keys[0]);
     schema_datatypes.pairs = malloc(sizeof(schema_datatypes_keys) / sizeof(schema_datatypes_keys[0]) * sizeof(dict_item));
     // populate the dictionary
@@ -1177,7 +1185,7 @@ int main(int argc, char const *argv[])
 
     printf("Listening on Port %u.\n", PORT);
 
-    while (1)
+    while (!done)
     {
         // client info
         int *client_fd = malloc(sizeof(int));
