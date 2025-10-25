@@ -15,6 +15,7 @@ services:
       - 4321:4321
     volumes:
       - ../apps/astro-app:/apps/astro-app
+      - astro-node_modules:/apps/astro-app/node_modules
     command: npm run dev -- --host
 
   sql-receptionist:
@@ -72,3 +73,4 @@ services:
 
 volumes:
   postgres-db:
+  astro-node_modules:

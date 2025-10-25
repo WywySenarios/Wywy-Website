@@ -6,8 +6,7 @@ WORKDIR /apps/astro-app
 COPY ./apps/astro-app/package*.json ./
 RUN npm install
 
-# copy over the rest of the files (astro files & global config)
-# COPY ./apps/astro-app/. ./
+# copy global config
 COPY ./config.yml ./../../
 
 ENV HOST=0.0.0.0
