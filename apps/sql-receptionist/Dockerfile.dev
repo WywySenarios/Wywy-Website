@@ -1,12 +1,15 @@
-FROM debian:bookworm AS dev
+FROM python:3.14.0-bookworm AS builder
 WORKDIR /apps/sql-receptionist
 
-# copy all C & header files
-COPY ./apps/sql-receptionist/*.c ./
-COPY ./apps/sql-receptionist/*.h ./
-# copy the makefile
-COPY ./apps/sql-receptionist/makefile ./
+COPY ./apps/sql-receptionist .
 COPY ./config.yml /
+
+ENV POSTGRES_PORT=5432
+ENV DB_USER=postgres
+ENV DB_PASSWORD=password
+
+RUN pip install psycopg2-binary
+RUN pip install --no-cache-dir PyYAML
 
 RUN apt-get update && apt-get install -y \
     cmake \
@@ -34,6 +37,7 @@ RUN wget https://github.com/tlsa/libcyaml/archive/refs/tags/v1.4.2.tar.gz \
     && make \
     && make install VARIANT=debug
 
+# make sure the compiler knows where to look for the libcyaml & jansson libraries
 RUN ldconfig
 
 RUN make
@@ -41,4 +45,4 @@ RUN make
 EXPOSE 2523
 EXPOSE 5432
 
-CMD ["./app"]
+CMD ["create_tables.py", "&&", "./app"]
