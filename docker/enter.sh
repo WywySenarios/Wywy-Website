@@ -2,7 +2,7 @@
 # Check if a second argument is provided
 if [ -z "$1" ]; then
   echo "Error: No argument provided."
-  echo "Usage: $0 <first_arg> <a|b|c>"
+  echo "Usage: $0 <first_arg> <astro|sqlr|pgres>"
   exit 1
 fi
 
