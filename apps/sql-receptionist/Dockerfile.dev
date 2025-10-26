@@ -1,4 +1,4 @@
-FROM python:3.14.0-bookworm AS builder
+FROM python:3.14.0-slim-bookworm AS builder
 WORKDIR /apps/sql-receptionist
 
 ENV LD_LIBRARY_PATH=/usr/local/lib
