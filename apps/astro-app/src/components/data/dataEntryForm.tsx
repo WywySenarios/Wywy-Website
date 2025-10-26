@@ -258,7 +258,7 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
             toast(`The server has returned an unexpected response. Wywy is sad. ${text}`)
           }
         } else {
-          toast(`HTTP Error. ${text}`)
+          toast(`Error while submitting form: ${text}`)
         }
       })
     })

@@ -510,22 +510,25 @@ void build_response_404(char **response, size_t *response_len)
  * Builds a 500 HTTP response (Internal Server Error).
  * @param response A pointer to a sequence of characters representing the response
  * @param response_len The length of the response. Does not include the null terminator.
+ * @param text The text to include in the response body. If NULL, the message will default to "500 Internal Server Error". The pointer is not freed.
  */
-void build_response_500(char **response, size_t *response_len)
+void build_response_500(char **response, size_t *response_len, const char *text)
 {
+    if (!text) {
+        text = "500 Internal Server Error";
+    }
+
     *response_len = strlen("HTTP/1.1 500 Internal Server Error\r\n"
                            "Content-Type: text/plain\r\n"
                            "Access-Control-Allow-Origin: *\r\n"
                            "Connection: close\r\n"
-                           "\r\n"
-                           "500 Internal Server Error");
+                           "\r\n") + strlen(text);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 500 Internal Server Error\r\n"
                                            "Content-Type: text/plain\r\n"
                                            "Access-Control-Allow-Origin: *\r\n"
                                            "Connection: close\r\n"
-                                           "\r\n"
-                                           "500 Internal Server Error");
+                                           "\r\n%s", text);
 }
 
 /**
@@ -889,7 +892,7 @@ found_table:
                 else
                 {
                     // @todo determine if it's the client's fault or the server's fault
-                    build_response_500(&response, &response_len);
+                    build_response_500(&response, &response_len, NULL);
                 }
 
                 free(query);
@@ -1047,7 +1050,7 @@ found_table:
             ExecStatusType sql_query_status = sql_query(db_name, query, &res, &conn);
             if (sql_query_status != PGRES_COMMAND_OK && sql_query_status != PGRES_TUPLES_OK)
             {
-                build_response_500(&response, &response_len);
+                build_response_500(&response, &response_len, PQresStatus(sql_query_status));
             }
             else
             {
