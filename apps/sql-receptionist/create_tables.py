@@ -4,8 +4,25 @@
 # imports
 from os import environ as env
 from typing import List
+import re
 import psycopg2
 import yaml
+
+def to_snake_case(target: str) -> str:
+    """Attempts to convert from regular words/sentences to snake_case. This will not affect strings already in underscore notation. (Does not work with camelCase)
+    @param target
+    @return Returns underscore notation string. e.g. "hi I am Wywy" -> "hi_I_am_Wywy"
+    """
+    stringFrags: List[str] = re.split(r"[\.\ \-]", target)
+    
+    output: str = ""
+    
+    for i in stringFrags:
+        output += i + "_"
+    
+    return output[:-1] # remove trailing underscore with "[:-1]"
+
+BASE_URL = "database"
 
 # Constants
 RESERVEDCOLUMNNAMES = ["id", "user", "users"]
@@ -26,14 +43,14 @@ PSQLDATATYPES = {
 }
 
 psycopg2config: dict = {
-    "host": "0.0.0.0",
+    "host": BASE_URL,
     "port": env["POSTGRES_PORT"],
-    "user": env["DB_USER"],
+    "user": env["DB_USERNAME"],
     "password": env["DB_PASSWORD"],
 }
 
 # peak at config
-with open("config.yml", "r") as file:
+with open("../../config.yml", "r") as file:
     config = yaml.safe_load(file)
 
 def to_snake_case(target: str) -> str:
@@ -50,9 +67,47 @@ def to_snake_case(target: str) -> str:
     
     return output[:-1] # remove trailing underscore with "[:-1]"
 
+def to_lower_snake_case(target: str) -> str:
+    """Attempts to convert from regular words/sentences to lower_snake_case. This will not affect strings already in underscore notation. (Does not work with camelCase)
+    @param target
+    @return Returns lower_snake_case string. e.g. "hi I am Wywy" -> "hi_i_am_wywy"
+    """
+    stringFrags: List[str] = re.split(r"[\.\ \-]", target)
+    
+    output: str = ""
+    
+    for i in stringFrags:
+        output += i.lower() + "_"
+    
+    return output[:-1] # remove trailing underscore with "[:-1]"
+
 if __name__ == "__main__":
+    print("Attempting to create tables based on config.yml...")
     # loop through every database that has tables to be created
     for dbInfo in config["data"]:
+        dbInfo["dbname"] = to_lower_snake_case(dbInfo["dbname"])
+        print(dbInfo["dbname"])
+
+        psycopg2config.pop("dbname", None)
+        
+        # check if the table already exists
+        # @TODO reduce the number of with statements
+        conn = psycopg2.connect(**psycopg2config)
+        conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT EXISTS (SELECT FROM pg_database WHERE datname = %s);", (dbInfo["dbname"],))
+                dbExists = cur.fetchone()[0]
+                
+                if not dbExists:
+                    try:
+                        cur.execute("CREATE DATABASE " + dbInfo["dbname"] + ";")
+                    except psycopg2.errors.DuplicateDatabase:
+                        pass
+        finally:
+            conn.close()
+
         psycopg2config["dbname"] = dbInfo["dbname"]
 
         # loop through every table that needs to be created @TODO verify config validity to avoid errors
@@ -60,7 +115,7 @@ if __name__ == "__main__":
             # skip any already created tables without raising any issues
             with psycopg2.connect(**psycopg2config) as conn:
                 with conn.cursor() as cur:
-                    cur.execute("SELECT EXISTS (SELECT FROM pg_tables WHERE tablename = " + tableInfo["tableName"] + ");")
+                    cur.execute("SELECT EXISTS (SELECT FROM pg_tables WHERE tablename = '" + tableInfo["tableName"] + "');")
                     tableExists = cur.fetchone()[0]
                     
                     if tableExists:

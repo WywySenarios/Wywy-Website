@@ -38,6 +38,5 @@ RUN wget https://github.com/tlsa/libcyaml/archive/refs/tags/v1.4.2.tar.gz \
 RUN make
 
 EXPOSE 2523
-EXPOSE 5432
 
 CMD ["create_tables.py", "&&", "./app"]
