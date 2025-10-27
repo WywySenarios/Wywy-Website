@@ -1064,13 +1064,15 @@ found_table:
                 char *error_text = malloc(error_text_len);
                 snprintf(error_text, error_text_len, "%s: %s", PQresStatus(sql_query_status), PQerrorMessage(conn));
                 build_response_500(&response, &response_len, error_text);
-                PQclear(res);
                 free(error_text);
-                if (sql_query_status != PGRES_FATAL_ERROR && conn)
-                    PQfinish(conns);
-
-                free(query);
+            } else {
+                build_response_200(&response, &response_len, "Entry successfully added.");
             }
+
+            PQclear(res);
+            if (conn)
+                    PQfinish(conn);
+            free(query);
             // free memory
         post_bad_input_end:
             free(body);
