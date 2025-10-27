@@ -37,7 +37,8 @@
 #define NUM_DATATYPES_KEYS 1
 
 int done = 0;
-void handle_sigterm(int signal_num) {
+void handle_sigterm(int signal_num)
+{
     printf("Received SIGTERM. Exiting after handling the current requests...\n");
     done = 1;
 }
@@ -517,7 +518,8 @@ void build_response_404(char **response, size_t *response_len)
  */
 void build_response_500(char **response, size_t *response_len, const char *text)
 {
-    if (!text) {
+    if (!text)
+    {
         text = "500 Internal Server Error";
     }
 
@@ -525,13 +527,15 @@ void build_response_500(char **response, size_t *response_len, const char *text)
                            "Content-Type: text/plain\r\n"
                            "Access-Control-Allow-Origin: *\r\n"
                            "Connection: close\r\n"
-                           "\r\n") + strlen(text);
+                           "\r\n") +
+                    strlen(text);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 500 Internal Server Error\r\n"
                                            "Content-Type: text/plain\r\n"
                                            "Access-Control-Allow-Origin: *\r\n"
                                            "Connection: close\r\n"
-                                           "\r\n%s", text);
+                                           "\r\n%s",
+             text);
 }
 
 /**
@@ -1062,10 +1066,10 @@ found_table:
                 build_response_500(&response, &response_len, error_text);
                 PQclear(res);
                 free(error_text);
-            if (sql_query_status != PGRES_FATAL_ERROR && conn)
-                PQfinish(conn);
+                if (sql_query_status != PGRES_FATAL_ERROR && conn)
+                    PQfinish(conns);
 
-            free(query);
+                free(query);
             }
             // free memory
         post_bad_input_end:
