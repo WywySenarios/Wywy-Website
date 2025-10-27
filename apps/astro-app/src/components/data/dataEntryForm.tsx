@@ -22,7 +22,7 @@ import type { ZodTypeAny } from "astro:schema"
 import type { JSXElementConstructor, ReactElement } from "react"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
-import { prettifyTimeString, prettyParseAny, parseAny } from "@/utils"
+import { toSnakeCase } from "@/utils"
 
 import { toast } from "sonner"
 
@@ -150,7 +150,6 @@ const inputElements: Record<inputElementName, inputElementFunction> = {
       <FormLabel className="text-lg font-semibold">{columnInfo.name}</FormLabel>
       <FormControl>
         <TimePicker
-          // @ts-ignore
           defaultValue={columnInfo.defaultValue}
           onChange={field.field.onChange}
         />
@@ -241,6 +240,9 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
     }
 
     // POST them to the SQL Receptionist!
+    databaseName = toSnakeCase(databaseName);
+    tableName = toSnakeCase(tableName);
+    console.log("HEY:", databaseName, tableName);
     console.log(`${dbURL + "/" + databaseName + "/" + tableName}`)
     fetch(dbURL + "/" + databaseName + "/" + tableName, {
       method: "POST",

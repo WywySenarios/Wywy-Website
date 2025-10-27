@@ -2,6 +2,12 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { parse } from "date-fns";
 
+function convertToTimeString(date: Date): string {
+    let output = date.toISOString().split("T")[1];
+    output = output.substring(0, output.length - 1); // get rid of the trailing Z.
+    return output;
+}
+
 /**
  * This element allows the user to pick a time and send it off to a React Hook Form.
  * @todo refractor so that the parent controls the value
@@ -14,17 +20,17 @@ export function TimePicker({ defaultValue, onChange }: { defaultValue: string, o
         if (defaultValue) {
             try {
                 output = parse(defaultValue, "HH:mm:ss", output)
-                onChange(output.toISOString().split("T")[1]);
+                onChange(convertToTimeString(output));
                 return output;
             } catch {
                 output = new Date();
-                onChange(output.toISOString().split("T")[1]);
+                onChange(convertToTimeString(output));
                 return output;
             }
         }
 
         output = new Date();
-        onChange(output.toISOString().split("T")[1]);
+        onChange(convertToTimeString(output));
         return output;
     });
 
@@ -46,7 +52,7 @@ export function TimePicker({ defaultValue, onChange }: { defaultValue: string, o
         output.setSeconds(copy.getSeconds());
 
         setDate(output);
-        onChange(output.toISOString().split("T")[1]);
+        onChange(convertToTimeString(output));
     }
 
     return (

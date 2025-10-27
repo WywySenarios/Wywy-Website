@@ -39,9 +39,9 @@ export function getFallbackValue(datatype: zodPrimaryDatatypes): number | string
     case "date":
       return "0001-01-01";
     case "time":
-      return "01:00:00Z";
+      return "01:00:00";
     case "timestamp":
-      return "0001-01-01T01:00:00Z";
+      return "0001-01-01T01:00:00";
     default:
       return null;  
   }

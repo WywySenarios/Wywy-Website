@@ -197,4 +197,13 @@ function parseTimestamp(timestamp: string): Date | undefined {
     return undefined
 }
 
+/**
+ * Converts a string to snake_case.
+ * @param str The string to convert.
+ * @returns The same string, but lower case and with all the spaces, dots, and dashes replaced with underscores.
+ */
+export function toSnakeCase(str: string): string {
+    return str.replace(/[\s.-]+/g, '_').toLowerCase();
+}
+
 export {prettyParseAny, parseAny, prettifyTimeString, parseDate, parseTime, parseTimestamp}

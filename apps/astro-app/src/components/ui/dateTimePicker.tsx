@@ -15,6 +15,12 @@ import {
 
 import { parseTime } from "@/utils"
 
+function convertToTimestampString(date: Date): string {
+  let output = date.toISOString();
+  output = output.substring(0, output.length - 1); // get rid of the trailing Z.
+  return output;
+}
+
 export function Calendar24({ onChange } : { onChange: (any: any) => void}) {
   const [open, setOpen] = React.useState(false)
   const [date, setDate] = React.useState<Date | undefined>(undefined)
@@ -38,7 +44,7 @@ export function Calendar24({ onChange } : { onChange: (any: any) => void}) {
     output.setDate(val.getDay());
 
     setDate(output);
-    onChange(output.toISOString());
+    onChange(convertToTimestampString(output));
   };
 
   const onTimeChange = (val: string) => {
@@ -60,7 +66,7 @@ export function Calendar24({ onChange } : { onChange: (any: any) => void}) {
     }
 
     setDate(output);
-    onChange(output.toISOString());
+    onChange(convertToTimestampString(output));
   };
 
   return (

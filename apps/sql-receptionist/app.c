@@ -143,7 +143,7 @@ static int check_timelike(const json_t *json)
     {
         const char *text = json_string_value(json);
         regex_t check_regex;
-        regcomp(&check_regex, "'([0-9]{2}:[0-9]{2}:[0-9]{2}Z|[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{1,6}Z|T[0-9]{6}Z|T[0-9]{6}.[0-9]{1,6}Z)'", REG_EXTENDED);
+        regcomp(&check_regex, "'([0-9]{2}:[0-9]{2}:[0-9]{2}|[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{1,6}|T[0-9]{6}|T[0-9]{6}.[0-9]{1,6})'", REG_EXTENDED);
 
         regmatch_t check_matches[2];
 
@@ -182,7 +182,7 @@ static int check_timestamplike(const json_t *json)
     {
         const char *text = json_string_value(json);
         regex_t check_regex;
-        regcomp(&check_regex, "'([0-9]{1,4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2}:[0-9]{2}Z|[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{1,6}Z|T[0-9]{6}Z|T[0-9]{6}.[0-9]{1,6}Z)'", REG_EXTENDED);
+        regcomp(&check_regex, "'([0-9]{1,4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2}:[0-9]{2}|[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{1,6}|T[0-9]{6}|T[0-9]{6}.[0-9]{1,6})'", REG_EXTENDED);
 
         regmatch_t check_matches[2];
 
@@ -320,26 +320,6 @@ const char *get_mime_type(const char *file_ext)
 }
 
 /**
- * Compares two series of characters without case sensitivity.
- * @param s1 A pointer to the first series of characters to compare
- * @param s2 A pointer to the second series of characters to compare
- * @return True if the two inputs are the same barring case sensitivity, false otherwise.
- */
-bool case_insensitive_compare(const char *s1, const char *s2)
-{
-    while (*s1 && *s2)
-    {
-        if (tolower((unsigned char)*s1) != tolower((unsigned char)*s2))
-        {
-            return false;
-        }
-        s1++;
-        s2++;
-    }
-    return *s1 == *s2;
-}
-
-/**
  * Decodes URLs, like "test%20test" -> "test test"
  * @param src The encoded URL to decode.
  * @return A pointer to a series of characters representing the decoded URL.
@@ -386,6 +366,29 @@ void to_snake_case(char *src)
         case '-':
         case '.':
             src[i] = '_';
+            break;
+        }
+    }
+}
+
+/**
+ * Attempts to convert a given string to snake case.
+ * @param src The string to convert. This function does not free src, but it does modify it in place.
+ */
+void to_lower_snake_case(char *src)
+{
+    size_t src_len = strlen(src);
+    for (unsigned i = 0; i < src_len; i++)
+    {
+        switch (src[i])
+        {
+        case ' ':
+        case '-':
+        case '.':
+            src[i] = '_';
+            break;
+        default:
+            src[i] = tolower((unsigned char)src[i]); // @WARNING why unsigned?
             break;
         }
     }
@@ -542,6 +545,8 @@ void build_response_500(char **response, size_t *response_len, const char *text)
  */
 ExecStatusType sql_query(char *dbname, char *query, PGresult **res, PGconn **conn)
 {
+    printf("Query: %s\n", query);
+
     if (*conn == NULL)
     {
         size_t conninfo_size = 1 + strlen("dbname= user= password= host= port=") + strlen(dbname) + strlen(getenv("DB_USERNAME")) + strlen(getenv("DB_PASSWORD")) + strlen(global_config->postgres.host) + 5;
@@ -687,11 +692,12 @@ void *handle_client(void *arg)
     for (unsigned int i = 0; i < global_config->dbs_count; i++)
     {
         db = &global_config->dbs[i];
-        if (case_insensitive_compare(db->db_name, db_name))
+        printf("Checking database %s against %s\n", db->db_name, db_name);
+        if (strcmp(db->db_name, db_name) == 0)
         {
             for (unsigned int j = 0; j < db->tables_count; j++)
             {
-                if (case_insensitive_compare(db->tables[j].table_name, table_name))
+                if (strcmp(db->tables[j].table_name, table_name) == 0)
                 {
                     table = &db->tables[j];
                     goto found_table;
@@ -1050,19 +1056,17 @@ found_table:
             ExecStatusType sql_query_status = sql_query(db_name, query, &res, &conn);
             if (sql_query_status != PGRES_COMMAND_OK && sql_query_status != PGRES_TUPLES_OK)
             {
-                build_response_500(&response, &response_len, PQresStatus(sql_query_status));
-            }
-            else
-            {
-                build_response_200(&response, &response_len, "");
-            }
-            if (sql_query_status != PGRES_FATAL_ERROR && res)
+                size_t error_text_len = strlen(PQresStatus(sql_query_status)) + 2 + strlen(PQerrorMessage(conn)) + 1;
+                char *error_text = malloc(error_text_len);
+                snprintf(error_text, error_text_len, "%s: %s", PQresStatus(sql_query_status), PQerrorMessage(conn));
+                build_response_500(&response, &response_len, error_text);
                 PQclear(res);
+                free(error_text);
             if (sql_query_status != PGRES_FATAL_ERROR && conn)
                 PQfinish(conn);
 
             free(query);
-
+            }
             // free memory
         post_bad_input_end:
             free(body);
@@ -1129,10 +1133,15 @@ int main(int argc, char const *argv[])
         printf("Recognized %u databases:\n", global_config->dbs_count);
         for (unsigned int i = 0; i < global_config->dbs_count; i++)
         {
+            // transform all database names into lower snake case
+            to_lower_snake_case(global_config->dbs[i].db_name);
+
             printf(" * %s:\n", global_config->dbs[i].db_name);
             printf("   - Name: %s\n", global_config->dbs[i].db_name);
             for (unsigned int j = 0; j < global_config->dbs[i].tables_count; j++)
             {
+                // transform all table names into lower snake case
+                to_lower_snake_case(global_config->dbs[i].tables[j].table_name);
                 printf("     - Table %s:\n", global_config->dbs[i].tables[j].table_name);
                 printf("       + Read: %s\n", global_config->dbs[i].tables[j].read ? "true" : "false");
                 printf("       + Write: %s\n", global_config->dbs[i].tables[j].write ? "true" : "false");

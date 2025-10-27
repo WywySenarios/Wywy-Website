@@ -13,7 +13,7 @@ websiteIcon: "/favicon.svg"
 # Postgres database
 postgres:
   # @TODO TCP vs UNIX socket
-  host: 127.0.0.1
+  host: database
   port: 5432
 data:
   - dbname: WywyWebsite

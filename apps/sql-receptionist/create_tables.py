@@ -86,7 +86,6 @@ if __name__ == "__main__":
     # loop through every database that has tables to be created
     for dbInfo in config["data"]:
         dbInfo["dbname"] = to_lower_snake_case(dbInfo["dbname"])
-        print(dbInfo["dbname"])
 
         psycopg2config.pop("dbname", None)
         
@@ -112,6 +111,9 @@ if __name__ == "__main__":
 
         # loop through every table that needs to be created @TODO verify config validity to avoid errors
         for tableInfo in dbInfo.get("tables", []):
+            # convert to lower_snake_case
+            tableInfo["tableName"] = to_lower_snake_case(tableInfo["tableName"])
+
             # skip any already created tables without raising any issues
             with psycopg2.connect(**psycopg2config) as conn:
                 with conn.cursor() as cur:

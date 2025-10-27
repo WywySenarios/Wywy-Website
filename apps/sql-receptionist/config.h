@@ -20,7 +20,7 @@ struct data_column
 
 struct table
 {
-    const char *table_name; // @todo validation
+    char *table_name; // @todo validation
     bool read;       // @todo validation
     bool write;      // @todo validation
     const char *entrytype;  // @todo validation
@@ -30,7 +30,7 @@ struct table
 
 struct db
 {
-    const char *db_name; // @todo validation
+    char *db_name; // @todo validation
     struct table *tables;
     unsigned int tables_count;
 };
