@@ -696,7 +696,6 @@ void *handle_client(void *arg)
     for (unsigned int i = 0; i < global_config->dbs_count; i++)
     {
         db = &global_config->dbs[i];
-        printf("Checking database %s against %s\n", db->db_name, db_name);
         if (strcmp(db->db_name, db_name) == 0)
         {
             for (unsigned int j = 0; j < db->tables_count; j++)
@@ -712,7 +711,6 @@ void *handle_client(void *arg)
     // didn't find a table? Tell the client that there's no such table
     if (table == NULL)
     {
-
         build_response_400(&response, &response_len);
         goto no_table_end;
     }
@@ -727,6 +725,13 @@ found_table:
 
             // @todo allow-list input validation
             // @todo still vulnerable to changing the config
+
+            // REQUIRES querystring to run
+            if (querystring == NULL)
+            {
+                build_response_400(&response, &response_len);
+                goto no_table_end;
+            }
 
             regex_t querystring_regex;
             // slash all &'s separate, and the first = sign after the start of the string or the last &
@@ -1065,13 +1070,15 @@ found_table:
                 snprintf(error_text, error_text_len, "%s: %s", PQresStatus(sql_query_status), PQerrorMessage(conn));
                 build_response_500(&response, &response_len, error_text);
                 free(error_text);
-            } else {
+            }
+            else
+            {
                 build_response_200(&response, &response_len, "Entry successfully added.");
             }
 
             PQclear(res);
             if (conn)
-                    PQfinish(conn);
+                PQfinish(conn);
             free(query);
             // free memory
         post_bad_input_end:
