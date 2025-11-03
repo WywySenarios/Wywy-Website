@@ -8,21 +8,23 @@ import type { DatabaseInfo, TableInfo } from "src/env";
 import config from "@universal_root/config.yml";
 import Layout from "@/layouts/Layout.astro";
 
-import { TestTest } from "@/components/data/test";
 import { DataEntryForm } from "@/components/data/dataEntryForm";
 import { Toaster } from "@/components/ui/sonner";
 
 export const prerender = true;
 export function getStaticPaths() {
-    let output: Array<{params: {databaseName: string, tableName: string}}> = [];
+    let output: Array<{ params: { databaseName: string; tableName: string } }> =
+        [];
 
-
-    Object.values(config.data as DatabaseInfo[]).map(
-        (dbinfo: DatabaseInfo) => (
-            Object.values(dbinfo.tables).map((tableInfo: TableInfo) => {
-                output.push({params: { databaseName: dbinfo.dbname, tableName: tableInfo.tableName }});
-            })
-        ),
+    Object.values(config.data as DatabaseInfo[]).map((dbinfo: DatabaseInfo) =>
+        Object.values(dbinfo.tables).map((tableInfo: TableInfo) => {
+            output.push({
+                params: {
+                    databaseName: dbinfo.dbname,
+                    tableName: tableInfo.tableName,
+                },
+            });
+        }),
     );
 
     return output;
@@ -35,11 +37,10 @@ const { databaseName, tableName } = Astro.params;
 const pageTitle: string =
     databaseName.charAt(0).toUpperCase() +
     databaseName.slice(1) +
-    "/" + 
+    "/" +
     tableName.charAt(0).toUpperCase() +
-    tableName.slice(1) + 
+    tableName.slice(1) +
     " Data Entry";
-
 
 let tableInfo: TableInfo | undefined = undefined;
 for (let i of config.data) {
@@ -56,7 +57,7 @@ for (let i of config.data) {
 
 if (!tableInfo) {
     // @todo say something isn't working
-    return Astro.redirect("/")
+    return Astro.redirect("/");
 }
 ---
 
@@ -78,5 +79,5 @@ if (!tableInfo) {
     >
         <div slot="fallback">Loading...</div>
     </DataEntryForm>
-    <Toaster client:load/>
+    <Toaster client:load />
 </Layout>
