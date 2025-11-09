@@ -36,7 +36,7 @@
 #define limit "20"
 #define NUM_DATATYPES_KEYS 1
 
-int done = 0;
+int done;
 void handle_sigterm(int signal_num)
 {
     printf("Received SIGTERM. Exiting after handling the current requests...\n");
@@ -1132,6 +1132,10 @@ end:
 
 int main(int argc, char const *argv[])
 {
+    // setup for SIGTERM
+    done = 0;
+    signal(SIGTERM, handle_sigterm);
+
     // populate global variables
     load_config(&global_config);
     if (global_config == NULL)
