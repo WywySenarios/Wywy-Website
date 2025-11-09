@@ -45,7 +45,7 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    command: bash -c "ls && python3 create_tables.py && make clean && make && ./app"
+    command: bash -c "python3 create_tables.py && make clean && make && ./app"
 
   # @TODO secrets for db authentication
   database:
