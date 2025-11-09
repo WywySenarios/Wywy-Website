@@ -878,6 +878,7 @@ found_table:
                     output_arrs[0] = '\0';
 
                     // add in "[...]," for all the arrays
+                    // @todo optimize
                     for (int row = 0; row < PQntuples(res); row++)
                     {
                         char *entry_arr = malloc(MAX_ENTRY_SIZE);
@@ -885,7 +886,32 @@ found_table:
 
                         for (int col = 0; col < PQnfields(res); col++)
                         {
-                            strcat(entry_arr, PQgetvalue(res, row, col));
+                            if (!PQgetisnull(res, row, col))
+                            {
+                                int requires_quotes = 0;
+                                // @todo binary search optimization
+                                switch (PQftype(res, col))
+                                {
+                                case 25:
+                                case 1082:
+                                case 1083:
+                                case 1114:
+                                    requires_quotes = 1;
+                                    strcat(entry_arr, "\"");
+                                    break;
+                                default:
+                                    requires_quotes = 0;
+                                    break;
+                                }
+
+                                strcat(entry_arr, PQgetvalue(res, row, col));
+                                if (requires_quotes)
+                                {
+                                    strcat(entry_arr, "\"");
+                                }
+                            }
+                            else
+                                strcat(entry_arr, "null");
                             strcat(entry_arr, ",");
                         }
                         // remove trailing comma
