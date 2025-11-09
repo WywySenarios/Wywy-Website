@@ -585,8 +585,8 @@ ExecStatusType sql_query(char *dbname, char *query, PGresult **res, PGconn **con
 void *handle_client(void *arg)
 {
     int client_fd = *((int *)arg);
-    char *buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));
-    char *response = (char *)malloc(BUFFER_SIZE * 2 * sizeof(char));
+    char *buffer = malloc(BUFFER_SIZE * sizeof(char));
+    char *response = malloc(BUFFER_SIZE * 2 * sizeof(char));
     size_t response_len;
 
     // receive request data from client and store into buffer
@@ -858,8 +858,8 @@ found_table:
             // are the mandatory request params valid? We need something to select and an order to sort it by.
             if (select && order_by)
             {
-                PGconn *conn;
-                PGresult *res;
+                PGconn *conn = NULL;
+                PGresult *res = NULL;
                 char *query = malloc(strlen("SELECT \nFROM \nORDER BY id \nLIMIT;") + strlen(select) + strlen(table_name) + strlen(order_by) + strlen(limit) + 1);
                 char *output = malloc(BUFFER_SIZE); // @todo be more specific
 
@@ -910,9 +910,11 @@ found_table:
                     build_response_500(&response, &response_len, NULL);
                 }
 
+                if (res)
+                    PQclear(res);
+                if (conn)
+                    PQfinish(conn);
                 free(query);
-                PQclear(res);
-                PQfinish(conn);
             }
             else
             {
@@ -1060,8 +1062,8 @@ found_table:
             // strcat(query, ");");
             snprintf(query, query_len, "INSERT INTO %s (%s)\nVALUES(%s);", table_name, column_names, values);
 
-            PGconn *conn;
-            PGresult *res;
+            PGconn *conn = NULL;
+            PGresult *res = NULL;
             ExecStatusType sql_query_status = sql_query(db_name, query, &res, &conn);
             if (sql_query_status != PGRES_COMMAND_OK && sql_query_status != PGRES_TUPLES_OK)
             {
@@ -1076,7 +1078,8 @@ found_table:
                 build_response_200(&response, &response_len, "Entry successfully added.");
             }
 
-            PQclear(res);
+            if (res)
+                PQclear(res);
             if (conn)
                 PQfinish(conn);
             free(query);
