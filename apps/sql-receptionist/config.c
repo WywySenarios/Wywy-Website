@@ -14,18 +14,13 @@ static const cyaml_schema_field_t reference_urls_schema[] = {
         "main", CYAML_FLAG_POINTER,
         struct reference_urls, main, 0, CYAML_UNLIMITED),
     CYAML_FIELD_STRING_PTR("db", CYAML_FLAG_POINTER,
-        struct reference_urls, db, 0, CYAML_UNLIMITED),
+                           struct reference_urls, db, 0, CYAML_UNLIMITED),
 };
 
 static const cyaml_schema_field_t postgres_config_fields_schema[] = {
     CYAML_FIELD_STRING_PTR(
         "host", CYAML_FLAG_POINTER,
-        struct postgres_config, host, 0, CYAML_UNLIMITED),
-
-    CYAML_FIELD_UINT(
-        "port", CYAML_FLAG_OPTIONAL,
-        struct postgres_config, port),
-    CYAML_FIELD_END};
+        struct postgres_config, host, 0, CYAML_UNLIMITED)};
 
 static const cyaml_schema_field_t data_column_fields_schema[] = {
     CYAML_FIELD_STRING_PTR(
@@ -49,13 +44,12 @@ static const cyaml_schema_field_t data_column_fields_schema[] = {
         struct data_column, entrytype, 0, CYAML_UNLIMITED),
     CYAML_FIELD_END};
 
-    static const cyaml_schema_value_t data_column_schema = {
+static const cyaml_schema_value_t data_column_schema = {
     CYAML_VALUE_MAPPING(
-        CYAML_FLAG_DEFAULT,      /* No special flags */
-        struct data_column,      /* Struct type */
-        data_column_fields_schema/* Field schema for mapping */
-    )
-};
+        CYAML_FLAG_DEFAULT,       /* No special flags */
+        struct data_column,       /* Struct type */
+        data_column_fields_schema /* Field schema for mapping */
+        )};
 
 static const cyaml_schema_field_t table_fields_schema[] = {
     CYAML_FIELD_STRING_PTR(
@@ -78,8 +72,7 @@ static const cyaml_schema_field_t table_fields_schema[] = {
     CYAML_FIELD_END};
 
 static const cyaml_schema_value_t table_schema = {
-    CYAML_VALUE_MAPPING(CYAML_FLAG_DEFAULT, struct table, table_fields_schema)
-};
+    CYAML_VALUE_MAPPING(CYAML_FLAG_DEFAULT, struct table, table_fields_schema)};
 
 static const cyaml_schema_field_t db_fields_schema[] = {
     CYAML_FIELD_STRING_PTR(
@@ -87,12 +80,10 @@ static const cyaml_schema_field_t db_fields_schema[] = {
         struct db, db_name, 0, CYAML_UNLIMITED),
 
     CYAML_FIELD_SEQUENCE("tables", CYAML_FLAG_POINTER, struct db, tables, &table_schema, 0, CYAML_UNLIMITED),
-    CYAML_FIELD_END
-};
+    CYAML_FIELD_END};
 
 static const cyaml_schema_value_t db_schema = {
-    CYAML_VALUE_MAPPING(CYAML_FLAG_DEFAULT, struct db, db_fields_schema)
-};
+    CYAML_VALUE_MAPPING(CYAML_FLAG_DEFAULT, struct db, db_fields_schema)};
 
 // top level structure for the config
 
@@ -101,15 +92,13 @@ static const cyaml_schema_field_t config_fields_schema[] = {
     CYAML_FIELD_MAPPING("postgres", CYAML_FLAG_DEFAULT, struct config, postgres, postgres_config_fields_schema),
     CYAML_FIELD_SEQUENCE("data", CYAML_FLAG_POINTER, struct config, dbs, &db_schema, 0, CYAML_UNLIMITED),
     CYAML_FIELD_IGNORE("python", CYAML_FLAG_OPTIONAL),
-    CYAML_FIELD_END
-};
+    CYAML_FIELD_END};
 
 static const cyaml_schema_value_t config_schema = {
-    CYAML_VALUE_MAPPING(CYAML_FLAG_POINTER, struct config, config_fields_schema)
-};
+    CYAML_VALUE_MAPPING(CYAML_FLAG_POINTER, struct config, config_fields_schema)};
 
 static const cyaml_config_t cyaml_config = {
-    .log_fn = cyaml_log,            /* Use the default logging function. */
+    .log_fn = cyaml_log, /* Use the default logging function. */
     .flags = CYAML_CFG_IGNORE_UNKNOWN_KEYS,
     .mem_fn = cyaml_mem,            /* Use the default memory allocator. */
     .log_level = CYAML_LOG_WARNING, /* Logging errors and warnings only. */
@@ -120,10 +109,12 @@ static const cyaml_config_t cyaml_config = {
  * @param cfg Pointer to use for output. This pointer should be empty to prevent memory leaks in the case that the configuration fails to load.
  * @return Null if the configuration could not be loaded, otherwise a pointer to the loaded configuration (struct config).
  */
-void load_config(struct config **cfg) {
+void load_config(struct config **cfg)
+{
     cyaml_err_t err = cyaml_load_file(CONFIG_PATH, &cyaml_config, &config_schema, (void **)cfg, NULL);
 
-    if (err != CYAML_OK) {
+    if (err != CYAML_OK)
+    {
         fprintf(stderr, "Failed to load config: %s\n", cyaml_strerror(err));
 
         *cfg = NULL;
