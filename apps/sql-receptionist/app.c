@@ -786,7 +786,7 @@ found_table:
                         }
                     }
                 }
-                else if (strcmp(item_name, "ORDER BY") == 0)
+                else if (strcmp(item_name, "ORDER_BY") == 0)
                 {
                     if (strcmp(value, "ASC") == 0)
                     {
