@@ -35,8 +35,6 @@ RUN wget https://github.com/tlsa/libcyaml/archive/refs/tags/v1.4.2.tar.gz \
     && make \
     && make install VARIANT=debug
 
-RUN make
-
 EXPOSE 2523
 
 CMD ["create_tables.py", "&&", "./app"]
