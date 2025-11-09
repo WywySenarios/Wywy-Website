@@ -1,5 +1,5 @@
 # Purpose
-TBD
+TBD.
 
 # Core Dependencies
 * npm
