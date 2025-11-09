@@ -15,3 +15,6 @@ networkingMode=mirrored
 * libcyaml
 * libpq-dev
 * jansson
+
+# Docker Watch
+Docker watch only appears to work when the user running the entire docker (e.g. root if you run `sudo docker compose up --watch`) also owns the associated foldes and files here. (e.g. sql-receptionist folder & all the children files)

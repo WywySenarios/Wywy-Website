@@ -38,14 +38,14 @@ services:
       watch:
         - action: sync+restart
           path: ./../apps/sql-receptionist
-          target: /
+          target: ./apps/sql-receptionist
           initial_sync: true
     ports:
       - 2523:2523
     depends_on:
       database:
         condition: service_healthy
-    command: bash -c "python3 create_tables.py && make clean && make && ./app"
+    command: bash -c "ls && python3 create_tables.py && make clean && make && ./app"
 
   # @TODO secrets for db authentication
   database:
