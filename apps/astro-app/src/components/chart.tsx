@@ -6,13 +6,13 @@ import { cn } from "../lib/utils";
 export default function EChart({
     id,
     className,
-    option,
-    optionSettings,
+    options,
+    optionSettings = {},
     showLoading,
     theme
 }: React.ComponentProps<"div"> & {
-    option: EChartsOption,
-    optionSettings: SetOptionOpts,
+    options: EChartsOption,
+    optionSettings?: SetOptionOpts,
     showLoading: boolean,
     theme?: "light" | "dark"
 }): JSX.Element {
@@ -41,16 +41,16 @@ export default function EChart({
         // Update chart
         if (chartRef.current !== null) {
             const chart = getInstanceByDom(chartRef.current);
-            if (chart != undefined) chart.setOption(option, optionSettings);
+            chart.setOption(options, optionSettings);
         }
-    }, [option, optionSettings, theme]); // Whenever theme changes we need to add option and setting due to it being deleted in cleanup function
+    }, [options, optionSettings, theme]); // Whenever theme changes we need to add options and setting due to it being deleted in cleanup function
 
     useEffect(() => {
         if (chartRef.current !== null) {
             const chart = getInstanceByDom(chartRef.current);
-            if (chart != undefined) showLoading === true ? chart.showLoading() : chart.hideLoading();
+            showLoading === true ? chart.showLoading() : chart.hideLoading();
         }
     }, [showLoading, theme]);
 
-    return <div ref={chartRef} className={cn("w-full h-full", className)} />;
+    return <div ref={chartRef} className={cn("min-w-100 min-h-100 w-full h-full", className)} />;
 }
