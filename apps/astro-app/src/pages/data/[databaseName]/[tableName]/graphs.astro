@@ -1,0 +1,73 @@
+---
+/*
+ * Statically hydrate a webpage which allows you to view graphs for a table.
+ * STAGE 1: Create draggable cards which contain graphs. Allow the user to decide what data is being displayed in each card.
+ * STAGE 2: Allow the user to create new cards and resize/relayout existing cards.
+ *
+ * @TODO redirect if dataHarvesting is disabled
+ */
+import type { DatabaseInfo, TableInfo } from "src/env";
+import config from "@universal_root/config.yml";
+import Layout from "@/layouts/Layout.astro";
+import DatasetControlPanel from "@root/src/components/data/dataset-control-panel";
+
+export const prerender = true;
+export function getStaticPaths() {
+    let output: Array<{ params: { databaseName: string; tableName: string } }> =
+        [];
+
+    Object.values(config.data as DatabaseInfo[]).map((dbinfo: DatabaseInfo) =>
+        Object.values(dbinfo.tables).map((tableInfo: TableInfo) => {
+            output.push({
+                params: {
+                    databaseName: dbinfo.dbname,
+                    tableName: tableInfo.tableName,
+                },
+            });
+        }),
+    );
+
+    return output;
+} // It's crucial that this page loads as quickly as possible to provide the best experience.
+
+const { databaseName, tableName } = Astro.params;
+
+// search for the table schema
+let tableSchema: TableInfo | undefined = undefined;
+
+for (const dbinfo of config.data as DatabaseInfo[]) {
+    if (dbinfo.dbname === databaseName) {
+        for (const tableInfo of dbinfo.tables) {
+            if (tableInfo.tableName === tableName) {
+                tableSchema = tableInfo;
+                break;
+            }
+        }
+        break;
+    }
+}
+
+if (!tableSchema) {
+    throw new Error(`Table schema for ${databaseName}/${tableName} not found.`);
+}
+
+const pageTitle: string =
+    databaseName.charAt(0).toUpperCase() +
+    databaseName.slice(1) +
+    "/" +
+    tableName.charAt(0).toUpperCase() +
+    tableName.slice(1) +
+    " Graphs";
+---
+
+<Layout
+    title={pageTitle}
+    css_color_palette="light_mode"
+    useAstroDefaultCSS={false}
+>
+    <DatasetControlPanel
+        databaseName={databaseName}
+        tableSchema={tableSchema}
+        client:load
+    />
+</Layout>
