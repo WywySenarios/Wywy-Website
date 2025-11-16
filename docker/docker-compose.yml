@@ -33,19 +33,19 @@ services:
     environment:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_USERNAME=${DB_USERNAME}
-      - POSTGRES_PORT=5432 #${POSTGRES_PORT}
+      - POSTGRES_PORT=${POSTGRES_PORT}
     develop:
       watch:
-        - action: rebuild
+        - action: sync+restart
           path: ./../apps/sql-receptionist
-          target: /
+          target: ./apps/sql-receptionist
           initial_sync: true
     ports:
       - 2523:2523
     depends_on:
       database:
         condition: service_healthy
-    command: bash -c "python3 create_tables.py && ./app"
+    command: bash -c "python3 create_tables.py && make clean && make && ./app"
 
   # @TODO secrets for db authentication
   database:
@@ -59,9 +59,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_USER: ${DB_USERNAME}
     ports:
-      - 5432:5432
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "${DB_USERNAME}" ]
+      test: [ "CMD", "pg_isready", "-U", "${DB_USERNAME}", "-p", "${POSTGRES_PORT}" ]
       interval: 5m
       timeout: 5s
       start_period: 3s
@@ -70,6 +70,7 @@ services:
       # - postgres-db:/var/lib/postgresql
       - ./../apps/postgres:/var/lib/postgresql
     shm_size: 128mb
+    command: -p ${POSTGRES_PORT}
 
 volumes:
   # postgres-db:

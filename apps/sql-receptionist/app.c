@@ -36,7 +36,7 @@
 #define limit "20"
 #define NUM_DATATYPES_KEYS 1
 
-int done = 0;
+int done;
 void handle_sigterm(int signal_num)
 {
     printf("Received SIGTERM. Exiting after handling the current requests...\n");
@@ -556,12 +556,12 @@ ExecStatusType sql_query(char *dbname, char *query, PGresult **res, PGconn **con
         size_t conninfo_size = 1 + strlen("dbname= user= password= host= port=") + strlen(dbname) + strlen(getenv("DB_USERNAME")) + strlen(getenv("DB_PASSWORD")) + strlen(global_config->postgres.host) + 5;
         char *conninfo = malloc(conninfo_size);
         snprintf(conninfo, conninfo_size,
-                 "dbname=%s user=%s password=%s host=%s port=%d",
+                 "dbname=%s user=%s password=%s host=%s port=%s",
                  dbname,
                  getenv("DB_USERNAME"),
                  getenv("DB_PASSWORD"),
                  global_config->postgres.host,
-                 global_config->postgres.port);
+                 getenv("POSTGRES_PORT"));
 
         *conn = PQconnectdb(conninfo);
         free(conninfo);
@@ -585,8 +585,8 @@ ExecStatusType sql_query(char *dbname, char *query, PGresult **res, PGconn **con
 void *handle_client(void *arg)
 {
     int client_fd = *((int *)arg);
-    char *buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));
-    char *response = (char *)malloc(BUFFER_SIZE * 2 * sizeof(char));
+    char *buffer = malloc(BUFFER_SIZE * sizeof(char));
+    char *response = malloc(BUFFER_SIZE * 2 * sizeof(char));
     size_t response_len;
 
     // receive request data from client and store into buffer
@@ -786,7 +786,7 @@ found_table:
                         }
                     }
                 }
-                else if (strcmp(item_name, "ORDER BY") == 0)
+                else if (strcmp(item_name, "ORDER_BY") == 0)
                 {
                     if (strcmp(value, "ASC") == 0)
                     {
@@ -858,8 +858,8 @@ found_table:
             // are the mandatory request params valid? We need something to select and an order to sort it by.
             if (select && order_by)
             {
-                PGconn *conn;
-                PGresult *res;
+                PGconn *conn = NULL;
+                PGresult *res = NULL;
                 char *query = malloc(strlen("SELECT \nFROM \nORDER BY id \nLIMIT;") + strlen(select) + strlen(table_name) + strlen(order_by) + strlen(limit) + 1);
                 char *output = malloc(BUFFER_SIZE); // @todo be more specific
 
@@ -874,10 +874,24 @@ found_table:
                 if (sql_query(db_name, query, &res, &conn) == PGRES_TUPLES_OK)
                 { // if the query is successful,
                     // convert the query information into JSON
+                    char *column_names = malloc(BUFFER_SIZE); // @todo be more specific
+                    column_names[0] = '\0';
+
+                    // add in the column names
+                    for (int col = 0; col < PQnfields(res); col++)
+                    {
+                        strcat(column_names, "\"");
+                        strcat(column_names, PQfname(res, col));
+                        strcat(column_names, "\",");
+                    }
+                    // remove trailing comma
+                    column_names[strlen(column_names) - 1] = '\0';
+
                     char *output_arrs = malloc(BUFFER_SIZE); // @todo be more specific
                     output_arrs[0] = '\0';
 
                     // add in "[...]," for all the arrays
+                    // @todo optimize
                     for (int row = 0; row < PQntuples(res); row++)
                     {
                         char *entry_arr = malloc(MAX_ENTRY_SIZE);
@@ -885,7 +899,32 @@ found_table:
 
                         for (int col = 0; col < PQnfields(res); col++)
                         {
-                            strcat(entry_arr, PQgetvalue(res, row, col));
+                            if (!PQgetisnull(res, row, col))
+                            {
+                                int requires_quotes = 0;
+                                // @todo binary search optimization
+                                switch (PQftype(res, col))
+                                {
+                                case 25:
+                                case 1082:
+                                case 1083:
+                                case 1114:
+                                    requires_quotes = 1;
+                                    strcat(entry_arr, "\"");
+                                    break;
+                                default:
+                                    requires_quotes = 0;
+                                    break;
+                                }
+
+                                strcat(entry_arr, PQgetvalue(res, row, col));
+                                if (requires_quotes)
+                                {
+                                    strcat(entry_arr, "\"");
+                                }
+                            }
+                            else
+                                strcat(entry_arr, "null");
                             strcat(entry_arr, ",");
                         }
                         // remove trailing comma
@@ -899,8 +938,9 @@ found_table:
                     // remove the trailing comma
                     output_arrs[strlen(output_arrs) - 1] = '\0';
 
-                    snprintf(output, BUFFER_SIZE, "{\"data\":[%s]}", output_arrs);
+                    snprintf(output, BUFFER_SIZE, "{\"columns\":[%s],\"data\":[%s]}", column_names, output_arrs);
                     build_response_200(&response, &response_len, output);
+                    free(column_names);
                     free(output_arrs);
                     free(output);
                 }
@@ -910,9 +950,11 @@ found_table:
                     build_response_500(&response, &response_len, NULL);
                 }
 
+                if (res)
+                    PQclear(res);
+                if (conn)
+                    PQfinish(conn);
                 free(query);
-                PQclear(res);
-                PQfinish(conn);
             }
             else
             {
@@ -1060,8 +1102,8 @@ found_table:
             // strcat(query, ");");
             snprintf(query, query_len, "INSERT INTO %s (%s)\nVALUES(%s);", table_name, column_names, values);
 
-            PGconn *conn;
-            PGresult *res;
+            PGconn *conn = NULL;
+            PGresult *res = NULL;
             ExecStatusType sql_query_status = sql_query(db_name, query, &res, &conn);
             if (sql_query_status != PGRES_COMMAND_OK && sql_query_status != PGRES_TUPLES_OK)
             {
@@ -1076,7 +1118,8 @@ found_table:
                 build_response_200(&response, &response_len, "Entry successfully added.");
             }
 
-            PQclear(res);
+            if (res)
+                PQclear(res);
             if (conn)
                 PQfinish(conn);
             free(query);
@@ -1129,6 +1172,10 @@ end:
 
 int main(int argc, char const *argv[])
 {
+    // setup for SIGTERM
+    done = 0;
+    signal(SIGTERM, handle_sigterm);
+
     // populate global variables
     load_config(&global_config);
     if (global_config == NULL)
@@ -1141,7 +1188,7 @@ int main(int argc, char const *argv[])
         printf("Successfully loaded config:\n");
         printf(" * Postgres Settings:\n");
         printf("   - Host: %s\n", global_config->postgres.host);
-        printf("   - Port: %u\n", global_config->postgres.port);
+        printf("   - Port: %s\n", getenv("POSTGRES_PORT"));
         printf("   - User: %s\n", getenv("DB_USERNAME"));
         printf("Recognized %u databases:\n", global_config->dbs_count);
         for (unsigned int i = 0; i < global_config->dbs_count; i++)

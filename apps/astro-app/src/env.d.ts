@@ -2,7 +2,7 @@
 
 import type { zodPrimaryDatatypes } from "./utils/data"
 
-declare module  "env" {
+declare module "env" {
     const config: MainConfigSchema
     export = config;
 }
@@ -127,4 +127,6 @@ export type DataColumn = {
     description?: string
     unique?: boolean
 } & (IntegerColumn | FloatColumn | StringColumn | BooleanColumn | DateColumn | TimeColumn | TimestampColumn)
+
+export type Dataset = Array<Array<any>>;
 // END - Database Related

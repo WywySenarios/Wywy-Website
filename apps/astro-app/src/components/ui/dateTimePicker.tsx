@@ -21,7 +21,7 @@ function convertToTimestampString(date: Date): string {
   return output;
 }
 
-export function Calendar24({ onChange } : { onChange: (any: any) => void}) {
+export function Calendar24({ onChange }: { onChange: (any: any) => void }) {
   const [open, setOpen] = React.useState(false)
   const [date, setDate] = React.useState<Date | undefined>(undefined)
 
@@ -41,7 +41,7 @@ export function Calendar24({ onChange } : { onChange: (any: any) => void}) {
     // move over year, month, and day
     output.setFullYear(val.getFullYear());
     output.setMonth(val.getMonth());
-    output.setDate(val.getDay());
+    output.setDate(val.getDate());
 
     setDate(output);
     onChange(convertToTimestampString(output));

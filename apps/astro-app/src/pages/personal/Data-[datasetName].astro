@@ -22,7 +22,7 @@ if (!entry) {
 
 import Layout from "@/layouts/Layout.astro";
 
-import { RadialCharts } from "@root/src/components/personal/radialCharts";
+import { RadialCharts } from "@root/src/components/data/RadialCharts";
 ---
 
 <Layout
@@ -31,7 +31,7 @@ import { RadialCharts } from "@root/src/components/personal/radialCharts";
     useAstroDefaultCSS={false}
 >
     <main>
-        <RadialCharts x="2025-03-13" info={fullInfo} client:load/>
+        <RadialCharts x="2025-03-13" info={fullInfo} client:load />
         <!-- {
             entry?.data.buckets?.map((bucket: any) => {
                 return (
