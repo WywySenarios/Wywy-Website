@@ -874,6 +874,19 @@ found_table:
                 if (sql_query(db_name, query, &res, &conn) == PGRES_TUPLES_OK)
                 { // if the query is successful,
                     // convert the query information into JSON
+                    char *column_names = malloc(BUFFER_SIZE); // @todo be more specific
+                    column_names[0] = '\0';
+
+                    // add in the column names
+                    for (int col = 0; col < PQnfields(res); col++)
+                    {
+                        strcat(column_names, "\"");
+                        strcat(column_names, PQfname(res, col));
+                        strcat(column_names, "\",");
+                    }
+                    // remove trailing comma
+                    column_names[strlen(column_names) - 1] = '\0';
+
                     char *output_arrs = malloc(BUFFER_SIZE); // @todo be more specific
                     output_arrs[0] = '\0';
 
@@ -925,8 +938,9 @@ found_table:
                     // remove the trailing comma
                     output_arrs[strlen(output_arrs) - 1] = '\0';
 
-                    snprintf(output, BUFFER_SIZE, "{\"data\":[%s]}", output_arrs);
+                    snprintf(output, BUFFER_SIZE, "{\"columns\":[%s],\"data\":[%s]}", column_names, output_arrs);
                     build_response_200(&response, &response_len, output);
+                    free(column_names);
                     free(output_arrs);
                     free(output);
                 }
