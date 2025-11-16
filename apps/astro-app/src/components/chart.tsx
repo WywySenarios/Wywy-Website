@@ -7,13 +7,13 @@ export default function EChart({
     id,
     className,
     options,
-    optionSettings = {},
+    optionSettings,
     showLoading,
     theme
 }: React.ComponentProps<"div"> & {
     options: EChartsOption,
     optionSettings?: SetOptionOpts,
-    showLoading: boolean,
+    showLoading?: boolean,
     theme?: "light" | "dark"
 }): JSX.Element {
     const chartRef = useRef<HTMLDivElement>(null);
@@ -41,6 +41,7 @@ export default function EChart({
         // Update chart
         if (chartRef.current !== null) {
             const chart = getInstanceByDom(chartRef.current);
+            console.log(options);
             chart.setOption(options, optionSettings);
         }
     }, [options, optionSettings, theme]); // Whenever theme changes we need to add options and setting due to it being deleted in cleanup function
