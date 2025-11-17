@@ -95,7 +95,7 @@ function parseAny(value: string | number | undefined | boolean | Date, datatype:
             return formatISO(value, {
                 representation: "date"
             });
-        case "time":    
+        case "time":
             if (typeof value == "string") {
                 value = parseTime(value as string);
                 if (!value) {
@@ -138,7 +138,7 @@ function prettifyTimeString(time: string): string {
         return undefined as any;
     }
 
-    const formatsToTry = ["HH:mm", "hh:mm a"]
+    const formatsToTry = ["HH:mm", "hh:mm a", "HH:mm:ss", "hh:mm:ss a"]
 
     for (const fmt of formatsToTry) {
         const date = parse(`${time}`, `${fmt}`, new Date())
@@ -158,7 +158,7 @@ function parseDate(date: string): Date | undefined {
     const formatsToTry = ["MM-dd-yyyy", "yyyy-MM-dd", "MM/dd/yyyy", "yyyy/MM/dd"]
 
     for (const fmt of formatsToTry) {
-        const output = parse (`${date}`, fmt, new Date())
+        const output = parse(`${date}`, fmt, new Date())
         if (isValid(output)) return output;
     }
 
@@ -171,10 +171,10 @@ function parseDate(date: string): Date | undefined {
  * @returns @type {Date} when the parse is successful and @type {undefined} when it is not.
  */
 function parseTime(time: string): Date | undefined {
-    const formatsToTry = ["HH:mm", "hh:mm a"]
+    const formatsToTry = ["HH:mm", "hh:mm a", "HH:mm:ss", "hh:mm:ss a"]
 
     for (const fmt of formatsToTry) {
-        const output = parse (`${time}`, fmt, new Date())
+        const output = parse(`${time}`, fmt, new Date())
         if (isValid(output)) return output;
     }
 
@@ -190,7 +190,7 @@ function parseTimestamp(timestamp: string): Date | undefined {
     const formatsToTry = [""]
 
     for (const fmt of formatsToTry) {
-        const output = parse (`${timestamp}`, fmt, new Date())
+        const output = parse(`${timestamp}`, fmt, new Date())
         if (isValid(output)) return output;
     }
 
@@ -206,4 +206,4 @@ export function toSnakeCase(str: string): string {
     return str.replace(/[\s.-]+/g, '_').toLowerCase();
 }
 
-export {prettyParseAny, parseAny, prettifyTimeString, parseDate, parseTime, parseTimestamp}
+export { prettyParseAny, parseAny, prettifyTimeString, parseDate, parseTime, parseTimestamp }
