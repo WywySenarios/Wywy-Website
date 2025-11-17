@@ -1,6 +1,6 @@
 "use client"
 
-import * as React from "react"
+import { useState, useEffect } from "react"
 import { ChevronDownIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -21,14 +21,33 @@ function convertToTimestampString(date: Date): string {
   return output;
 }
 
-export function Calendar24({ onChange }: { onChange: (any: any) => void }) {
-  const [open, setOpen] = React.useState(false)
-  const [date, setDate] = React.useState<Date | undefined>(undefined)
+export function Calendar24({ onChange, defaultValue }: { onChange: (val: any) => void, defaultValue?: string }) {
+  const [open, setOpen] = useState<boolean>(false)
+  const [date, setDate] = useState<Date | undefined>(undefined)
+
+  useEffect(() => {
+    let output = new Date();
+
+    output.setMilliseconds(0);
+    if (defaultValue) {
+      let time = parseTime(defaultValue);
+      if (time) {
+        output.setHours(time.getHours());
+        output.setMinutes(time.getMinutes());
+        output.setSeconds(time.getSeconds());
+      }
+    }
+
+    setDate(output);
+  }, [])
 
   const onCalendarChange = (val: Date | undefined) => {
-    if (!val) {
+    console.log(onChange);
+    if (!val || !onChange) {
       return;
     }
+    console.log(onChange);
+    console.log("datechange")
 
     // copy date
     let output;
@@ -48,6 +67,9 @@ export function Calendar24({ onChange }: { onChange: (any: any) => void }) {
   };
 
   const onTimeChange = (val: string) => {
+    console.log(val);
+    if (!val || !onChange) return;
+    console.log("Timechange")
     // copy date
     let output;
     if (date) {
@@ -64,6 +86,8 @@ export function Calendar24({ onChange }: { onChange: (any: any) => void }) {
       output.setMinutes(copy.getMinutes());
       output.setSeconds(copy.getSeconds());
     }
+
+    console.log(convertToTimestampString(output));
 
     setDate(output);
     onChange(convertToTimestampString(output));
@@ -107,7 +131,7 @@ export function Calendar24({ onChange }: { onChange: (any: any) => void }) {
           type="time"
           id="time-picker"
           step="1"
-          defaultValue="10:30:00"
+          defaultValue={defaultValue}
           onChange={(val: React.ChangeEvent<HTMLInputElement>) => {
             onTimeChange(val.target.value);
           }}

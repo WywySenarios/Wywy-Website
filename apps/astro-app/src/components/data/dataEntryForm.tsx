@@ -33,7 +33,7 @@ import { Slider } from "@/components/ui/slider/labelslider"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radioGroup"
 import { Switch } from "@/components/ui/switch"
 import { Calendar } from "@/components/ui/calendar"
-import { Calendar24 } from "@/components/ui/dateTimePicker"
+import { Calendar24 } from "@root/src/components/ui/timestamp-picker"
 import { TimePicker } from "@/components/ui/timePicker"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 
@@ -242,8 +242,7 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
     // POST them to the SQL Receptionist!
     databaseName = toSnakeCase(databaseName);
     tableName = toSnakeCase(tableName);
-    console.log("HEY:", databaseName, tableName);
-    console.log(`${dbURL + "/" + databaseName + "/" + tableName}`)
+    console.log(`POSTING to: ${dbURL + "/" + databaseName + "/" + tableName}`)
     fetch(dbURL + "/" + databaseName + "/" + tableName, {
       method: "POST",
       body: JSON.stringify(values),
