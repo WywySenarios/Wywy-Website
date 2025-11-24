@@ -1,8 +1,111 @@
 import { parse, format as formatDate, formatISO, isValid } from "date-fns";
 import { type zodPrimaryDatatypes } from "./utils/data";
 
+const prettyParseFunctions = {
+    "string": prettyParseString,
+    "str": prettyParseString,
+    "text": prettyParseString,
+    "int": prettyParseInt,
+    "integer": prettyParseInt,
+    "float": prettyParseFloat,
+    "number": prettyParseFloat,
+    "bool": prettyParseBoolean,
+    "boolean": prettyParseBoolean,
+    "date": prettyParseDate,
+    "time": prettyParseTime,
+    "timestamp": prettyParseTimestamp,
+}
+
 /**
- * Attempts to turnp any type of input into something pretty that the user can look at and easily understand.
+ * Attempts to parse a string.
+ * @TODO pretty print
+ * @param value The value to parse.
+ * @returns The string that was inputted.
+ */
+function prettyParseString(value: string): string {
+    return value;
+}
+
+/**
+ * Attempts to parse an integer.
+ * @param value The value to parse.
+ * @param defaultValue The fallback value in case parsing fails.
+ * @returns An integer if parsing is successful. May return NaN if the defaultValue is not set or is NaN.
+ */
+function prettyParseInt(value: string | number, defaultValue: number = NaN): number {
+    const floatResult = parseFloat(value.toString())
+    if (isNaN(floatResult)) {
+        return defaultValue;
+    }
+
+    return floatResult;
+}
+
+/**
+ * Attempts to parse a float.
+ * @param value The value to parse.
+ * @param defaultValue The fallback value in case parsing fails.
+ * @returns An integer if parsing is successful. May return NaN if the defaultValue is not set or is NaN.
+ */
+function prettyParseFloat(value: string | number, defaultValue: number = NaN): number | undefined {
+    const floatResult = parseFloat(value.toString())
+    if (isNaN(floatResult)) {
+        return defaultValue;
+    }
+
+    return floatResult;
+}
+/**
+ * Attempts to parse a boolean value.
+ * @param value The value to parse.
+ * @returns True if the text of the string is true (case insensitive), false otherwise.
+ */
+function prettyParseBoolean(value: string): boolean {
+    return (value.toString().toLowerCase() === "true");
+}
+
+
+/**
+ * Attempts to parse a time.
+ * @param value The value to prase.
+ * @param defaultValue The fallback value in case parsing fails.
+ * @returns 
+ */
+function prettyParseTime(value: string | Date, defaultValue?: Date): Date | undefined {
+    if (value instanceof Date) return value;
+    let output = parseTime(value);
+
+    return output ? output : defaultValue;
+}
+
+/**
+ * Attempts to parse a date.
+ * @param value The value to parse.
+ * @param defaultValue The fallback value in case parsing fails.
+ * @returns 
+ */
+function prettyParseDate(value: string | Date, defaultValue?: Date): Date | undefined {
+    if (value instanceof Date) return value;
+    let output = parseDate(value);
+
+    return output ? output : defaultValue;
+}
+
+/**
+ * Attempts to parse a timestamp.
+ * @param value The value to parse.
+ * @param defaultValue The fallback value in case parsing fails.
+ * @returns 
+ */
+function prettyParseTimestamp(value: string | Date, defaultValue?: Date): Date | undefined {
+    if (value instanceof Date) return value;
+    let output = parseTimestamp(value);
+
+    return output ? output : defaultValue;
+}
+
+/**
+ * Attempts to turn any type of input into something pretty that the user can look at and easily understand.
  * @param value The value that needs to be parsed.
  * @param datatype @type {zodPrimaryDatatypes} The expected datatype of the value.
  * @returns @type {undefined} when the input is invalid, @type {string | number | boolean} or whatever that was put in.
@@ -13,7 +116,7 @@ function prettyParseAny(value: string | boolean, datatype: "bool" | "boolean"): 
 // function prettyParseAny(value: Date, datatype: "date" | "time" | "timestamp"): Date
 function prettyParseAny(value: string | number | boolean | undefined, datatype: zodPrimaryDatatypes): undefined | number | string | boolean {
     if (value == undefined) {
-        return value
+        return value;
     }
 
     switch (datatype) {
@@ -36,6 +139,7 @@ function prettyParseAny(value: string | number | boolean | undefined, datatype: 
                 return undefined as any;
             }
             return floatResult as any;
+        case "bool":
         case "boolean":
             return (value.toString().toLowerCase() === "true") as any;
         default:
@@ -44,7 +148,7 @@ function prettyParseAny(value: string | number | boolean | undefined, datatype: 
 }
 
 /**
- * Attempts to turnp any type of input into a format recognized by the sql-receptionist.
+ * Attempts to turn any type of input into a format recognized by the sql-receptionist.
  * @param value The value that needs to be parsed.
  * @param datatype @type {zodPrimaryDatatypes} The expected datatype of the value.
  * @returns @type {undefined} if the input is invalid, @type {string | number | boolean} otherwise.
@@ -86,10 +190,10 @@ function parseAny(value: string | number | undefined | boolean | Date, datatype:
                 return undefined;
             }
             return floatResult;
+        case "bool":
         case "boolean":
             return (value.toString().toLowerCase() === "true");
         case "date":
-            console.log("DATE:", value, typeof value);
             value = (new Date(value as Date | string)).toISOString();
 
             return formatISO(value, {
@@ -107,15 +211,10 @@ function parseAny(value: string | number | undefined | boolean | Date, datatype:
                 value = (value as Date);
             }
 
-            console.log(value, formatISO(value as Date | string, {
-                representation: "time"
-            }));
-
             return formatISO(value as Date | string, {
                 representation: "time"
             });
         case "timestamp":
-            console.log("TIMESTAMP:", value, typeof value);
             value = (new Date(value as Date | string)).toISOString();
 
             return formatISO(value, {
@@ -134,7 +233,7 @@ function parseAny(value: string | number | undefined | boolean | Date, datatype:
 function prettifyTimeString(time: string): string {
     // avoid issues with undefined strings
     if (!time) {
-        console.warn("parseTime received an empty or undefined string.")
+        console.warn("prettifyTimeString received an empty or undefined string.")
         return undefined as any;
     }
 
@@ -145,7 +244,7 @@ function prettifyTimeString(time: string): string {
         if (isValid(date)) return formatDate(date, "hh:mm:ss");
     }
 
-    console.warn(`parseTime could not parse the time string: "${time}" with any of the formats: ${formatsToTry.join(", ")}`);
+    console.warn(`prettifyTimeString could not parse the time string: "${time}" with any of the formats: ${formatsToTry.join(", ")}`);
     return "";
 }
 
@@ -161,6 +260,9 @@ function parseDate(date: string): Date | undefined {
         const output = parse(`${date}`, fmt, new Date())
         if (isValid(output)) return output;
     }
+
+    // @TODO don't band-aid solution this
+    if (Date.parse(date)) return new Date(date);
 
     return undefined
 }
@@ -187,14 +289,9 @@ function parseTime(time: string): Date | undefined {
  * @returns @type {Date} when the parse is successful and @type {undefined} when it is not.
  */
 function parseTimestamp(timestamp: string): Date | undefined {
-    const formatsToTry = [""]
-
-    for (const fmt of formatsToTry) {
-        const output = parse(`${timestamp}`, fmt, new Date())
-        if (isValid(output)) return output;
-    }
-
-    return undefined
+    let value = Date.parse(timestamp);
+    if (isNaN(value)) return undefined;
+    return new Date(value);
 }
 
 /**
@@ -202,8 +299,31 @@ function parseTimestamp(timestamp: string): Date | undefined {
  * @param str The string to convert.
  * @returns The same string, but lower case and with all the spaces, dots, and dashes replaced with underscores.
  */
-export function toSnakeCase(str: string): string {
+function toSnakeCase(str: string): string {
     return str.replace(/[\s.-]+/g, '_').toLowerCase();
 }
 
-export { prettyParseAny, parseAny, prettifyTimeString, parseDate, parseTime, parseTimestamp }
+function prettifySnakeCase(str: string): string {
+    return str
+        .replace(/_/g, ' ')            // replace underscores with spaces
+        .replace(/\b\w/g, c => c.toUpperCase()) // capitalize each word
+}
+
+export {
+    prettyParseFunctions,
+    prettyParseString,
+    prettyParseInt,
+    prettyParseFloat,
+    prettyParseBoolean,
+    prettyParseTime,
+    prettyParseDate,
+    prettyParseTimestamp,
+    prettyParseAny,
+    parseAny,
+    prettifyTimeString,
+    parseDate,
+    parseTime,
+    parseTimestamp,
+    toSnakeCase,
+    prettifySnakeCase
+}
