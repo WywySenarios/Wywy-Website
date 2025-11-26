@@ -35,8 +35,6 @@ export function TimePicker({ defaultValue, onChange }: { defaultValue: string, o
         return output;
     });
 
-    console.log(date);
-
     const onTimeChange = (val: string) => {
         if (!val) {
             return
