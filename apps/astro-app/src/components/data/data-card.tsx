@@ -25,6 +25,7 @@ import { SeriesModel, type EChartsOption, type LineSeriesOption, type SeriesOpti
 import type { Dataset, TableInfo } from "@/env";
 import { Label } from "@/components/ui/label";
 import { toSnakeCase } from "@root/src/utils";
+import type { zodPrimaryDatatypes } from "@root/src/utils/data";
 
 const prettySeriesTypes = [
     "Line",
@@ -34,6 +35,21 @@ type PrettySeriesType = typeof prettySeriesTypes[number]
 
 const unprettySeriesTypes: Record<PrettySeriesType, "line"> = {
     "Line": "line",
+}
+
+const axisTypes: Record<zodPrimaryDatatypes, 'category' | 'value' | 'time' | 'log'> = {
+    "integer": "value",
+    "int": "value",
+    "float": "value",
+    "number": "value",
+    "string": "category",
+    "str": "category",
+    "text": "category",
+    "bool": "category",
+    "boolean": "category",
+    "time": "time",
+    "date": "time",
+    "timestamp": "time"
 }
 
 export type ChartCardProps = {
@@ -48,7 +64,14 @@ type ChartSettingsOption = Omit<EChartsOption, "series"> & {
     series: Array<Omit<LineSeriesOption, "encode"> & { encode: LineSeriesOption["encode"] }>;
 }
 
-function ChartSettings({ columns, options, setOptions }: { columns: Array<any>, options: ChartSettingsOption, setOptions: (options: ChartSettingsOption) => void }) {
+/**
+ * A generic/basic popover that allows a user to modify chart settings.
+ * @param columns @type{string[]} The column names. This component will not load if there are no columns.
+ * @param options The useState value for the chart options that this is controlling.
+ * @param setOptions The useState setter for the chart options that this is controlling.
+ * @returns @type{JSX.Element}
+ */
+function ChartSettings({ columns, tableSchema, options, setOptions }: { columns: Array<any>, tableSchema: TableInfo, options: ChartSettingsOption, setOptions: (options: ChartSettingsOption) => void }) {
     const [open, setOpen] = useState(false);
     const [newOptions, setNewOptions] = useState<ChartSettingsOption>(options);
     const [x, setX] = useState<string>(options.series.at(0)?.encode.x || columns[0] || "");
@@ -93,7 +116,13 @@ function ChartSettings({ columns, options, setOptions }: { columns: Array<any>, 
 
                     <Label>X axis:</Label>
                     <Select defaultValue={x} onValueChange={(value) => {
-                        let output = { ...newOptions, series: newOptions.series.filter((series) => series.encode.y !== value) };
+                        let output = {
+                            ...newOptions, series: newOptions.series.filter((series) => series.encode.y !== value)
+                        };
+                        if (!output.xAxis) {
+                            output.xAxis = {};
+                        }
+                        output.xAxis.type = axisTypes[tableSchema.schema.find((item) => toSnakeCase(item.name) == toSnakeCase(value))?.datatype || "string"];
                         output.series.forEach(series => series.encode.x = value);
                         setX(value);
                         setNewOptions(output);
@@ -185,9 +214,7 @@ export function LineChartCard({ databaseName, tableSchema, columns, dataset }: C
             dimensions: columns,
             source: dataset
         },
-        xAxis: {
-            type: "time"
-        },
+        xAxis: {},
         yAxis: {},
         series: []
     });
@@ -215,7 +242,7 @@ export function LineChartCard({ databaseName, tableSchema, columns, dataset }: C
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <ChartSettings columns={columns} options={options} setOptions={setOptions} />
+                <ChartSettings columns={columns} tableSchema={tableSchema} options={options} setOptions={setOptions} />
                 <Chart options={options} />
             </CardContent>
         </Card>
