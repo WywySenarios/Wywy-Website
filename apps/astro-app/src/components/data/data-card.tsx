@@ -20,36 +20,86 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
-import type { EChartsOption } from "echarts";
+import { useEffect, useState } from "react";
+import { SeriesModel, type EChartsOption, type LineSeriesOption, type SeriesOption } from "echarts";
 import type { Dataset, TableInfo } from "@/env";
 import { Label } from "@/components/ui/label";
+import { toSnakeCase } from "@root/src/utils";
+import type { zodPrimaryDatatypes } from "@root/src/utils/data";
+
+const prettySeriesTypes = [
+    "Line",
+]
+
+type PrettySeriesType = typeof prettySeriesTypes[number]
+
+const unprettySeriesTypes: Record<PrettySeriesType, "line"> = {
+    "Line": "line",
+}
+
+const axisTypes: Record<zodPrimaryDatatypes, 'category' | 'value' | 'time' | 'log'> = {
+    "integer": "value",
+    "int": "value",
+    "float": "value",
+    "number": "value",
+    "string": "category",
+    "str": "category",
+    "text": "category",
+    "bool": "category",
+    "boolean": "category",
+    "time": "time",
+    "date": "time",
+    "timestamp": "time"
+}
 
 export type ChartCardProps = {
     databaseName: string;
     tableSchema: TableInfo;
-    columns: Array<any>;
+    columns: Array<string>;
     dataset: Dataset
 };
 
-function ChartSettings({ columns, x, setX, ys, setYs }: { columns: Array<any>, x: string, setX: (x: string) => void, ys: Array<string>, setYs: (ys: Array<string>) => void }) {
+
+type ChartSettingsOption = Omit<EChartsOption, "series"> & {
+    series: Array<Omit<LineSeriesOption, "encode"> & { encode: LineSeriesOption["encode"] }>;
+}
+
+/**
+ * A generic/basic popover that allows a user to modify chart settings.
+ * @param columns @type{string[]} The column names. This component will not load if there are no columns.
+ * @param options The useState value for the chart options that this is controlling.
+ * @param setOptions The useState setter for the chart options that this is controlling.
+ * @returns @type{JSX.Element}
+ */
+function ChartSettings({ columns, tableSchema, options, setOptions }: { columns: Array<any>, tableSchema: TableInfo, options: ChartSettingsOption, setOptions: (options: ChartSettingsOption) => void }) {
     const [open, setOpen] = useState(false);
+    const [newOptions, setNewOptions] = useState<ChartSettingsOption>(options);
+    const [x, setX] = useState<string>(options.series.at(0)?.encode.x || columns[0] || "");
+    const [seriesTypes, setSeriesTypes] = useState<Record<string, string>>({});
+
     // const isDesktop = useMediaQuery("(min-width: 768px)");
     const isDesktop = true; // @TODO
-    const [newX, setNewX] = useState<string>(x);
-    const [newYs, setNewYs] = useState<Array<string>>(ys);
 
     function onSubmit() {
-        setX(newX);
-        setYs(newYs);
+        setOptions(newOptions);
         setOpen(false);
+    }
+
+    useEffect(() => {
+        if (columns) setSeriesTypes(Object.fromEntries(columns.map(col => [col, prettySeriesTypes[0]])));
+    }, [columns]);
+
+    if (!columns || columns.length == 0) {
+        return (<div>Loading...</div>);
     }
 
     if (isDesktop) {
         return (
             <Dialog open={open} onOpenChange={(x) => {
                 setOpen(x);
-                if (!x) {
+                if (x) {
+                    setNewOptions(options);
+                } else {
                     onSubmit();
                 }
             }}>
@@ -65,9 +115,17 @@ function ChartSettings({ columns, x, setX, ys, setYs }: { columns: Array<any>, x
                     </DialogHeader>
 
                     <Label>X axis:</Label>
-                    <Select defaultValue={newX} onValueChange={(value) => {
-                        setNewX(value);
-                        setNewYs(newYs.filter((y) => y !== value));
+                    <Select defaultValue={x} onValueChange={(value) => {
+                        let output = {
+                            ...newOptions, series: newOptions.series.filter((series) => series.encode.y !== value)
+                        };
+                        if (!output.xAxis) {
+                            output.xAxis = {};
+                        }
+                        output.xAxis.type = axisTypes[tableSchema.schema.find((item) => toSnakeCase(item.name) == toSnakeCase(value))?.datatype || "string"];
+                        output.series.forEach(series => series.encode.x = value);
+                        setX(value);
+                        setNewOptions(output);
                     }
                     }>
                         <SelectTrigger className="w-[180px]">
@@ -87,17 +145,52 @@ function ChartSettings({ columns, x, setX, ys, setYs }: { columns: Array<any>, x
                     {columns.map((col) => (
                         <div key={col} className="flex items-center gap-3">
                             <Checkbox
-                                disabled={col === newX}
-                                checked={col !== newX && newYs.includes(col)}
+                                disabled={col === x}
+                                checked={col !== x && newOptions.series.some((series) => col == series.encode.y)}
                                 onCheckedChange={(checked) => {
                                     if (checked) {
-                                        setNewYs([...newYs, col]);
+                                        let newNewOptions: typeof newOptions = { ...newOptions };
+                                        newNewOptions.series.push({
+                                            type: unprettySeriesTypes[seriesTypes[col]],
+                                            encode: {
+                                                x: x,
+                                                y: col
+                                            }
+                                        });
+
+                                        setNewOptions(newNewOptions);
                                     } else {
-                                        setNewYs(newYs.filter((y) => y !== col));
+                                        setNewOptions({ ...newOptions, series: newOptions.series.filter((series) => series.encode.y !== col) });
                                     }
                                 }}
                             />
                             <Label>{col}</Label>
+                            {/* @TODO see if this key is truly unique */}
+                            <Select key={col + "-series-type-select"} defaultValue={prettySeriesTypes[0]} onValueChange={(val) => {
+                                let newSeriesTypes = { ...seriesTypes };
+                                for (let series of newOptions.series) {
+                                    if (series.encode && series.encode.y == col) {
+                                        // @TODO don't modify reference
+                                        series.type = val;
+                                        newSeriesTypes[col] = val;
+                                    }
+                                }
+
+                                setSeriesTypes(newSeriesTypes);
+                                setNewOptions(newOptions);
+                            }}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Line" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectLabel>Series Type</SelectLabel>
+                                        {prettySeriesTypes.map((type) => (
+                                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
                         </div>
                     ))}
                 </DialogContent>
@@ -116,24 +209,29 @@ function ChartSettings({ columns, x, setX, ys, setYs }: { columns: Array<any>, x
  * @returns {JSX.Element}
  */
 export function LineChartCard({ databaseName, tableSchema, columns, dataset }: ChartCardProps): JSX.Element {
-    const [x, setX] = useState<string>(columns[0] || "");
-    const [ys, setYs] = useState<Array<string>>([]);
-
-    let options: EChartsOption = {
+    const [options, setOptions] = useState<ChartSettingsOption>({
         dataset: {
             dimensions: columns,
             source: dataset
         },
         xAxis: {},
         yAxis: {},
-        series: [{
-            type: 'line',
-            encode: {
-                x: x,
-                y: ys
-            }
-        }]
-    };
+        series: []
+    });
+
+    useEffect(() => {
+        setOptions({
+            dataset: {
+                dimensions: columns,
+                source: dataset
+            },
+            xAxis: {
+                type: "time"
+            },
+            yAxis: {},
+            series: []
+        })
+    }, [columns, dataset]);
 
     return (
         <Card className="">
@@ -144,7 +242,7 @@ export function LineChartCard({ databaseName, tableSchema, columns, dataset }: C
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <ChartSettings columns={columns} x={x} setX={setX} ys={ys} setYs={setYs} />
+                <ChartSettings columns={columns} tableSchema={tableSchema} options={options} setOptions={setOptions} />
                 <Chart options={options} />
             </CardContent>
         </Card>

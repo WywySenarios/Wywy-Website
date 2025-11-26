@@ -24,6 +24,7 @@ data:
         schema:
           # Please note that the datatype is what the PostgreSQL database will recognize (e.g. Typescript has no way of differentiating an integer from a float).
           - name: Date
+            parser: date # the datatype that the parser should attempt to cast to
             datatype: timestamp
             entrytype: timestamp
             description: The estimate of when you gained conciousness at the start of this (sleep-based) day.

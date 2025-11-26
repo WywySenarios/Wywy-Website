@@ -118,6 +118,7 @@ type TimestampColumn = {
 
 export type DataColumn = {
     name: string
+    parser?: zodPrimaryDatatypes
     datatype: zodPrimaryDatatypes
     // Definitely optional:
     //@TODO add regex restrictions
