@@ -1,4 +1,5 @@
 ---
+export const prerender = false;
 import { getCollection } from "astro:content";
 import Layout from "@/layouts/Layout.astro";
 import { render } from "astro:content";
@@ -10,7 +11,7 @@ const { url } = Astro.params;
 const page = pages.find((page) => page.data.url === url);
 if (!page) return Astro.redirect("/404");
 
-const {Content} = await render(page);
+const { Content } = await render(page);
 ---
 
 <Layout title={page["data"]["title"]} css_color_palette="light_mode">
@@ -24,5 +25,4 @@ const {Content} = await render(page);
 			max-width: unset;
 		}
 	</style>
-	
 </Layout>
