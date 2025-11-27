@@ -1023,21 +1023,61 @@ found_table:
             {
                 bool valid = false;
 
+                // check for the case in which the JSON key relates to comments instead of regular columns
+                regex_t comments_regex;
+                regcomp(&comments_regex, "_comments$", REG_EXTENDED);
+
+                regmatch_t comments_matches[1 + 1];
+                bool is_comments_column = !(regexec(&comments_regex, key, 1 + 1, comments_matches, 0) == REG_NOMATCH);
+                regfree(&comments_regex);
+
+                char *target_column;
+
+                if (is_comments_column)
+                {
+                    target_column = malloc(strlen(key) - strlen("_comments") + 1);
+                    strncpy(target_column, key, strlen(key) - strlen("_comments"));
+                    target_column[strlen(key) - strlen("_comments")] = '\0';
+                }
+                else
+                {
+                    target_column = malloc(strlen(key) + 1);
+                    strcpy(target_column, key);
+                }
+
                 for (int i = 0; i < table->schema_count; i++)
                 {
                     // find which entry in the schema matches
-                    if (strcmp(key, table->schema[i].name) == 0)
+
+                    if (strcmp(target_column, table->schema[i].name) == 0)
                     {
-                        dict_item *item = linear_search(schema_datatypes, table->schema[i].datatype);
-                        // check if the input is bad
-                        if (!item)
+                        // check if the input is a comment and the column does not have comments.
+                        if (is_comments_column)
                         {
-                            break;
+                            if ((table->schema[i].comments == false))
+                            {
+                                break;
+                            }
+
+                            // comments MUST have text
+                            if (check_string(value) == 0)
+                            {
+                                break;
+                            }
                         }
-                        json_datatype_check_function *related_datatype_checker = item->value;
-                        if ((*related_datatype_checker)(value) == 0)
+                        else
                         {
-                            break;
+                            dict_item *item = linear_search(schema_datatypes, table->schema[i].datatype);
+                            // check if the input's datatype mismatches
+                            if (!item)
+                            {
+                                break;
+                            }
+                            json_datatype_check_function *related_datatype_checker = item->value;
+                            if ((*related_datatype_checker)(value) == 0)
+                            {
+                                break;
+                            }
                         }
 
                         valid = true;
@@ -1058,9 +1098,11 @@ found_table:
                 // also remember to catch when the key is not inside the table's schema
                 if (!valid)
                 {
+                    free(target_column);
                     build_response_400(&response, &response_len);
                     goto post_bad_input_end;
                 }
+                free(target_column);
             }
 
             separator_len--;

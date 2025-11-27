@@ -1,6 +1,7 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { parse } from "date-fns";
+import { parseTime } from "@/utils";
 
 function convertToTimeString(date: Date): string {
     let output = date.toISOString().split("T")[1];
@@ -46,10 +47,12 @@ export function TimePicker({ defaultValue, onChange }: { defaultValue: string, o
         }
 
         // copy over values if possible
-        let copy = new Date(val);
-        output.setHours(copy.getHours());
-        output.setMinutes(copy.getMinutes());
-        output.setSeconds(copy.getSeconds());
+        let copy = parseTime(val);
+        if (copy && !isNaN(copy.getTime())) {
+            output.setHours(copy.getHours());
+            output.setMinutes(copy.getMinutes());
+            output.setSeconds(copy.getSeconds());
+        }
 
         setDate(output);
         onChange(convertToTimeString(output));

@@ -140,8 +140,8 @@ if __name__ == "__main__":
             if "schema" in tableInfo:
                 for columnInfo in tableInfo["schema"]:
                     # we may guarentee that the column has a name because of earlier checks
-                    if columnInfo.get("name")[-9:] == "-comments":
-                        print("Table", tableInfo["tableName"], "must not have a column with a name that ends in \"-comments\".")
+                    if columnInfo.get("name")[-9:] == "_comments":
+                        print("Table", tableInfo["tableName"], "must not have a column with a name that ends in \"_comments\".")
 
             # avoid reserved columns
             if "schema" in tableInfo:
@@ -187,6 +187,9 @@ if __name__ == "__main__":
                             
                             # strip trailing comma & add closing brackets
                             currentCommand = currentCommand[:-1] + ")),"
+                        # comments
+                        if columnInfo.get("comments", False):
+                            currentCommand += columnDisplayName + "_comments text,"
                         # @TODO foreign keys
                         # @TODO defaults
                         

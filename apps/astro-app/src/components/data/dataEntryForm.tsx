@@ -189,8 +189,8 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
 
     // update schema if there should be comments for this column
     // @TODO add length restriction
-    zodSchema[columnInfo.name + "-comments"] = z.string().optional()
-    defaultValues[columnInfo.name + "-comments"] = undefined
+    zodSchema[columnInfo.name + "_comments"] = z.string().optional()
+    defaultValues[columnInfo.name + "_comments"] = undefined
 
     // look for any restrictions
     // @ts-ignore thanks to the ColumnData type, this is guarenteed to be OK.
@@ -206,15 +206,19 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
     defaultValues,
   })
 
-  /*
+  /**
    * Form submit handler.
    * Parses the schema into something the sql-receptionist will recognize.
+   * @param values The raw values the user inputted into the form.
    */
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-
     let formattedValues: Record<string, any> = {}
     for (let field of fieldsToEnter) {
+      // check the comments first
+      if (values[field.name + "_comments"]) {
+        values[field.name + "_comments"] = `'${values[field.name + "_comments"]}'`;
+      }
+
       // check if the user really wanted to submit that or not
       if (!values[field.name]) {
         continue
@@ -231,17 +235,12 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
           values[field.name] = "'" + values[field.name] + "'"
           break;
       }
-
-      // let valueToInsert = parseAny(values[field.name], field.datatype);
-      let valueToInsert = values[field.name]
-      if (valueToInsert != undefined) {
-        formattedValues[field.name] = valueToInsert
-      }
     }
 
     // POST them to the SQL Receptionist!
     databaseName = toSnakeCase(databaseName);
     tableName = toSnakeCase(tableName);
+    console.log()
     console.log(`POSTING to: ${dbURL + "/" + databaseName + "/" + tableName}`)
     fetch(dbURL + "/" + databaseName + "/" + tableName, {
       method: "POST",
@@ -296,8 +295,8 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
                   </div>
                   {columnInfo.comments ? <FormField
                     control={form.control}
-                    name={columnInfo.name + "-comments"}
-                    key={columnInfo.name + "-comments-field"}
+                    name={columnInfo.name + "_comments"}
+                    key={columnInfo.name + "_comments-field"}
                     render={(field) => <FormControl>
                       <Textarea {...field.field} />
                     </FormControl>}

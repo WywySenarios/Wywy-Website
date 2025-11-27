@@ -69,14 +69,12 @@ data:
             datatype: time # @todo fix this for typescript programs
             entrytype: time
             defaultValue: "22:30:00"
-            comments: true
             description: When did you go to bed? This is separate from when you fall asleep.
 
           - name: Awakening
             datatype: time
             entrytype: time
             defaultValue: "07:00:00"
-            comments: true
             description: When were you ready to begin the first task (prehaps as simple as brushing teeth) of the day?
       - tableName: events
         read: true
