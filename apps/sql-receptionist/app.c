@@ -1038,13 +1038,11 @@ found_table:
                     target_column = malloc(strlen(key) - strlen("_comments") + 1);
                     strncpy(target_column, key, strlen(key) - strlen("_comments"));
                     target_column[strlen(key) - strlen("_comments")] = '\0';
-                    printf("Comments column: %s\n", target_column);
                 }
                 else
                 {
                     target_column = malloc(strlen(key) + 1);
                     strcpy(target_column, key);
-                    printf("Non-comments column: %s\n", target_column);
                 }
 
                 for (int i = 0; i < table->schema_count; i++)
@@ -1058,14 +1056,12 @@ found_table:
                         {
                             if ((table->schema[i].comments == false))
                             {
-                                printf("Failed comments: %s\n", key);
                                 break;
                             }
 
                             // comments MUST have text
                             if (check_string(value) == 0)
                             {
-                                printf("Comments datatype mismatch: %s\n", key);
                                 break;
                             }
                         }
@@ -1075,13 +1071,11 @@ found_table:
                             // check if the input's datatype mismatches
                             if (!item)
                             {
-                                printf("Datatype mismatch: %s\n", key);
                                 break;
                             }
                             json_datatype_check_function *related_datatype_checker = item->value;
                             if ((*related_datatype_checker)(value) == 0)
                             {
-                                printf("Datatype mismatch: %s\n", key);
                                 break;
                             }
                         }
@@ -1104,7 +1098,6 @@ found_table:
                 // also remember to catch when the key is not inside the table's schema
                 if (!valid)
                 {
-                    printf("Failed: %s\n", target_column);
                     free(target_column);
                     build_response_400(&response, &response_len);
                     goto post_bad_input_end;
