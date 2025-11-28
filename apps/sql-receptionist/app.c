@@ -408,17 +408,21 @@ void build_response_200(char **response, size_t *response_len, const char *text)
 {
     *response_len = strlen("HTTP/1.1 200 OK\r\n"
                            "Content-Type: text/plain\r\n"
-                           "Access-Control-Allow-Origin: *\r\n"
+                           "Access-Control-Allow-Origin: \r\n"
+                           "Access-Control-Allow-Credentials: true\r\n"
                            "Connection: close\r\n"
                            "\r\n") +
+                    strlen(global_config->reference_urls.main) +
                     strlen(text);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 200 OK\r\n"
                                            "Content-Type: text/plain\r\n"
-                                           "Access-Control-Allow-Origin: *\r\n"
+                                           "Access-Control-Allow-Origin: %s\r\n"
+                                           "Access-Control-Allow-Credentials: true\r\n"
                                            "Connection: close\r\n"
                                            "\r\n"
                                            "%s",
+             global_config->reference_urls.main,
              text);
 }
 
@@ -430,21 +434,25 @@ void build_response_200(char **response, size_t *response_len, const char *text)
 void build_response_204(char **response, size_t *response_len)
 {
     *response_len = strlen("HTTP/1.1 204 No Content\r\n"
-                           "Access-Control-Allow-Origin: *\r\n"
+                           "Access-Control-Allow-Origin: \r\n"
+                           "Access-Control-Allow-Credentials: true\r\n"
                            "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
                            "Access-Control-Allow-Headers: Content-Type\r\n"
                            "Content-Length: 0\r\n"
                            "Connection: close\r\n"
-                           "\r\n");
+                           "\r\n") +
+                    strlen(global_config->reference_urls.main);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1,
              "HTTP/1.1 204 No Content\r\n"
-             "Access-Control-Allow-Origin: *\r\n"
+             "Access-Control-Allow-Origin: %s\r\n"
+             "Access-Control-Allow-Credentials: true\r\n"
              "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
              "Access-Control-Allow-Headers: Content-Type\r\n"
              "Content-Length: 0\r\n"
              "Connection: close\r\n"
-             "\r\n");
+             "\r\n",
+             global_config->reference_urls.main);
 }
 
 /**
@@ -456,17 +464,21 @@ void build_response_400(char **response, size_t *response_len)
 {
     *response_len = strlen("HTTP/1.1 400 Bad Request\r\n"
                            "Content-Type: text/plain\r\n"
-                           "Access-Control-Allow-Origin: *\r\n"
+                           "Access-Control-Allow-Origin: \r\n"
+                           "Access-Control-Allow-Credentials: true\r\n"
                            "Connection: close\r\n"
                            "\r\n"
-                           "400 Bad Request");
+                           "400 Bad Request") +
+                    strlen(global_config->reference_urls.main);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 400 Bad Request\r\n"
                                            "Content-Type: text/plain\r\n"
-                                           "Access-Control-Allow-Origin: *\r\n"
+                                           "Access-Control-Allow-Origin: %s\r\n"
+                                           "Access-Control-Allow-Credentials: true\r\n"
                                            "Connection: close\r\n"
                                            "\r\n"
-                                           "400 Bad Request");
+                                           "400 Bad Request",
+             global_config->reference_urls.main);
 }
 
 /**
@@ -478,17 +490,21 @@ void build_response_403(char **response, size_t *response_len)
 {
     *response_len = strlen("HTTP/1.1 403 Forbidden\r\n"
                            "Content-Type: text/plain\r\n"
-                           "Access-Control-Allow-Origin: *\r\n"
+                           "Access-Control-Allow-Origin: \r\n"
+                           "Access-Control-Allow-Credentials: true\r\n"
                            "Connection: close\r\n"
                            "\r\n"
-                           "403 Forbidden");
+                           "403 Forbidden") +
+                    strlen(global_config->reference_urls.main);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 403 Forbidden\r\n"
                                            "Content-Type: text/plain\r\n"
-                                           "Access-Control-Allow-Origin: *\r\n"
+                                           "Access-Control-Allow-Origin: %s\r\n"
+                                           "Access-Control-Allow-Credentials: true\r\n"
                                            "Connection: close\r\n"
                                            "\r\n"
-                                           "403 Forbidden");
+                                           "403 Forbidden",
+             global_config->reference_urls.main);
 }
 
 /**
@@ -500,17 +516,21 @@ void build_response_404(char **response, size_t *response_len)
 {
     *response_len = strlen("HTTP/1.1 404 Not Found\r\n"
                            "Content-Type: text/plain\r\n"
-                           "Access-Control-Allow-Origin: *\r\n"
+                           "Access-Control-Allow-Origin: \r\n"
+                           "Access-Control-Allow-Credentials: true\r\n"
                            "Connection: close\r\n"
                            "\r\n"
-                           "404 Not Found");
+                           "404 Not Found") +
+                    strlen(global_config->reference_urls.main);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 404 Not Found\r\n"
                                            "Content-Type: text/plain\r\n"
-                                           "Access-Control-Allow-Origin: *\r\n"
+                                           "Access-Control-Allow-Origin: %s\r\n"
+                                           "Access-Control-Allow-Credentials: true\r\n"
                                            "Connection: close\r\n"
                                            "\r\n"
-                                           "404 Not Found");
+                                           "404 Not Found",
+             global_config->reference_urls.main);
 }
 
 /**
@@ -528,16 +548,20 @@ void build_response_500(char **response, size_t *response_len, const char *text)
 
     *response_len = strlen("HTTP/1.1 500 Internal Server Error\r\n"
                            "Content-Type: text/plain\r\n"
-                           "Access-Control-Allow-Origin: *\r\n"
+                           "Access-Control-Allow-Origin: \r\n"
+                           "Access-Control-Allow-Credentials: true\r\n"
                            "Connection: close\r\n"
                            "\r\n") +
+                    strlen(global_config->reference_urls.main) +
                     strlen(text);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 500 Internal Server Error\r\n"
                                            "Content-Type: text/plain\r\n"
-                                           "Access-Control-Allow-Origin: *\r\n"
+                                           "Access-Control-Allow-Origin: %s\r\n"
+                                           "Access-Control-Allow-Credentials: true\r\n"
                                            "Connection: close\r\n"
                                            "\r\n%s",
+             global_config->reference_urls.main,
              text);
 }
 
