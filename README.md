@@ -9,18 +9,38 @@ TBD.
 # Docker
 1. Install Docker.
 
-2. cd to docker folder
+2. Create & configure your cloudflare tokens
+Astro token:
+* User API Token
+  * Account, Workers KV Storage, Edit (IDK if this is necessary)
+  * Account, Workers Scripts, Edit
+  * User, Memberships, Read
+  * User, User Details, Read (IDK if this is necessary)
+  * Zone, Zone, Read
+  * Zone, Worker Routes, Edit
+  * Zone, DNS, Edit
+
+3. Insert cloudflare tokens
+* Create secrets folder using `mkdir secrets`
+* cd to secrets folder
+* Insert Astro token `nano astro-cloudflare-token.txt`
+* ... TBD
+
+4. Insert domain names
+* References to the main website & sql-receptionist in config.yml
+* The final URL of the main website inside apps/astro-app/wrangler.jsonc
+  * under "routes"
+
+5. Change the database password in docker/.env
+
+6. cd to docker folder
 ```
 cd docker
 ```
-3. Change the password for example.env, then rename it to .env.
 
-4. Build & run the docker containers via compose
+7. Run your servers.
 ```
-sudo docker compose up
+./run.sh prod
 ```
-
-Make sure to update the database password for config.yml & docker/db.env
-
 # Scoping
 TBD

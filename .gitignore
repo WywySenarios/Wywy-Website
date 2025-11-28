@@ -11,3 +11,6 @@ startup.bat
 
 # C build artifacts
 *.out
+
+# secrets
+secrets/*

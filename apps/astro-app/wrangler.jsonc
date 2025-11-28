@@ -12,5 +12,15 @@
   },
   "observability": {
     "enabled": true
-  }
+  },
+  "routes": [
+    {
+      "pattern": "ericzhu.me",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.ericzhu.me",
+      "custom_domain": true
+    }
+  ]
 }
