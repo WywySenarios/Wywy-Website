@@ -35,6 +35,7 @@
 #define MAX_REGEX_MATCHES 25
 #define limit "20"
 #define NUM_DATATYPES_KEYS 1
+#define MAX_PASSWORD_LENGTH 255
 
 int done;
 void handle_sigterm(int signal_num)
@@ -42,6 +43,8 @@ void handle_sigterm(int signal_num)
     printf("Received SIGTERM. Exiting after handling the current requests...\n");
     done = 1;
 }
+
+char *admin_creds;
 
 struct dict_item
 {
@@ -1214,6 +1217,37 @@ end:
 
 int main(int argc, char const *argv[])
 {
+    // exit if environment variables are missing
+    if (!getenv("POSTGRES_PORT"))
+    {
+        printf("Could not find environment variable POSTGRES_PORT.");
+        exit(EXIT_FAILURE);
+    }
+    if (!getenv("DB_USERNAME"))
+    {
+        printf("Could not find environment variable DB_USERNAME.");
+        exit(EXIT_FAILURE);
+    }
+    if (!getenv("DB_PASSWORD"))
+    {
+        printf("Could not find environment variable DB_PASSWORD.");
+        exit(EXIT_FAILURE);
+    }
+
+    // attempt to read admin password
+    admin_creds = malloc(MAX_PASSWORD_LENGTH + 1);
+    FILE *admin_secret = fopen("/run/secrets/admin", "r");
+
+    if (!admin_secret)
+    {
+        printf("Could not find admin password secret.");
+        exit(EXIT_FAILURE);
+    }
+
+    fgets(admin_creds, MAX_PASSWORD_LENGTH + 1, admin_secret);
+
+    fclose(admin_secret);
+
     // setup for SIGTERM
     done = 0;
     signal(SIGTERM, handle_sigterm);
