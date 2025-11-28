@@ -15,8 +15,9 @@ services:
       - 4321:4321
     volumes:
       - ../apps/astro-app:/apps/astro-app
-      - astro-node_modules:/apps/astro-app/node_modules
-    command: npm run dev -- --host
+      - /apps/astro-app/node_modules
+      # - astro-node_modules:/apps/astro-app/node_modules
+    command: bash -c "npm run dev -- --host"
 
   sql-receptionist:
     container_name: sql-receptionist-dev-server

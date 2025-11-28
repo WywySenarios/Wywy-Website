@@ -17,18 +17,11 @@ TO INSTALL NEW PACKAGES:
 ./enter.sh astro
 ```
 3. Install your desired packages
-4. Remove all previous node_modules
-```
-sudo su
-cd /var/lib/docker/volumes
-rm -rf docker_astro-node_modules/_data/*
-```
-5. cd back to the docker folder
-6. Purge all previous docker images.
+4. Purge previous docker images
 ```
 ./purge.sh
 ```
-7. Rebuild
+5. Rebuild
 ```
-sudo docker compose up --watch
+./run.sh dev
 ```
