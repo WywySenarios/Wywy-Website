@@ -1220,17 +1220,17 @@ int main(int argc, char const *argv[])
     // exit if environment variables are missing
     if (!getenv("POSTGRES_PORT"))
     {
-        printf("Could not find environment variable POSTGRES_PORT.");
+        fprintf(stderr, "Could not find environment variable POSTGRES_PORT.");
         exit(EXIT_FAILURE);
     }
     if (!getenv("DB_USERNAME"))
     {
-        printf("Could not find environment variable DB_USERNAME.");
+        fprintf(stderr, "Could not find environment variable DB_USERNAME.");
         exit(EXIT_FAILURE);
     }
     if (!getenv("DB_PASSWORD"))
     {
-        printf("Could not find environment variable DB_PASSWORD.");
+        fprintf(stderr, "Could not find environment variable DB_PASSWORD.");
         exit(EXIT_FAILURE);
     }
 
