@@ -7,9 +7,10 @@ import SenariosCard from "@/components/Senarios/SenariosCard.astro";
 import config from "@universal_root/config.yml";
 
 let pinnedCards = [];
-for (let i of config["websiteData"]["Senarios"]["cards"]["pinned"]) {
-	pinnedCards.push(await getEntry("cards", i));
-}
+if (config.websiteData?.Senarios?.cards?.pinned)
+	for (let i of config["websiteData"]["Senarios"]["cards"]["pinned"]) {
+		pinnedCards.push(await getEntry("cards", i));
+	}
 ---
 
 <Layout title="Senarios!" css_color_palette="dark_mode">
@@ -52,7 +53,7 @@ for (let i of config["websiteData"]["Senarios"]["cards"]["pinned"]) {
 			grid-template-columns: 1fr 1fr; /* This line of code will almost CERTAINLY cause issues in the future, especially if the "main" element's width is anything but 800px. */
 			/* grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr)); */
 		}
-	
+
 		h1 {
 			width: 100%;
 			text-decoration: none;

@@ -1,16 +1,16 @@
 ---
 export const prerender = true;
-import { getCollection } from 'astro:content';
+import { getCollection } from "astro:content";
 import Layout from "@/layouts/Layout.astro";
 import ScheduleTable from "@/components/ScheduleTable.astro";
 import config from "@universal_root/config.yml";
 
-let schedules: {[key: string]: any}[] = [];
-await getCollection('schedules', ({ data }) => {
-	schedules.push(data);
+let schedules: { [key: string]: any }[] = [];
+await getCollection("schedules", ({ data }) => {
+  schedules.push(data);
 });
 
-const scheduleToFind: string = config["websiteData"]["schedule"];
+const scheduleToFind: string = config.websiteData?.schedule;
 
 let timeslots = [
   {
@@ -147,7 +147,7 @@ let timeslots = [
 
 for (let i in schedules) {
   if (schedules[i].title == scheduleToFind) {
-    timeslots = schedules[i].content
+    timeslots = schedules[i].content;
   }
 }
 ---
