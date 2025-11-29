@@ -627,9 +627,6 @@ void *handle_client(void *arg)
         goto end;
     }
 
-    // @todo cookies/tokens
-    // @todo special/reserved URLs
-
     regex_t regex;
     regcomp(&regex, "^([A-Z]+) /([^ ]*) HTTP/[12]\\.[0-9]", REG_EXTENDED); // @warning HTTP/1 not matching?
 
@@ -668,6 +665,70 @@ void *handle_client(void *arg)
         goto options_end;
     }
 
+    // @todo special/reserved URLs
+
+    // @todo tokens
+    regex_t raw_cookie_regex;
+    regcomp(&raw_cookie_regex, "Cookie: (.*)[\r\n]", REG_EXTENDED);
+
+    regmatch_t raw_cookie_matches[1 + 1];
+    // auth fails because request has no cookies
+    if (regexec(&raw_cookie_regex, buffer, 1 + 1, raw_cookie_matches, 0) == REG_NOMATCH)
+    {
+        regfree(&raw_cookie_regex);
+        build_response_403(&response, &response_len);
+        goto options_end;
+    }
+
+    int raw_cookies_len = raw_cookie_matches[1].rm_eo - raw_cookie_matches[1].rm_so;
+    char *raw_cookies = malloc(raw_cookies_len + 1);
+    strncpy(raw_cookies, buffer + raw_cookie_matches[1].rm_so, raw_cookies_len);
+    raw_cookies[raw_cookies_len] = '\0';
+    regfree(&raw_cookie_regex);
+
+    bool admin_username = false;
+    bool admin_password = false;
+
+    regex_t cookie_regex;
+    regcomp(&cookie_regex, "[ ]*([^= ;]+)[ ]*=[ ]*([^;\r\n]+)", REG_EXTENDED);
+
+    regmatch_t cookie_matches[2 + 1];
+    char *cursor = raw_cookies;
+    while (regexec(&cookie_regex, cursor, 2 + 1, cookie_matches, 0) == 0)
+    {
+        int key_len = cookie_matches[1].rm_eo - cookie_matches[1].rm_so;
+        char *key = malloc(key_len + 1);
+        strncpy(key, cursor + cookie_matches[1].rm_so, key_len);
+        key[key_len] = '\0';
+
+        int value_len = cookie_matches[2].rm_eo - cookie_matches[2].rm_so;
+        char *value = malloc(value_len + 1);
+        strncpy(value, cursor + cookie_matches[2].rm_so, value_len);
+        value[value_len] = '\0';
+
+        if (strcmp(key, "username") == 0)
+            admin_username = strcmp(value, "admin") == 0;
+        else if (strcmp(key, "password") == 0)
+            admin_password = strcmp(value, admin_creds) == 0;
+
+        free(value);
+        free(key);
+
+        cursor += cookie_matches[0].rm_eo;
+
+        // Skip any leftover semicolons or spaces
+        while (*cursor == ';' || *cursor == ' ')
+            cursor++;
+    }
+
+    free(raw_cookies);
+    if (!(admin_username && admin_password))
+    {
+        build_response_403(&response, &response_len);
+        goto bad_auth_end;
+    }
+    // @todo non-admin cookies
+
     // extract URL from request and decode URL
     int url_len = matches[2].rm_eo - matches[2].rm_so;
     char *encoded_url = malloc(url_len + 1);
@@ -676,6 +737,7 @@ void *handle_client(void *arg)
     char *url = url_decode(encoded_url);
     free(encoded_url);
 
+    // @todo handle memory?
     // handle querystring
     char *querystring = NULL;
     char *path = url;
@@ -1219,6 +1281,9 @@ no_table_end:
 
 bad_url_end:
     free(url);
+
+bad_auth_end:
+    regfree(&cookie_regex);
 
 unsuccessful_regex_end:
     regfree(&url_regex);
