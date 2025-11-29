@@ -15,7 +15,8 @@ services:
       - 4321:4321
     volumes:
       - ../apps/astro-app:/apps/astro-app
-      - astro-node_modules:/apps/astro-app/node_modules
+      - /apps/astro-app/node_modules
+      # - astro-node_modules:/apps/astro-app/node_modules
     command: npm run dev -- --host
 
   sql-receptionist:
@@ -40,6 +41,8 @@ services:
           path: ./../apps/sql-receptionist
           target: ./apps/sql-receptionist
           initial_sync: true
+    secrets:
+      - admin
     ports:
       - 2523:2523
     depends_on:
@@ -75,3 +78,7 @@ services:
 volumes:
   # postgres-db:
   astro-node_modules:
+
+secrets:
+  admin:
+    file: ./../secrets/admin.txt

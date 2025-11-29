@@ -10,6 +10,8 @@ import type { DatabaseInfo, TableInfo } from "src/env";
 import config from "@universal_root/config.yml";
 import Layout from "@/layouts/Layout.astro";
 import DatasetControlPanel from "@root/src/components/data/dataset-control-panel";
+import LoginDialog from "@/components/auth/login-dialog";
+import { CookiesProvider } from "react-cookies";
 
 export const prerender = true;
 export function getStaticPaths() {
@@ -65,6 +67,7 @@ const pageTitle: string =
     css_color_palette="light_mode"
     useAstroDefaultCSS={false}
 >
+    <LoginDialog client:load slot="top-bar-button2" />
     <DatasetControlPanel
         databaseName={databaseName}
         tableSchema={tableSchema}

@@ -35,6 +35,7 @@
 #define MAX_REGEX_MATCHES 25
 #define limit "20"
 #define NUM_DATATYPES_KEYS 1
+#define MAX_PASSWORD_LENGTH 255
 
 int done;
 void handle_sigterm(int signal_num)
@@ -42,6 +43,8 @@ void handle_sigterm(int signal_num)
     printf("Received SIGTERM. Exiting after handling the current requests...\n");
     done = 1;
 }
+
+char *admin_creds;
 
 struct dict_item
 {
@@ -405,17 +408,21 @@ void build_response_200(char **response, size_t *response_len, const char *text)
 {
     *response_len = strlen("HTTP/1.1 200 OK\r\n"
                            "Content-Type: text/plain\r\n"
-                           "Access-Control-Allow-Origin: *\r\n"
+                           "Access-Control-Allow-Origin: \r\n"
+                           "Access-Control-Allow-Credentials: true\r\n"
                            "Connection: close\r\n"
                            "\r\n") +
+                    strlen(global_config->reference_urls.main) +
                     strlen(text);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 200 OK\r\n"
                                            "Content-Type: text/plain\r\n"
-                                           "Access-Control-Allow-Origin: *\r\n"
+                                           "Access-Control-Allow-Origin: %s\r\n"
+                                           "Access-Control-Allow-Credentials: true\r\n"
                                            "Connection: close\r\n"
                                            "\r\n"
                                            "%s",
+             global_config->reference_urls.main,
              text);
 }
 
@@ -427,21 +434,25 @@ void build_response_200(char **response, size_t *response_len, const char *text)
 void build_response_204(char **response, size_t *response_len)
 {
     *response_len = strlen("HTTP/1.1 204 No Content\r\n"
-                           "Access-Control-Allow-Origin: *\r\n"
+                           "Access-Control-Allow-Origin: \r\n"
+                           "Access-Control-Allow-Credentials: true\r\n"
                            "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
                            "Access-Control-Allow-Headers: Content-Type\r\n"
                            "Content-Length: 0\r\n"
                            "Connection: close\r\n"
-                           "\r\n");
+                           "\r\n") +
+                    strlen(global_config->reference_urls.main);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1,
              "HTTP/1.1 204 No Content\r\n"
-             "Access-Control-Allow-Origin: *\r\n"
+             "Access-Control-Allow-Origin: %s\r\n"
+             "Access-Control-Allow-Credentials: true\r\n"
              "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
              "Access-Control-Allow-Headers: Content-Type\r\n"
              "Content-Length: 0\r\n"
              "Connection: close\r\n"
-             "\r\n");
+             "\r\n",
+             global_config->reference_urls.main);
 }
 
 /**
@@ -453,17 +464,21 @@ void build_response_400(char **response, size_t *response_len)
 {
     *response_len = strlen("HTTP/1.1 400 Bad Request\r\n"
                            "Content-Type: text/plain\r\n"
-                           "Access-Control-Allow-Origin: *\r\n"
+                           "Access-Control-Allow-Origin: \r\n"
+                           "Access-Control-Allow-Credentials: true\r\n"
                            "Connection: close\r\n"
                            "\r\n"
-                           "400 Bad Request");
+                           "400 Bad Request") +
+                    strlen(global_config->reference_urls.main);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 400 Bad Request\r\n"
                                            "Content-Type: text/plain\r\n"
-                                           "Access-Control-Allow-Origin: *\r\n"
+                                           "Access-Control-Allow-Origin: %s\r\n"
+                                           "Access-Control-Allow-Credentials: true\r\n"
                                            "Connection: close\r\n"
                                            "\r\n"
-                                           "400 Bad Request");
+                                           "400 Bad Request",
+             global_config->reference_urls.main);
 }
 
 /**
@@ -475,17 +490,21 @@ void build_response_403(char **response, size_t *response_len)
 {
     *response_len = strlen("HTTP/1.1 403 Forbidden\r\n"
                            "Content-Type: text/plain\r\n"
-                           "Access-Control-Allow-Origin: *\r\n"
+                           "Access-Control-Allow-Origin: \r\n"
+                           "Access-Control-Allow-Credentials: true\r\n"
                            "Connection: close\r\n"
                            "\r\n"
-                           "403 Forbidden");
+                           "403 Forbidden") +
+                    strlen(global_config->reference_urls.main);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 403 Forbidden\r\n"
                                            "Content-Type: text/plain\r\n"
-                                           "Access-Control-Allow-Origin: *\r\n"
+                                           "Access-Control-Allow-Origin: %s\r\n"
+                                           "Access-Control-Allow-Credentials: true\r\n"
                                            "Connection: close\r\n"
                                            "\r\n"
-                                           "403 Forbidden");
+                                           "403 Forbidden",
+             global_config->reference_urls.main);
 }
 
 /**
@@ -497,17 +516,21 @@ void build_response_404(char **response, size_t *response_len)
 {
     *response_len = strlen("HTTP/1.1 404 Not Found\r\n"
                            "Content-Type: text/plain\r\n"
-                           "Access-Control-Allow-Origin: *\r\n"
+                           "Access-Control-Allow-Origin: \r\n"
+                           "Access-Control-Allow-Credentials: true\r\n"
                            "Connection: close\r\n"
                            "\r\n"
-                           "404 Not Found");
+                           "404 Not Found") +
+                    strlen(global_config->reference_urls.main);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 404 Not Found\r\n"
                                            "Content-Type: text/plain\r\n"
-                                           "Access-Control-Allow-Origin: *\r\n"
+                                           "Access-Control-Allow-Origin: %s\r\n"
+                                           "Access-Control-Allow-Credentials: true\r\n"
                                            "Connection: close\r\n"
                                            "\r\n"
-                                           "404 Not Found");
+                                           "404 Not Found",
+             global_config->reference_urls.main);
 }
 
 /**
@@ -525,16 +548,20 @@ void build_response_500(char **response, size_t *response_len, const char *text)
 
     *response_len = strlen("HTTP/1.1 500 Internal Server Error\r\n"
                            "Content-Type: text/plain\r\n"
-                           "Access-Control-Allow-Origin: *\r\n"
+                           "Access-Control-Allow-Origin: \r\n"
+                           "Access-Control-Allow-Credentials: true\r\n"
                            "Connection: close\r\n"
                            "\r\n") +
+                    strlen(global_config->reference_urls.main) +
                     strlen(text);
     *response = malloc(*response_len + 1);
     snprintf(*response, *response_len + 1, "HTTP/1.1 500 Internal Server Error\r\n"
                                            "Content-Type: text/plain\r\n"
-                                           "Access-Control-Allow-Origin: *\r\n"
+                                           "Access-Control-Allow-Origin: %s\r\n"
+                                           "Access-Control-Allow-Credentials: true\r\n"
                                            "Connection: close\r\n"
                                            "\r\n%s",
+             global_config->reference_urls.main,
              text);
 }
 
@@ -600,9 +627,6 @@ void *handle_client(void *arg)
         goto end;
     }
 
-    // @todo cookies/tokens
-    // @todo special/reserved URLs
-
     regex_t regex;
     regcomp(&regex, "^([A-Z]+) /([^ ]*) HTTP/[12]\\.[0-9]", REG_EXTENDED); // @warning HTTP/1 not matching?
 
@@ -641,6 +665,70 @@ void *handle_client(void *arg)
         goto options_end;
     }
 
+    // @todo special/reserved URLs
+
+    // @todo tokens
+    regex_t raw_cookie_regex;
+    regcomp(&raw_cookie_regex, "Cookie: (.*)[\r\n]", REG_EXTENDED);
+
+    regmatch_t raw_cookie_matches[1 + 1];
+    // auth fails because request has no cookies
+    if (regexec(&raw_cookie_regex, buffer, 1 + 1, raw_cookie_matches, 0) == REG_NOMATCH)
+    {
+        regfree(&raw_cookie_regex);
+        build_response_403(&response, &response_len);
+        goto options_end;
+    }
+
+    int raw_cookies_len = raw_cookie_matches[1].rm_eo - raw_cookie_matches[1].rm_so;
+    char *raw_cookies = malloc(raw_cookies_len + 1);
+    strncpy(raw_cookies, buffer + raw_cookie_matches[1].rm_so, raw_cookies_len);
+    raw_cookies[raw_cookies_len] = '\0';
+    regfree(&raw_cookie_regex);
+
+    bool admin_username = false;
+    bool admin_password = false;
+
+    regex_t cookie_regex;
+    regcomp(&cookie_regex, "[ ]*([^= ;]+)[ ]*=[ ]*([^;\r\n]+)", REG_EXTENDED);
+
+    regmatch_t cookie_matches[2 + 1];
+    char *cursor = raw_cookies;
+    while (regexec(&cookie_regex, cursor, 2 + 1, cookie_matches, 0) == 0)
+    {
+        int key_len = cookie_matches[1].rm_eo - cookie_matches[1].rm_so;
+        char *key = malloc(key_len + 1);
+        strncpy(key, cursor + cookie_matches[1].rm_so, key_len);
+        key[key_len] = '\0';
+
+        int value_len = cookie_matches[2].rm_eo - cookie_matches[2].rm_so;
+        char *value = malloc(value_len + 1);
+        strncpy(value, cursor + cookie_matches[2].rm_so, value_len);
+        value[value_len] = '\0';
+
+        if (strcmp(key, "username") == 0)
+            admin_username = strcmp(value, "admin") == 0;
+        else if (strcmp(key, "password") == 0)
+            admin_password = strcmp(value, admin_creds) == 0;
+
+        free(value);
+        free(key);
+
+        cursor += cookie_matches[0].rm_eo;
+
+        // Skip any leftover semicolons or spaces
+        while (*cursor == ';' || *cursor == ' ')
+            cursor++;
+    }
+
+    free(raw_cookies);
+    if (!(admin_username && admin_password))
+    {
+        build_response_403(&response, &response_len);
+        goto bad_auth_end;
+    }
+    // @todo non-admin cookies
+
     // extract URL from request and decode URL
     int url_len = matches[2].rm_eo - matches[2].rm_so;
     char *encoded_url = malloc(url_len + 1);
@@ -649,6 +737,7 @@ void *handle_client(void *arg)
     char *url = url_decode(encoded_url);
     free(encoded_url);
 
+    // @todo handle memory?
     // handle querystring
     char *querystring = NULL;
     char *path = url;
@@ -1193,6 +1282,9 @@ no_table_end:
 bad_url_end:
     free(url);
 
+bad_auth_end:
+    regfree(&cookie_regex);
+
 unsuccessful_regex_end:
     regfree(&url_regex);
 
@@ -1214,6 +1306,37 @@ end:
 
 int main(int argc, char const *argv[])
 {
+    // exit if environment variables are missing
+    if (!getenv("POSTGRES_PORT"))
+    {
+        fprintf(stderr, "Could not find environment variable POSTGRES_PORT.");
+        exit(EXIT_FAILURE);
+    }
+    if (!getenv("DB_USERNAME"))
+    {
+        fprintf(stderr, "Could not find environment variable DB_USERNAME.");
+        exit(EXIT_FAILURE);
+    }
+    if (!getenv("DB_PASSWORD"))
+    {
+        fprintf(stderr, "Could not find environment variable DB_PASSWORD.");
+        exit(EXIT_FAILURE);
+    }
+
+    // attempt to read admin password
+    admin_creds = malloc(MAX_PASSWORD_LENGTH + 1);
+    FILE *admin_secret = fopen("/run/secrets/admin", "r");
+
+    if (!admin_secret)
+    {
+        printf("Could not find admin password secret.");
+        exit(EXIT_FAILURE);
+    }
+
+    fgets(admin_creds, MAX_PASSWORD_LENGTH + 1, admin_secret);
+
+    fclose(admin_secret);
+
     // setup for SIGTERM
     done = 0;
     signal(SIGTERM, handle_sigterm);

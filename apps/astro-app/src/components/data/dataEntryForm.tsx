@@ -246,6 +246,7 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
       method: "POST",
       body: JSON.stringify(values),
       mode: "cors",
+      credentials: "include",
       headers: {
         "Content-type": "application/json; charset=UTF-8",
       }
