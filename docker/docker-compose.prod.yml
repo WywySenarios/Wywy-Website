@@ -1,21 +1,21 @@
 services:
-  astro-app:
-    container_name: astro
-    working_dir: /apps/astro-app
-    build:
-      context: ../
-      dockerfile: apps/astro-app/Dockerfile
-      target: runtime
-    environment:
-      CLOUDFLARE_API_TOKEN_FILE: /run/secrets/wywywebsite-astro-cloudflare
-    entrypoint: /entrypoint.sh
-    secrets:
-      - wywywebsite-astro-cloudflare
-    ports:
-      - 4321:4321
-    volumes:
-      - ../apps/astro-app:/apps/astro-app
-      - astro-node_modules:/apps/astro-app/node_modules
+  # astro-app:
+  #   container_name: astro
+  #   working_dir: /apps/astro-app
+  #   build:
+  #     context: ../
+  #     dockerfile: apps/astro-app/Dockerfile
+  #     target: runtime
+  #   environment:
+  #     CLOUDFLARE_API_TOKEN_FILE: /run/secrets/wywywebsite-astro-cloudflare
+  #   entrypoint: /entrypoint.sh
+  #   secrets:
+  #     - wywywebsite-astro-cloudflare
+  #   ports:
+  #     - 4321:4321
+  #   volumes:
+  #     - ../apps/astro-app:/apps/astro-app
+  #     - astro-node_modules:/apps/astro-app/node_modules
 
   sql-receptionist:
     container_name: sql-receptionist
@@ -33,12 +33,51 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_USERNAME=${DB_USERNAME}
       - POSTGRES_PORT=${POSTGRES_PORT}
+    secrets:
+      - admin
+    networks:
+      - cloudflared
     ports:
       - 2523:2523
     depends_on:
       database:
         condition: service_healthy
-    command: bash -c "python3 create_tables.py && ./app"
+    command: ./app
+
+  create_tables:
+    container_name: create_tables
+    tty: true
+    working_dir: /apps/create_tables
+    build:
+      context: ../
+      dockerfile: apps/create_tables/Dockerfile
+    env_file:
+      - path: .env
+        required: true
+    environment:
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_USERNAME=${DB_USERNAME}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+    depends_on:
+      database:
+        condition: service_healthy
+    command: python3 create_tables.py
+
+  cloudflared:
+    working_dir: /apps/cloudflared
+    build:
+      context: ../
+      dockerfile: apps/cloudflared/Dockerfile
+    container_name: cloudflared
+    environment:
+      TZ: America/Toronto
+      TUNNEL_TOKEN_FILE: /run/secrets/wywywebsite-cloudflared-cloudflare
+    entrypoint: /entrypoint.sh
+    restart: unless-stopped
+    secrets:
+      - wywywebsite-cloudflared-cloudflare
+    networks:
+      - cloudflared
 
   # @TODO secrets for db authentication
   database:
@@ -68,8 +107,14 @@ services:
 volumes:
   astro-node_modules:
 
+networks:
+  cloudflared:
+    name: cloudflared
+
 secrets:
   wywywebsite-astro-cloudflare:
     file: ./../secrets/astro-cloudflare-token.txt
+  wywywebsite-cloudflared-cloudflare:
+    file: ./../secrets/cloudflared-cloudflare-token.txt
   admin:
     file: ./../secrets/admin.txt

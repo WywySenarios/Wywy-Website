@@ -6,9 +6,6 @@ ENV LD_LIBRARY_PATH=/usr/local/lib
 COPY ./apps/sql-receptionist .
 COPY ./config.yml /
 
-RUN pip install psycopg2-binary
-RUN pip install --no-cache-dir PyYAML
-
 RUN apt-get update && apt-get install -y \
     cmake \
     build-essential \
@@ -37,4 +34,4 @@ RUN make
 
 EXPOSE 2523
 
-CMD ["create_tables.py", "&&", "./app"]
+CMD ["./app"]

@@ -19,12 +19,15 @@ Astro token:
   * Zone, Zone, Read
   * Zone, Worker Routes, Edit
   * Zone, DNS, Edit
+Sql-receptionist Token:
+* Tunnel Token
+  * You do not need to follow the instructions to create a tunnel. Just throw in the token into the correct secret location.
 
 3. Insert cloudflare tokens
 * Create secrets folder using `mkdir secrets`
 * cd to secrets folder
 * Insert Astro token `nano astro-cloudflare-token.txt`
-* ... TBD
+* Insert Sql-receptionist token `nano cloudflared-cloudflare-token.txt`
 
 4. Insert domain names
 * References to the main website & sql-receptionist in config.yml
