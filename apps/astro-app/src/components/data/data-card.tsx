@@ -106,7 +106,7 @@ function ChartSettings({ columns, tableSchema, options, setOptions }: { columns:
                 <DialogTrigger asChild>
                     <Button variant="outline">Chart Settings</Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="max-h-screen overflow-y-scroll sm:max-w-[425px]">
                     <DialogHeader>
                         <DialogTitle>Chart Settings</DialogTitle>
                         <DialogDescription>
