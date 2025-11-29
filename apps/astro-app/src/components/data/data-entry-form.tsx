@@ -30,11 +30,11 @@ import { toast } from "sonner"
 // Input elements!
 import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider/labelslider"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radioGroup"
+import { RadioGroup, RadioGroupItem } from "@root/src/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
 import { Calendar } from "@/components/ui/calendar"
 import { Calendar24 } from "@root/src/components/ui/timestamp-picker"
-import { TimePicker } from "@/components/ui/timePicker"
+import { TimePicker } from "@root/src/components/ui/time-picker"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 
 type inputElementName = "textbox" | "linearSlider" | "switch" | "radio" | "calendar" | "time" | "timestamp";

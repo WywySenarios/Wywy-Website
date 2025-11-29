@@ -136,7 +136,7 @@ if __name__ == "__main__":
                 print("Table", tableInfo["tableName"], "must have a column schema containing at least 1 column of data to store.")
                 valid = False
             
-            # ensure that column names will not interfere with comments in the Astro schema (see apps/astro-app/src/components/data/dataEntryForm.tsx)
+            # ensure that column names will not interfere with comments in the Astro schema (see apps/astro-app/src/components/data/data-entry-form.tsx)
             if "schema" in tableInfo:
                 for columnInfo in tableInfo["schema"]:
                     # we may guarentee that the column has a name because of earlier checks
