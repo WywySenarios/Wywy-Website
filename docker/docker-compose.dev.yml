@@ -48,7 +48,26 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    command: bash -c "python3 create_tables.py && make clean && make && ./app"
+    command: bash -c "make clean && make && ./app"
+  
+  create_tables:
+    container_name: create_tables
+    tty: true
+    working_dir: /apps/create_tables
+    build:
+      context: ../
+      dockerfile: apps/create_tables/Dockerfile
+    env_file:
+      - path: .env
+        required: true
+    environment:
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_USERNAME=${DB_USERNAME}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+    depends_on:
+      database:
+        condition: service_healthy
+    command: python3 create_tables.py
 
   # @TODO secrets for db authentication
   database:
