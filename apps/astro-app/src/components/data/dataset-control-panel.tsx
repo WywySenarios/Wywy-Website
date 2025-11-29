@@ -40,9 +40,15 @@ export default function DatasetControlPanel({ databaseName, tableSchema }: Datas
     const [columns, setColumns] = useState<Array<any>>([]);
 
     function fetchDataset() {
-        fetch(`${config.referenceUrls.db}/${databaseName.toLowerCase()}/${tableSchema.tableName.toLowerCase()}?SELECT=*&ORDER_BY=ASC`).then((res) => {
+        fetch(`${config.referenceUrls.db}/${databaseName.toLowerCase()}/${tableSchema.tableName.toLowerCase()}?SELECT=*&ORDER_BY=ASC`, {
+            method: "GET",
+            mode: "cors",
+            credentials: "include",
+        }).then((res) => {
             if (res.ok) {
                 res.json().then((data) => {
+                    console.log(data);
+
                     // prettify column names
                     const dataColumns = data.columns.map((col: string) =>
                         prettifySnakeCase(col)
@@ -59,8 +65,15 @@ export default function DatasetControlPanel({ databaseName, tableSchema }: Datas
                         for (const row of dataset) {
                             row[i] = prettifier(row[i]);
                         }
-
                         i++;
+
+                        // check for comments column
+                        if (dataColumn.comments) {
+                            for (const row of dataset) {
+                                row[i] = prettyParseString(row[i]);
+                            }
+                            i++;
+                        }
                     }
 
 
