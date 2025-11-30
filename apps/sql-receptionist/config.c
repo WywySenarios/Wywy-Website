@@ -119,4 +119,8 @@ void load_config(struct config **cfg)
 
         *cfg = NULL;
     }
+    else
+    {
+        fprintf(stderr, "Configuration file successfully loaded!");
+    }
 }
