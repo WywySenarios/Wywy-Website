@@ -7,7 +7,7 @@
 #include <cyaml/cyaml.h>
 #include "config.h"
 
-#define CONFIG_PATH "../../config.yml"
+#define CONFIG_PATH "/config.yml"
 
 static const cyaml_schema_field_t reference_urls_schema[] = {
     CYAML_FIELD_STRING_PTR(
