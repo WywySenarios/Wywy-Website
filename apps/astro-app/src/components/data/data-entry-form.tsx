@@ -54,12 +54,15 @@ const inputElementsAliases: Record<string, inputElementName> = {
 type inputElementFunction = (field: any, columnInfo: DataColumn) => ReactElement<unknown, string | JSXElementConstructor<any>>
 
 const inputElements: Record<inputElementName, inputElementFunction> = {
-  "textbox": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
-    <FormControl>
-      <Textarea placeholder={columnInfo.defaultValue} {...field.field} />
-    </FormControl>
-    {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
-  </FormItem>,
+  "textbox": (field, columnInfo) => <div className="w-full flex flex-col items-center">
+    <FormLabel className="text-lg font-semibold">{columnInfo.name}</FormLabel>
+    <FormItem className="w-full rounded-lg border p-3 shadow-sm">
+      <FormControl>
+        <Textarea placeholder={columnInfo.defaultValue} {...field.field} />
+      </FormControl>
+      {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
+    </FormItem>
+  </div>,
   "linearSlider": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
     <div className="w-full flex flex-col items-center gap-4">
       <FormLabel className="text-lg font-semibold">{columnInfo.name}</FormLabel>
