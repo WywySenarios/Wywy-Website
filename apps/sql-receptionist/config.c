@@ -111,6 +111,7 @@ static const cyaml_config_t cyaml_config = {
  */
 void load_config(struct config **cfg)
 {
+    fprintf(stderr, "Attempting to load config at %s\n", CONFIG_PATH);
     cyaml_err_t err = cyaml_load_file(CONFIG_PATH, &cyaml_config, &config_schema, (void **)cfg, NULL);
 
     if (err != CYAML_OK)
@@ -121,6 +122,6 @@ void load_config(struct config **cfg)
     }
     else
     {
-        fprintf(stderr, "Configuration file successfully loaded!");
+        fprintf(stderr, "Configuration file successfully loaded!\n");
     }
 }
