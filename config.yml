@@ -1,13 +1,13 @@
 referenceUrls:
-  main: http://localhost:4321
-  db: http://localhost:2523
+  main: https://ericzhu.me
+  db: https://db.ericzhu.me
 
 # UNUSED SO FAR:
 # The location of python that you wish to run.
 python: ".venv\\Scripts\\python.exe"
 
 # Webpage
-websiteTitle: "My Website Title"
+websiteTitle: "Eric's Website"
 websiteIcon: "/favicon.svg"
 
 # Postgres database
@@ -79,6 +79,23 @@ data:
 
           # BAND AID COLUMNS BEFORE EVENTS ARE ADDED:
           # (that's why their input elements and datatypes are so bad at the job)
+          - name: Productivity
+            datatype: string
+            entrytype: textbox
+            comments: true
+            description: Time spent on productivity in format [x]h [y]min
+
+          - name: Social
+            datatype: string
+            entrytype: textbox
+            comments: true
+            description: Time spent hanging out in format [x]h [y]min
+          
+          - name: Exercise
+            datatype: string
+            entrytype: texetbox
+            comments: true
+            description: Time spent exercising in format [x]h [y]min
 
           - name: Computer
             datatype: string
