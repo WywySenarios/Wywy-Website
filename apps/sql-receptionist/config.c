@@ -15,12 +15,13 @@ static const cyaml_schema_field_t reference_urls_schema[] = {
         struct reference_urls, main, 0, CYAML_UNLIMITED),
     CYAML_FIELD_STRING_PTR("db", CYAML_FLAG_POINTER,
                            struct reference_urls, db, 0, CYAML_UNLIMITED),
-};
+    CYAML_FIELD_END};
 
 static const cyaml_schema_field_t postgres_config_fields_schema[] = {
     CYAML_FIELD_STRING_PTR(
         "host", CYAML_FLAG_POINTER,
-        struct postgres_config, host, 0, CYAML_UNLIMITED)};
+        struct postgres_config, host, 0, CYAML_UNLIMITED),
+    CYAML_FIELD_END};
 
 static const cyaml_schema_field_t data_column_fields_schema[] = {
     CYAML_FIELD_STRING_PTR(
@@ -119,9 +120,5 @@ void load_config(struct config **cfg)
         fprintf(stderr, "Failed to load config: %s\n", cyaml_strerror(err));
 
         *cfg = NULL;
-    }
-    else
-    {
-        fprintf(stderr, "Configuration file successfully loaded!\n");
     }
 }
