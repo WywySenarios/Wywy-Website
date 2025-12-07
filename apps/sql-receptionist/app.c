@@ -44,6 +44,11 @@ void handle_sigterm(int signal_num)
     done = 1;
 }
 
+void handle_sigint(int signal_num) {
+    printf("Received SIGINT. Exiting after handling the current requests...\n");
+    done = 1;
+}
+
 char *admin_creds;
 
 struct dict_item
@@ -1340,6 +1345,7 @@ int main(int argc, char const *argv[])
     // setup for SIGTERM
     done = 0;
     signal(SIGTERM, handle_sigterm);
+    signal(SIGINT, handle_sigint);
 
     // populate global variables
     load_config(&global_config);
