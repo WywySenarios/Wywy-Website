@@ -10,12 +10,27 @@ void init(config cfg) {
     // @TODO check validity
 }
 
-void build_response_generic(int status_code, char **response, size_t *response_len, char *body) {
-    const char *status_code_name;
+const char * get_status_code_name(int status_code) {
     switch (status_code) {
+        case 200:
+            return "OK";
+        case 204:
+            return "No Content";
+        case 400:
+            return "Bad Request";
+        case 403:
+            return "Forbidden";
+        case 404:
+            return "Not Found";
+        case 500:
+            return "Internal Server Error";
         default:
-            status_code_name = "";
+            return "";
     }
+}
+
+void build_response_generic(int status_code, char **response, size_t *response_len, char *body) {
+    const char *status_code_name = get_status_code_name(status_code);
 
     response_len = strlen("HTTP/1.1 xxx \r\n"
                            "Content-Type: text/plain\r\n"
