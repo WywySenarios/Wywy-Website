@@ -59,4 +59,20 @@ void build_response(int status_code, char **response, size_t *response_len, cons
     free(body);
 }
 
-void build_response_default(int status_code, char **response, size_t *response_len) {}
+void build_response_default(int status_code, char **response, size_t *response_len) {
+    switch (status_code) {
+        case 200:
+            build_response_generic(200, response, response_len, "OK");
+        case 204:
+            build_response_generic(204, response, response_len, "No Content");
+        case 400:
+            build_response_generic(400, response, response_len, "Bad Request");
+        case 403:
+            build_response_generic(403, response, response_len, "Forbidden");
+        case 404:
+            build_response_generic(404, response, response_len, "Not Found")
+        case 500:
+            build_response_generic(500, response, response_len, "Internal Server Error");
+        default:
+    }
+}
