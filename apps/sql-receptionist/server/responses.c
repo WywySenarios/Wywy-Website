@@ -53,8 +53,8 @@ const char *get_status_code_name(int status_code) {
  * @param response_len response text length output pointer.
  * @param body response body string.
  */
-void build_response_generic(int status_code, char **response,
-                            size_t *response_len, char *body) {
+void build_response(int status_code, char **response, size_t *response_len,
+                    char *body) {
   const char *status_code_name = get_status_code_name(status_code);
 
   *response_len = strlen("HTTP/1.1 xxx \r\n"
@@ -87,15 +87,16 @@ void build_response_generic(int status_code, char **response,
  * @param pattern body string pattern.
  * @param ... body string content (args for vsnprintf).
  */
-void build_response(int status_code, char **response, size_t *response_len,
-                    size_t text_size, const char *pattern, ...) {
+void build_response_printf(int status_code, char **response,
+                           size_t *response_len, size_t text_size,
+                           const char *pattern, ...) {
   va_list arg;
   char *body = malloc(text_size + 1);
   va_start(arg, pattern);
   vsnprintf(body, text_size, pattern, arg);
   va_end(arg);
 
-  build_response_generic(status_code, response, response_len, body);
+  build_response(status_code, response, response_len, body);
 
   free(body);
 }
@@ -110,17 +111,16 @@ void build_response_default(int status_code, char **response,
                             size_t *response_len) {
   switch (status_code) {
   case 200:
-    build_response_generic(200, response, response_len, "OK");
+    build_response(200, response, response_len, "OK");
   case 204:
-    build_response_generic(204, response, response_len, "No Content");
+    build_response(204, response, response_len, "No Content");
   case 400:
-    build_response_generic(400, response, response_len, "Bad Request");
+    build_response(400, response, response_len, "Bad Request");
   case 403:
-    build_response_generic(403, response, response_len, "Forbidden");
+    build_response(403, response, response_len, "Forbidden");
   case 404:
-    build_response_generic(404, response, response_len, "Not Found");
+    build_response(404, response, response_len, "Not Found");
   case 500:
-    build_response_generic(500, response, response_len,
-                           "Internal Server Error");
+    build_response(500, response, response_len, "Internal Server Error");
   }
 }
