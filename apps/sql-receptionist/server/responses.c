@@ -47,7 +47,8 @@ const char *get_status_code_name(int status_code) {
 }
 
 /**
- * Build a response, and set its body to the given string.
+ * Build a response, and set its body to the given string. Fails if the config
+ * is missing or NULL.
  * @param status_code The status code of the response.
  * @param response response text output pointer.
  * @param response_len response text length output pointer.
@@ -55,6 +56,10 @@ const char *get_status_code_name(int status_code) {
  */
 void build_response(int status_code, char **response, size_t *response_len,
                     char *body) {
+  if (!global_config) {
+    perror("Cannot build response because the config is NULL.");
+    exit(1);
+  }
   const char *status_code_name = get_status_code_name(status_code);
 
   *response_len = strlen("HTTP/1.1 xxx \r\n"
@@ -79,7 +84,7 @@ void build_response(int status_code, char **response, size_t *response_len,
 
 /**
  * Build a response when supplied with snprintf style arguments (pattern &
- * variable number of arguments).
+ * variable number of arguments). Fails if the config is missing or NULL.
  * @param status_code The status code of the response.
  * @param response response text output pointer.
  * @param response_len response text length output pointer.
@@ -102,7 +107,8 @@ void build_response_printf(int status_code, char **response,
 }
 
 /**
- * Build a response with the status code name as the body.
+ * Build a response with the status code name as the body. Fails if the config
+ * is missing or NULL.
  * @param status_code The status code of the response.
  * @param response response text output pointer.
  * @param response_len response text length output pointer.
