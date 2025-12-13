@@ -1,3 +1,9 @@
+/**
+ * @brief helper library for building HTTP 1.1 responses.
+ * This helper library can build responses for the following status codes: 200,
+ * 204, 400, 403, 404, 500.
+ */
+
 #include "../config.h"
 #include <stdarg.h>
 #include <stdio.h>
@@ -6,12 +12,21 @@
 
 static struct config *global_config = NULL;
 
+/**
+ * Loads in a config. This config will be used to provide the correct headers
+ * for CORS.
+ * @param cfg The config to load in.
+ */
 void init(struct config cfg) {
   global_config = &cfg;
 
   // @TODO check validity
 }
 
+/**
+ * Returns the name associated with the given status code.
+ * @return the name associated with the given status code.
+ */
 const char *get_status_code_name(int status_code) {
   switch (status_code) {
   case 200:
@@ -31,6 +46,13 @@ const char *get_status_code_name(int status_code) {
   }
 }
 
+/**
+ * Build a response, and set its body to the given string.
+ * @param status_code The status code of the response.
+ * @param response response text output pointer.
+ * @param response_len response text length output pointer.
+ * @param body response body string.
+ */
 void build_response_generic(int status_code, char **response,
                             size_t *response_len, char *body) {
   const char *status_code_name = get_status_code_name(status_code);
@@ -55,6 +77,16 @@ void build_response_generic(int status_code, char **response,
            body);
 }
 
+/**
+ * Build a response when supplied with snprintf style arguments (pattern &
+ * variable number of arguments).
+ * @param status_code The status code of the response.
+ * @param response response text output pointer.
+ * @param response_len response text length output pointer.
+ * @param text_size expected body size.
+ * @param pattern body string pattern.
+ * @param ... body string content (args for vsnprintf).
+ */
 void build_response(int status_code, char **response, size_t *response_len,
                     size_t text_size, const char *pattern, ...) {
   va_list arg;
@@ -68,6 +100,12 @@ void build_response(int status_code, char **response, size_t *response_len,
   free(body);
 }
 
+/**
+ * Build a response with the status code name as the body.
+ * @param status_code The status code of the response.
+ * @param response response text output pointer.
+ * @param response_len response text length output pointer.
+ */
 void build_response_default(int status_code, char **response,
                             size_t *response_len) {
   switch (status_code) {
