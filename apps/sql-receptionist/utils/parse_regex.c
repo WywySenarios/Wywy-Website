@@ -102,6 +102,22 @@ int regex_iterator_match_next(struct regex_iterator *iter, int eflags) {
 }
 
 /**
+ * Checks if there is a match for the given group number.
+ * @param iter the related regex iterator.
+ * @param group_num the group to check for a match.
+ * @return true if there is a valid match.
+ */
+int has_match(struct regex_iterator *iter, int group_num) {
+  if (iter->nmatch <= group_num || iter->nmatch <= 0)
+    return 0;
+  if (iter->matches == NULL || iter->matches[0].rm_eo == -1 ||
+      iter->matches[0].rm_so == -1 || iter->matches[group_num].rm_eo == -1 ||
+      iter->matches[group_num].rm_so == -1)
+    return 0;
+  return 1;
+}
+
+/**
  * Gets the ith match number (0 -> entire string that was regex'd). May behave
  * unexpectedly if match_num is invalid. May fail if the iterator never tried to
  * match or if the iterator is invalid.
