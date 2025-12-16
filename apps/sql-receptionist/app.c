@@ -8,6 +8,7 @@
  */
 
 #include "config.h"
+#include "utils/format_string.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
 #include <ctype.h>
@@ -286,45 +287,6 @@ char *url_decode(const char *src) {
   // add null terminator
   decoded[decoded_len] = '\0';
   return decoded;
-}
-
-/**
- * Attempts to convert a given string to snake case.
- * @param src The string to convert. This function does not free src, but it
- * does modify it in place.
- */
-void to_snake_case(char *src) {
-  size_t src_len = strlen(src);
-  for (unsigned i = 0; i < src_len; i++) {
-    switch (src[i]) {
-    case ' ':
-    case '-':
-    case '.':
-      src[i] = '_';
-      break;
-    }
-  }
-}
-
-/**
- * Attempts to convert a given string to snake case.
- * @param src The string to convert. This function does not free src, but it
- * does modify it in place.
- */
-void to_lower_snake_case(char *src) {
-  size_t src_len = strlen(src);
-  for (unsigned i = 0; i < src_len; i++) {
-    switch (src[i]) {
-    case ' ':
-    case '-':
-    case '.':
-      src[i] = '_';
-      break;
-    default:
-      src[i] = tolower((unsigned char)src[i]); // @WARNING why unsigned?
-      break;
-    }
-  }
 }
 
 /**
