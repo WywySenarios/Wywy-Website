@@ -13,7 +13,8 @@
  * failure.
  * @param pattern the pattern for the new regex iterator. This string is not
  * freed.
- * @param num_matches the upper bound of number of matches you expect to get.
+ * @param num_matches the upper bound of number of catpuring groups you expect
+ * to get.
  * @param cflags for regcomp.
  * @return the pointer to the new regex iterator.
  */
@@ -21,7 +22,7 @@ struct regex_iterator *create_regex_iterator(char *pattern, int num_matches,
                                              int cflags) {
   struct regex_iterator *output = malloc(sizeof(struct regex_iterator));
 
-  output->nmatch = num_matches;
+  output->nmatch = num_matches + 1;
   output->matches = malloc(sizeof(regmatch_t) * num_matches);
   if (regcomp(output->preg, pattern, cflags) != 0) {
     free(output->matches);
