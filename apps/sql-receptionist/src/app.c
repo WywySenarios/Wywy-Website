@@ -596,7 +596,7 @@ found_table:
 
           snprintf(output, BUFFER_SIZE, "{\"columns\":[%s],\"data\":[%s]}",
                    column_names, output_arrs);
-          build_response_generic(200, response, response_len, output);
+          build_response(200, response, response_len, output);
           free(column_names);
           free(output_arrs);
           free(output);
@@ -789,14 +789,14 @@ found_table:
       ExecStatusType sql_query_status = sql_query(db_name, query, &res, &conn);
       if (sql_query_status != PGRES_COMMAND_OK &&
           sql_query_status != PGRES_TUPLES_OK) {
-        build_response(500, response, response_len,
-                       strlen(PQresStatus(sql_query_status)) + 2 +
-                           strlen(PQerrorMessage(conn)) + 1,
-                       "%s: %s", PQresStatus(sql_query_status),
-                       PQerrorMessage(conn));
+        build_response_printf(500, response, response_len,
+                              strlen(PQresStatus(sql_query_status)) + 2 +
+                                  strlen(PQerrorMessage(conn)) + 1,
+                              "%s: %s", PQresStatus(sql_query_status),
+                              PQerrorMessage(conn));
       } else {
-        build_response_generic(200, response, response_len,
-                               "Entry successfully added.");
+        build_response(200, response, response_len,
+                       "Entry successfully added.");
       }
 
       if (res)

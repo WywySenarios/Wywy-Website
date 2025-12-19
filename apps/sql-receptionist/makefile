@@ -1,11 +1,11 @@
-SRC = $(wildcard *.c)
+SRC := $(shell find src -name "*.c")
 CC = gcc
-CFLAGS = -I/usr/include/postgresql
+CFLAGS = -I/usr/include/postgresql -Iinclude
 LDFLAGS = -L/usr/lib/x86_64-linux-gnu/ -lpq -lcyaml -ljansson
 TARGET = app
 
-app: $(SRC)
-	$(CC) $(CFLAGS) *.c -o $(TARGET) $(LDFLAGS)
+app:
+	$(CC) $(CFLAGS) $(SRC) -o $(TARGET) $(LDFLAGS)
 
 clean:
 	rm -f $(TARGET)

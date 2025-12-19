@@ -4,7 +4,7 @@
  * 204, 400, 403, 404, 500.
  */
 
-#include "../config.h"
+#include "config.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
