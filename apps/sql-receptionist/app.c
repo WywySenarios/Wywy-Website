@@ -8,6 +8,7 @@
  */
 
 #include "config.h"
+#include "server/responses.h"
 #include "utils/format_string.h"
 #include "utils/json/datatype_validation.h"
 #include <arpa/inet.h>
@@ -155,183 +156,6 @@ char *url_decode(const char *src) {
 }
 
 /**
- * Builds a 200 HTTP response (OK).
- * @param response A pointer to a sequence of characters representing the
- * response
- * @param response_len The length of the response. Does not include the null
- * terminator.
- * @param text The text to include in the response body. The pointer is not
- * freed.
- */
-void build_response_200(char **response, size_t *response_len,
-                        const char *text) {
-  *response_len = strlen("HTTP/1.1 200 OK\r\n"
-                         "Content-Type: text/plain\r\n"
-                         "Access-Control-Allow-Origin: \r\n"
-                         "Access-Control-Allow-Credentials: true\r\n"
-                         "Connection: close\r\n"
-                         "\r\n") +
-                  strlen(global_config->reference_urls.main) + strlen(text);
-  *response = malloc(*response_len + 1);
-  snprintf(*response, *response_len + 1,
-           "HTTP/1.1 200 OK\r\n"
-           "Content-Type: text/plain\r\n"
-           "Access-Control-Allow-Origin: %s\r\n"
-           "Access-Control-Allow-Credentials: true\r\n"
-           "Connection: close\r\n"
-           "\r\n"
-           "%s",
-           global_config->reference_urls.main, text);
-}
-
-/**
- * Builds a 204 HTTP response (No Content).
- * @param response A pointer to a sequence of characters representing the
- * response
- * @param response_len The length of the response. Does not include the null
- * terminator.
- */
-void build_response_204(char **response, size_t *response_len) {
-  *response_len = strlen("HTTP/1.1 204 No Content\r\n"
-                         "Access-Control-Allow-Origin: \r\n"
-                         "Access-Control-Allow-Credentials: true\r\n"
-                         "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-                         "Access-Control-Allow-Headers: Content-Type\r\n"
-                         "Content-Length: 0\r\n"
-                         "Connection: close\r\n"
-                         "\r\n") +
-                  strlen(global_config->reference_urls.main);
-  *response = malloc(*response_len + 1);
-  snprintf(*response, *response_len + 1,
-           "HTTP/1.1 204 No Content\r\n"
-           "Access-Control-Allow-Origin: %s\r\n"
-           "Access-Control-Allow-Credentials: true\r\n"
-           "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-           "Access-Control-Allow-Headers: Content-Type\r\n"
-           "Content-Length: 0\r\n"
-           "Connection: close\r\n"
-           "\r\n",
-           global_config->reference_urls.main);
-}
-
-/**
- * Builds a 400 HTTP response (Bad Request).
- * @param response A pointer to a sequence of characters representing the
- * response
- * @param response_len The length of the response. Does not include the null
- * terminator.
- */
-void build_response_400(char **response, size_t *response_len) {
-  *response_len = strlen("HTTP/1.1 400 Bad Request\r\n"
-                         "Content-Type: text/plain\r\n"
-                         "Access-Control-Allow-Origin: \r\n"
-                         "Access-Control-Allow-Credentials: true\r\n"
-                         "Connection: close\r\n"
-                         "\r\n"
-                         "400 Bad Request") +
-                  strlen(global_config->reference_urls.main);
-  *response = malloc(*response_len + 1);
-  snprintf(*response, *response_len + 1,
-           "HTTP/1.1 400 Bad Request\r\n"
-           "Content-Type: text/plain\r\n"
-           "Access-Control-Allow-Origin: %s\r\n"
-           "Access-Control-Allow-Credentials: true\r\n"
-           "Connection: close\r\n"
-           "\r\n"
-           "400 Bad Request",
-           global_config->reference_urls.main);
-}
-
-/**
- * Builds a 403 HTTP response (Forbidden).
- * @param response A pointer to a sequence of characters representing the
- * response
- * @param response_len The length of the response. Does not include the null
- * terminator.
- */
-void build_response_403(char **response, size_t *response_len) {
-  *response_len = strlen("HTTP/1.1 403 Forbidden\r\n"
-                         "Content-Type: text/plain\r\n"
-                         "Access-Control-Allow-Origin: \r\n"
-                         "Access-Control-Allow-Credentials: true\r\n"
-                         "Connection: close\r\n"
-                         "\r\n"
-                         "403 Forbidden") +
-                  strlen(global_config->reference_urls.main);
-  *response = malloc(*response_len + 1);
-  snprintf(*response, *response_len + 1,
-           "HTTP/1.1 403 Forbidden\r\n"
-           "Content-Type: text/plain\r\n"
-           "Access-Control-Allow-Origin: %s\r\n"
-           "Access-Control-Allow-Credentials: true\r\n"
-           "Connection: close\r\n"
-           "\r\n"
-           "403 Forbidden",
-           global_config->reference_urls.main);
-}
-
-/**
- * Builds a 404 HTTP response (Not Found).
- * @param response A pointer to a sequence of characters representing the
- * response
- * @param response_len The length of the response. Does not include the null
- * terminator.
- */
-void build_response_404(char **response, size_t *response_len) {
-  *response_len = strlen("HTTP/1.1 404 Not Found\r\n"
-                         "Content-Type: text/plain\r\n"
-                         "Access-Control-Allow-Origin: \r\n"
-                         "Access-Control-Allow-Credentials: true\r\n"
-                         "Connection: close\r\n"
-                         "\r\n"
-                         "404 Not Found") +
-                  strlen(global_config->reference_urls.main);
-  *response = malloc(*response_len + 1);
-  snprintf(*response, *response_len + 1,
-           "HTTP/1.1 404 Not Found\r\n"
-           "Content-Type: text/plain\r\n"
-           "Access-Control-Allow-Origin: %s\r\n"
-           "Access-Control-Allow-Credentials: true\r\n"
-           "Connection: close\r\n"
-           "\r\n"
-           "404 Not Found",
-           global_config->reference_urls.main);
-}
-
-/**
- * Builds a 500 HTTP response (Internal Server Error).
- * @param response A pointer to a sequence of characters representing the
- * response
- * @param response_len The length of the response. Does not include the null
- * terminator.
- * @param text The text to include in the response body. If NULL, the message
- * will default to "500 Internal Server Error". The pointer is not freed.
- */
-void build_response_500(char **response, size_t *response_len,
-                        const char *text) {
-  if (!text) {
-    text = "500 Internal Server Error";
-  }
-
-  *response_len = strlen("HTTP/1.1 500 Internal Server Error\r\n"
-                         "Content-Type: text/plain\r\n"
-                         "Access-Control-Allow-Origin: \r\n"
-                         "Access-Control-Allow-Credentials: true\r\n"
-                         "Connection: close\r\n"
-                         "\r\n") +
-                  strlen(global_config->reference_urls.main) + strlen(text);
-  *response = malloc(*response_len + 1);
-  snprintf(*response, *response_len + 1,
-           "HTTP/1.1 500 Internal Server Error\r\n"
-           "Content-Type: text/plain\r\n"
-           "Access-Control-Allow-Origin: %s\r\n"
-           "Access-Control-Allow-Credentials: true\r\n"
-           "Connection: close\r\n"
-           "\r\n%s",
-           global_config->reference_urls.main, text);
-}
-
-/**
  * Attempts to query the database with the given query.
  * This function assumes that the global config has the correct information on
  * the
@@ -385,8 +209,9 @@ ExecStatusType sql_query(char *dbname, char *query, PGresult **res,
 void *handle_client(void *arg) {
   int client_fd = *((int *)arg);
   char *buffer = malloc(BUFFER_SIZE * sizeof(char));
-  char *response = malloc(BUFFER_SIZE * 2 * sizeof(char));
-  size_t response_len;
+  char **response = malloc(sizeof(char *));
+  *response = malloc(BUFFER_SIZE * 2 * sizeof(char));
+  size_t *response_len = malloc(sizeof(size_t *));
 
   // receive request data from client and store into buffer
   ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
@@ -394,7 +219,7 @@ void *handle_client(void *arg) {
   // printf("%s\n", buffer);
 
   if (bytes_received <= 0) {
-    build_response_400(&response, &response_len);
+    build_response_default(400, response, response_len);
     goto end;
   }
 
@@ -411,14 +236,14 @@ void *handle_client(void *arg) {
 
   // Does the request have a URL?
   if (regexec(&regex, buffer, 3, matches, 0) == REG_NOMATCH) {
-    build_response_400(&response, &response_len);
+    build_response_default(400, response, response_len);
     goto unsuccessful_regex_end;
   }
 
   // extract database name and table name from request
   // @todo validate the request
   if (matches[1].rm_so == -1 || matches[2].rm_so == -1) {
-    build_response_400(&response, &response_len);
+    build_response_default(400, response, response_len);
     goto unsuccessful_regex_end;
   }
 
@@ -430,7 +255,7 @@ void *handle_client(void *arg) {
 
   // immediately check for OPTIONS requests
   if (strcmp(method, "OPTIONS") == 0) {
-    build_response_204(&response, &response_len);
+    build_response_default(204, response, response_len);
     goto options_end;
   }
 
@@ -445,7 +270,7 @@ void *handle_client(void *arg) {
   if (regexec(&raw_cookie_regex, buffer, 1 + 1, raw_cookie_matches, 0) ==
       REG_NOMATCH) {
     regfree(&raw_cookie_regex);
-    build_response_403(&response, &response_len);
+    build_response_default(403, response, response_len);
     goto options_end;
   }
 
@@ -492,7 +317,7 @@ void *handle_client(void *arg) {
 
   free(raw_cookies);
   if (!(admin_username && admin_password)) {
-    build_response_403(&response, &response_len);
+    build_response_default(403, response, response_len);
     goto bad_auth_end;
   }
   // @todo non-admin cookies
@@ -519,12 +344,12 @@ void *handle_client(void *arg) {
   // does the URL have 2 segments?
   if (regexec(&url_regex, url, MAX_URL_SECTIONS + 1, url_matches, 0) ==
       REG_NOMATCH) {
-    build_response_400(&response, &response_len);
+    build_response_default(400, response, response_len);
     goto bad_url_end;
   }
 
   if (url_matches[1].rm_so == -1 || url_matches[2].rm_so == -1) {
-    build_response_400(&response, &response_len);
+    build_response_default(400, response, response_len);
     goto bad_url_end;
   }
   // decide what to do
@@ -560,7 +385,7 @@ void *handle_client(void *arg) {
   }
   // didn't find a table? Tell the client that there's no such table
   if (table == NULL) {
-    build_response_400(&response, &response_len);
+    build_response_default(400, response, response_len);
     goto no_table_end;
   }
 
@@ -575,7 +400,7 @@ found_table:
 
       // REQUIRES querystring to run
       if (querystring == NULL) {
-        build_response_400(&response, &response_len);
+        build_response_default(400, response, response_len);
         goto no_table_end;
       }
 
@@ -771,13 +596,13 @@ found_table:
 
           snprintf(output, BUFFER_SIZE, "{\"columns\":[%s],\"data\":[%s]}",
                    column_names, output_arrs);
-          build_response_200(&response, &response_len, output);
+          build_response_generic(200, response, response_len, output);
           free(column_names);
           free(output_arrs);
           free(output);
         } else {
           // @todo determine if it's the client's fault or the server's fault
-          build_response_500(&response, &response_len, NULL);
+          build_response_default(500, response, response_len);
         }
 
         if (res)
@@ -786,7 +611,7 @@ found_table:
           PQfinish(conn);
         free(query);
       } else {
-        build_response_400(&response, &response_len);
+        build_response_default(400, response, response_len);
       }
 
       regfree(&querystring_regex);
@@ -800,7 +625,7 @@ found_table:
       }
     } else {
       // user does not have read access to the respective table
-      build_response_403(&response, &response_len);
+      build_response_default(403, response, response_len);
     }
   } else if (strcmp(method, "POST") == 0) {
     // check if the database & table can be written to freely
@@ -812,7 +637,7 @@ found_table:
       regmatch_t body_matches[1 + 1];
 
       if (regexec(&body_regex, buffer, 1 + 1, body_matches, 0) == REG_NOMATCH) {
-        build_response_400(&response, &response_len);
+        build_response_default(400, response, response_len);
         goto bad_body_end;
       }
 
@@ -828,7 +653,7 @@ found_table:
       entry = json_loads(body, 0, &entry_error);
 
       if (!entry) {
-        build_response_400(&response, &response_len);
+        build_response_default(400, response, response_len);
       }
 
       const char *key;
@@ -912,7 +737,7 @@ found_table:
         // also remember to catch when the key is not inside the table's schema
         if (!valid) {
           free(target_column);
-          build_response_400(&response, &response_len);
+          build_response_default(400, response, response_len);
           goto post_bad_input_end;
         }
         free(target_column);
@@ -964,16 +789,14 @@ found_table:
       ExecStatusType sql_query_status = sql_query(db_name, query, &res, &conn);
       if (sql_query_status != PGRES_COMMAND_OK &&
           sql_query_status != PGRES_TUPLES_OK) {
-        size_t error_text_len = strlen(PQresStatus(sql_query_status)) + 2 +
-                                strlen(PQerrorMessage(conn)) + 1;
-        char *error_text = malloc(error_text_len);
-        snprintf(error_text, error_text_len, "%s: %s",
-                 PQresStatus(sql_query_status), PQerrorMessage(conn));
-        build_response_500(&response, &response_len, error_text);
-        free(error_text);
+        build_response(500, response, response_len,
+                       strlen(PQresStatus(sql_query_status)) + 2 +
+                           strlen(PQerrorMessage(conn)) + 1,
+                       "%s: %s", PQresStatus(sql_query_status),
+                       PQerrorMessage(conn));
       } else {
-        build_response_200(&response, &response_len,
-                           "Entry successfully added.");
+        build_response_generic(200, response, response_len,
+                               "Entry successfully added.");
       }
 
       if (res)
@@ -990,11 +813,11 @@ found_table:
       json_decref(entry);
     } else {
       // user does not have write access to the respective table
-      build_response_403(&response, &response_len);
+      build_response_default(403, response, response_len);
     }
   } else {
     // tell the client I don't understand what's going on
-    build_response_400(&response, &response_len);
+    build_response_default(400, response, response_len);
   }
 
   // free memory
@@ -1017,12 +840,14 @@ options_end:
 
 end:
   // send HTTP response to client
-  send(client_fd, response, response_len, 0);
+  send(client_fd, *response, *response_len, 0);
 
-  printf("Response:\n%s\n\n", response);
+  printf("Response:\n%s\n\n", *response);
 
   close(client_fd);
+  free(*response);
   free(response);
+  free(response_len);
   free(arg);
   free(buffer);
   return NULL;
@@ -1063,6 +888,7 @@ int main(int argc, char const *argv[]) {
 
   // populate global variables
   load_config(&global_config);
+  init(*global_config);
   if (global_config == NULL) {
     fprintf(stderr, "Failed to load configuration.\n");
     return EXIT_FAILURE;
