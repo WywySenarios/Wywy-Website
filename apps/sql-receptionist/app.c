@@ -982,7 +982,7 @@ found_table:
             // check if the input is a comment and the column does not have
             // comments.
             if (is_comments_column) {
-              if ((table->schema[i].comments == false)) {
+              if (table->schema[i].comments == false) {
                 break;
               }
 
@@ -1137,6 +1137,7 @@ end:
   free(response);
   free(arg);
   free(buffer);
+  return NULL;
 }
 
 int main(int argc, char const *argv[]) {
