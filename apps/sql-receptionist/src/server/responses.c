@@ -65,6 +65,7 @@ void build_response(int status_code, char **response, size_t *response_len,
   *response_len = strlen("HTTP/1.1 xxx \r\n"
                          "Content-Type: text/plain\r\n"
                          "Access-Control-Allow-Origin: \r\n"
+                         "Access-Control-Allow-Headers: Content-Type\r\n"
                          "Access-Control-Allow-Credentials: true\r\n"
                          "Connection: close\r\n"
                          "\r\n") +
@@ -75,6 +76,7 @@ void build_response(int status_code, char **response, size_t *response_len,
            "HTTP/1.1 %d %s\r\n"
            "Content-Type: text/plain\r\n"
            "Access-Control-Allow-Origin: %s\r\n"
+           "Access-Control-Allow-Headers: Content-Type\r\n"
            "Access-Control-Allow-Credentials: true\r\n"
            "Connection: close\r\n"
            "\r\n%s",
