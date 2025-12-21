@@ -10,15 +10,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-static struct config *global_config = NULL;
+static const struct config *global_config = NULL;
 
 /**
  * Loads in a config. This config will be used to provide the correct headers
  * for CORS.
  * @param cfg The config to load in.
  */
-void init(struct config cfg) {
-  global_config = &cfg;
+void init(const struct config *cfg) {
+  global_config = cfg;
 
   // @TODO check validity
 }
@@ -58,7 +58,7 @@ void build_response(int status_code, char **response, size_t *response_len,
                     char *body) {
   if (!global_config) {
     perror("Cannot build response because the config is NULL.");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   const char *status_code_name = get_status_code_name(status_code);
 
@@ -70,7 +70,7 @@ void build_response(int status_code, char **response, size_t *response_len,
                          "\r\n") +
                   strlen(status_code_name) +
                   strlen(global_config->reference_urls.main) + strlen(body);
-  response = malloc(*response_len + 1);
+  *response = malloc(*response_len + 1);
   snprintf(*response, *response_len + 1,
            "HTTP/1.1 %d %s\r\n"
            "Content-Type: text/plain\r\n"
