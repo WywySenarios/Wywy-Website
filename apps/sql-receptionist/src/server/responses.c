@@ -103,6 +103,8 @@ void build_response_printf(int status_code, char **response,
   vsnprintf(body, text_size, pattern, arg);
   va_end(arg);
 
+  printf("BODY: %s\n", body);
+
   build_response(status_code, response, response_len, body);
 
   free(body);
