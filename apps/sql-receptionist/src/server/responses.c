@@ -120,15 +120,21 @@ void build_response_default(int status_code, char **response,
   switch (status_code) {
   case 200:
     build_response(200, response, response_len, "OK");
+    break;
   case 204:
     build_response(204, response, response_len, "No Content");
+    break;
   case 400:
     build_response(400, response, response_len, "Bad Request");
+    break;
   case 403:
     build_response(403, response, response_len, "Forbidden");
+    break;
   case 404:
     build_response(404, response, response_len, "Not Found");
+    break;
   case 500:
     build_response(500, response, response_len, "Internal Server Error");
+    break;
   }
 }
