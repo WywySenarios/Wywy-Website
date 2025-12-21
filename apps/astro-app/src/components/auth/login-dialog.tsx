@@ -29,8 +29,20 @@ export default function LoginDialog(): JSX.Element {
 }
 
 function LoginDialogContents(): JSX.Element {
-    const [usernameCookie, setUsernameCookie] = useCookies(["username"]);
-    const [passwordCookie, setPasswordCookie] = useCookies(["password"]);
+    const [usernameCookie, setUsernameCookie, removeUsernameCookie] = useCookies(["username"]);
+    const [passwordCookie, setPasswordCookie, removePasswordCookie] = useCookies(["password"]);
+
+    function onResetLoginInfo() {
+        console.log("poof!");
+        removeUsernameCookie("username", {
+            path: "/",
+            sameSite: "lax",
+        });
+        removePasswordCookie("password", {
+            path: "/",
+            sameSite: "lax",
+        });
+    }
 
     function onSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault(); // prevent dialog from closing automatically
@@ -47,37 +59,42 @@ function LoginDialogContents(): JSX.Element {
     }
 
     return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <Button variant="outline">Login</Button>
-            </DialogTrigger>
+        <div>
+            {
+                usernameCookie.username && passwordCookie.password ? <Button onClick={onResetLoginInfo}>Log Out</Button> :
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline">Login</Button>
+                        </DialogTrigger>
 
-            <DialogContent className="sm:max-w-[425px]">
-                <form onSubmit={onSubmit}>
-                    <DialogHeader>
-                        <DialogTitle>Login</DialogTitle>
-                        <DialogDescription>
-                            ONLY ADMIN LOGIN IS SUPPORTED RIGHT NOW
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4">
-                        <div className="grid gap-3">
-                            <Label htmlFor="username">Username</Label>
-                            <Input id="username" name="username" defaultValue="" />
-                        </div>
-                        <div className="grid gap-3">
-                            <Label htmlFor="password">Password</Label>
-                            <Input id="password" name="password" defaultValue="" />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
-                        </DialogClose>
-                        <Button type="submit">Login</Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog >
+                        <DialogContent className="sm:max-w-[425px]">
+                            <form onSubmit={onSubmit}>
+                                <DialogHeader>
+                                    <DialogTitle>Login</DialogTitle>
+                                    <DialogDescription>
+                                        ONLY ADMIN LOGIN IS SUPPORTED RIGHT NOW
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4">
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="username">Username</Label>
+                                        <Input id="username" name="username" defaultValue="" />
+                                    </div>
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="password">Password</Label>
+                                        <Input id="password" name="password" defaultValue="" />
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <DialogClose asChild>
+                                        <Button variant="outline">Cancel</Button>
+                                    </DialogClose>
+                                    <Button type="submit">Login</Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog >
+            }
+        </div>
     )
 }
