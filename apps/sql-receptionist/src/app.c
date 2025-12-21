@@ -534,8 +534,11 @@ found_table:
         strcat(query, ";");
 
         // attempt to query the database
-        if (sql_query(db_name, query, &res, &conn) ==
-            PGRES_TUPLES_OK) { // if the query is successful,
+        ExecStatusType sql_query_status =
+            sql_query(db_name, query, &res, &conn);
+        if (sql_query_status == PGRES_TUPLES_OK ||
+            sql_query_status ==
+                PGRES_COMMAND_OK) { // if the query is successful,
           // convert the query information into JSON
           char *column_names = malloc(BUFFER_SIZE); // @todo be more specific
           column_names[0] = '\0';
@@ -602,7 +605,11 @@ found_table:
           free(output);
         } else {
           // @todo determine if it's the client's fault or the server's fault
-          build_response_default(500, response, response_len);
+          build_response_printf(500, response, response_len,
+                                strlen(PQresStatus(sql_query_status)) + 2 +
+                                    strlen(PQerrorMessage(conn)) + 1,
+                                "%s: %s", PQresStatus(sql_query_status),
+                                PQerrorMessage(conn));
         }
 
         if (res)
