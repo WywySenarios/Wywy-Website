@@ -43,13 +43,15 @@
 
 int done;
 void handle_sigterm(int signal_num) {
-  printf("Received SIGTERM. Exiting after handling the current requests...\n");
+  printf("Received SIGTERM. Exiting now...\n");
   done = 1;
+  exit(1);
 }
 
 void handle_sigint(int signal_num) {
-  printf("Received SIGINT. Exiting after handling the current requests...\n");
+  printf("Received SIGINT. Exiting now...\n");
   done = 1;
+  exit(1);
 }
 
 char *admin_creds;
