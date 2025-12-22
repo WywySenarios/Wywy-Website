@@ -232,7 +232,7 @@ void *handle_client(void *arg) {
   regmatch_t matches[3];
 
   regex_t url_regex;
-  regcomp(&url_regex, "([^/]+)/([^/]+)", REG_EXTENDED); // "[^/]+"
+  regcomp(&url_regex, "([^/]+)/([^/]+)/([^/]+)", REG_EXTENDED); // "[^/]+"
 
   regmatch_t url_matches[MAX_URL_SECTIONS + 1];
 
@@ -343,7 +343,7 @@ void *handle_client(void *arg) {
     querystring = qmark + 1; // everything after is the querystring
   }
 
-  // does the URL have 2 segments?
+  // does the URL have 2 or 3 segments?
   if (regexec(&url_regex, url, MAX_URL_SECTIONS + 1, url_matches, 0) ==
       REG_NOMATCH) {
     build_response_default(400, response, response_len);
@@ -399,6 +399,55 @@ found_table:
 
       // @todo allow-list input validation
       // @todo still vulnerable to changing the config
+
+      // check for the case where the user wants to get the next id
+      if (url_matches[3].rm_so != -1) {
+        int command_len = url_matches[3].rm_eo - url_matches[3].rm_so;
+        char *command = malloc(command_len + 1);
+        strncpy(command, url + url_matches[3].rm_so, command_len);
+        command[command_len] = '\0';
+
+        if (strcmp(command, "get_next_id") == 0) {
+          PGconn *conn = NULL;
+          PGresult *res = NULL;
+
+          size_t query_len = strlen("SELECT MAX(id) AS highest_id\nFROM ;") +
+                             strlen(table_name);
+          char *query = malloc(query_len + 1);
+
+          snprintf(query, query_len, "SELECT MAX(id) AS highest_id\nFROM %s;",
+                   table_name);
+
+          ExecStatusType sql_query_status =
+              sql_query(db_name, query, &res, &conn);
+          if (sql_query_status == PGRES_TUPLES_OK ||
+              sql_query_status == PGRES_COMMAND_OK) {
+            char *highest_id_str = PQgetvalue(res, 0, 0);
+            if (highest_id_str && strlen(highest_id_str) > 0) {
+              build_response(200, response, response_len, highest_id_str);
+            } else {
+              build_response(200, response, response_len, "1");
+            }
+          } else {
+            // @todo determine if it's the client's fault or the server's fault
+            build_response_printf(500, response, response_len,
+                                  strlen(PQresStatus(sql_query_status)) + 2 +
+                                      strlen(PQerrorMessage(conn)) + 1,
+                                  "%s: %s", PQresStatus(sql_query_status),
+                                  PQerrorMessage(conn));
+          }
+
+          if (res)
+            PQclear(res);
+          if (conn)
+            PQfinish(conn);
+          free(query);
+        } else {
+          build_response_default(400, response, response_len);
+        }
+
+        goto no_table_end;
+      }
 
       // REQUIRES querystring to run
       if (querystring == NULL) {
