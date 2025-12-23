@@ -22,7 +22,7 @@ def to_snake_case(target: str) -> str:
     
     return output[:-1] # remove trailing underscore with "[:-1]"
 
-BASE_URL = "database"
+BASE_URL = "wywywebsite_database"
 
 # Constants
 RESERVEDCOLUMNNAMES = ["id", "user", "users"]
