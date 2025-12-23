@@ -1042,6 +1042,7 @@ int main(int argc, char const *argv[]) {
         0) {
       perror("thread create");
       close(*client_fd);
+      free(client_fd);
       // @todo send a nice error msg
     } else {
       pthread_detach(thread_id);
