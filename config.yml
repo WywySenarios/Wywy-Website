@@ -14,7 +14,7 @@ websiteIcon: "/favicon.svg"
 # Postgres database
 postgres:
   # @TODO TCP vs UNIX socket
-  host: database
+  host: wywywebsite_database
 data:
   - dbname: WywyWebsite
     tables:

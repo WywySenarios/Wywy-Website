@@ -1,6 +1,6 @@
 services:
-  astro-app:
-    container_name: astro-dev-server
+  wywywebsite_astro-app:
+    container_name: wywywebsite_astro-dev-server
     restart: always
     working_dir: /apps/astro-app
     build:
@@ -19,8 +19,8 @@ services:
       # - astro-node_modules:/apps/astro-app/node_modules
     command: npm run dev -- --host
 
-  sql-receptionist:
-    container_name: sql-receptionist-dev-server
+  wywywebsite_sql-receptionist:
+    container_name: wywywebsite_sql-receptionist-dev-server
     tty: true
     # image: gcc:latest
     working_dir: /apps/sql-receptionist
@@ -46,12 +46,12 @@ services:
     ports:
       - 2523:2523
     depends_on:
-      database:
+      wywywebsite_database:
         condition: service_healthy
     command: bash -c "make clean && make && ./app"
   
-  create_tables:
-    container_name: create_tables
+  wywywebsite_create_tables:
+    container_name: wywywebsite_create_tables
     tty: true
     working_dir: /apps/create_tables
     build:
@@ -65,13 +65,13 @@ services:
       - DB_USERNAME=${DB_USERNAME}
       - POSTGRES_PORT=${POSTGRES_PORT}
     depends_on:
-      database:
+      wywywebsite_database:
         condition: service_healthy
     command: python3 create_tables.py
 
   # @TODO secrets for db authentication
-  database:
-    container_name: postgres
+  wywywebsite_database:
+    container_name: wywywebsite_postgres
     image: postgres
     working_dir: /apps/postgres
     restart: always

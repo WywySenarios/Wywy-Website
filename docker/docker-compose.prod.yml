@@ -1,6 +1,6 @@
 services:
-  # astro-app:
-  #   container_name: astro
+  # wywywebsite_astro-app:
+  #   container_name: wywywebsite_astro
   #   working_dir: /apps/astro-app
   #   build:
   #     context: ../
@@ -17,7 +17,7 @@ services:
   #     - ../apps/astro-app:/apps/astro-app
   #     - astro-node_modules:/apps/astro-app/node_modules
 
-  sql-receptionist:
+  wywywebsite_sql-receptionist:
     container_name: sql-receptionist
     tty: true
     # image: gcc:latest
@@ -36,7 +36,7 @@ services:
     secrets:
       - admin
     networks:
-      - cloudflared
+      - wywywebsite_cloudflared
     ports:
       - 2523:2523
     depends_on:
@@ -44,8 +44,8 @@ services:
         condition: service_healthy
     command: ./app
 
-  create_tables:
-    container_name: create_tables
+  wywywebsite_create_tables:
+    container_name: wywywebsite_create_tables
     tty: true
     working_dir: /apps/create_tables
     build:
@@ -63,12 +63,12 @@ services:
         condition: service_healthy
     command: python3 create_tables.py
 
-  cloudflared:
+  wywywebsite_cloudflared:
     working_dir: /apps/cloudflared
     build:
       context: ../
       dockerfile: apps/cloudflared/Dockerfile
-    container_name: cloudflared
+    container_name: wywywebsite_cloudflared
     environment:
       TZ: America/Toronto
       TUNNEL_TOKEN_FILE: /run/secrets/wywywebsite-cloudflared-cloudflare
@@ -77,11 +77,11 @@ services:
     secrets:
       - wywywebsite-cloudflared-cloudflare
     networks:
-      - cloudflared
+      - wywywebsite_cloudflared
 
   # @TODO secrets for db authentication
-  database:
-    container_name: postgres
+  wywywebsite_database:
+    container_name: wywywebsite_postgres
     image: postgres
     working_dir: /apps/postgres
     restart: always
@@ -108,8 +108,8 @@ volumes:
   astro-node_modules:
 
 networks:
-  cloudflared:
-    name: cloudflared
+  wywywebsite_cloudflared:
+    name: wywywebsite_cloudflared
 
 secrets:
   wywywebsite-astro-cloudflare:
