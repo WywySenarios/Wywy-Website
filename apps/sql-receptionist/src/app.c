@@ -746,57 +746,67 @@ found_table:
           strcpy(target_column, key);
         }
 
-        for (int i = 0; i < table->schema_count; i++) {
-          // find which entry in the schema matches
+        if (strcmp(target_column, "id") == 0) {
+          regex_t id_regex;
+          regcomp(&id_regex, "^[0-9]+$", REG_EXTENDED);
+
+          regmatch_t id_matches[1];
+          valid = !(regexec(&id_regex, json_to_string(value), 1, id_matches,
+                            0) == REG_NOMATCH);
+
+          regfree(&id_regex);
+        } else
+          for (int i = 0; i < table->schema_count; i++) {
+            // find which entry in the schema matches
 
             if (str_cci_cmp(target_column, table->schema[i].name) == 0) {
-            // check if the input is a comment and the column does not have
-            // comments.
-            if (is_comments_column) {
-              if (table->schema[i].comments == false) {
-                break;
+              // check if the input is a comment and the column does not have
+              // comments.
+              if (is_comments_column) {
+                if (table->schema[i].comments == false) {
+                  break;
+                }
+
+                // comments MUST have text
+                if (check_string(value) == 0) {
+                  break;
+                }
+              } else {
+                dict_item *item =
+                    linear_search(schema_datatypes, table->schema[i].datatype);
+                // check if the input's datatype mismatches
+                if (!item) {
+                  break;
+                }
+                json_datatype_check_function *related_datatype_checker =
+                    item->value;
+                if ((*related_datatype_checker)(value) == 0) {
+                  break;
+                }
               }
 
-              // comments MUST have text
-              if (check_string(value) == 0) {
-                break;
-              }
-            } else {
-              dict_item *item =
-                  linear_search(schema_datatypes, table->schema[i].datatype);
-              // check if the input's datatype mismatches
-              if (!item) {
-                break;
-              }
-              json_datatype_check_function *related_datatype_checker =
-                  item->value;
-              if ((*related_datatype_checker)(value) == 0) {
-                break;
-              }
+              valid = true;
+              break;
             }
-
-            valid = true;
-
-            // @todo optimize
-            // char *key_string = json_to_string(key);
-            char *value_string = json_to_string(value);
-            total_value_len += strlen(value_string);
-            total_key_len +=
-                strlen(key); // no need to use to_snake_case: it won't change
-                             // the length of the string.
-            separator_len++;
-
-            // free(key_string);
-            free(value_string);
-            break;
           }
-        }
 
         // also remember to catch when the key is not inside the table's schema
         if (!valid) {
           free(target_column);
           build_response_default(400, response, response_len);
           goto post_bad_input_end;
+        } else {
+          // @todo optimize
+          // char *key_string = json_to_string(key);
+          char *value_string = json_to_string(value);
+          total_value_len += strlen(value_string);
+          total_key_len +=
+              strlen(key); // no need to use to_snake_case: it won't change
+                           // the length of the string.
+          separator_len++;
+
+          // free(key_string);
+          free(value_string);
         }
         free(target_column);
       }
