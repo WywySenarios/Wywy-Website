@@ -232,7 +232,7 @@ void *handle_client(void *arg) {
   regmatch_t matches[3];
 
   regex_t url_regex;
-  regcomp(&url_regex, "([^/]+)/([^/]+)/([^/]+)", REG_EXTENDED); // "[^/]+"
+  regcomp(&url_regex, "([^/]+)/([^/]+)(/([^/]+))?", REG_EXTENDED); // "[^/]+"
 
   regmatch_t url_matches[MAX_URL_SECTIONS + 1];
 
