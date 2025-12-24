@@ -749,7 +749,7 @@ found_table:
         for (int i = 0; i < table->schema_count; i++) {
           // find which entry in the schema matches
 
-          if (strcmp(target_column, table->schema[i].name) == 0) {
+            if (str_cci_cmp(target_column, table->schema[i].name) == 0) {
             // check if the input is a comment and the column does not have
             // comments.
             if (is_comments_column) {

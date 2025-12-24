@@ -39,3 +39,35 @@ void to_lower_snake_case(char *src) {
     }
   }
 }
+
+int str_cci_cmp(const char *a, const char *b) {
+  while (*a && *b) {
+    // Skip underscores and spaces in both strings
+    while (*a == '_' || *a == ' ')
+      a++;
+    while (*b == '_' || *b == ' ')
+      b++;
+
+    // If we reach the end after skipping, break
+    if (!*a || !*b)
+      break;
+
+    char ca = tolower((unsigned char)*a);
+    char cb = tolower((unsigned char)*b);
+
+    if (ca != cb)
+      return (unsigned char)ca - (unsigned char)cb;
+
+    a++;
+    b++;
+  }
+
+  // Skip any remaining underscores/spaces at the end
+  while (*a == '_' || *a == ' ')
+    a++;
+  while (*b == '_' || *b == ' ')
+    b++;
+
+  return (unsigned char)tolower((unsigned char)*a) -
+         (unsigned char)tolower((unsigned char)*b);
+}
