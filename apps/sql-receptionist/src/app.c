@@ -747,6 +747,7 @@ found_table:
         }
 
         if (strcmp(target_column, "id") == 0) {
+          // @TODO make sure postgres doesn't tweak out over incorrect next keys
           regex_t id_regex;
           regcomp(&id_regex, "^[0-9]+$", REG_EXTENDED);
 
