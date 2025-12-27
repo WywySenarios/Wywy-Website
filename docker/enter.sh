@@ -8,18 +8,16 @@ fi
 
 case "$1" in
   astro)
-    sudo docker run -it --rm -p 4321:4321 -v "../apps/astro-app:/apps/astro-app" docker-astro-app /bin/sh
+    sudo docker exec -it wywywebsite_astro-dev-server bash
     ;;
   sqlr)
-    sudo docker run -it --rm \
-    -p 2523:2523 \
-    --env-file .env \
-    --mount type=bind,source="$(pwd)/../secrets/admin.txt",target=/run/secrets/admin,readonly \
-    docker-sql-receptionist \
-    /bin/sh
+    sudo docker exec -it wywywebsite_sql-receptionist-dev-server bash
     ;;
   pgres)
-    sudo docker run -it --rm -p 5432:5432 -v "postgres-db:/var/lib/postgresql" docker-postgres /bin/sh
+    sudo docker exec -it wywywebsite_postgres bash
+    ;;
+  create_tables)
+    sudo docker run -it --rm docker-wywywebsite_create_tables bash
     ;;
   *)
     echo "Error: Invalid argument '$1'. Expected 'astro', 'sqlr', or 'pgres'."
