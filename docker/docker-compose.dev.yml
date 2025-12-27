@@ -72,8 +72,10 @@ services:
   # @TODO secrets for db authentication
   wywywebsite_database:
     container_name: wywywebsite_postgres
-    image: postgres:18
-    working_dir: /apps/postgres
+    build:
+      context: ../
+      dockerfile: apps/postgres/Dockerfile
+      target: db
     restart: always
     env_file:
       - .env
@@ -90,12 +92,12 @@ services:
       start_period: 3s
       retries: 10
     volumes:
-      # - postgres-db:/var/lib/postgresql
       - ./../apps/postgres/pgdata:/var/lib/postgresql/data
       - ./../apps/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ./../apps/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      # - ./../apps/postgres/backup.sh:/backup.sh
     shm_size: 128mb
-    command: -p ${POSTGRES_PORT} -c config_file=/etc/postgresql/postgresql.conf
+    command: postgres -D /var/lib/postgresql/data -p ${POSTGRES_PORT} -c config_file=/etc/postgresql/postgresql.conf
 
 volumes:
   # postgres-db:
