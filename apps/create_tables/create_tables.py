@@ -95,6 +95,62 @@ def validate_suffix(name: str, reserved_suffixes: List[str]) -> bool:
             return False
     return True
 
+def table_exists(conn, table_name: str) -> bool:
+    """Checks if the given table exists inside the database related to the connection.
+    @param conn the connection to the database that may contain the given table.
+    @param table_name the table to check for
+    @returns True if the table exists, False if it does not.
+    """
+
+def column_exists(conn, table_name: str, column_name) -> bool:
+    """Checks if the column inside the given table exists. Assumes that the table already exists.
+    @param conn the connection to the database that contains the table that may contain the given column.
+    @param table_name the name of the table that may contain the given column.
+    @param column_name the column to check for
+    @returns True if the column exists, False if it does not.
+    """
+
+def enforce_column(conn, table_name: str, column_schema: dict) -> bool:
+    """Attempts to ensure that the column conforms to the given schema. Assumes that the respective table already exists.
+    @param conn the connection to the database that contains the table that will contain the given column.
+    @param table_name the name of the table that will contain the given column.
+    @param column_schema the column schema to enforce. This function assumes that column_schema is well-formed.
+    @returns True if the column matches the schema, False if the column already exists under a different datatype.
+    """
+    column_name = column_schema["name"]
+
+    # ensure that the column exists
+    with conn.cursor() as cur:
+        if column_exists(conn, table_name, column_name):
+            cur.execute("verify the column datatype")
+            is_datatype_correct: bool = cur.fetchone()
+            if not is_datatype_correct: return False
+        else:
+            cur.execute("insert column")
+
+    # ensure existing constraints conform to the schema.
+    existing_conformant_constraints: dict = {}
+    with conn.cursor() as cur:
+        cur.execute("get all existing constraints")
+        for constraint in cur.fetchall():
+            # check if the constraint conforms to the schema
+            # the respective constraint name should be everything after the last underscore.
+            pass
+
+    # ensure
+
+def enforce_reserved_columns(conn, table_schema: dict) -> bool:
+    """Attempts to ensure that the table's reserved columns conform to its schema. Assumes that the respective table already exists.
+    @param conn the connection to the database that contains the given table.
+    @param table_schema the table schema to enforce. This function assumes that table_schema is well-formed.
+    @returns True if the table matches the schema, False if there are reserved columns that should not exist.
+    """
+    with conn.cursor() as cur:
+        # id column
+        if column_exists()
+        # primary_tag column
+        pass
+
 if __name__ == "__main__":
     print("Attempting to create tables based on config.yml...")
     # loop through every database that has tables to be created
