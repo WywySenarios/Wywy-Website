@@ -179,3 +179,26 @@ data:
               - name: Destination Resolution
                 datatype: enum
                 values: ["region", "building", "room"]
+          - name: shower
+            schema:
+              - name: Shampoo
+                datatype: boolean
+                description: Was shampoo used?
+              - name: Body Wash
+                datatype: boolean
+                description: Was body wash used?
+              - name: 
+          - name: dental
+            schema:
+              - name: Waterpik
+                datatype: boolean
+                description: Did you rinse with Waterpik?
+              - name: Toothbrush
+                datatype: boolean
+                description: Did you brush your teeth?
+              - name: Floss
+                datatype: boolean
+                description: Did you floss, not including the bridge?
+              - name: Bridge Floss
+                datatype: boolean
+                description: Did you floss the teeth under your bridge?
