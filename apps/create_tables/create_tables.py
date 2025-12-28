@@ -101,7 +101,7 @@ if __name__ == "__main__":
     for dbInfo in config["data"]:
         # immediately exit if the database name is empty
         if not "dbname" in dbInfo or dbInfo["dbname"] is None or not type(dbInfo["dbname"]) is str or len(dbInfo["dbname"]) == 0:
-            print("Databases must have names under the key \"dhname\". Skipping the creation of a nameless database.")
+            print("Databases must have names under the key \"dbname\". Skipping the creation of a nameless database.")
             continue
 
         db_name = to_lower_snake_case(dbInfo["dbname"])
