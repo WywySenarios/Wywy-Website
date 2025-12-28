@@ -134,22 +134,48 @@ data:
       - tableName: events
         read: true
         write: true
-        entrytype: entries
+        entrytype: stopwatch
+        comments: true
+        tagging: true
         schema:
-          - name: Type
-            datatype: string
-            entrytype: textbox
-            suggestions: [""]
-            comments: false
-
-          - name: Applicable Start
+          - name: Start Time
             datatype: timestamp
             entrytype: calendar time
 
-          - name: Applicable End
+          - name: End time
             datatype: timestamp
             entrytype: calendar time
 
-          - name: Execution Length
+          - name: Duration
+            invertible: true
             datatype: float
             entrytype: textbox
+            description: An estimate related to the event length. Positive values represent how long the event occured for. Negative values represent how long the event did not actively occur inside the respective time interval.
+        descriptors:
+          - name: Maintenance
+            schema:
+              - name: Maintenance Item
+                datatype: enum
+                values:
+                  - # subject to presumably intense debate
+
+          - name: Bathroom
+            schema:
+              - name: Bathroom Type
+                datatype: enum
+                values: ["pee", "poo"]
+          - name: Travel
+            schema:
+              - name: Source
+                datatype: string
+
+              - name: Source Resolution
+                datatype: enum
+                values: ["region", "building", "room"]
+
+              - name: Destination
+                datatype: string
+
+              - name: Destination Resolution
+                datatype: enum
+                values: ["region", "building", "room"]
