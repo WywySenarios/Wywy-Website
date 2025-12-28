@@ -156,6 +156,7 @@ data:
             schema:
               - name: Maintenance Item
                 datatype: enum
+                entrytype: dropdown
                 values:
                   - # subject to presumably intense debate
 
@@ -163,42 +164,53 @@ data:
             schema:
               - name: Bathroom Type
                 datatype: enum
+                entrytype: radio
                 values: ["pee", "poo"]
           - name: Travel
             schema:
               - name: Source
                 datatype: string
+                entrytype: textbox
 
               - name: Source Resolution
                 datatype: enum
+                entrytype: radio
                 values: ["region", "building", "room"]
 
               - name: Destination
                 datatype: string
+                entrytype: textbox
 
               - name: Destination Resolution
                 datatype: enum
+                entrytype: radio
                 values: ["region", "building", "room"]
           - name: shower
             schema:
               - name: Shampoo
                 datatype: boolean
+                entrytype: switch
                 description: Was shampoo used?
               - name: Body Wash
                 datatype: boolean
+                entrytype: switch
                 description: Was body wash used?
               - name: 
           - name: dental
             schema:
               - name: Waterpik
                 datatype: boolean
+                entrytype: switch
                 description: Did you rinse with Waterpik?
               - name: Toothbrush
                 datatype: boolean
+                entrytype: switch
                 description: Did you brush your teeth?
               - name: Floss
                 datatype: boolean
+                entrytype: switch
                 description: Did you floss, not including the bridge?
               - name: Bridge Floss
                 datatype: boolean
+                entrytype: switch
                 description: Did you floss the teeth under your bridge?
