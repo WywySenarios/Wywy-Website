@@ -21,7 +21,7 @@ data:
       - tableName: daily
         read: true
         write: true
-        entrytype: form # !!!! this is important I'M NOT SQUIDDING
+        entrytype: form
         schema:
           # Please note that the datatype is what the PostgreSQL database will recognize (e.g. Typescript has no way of differentiating an integer from a float).
           - name: Date
