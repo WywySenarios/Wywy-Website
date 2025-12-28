@@ -1,5 +1,6 @@
 """Helper script to create PostgreSQL tables based on the config.yml file.
 @TODO write to stderr on errors, and figure out warnings, too
+@TODO ensure that no table name or column name is used twice
 """
 # imports
 from os import environ as env
@@ -11,7 +12,11 @@ import yaml
 BASE_URL = "wywywebsite_database"
 
 # Constants
-RESERVEDCOLUMNNAMES = ["id", "user", "users"]
+RESERVED_DATABASE_NAMES = ["info"]
+RESERVED_TABLE_NAMES = []
+RESERVED_TABLE_SUFFIXES = ["tags", "tag_aliases", "_tag_names", "tag_groups"]
+RESERVED_COLUMN_NAMES = ["id", "user", "users", "primary_tag"]
+RESERVED_COLUMN_SUFFIXES  = ["_comments"]
 PSQLDATATYPES = {
     "int": "integer",
     "integer": "integer",
@@ -68,11 +73,48 @@ def to_lower_snake_case(target: str) -> str:
     
     return output[:-1] # remove trailing underscore with "[:-1]"
 
+def validate_name(name: str, reserved_names: List[str]) -> bool:
+    """
+    @param name the name to validate
+    @param reserved_names a list of reserved names to check for.
+    @return Returns whether or not the name is reserved (validity)
+    """
+    for reserved_name in reserved_names:
+        if name == reserved_name: return False
+    return True
+
+def validate_suffix(name: str, reserved_suffixes: List[str]) -> bool:
+    """
+    @param name the name to validate
+    @param reserved_suffixes a list of suffixes to check for.
+    @returns Returns whether or not the name's suffix is reserved (validity)
+    """
+    for reserved_suffix in reserved_suffixes:
+        suffix_len = len(reserved_suffix)
+        if len(name) >= suffix_len and name[:-suffix_len] == reserved_suffix:
+            return False
+    return True
+
 if __name__ == "__main__":
     print("Attempting to create tables based on config.yml...")
     # loop through every database that has tables to be created
     for dbInfo in config["data"]:
-        dbInfo["dbname"] = to_lower_snake_case(dbInfo["dbname"])
+        # immediately exit if the database name is empty
+        if not "dbname" in dbInfo or dbInfo["dbname"] is None or not type(dbInfo["dbname"]) is str or len(dbInfo["dbname"]) == 0:
+            print("Databases must have names under the key \"dhname\". Skipping the creation of a nameless database.")
+            continue
+
+        db_name = to_lower_snake_case(dbInfo["dbname"])
+
+        # validate database name
+        schema_violations: List[str] = []
+        if not validate_name(db_name, RESERVED_DATABASE_NAMES):
+            schema_violations.append(f"{db_name} is a reserved database name.")
+        
+        if len(schema_violations) > 0:
+            print(f"Skipping creation of database {db_name} due to schema {"violation" if len(schema_violations) == 1 else "violations"}")
+            for schema_violation in schema_violations:
+                print(f" * {schema_violation}")
 
         psycopg2config.pop("dbname", None)
         
@@ -94,80 +136,87 @@ if __name__ == "__main__":
         finally:
             conn.close()
 
-        psycopg2config["dbname"] = dbInfo["dbname"]
+        psycopg2config["dbname"] = db_name
 
         # loop through every table that needs to be created @TODO verify config validity to avoid errors
         for tableInfo in dbInfo.get("tables", []):
+            # immediately skip if the table is nameless
+            if not "tableName" in tableInfo or tableInfo["tableName"] is None or not type(tableInfo["tableName"]) is str or len(tableInfo["tableName"]) == 0:
+                print(f"Tables must have a non-empty name specified in key \"tableName\". Skipping creation of a nameless table in {db_name}.")
+                continue
             # convert to lower_snake_case
-            tableInfo["tableName"] = to_lower_snake_case(tableInfo["tableName"])
+            table_name = to_lower_snake_case(tableInfo["tableName"])
 
             # skip any already created tables without raising any issues
             with psycopg2.connect(**psycopg2config) as conn:
                 with conn.cursor() as cur:
-                    cur.execute("SELECT EXISTS (SELECT FROM pg_tables WHERE tablename = '" + tableInfo["tableName"] + "');")
+                    cur.execute("SELECT EXISTS (SELECT FROM pg_tables WHERE tablename = '" + table_name + "');")
                     tableExists = cur.fetchone()[0]
                     
                     if tableExists:
-                        print("Table \"", tableInfo["tableName"], "\" already exists in database \"", dbInfo["dbname"] + "\"; skipping creation.", sep="")
+                        print("Table \"", table_name, "\" already exists in database \"", dbInfo["dbname"] + "\"; skipping creation.", sep="")
                         continue
             
-            # look for prereqs:
+            # validate the table name
+            # do not check for nameless tables because this was previously validated
+            schema_violations: List[str] = []
             valid = True # innocent until proven guilty
-            # it has a name
-            if not "tableName" in tableInfo or tableInfo["tableName"] is None or len(tableInfo["tableName"]) == 0:
-                print("Tables must have a non-empty name specified in key \"tableName\"")
-                valid = False
+
+            # avoid reserved table names
+            if not validate_name(table_name, RESERVED_TABLE_NAMES):
+                schema_violations.append(f"\"{tableInfo["table_name"]}\" is a reserved table name.")
+
+            # avoid reserved table suffixes
+            if not validate_suffix(table_name, RESERVED_TABLE_SUFFIXES):
+                schema_violations.append(f"\"{tableInfo["table_name"]}\" contains a reserved table suffix ({RESERVED_TABLE_SUFFIXES}).")
                 
             # there are 1+ columns
             if not "schema" in tableInfo or not (type(tableInfo["schema"]) is List or type(tableInfo["schema"]) is list) or len(tableInfo["schema"]) < 1 or not tableInfo["schema"]:
-                print("Table", tableInfo["tableName"], "must have a column schema containing at least 1 column of data to store.")
-                valid = False
-            
-            # ensure that column names will not interfere with comments in the Astro schema (see apps/astro-app/src/components/data/data-entry-form.tsx)
-            if "schema" in tableInfo:
-                for columnInfo in tableInfo["schema"]:
-                    # we may guarentee that the column has a name because of earlier checks
-                    if columnInfo.get("name")[-9:] == "_comments":
-                        print("Table", tableInfo["tableName"], "must not have a column with a name that ends in \"_comments\".")
+                schema_violations.append(f"Table {tableInfo["tableName"]} must have least 1 column of data to store.")
 
-            # avoid reserved columns
-            if "schema" in tableInfo:
-                for i in RESERVEDCOLUMNNAMES:
-                    if i in tableInfo["schema"]:
-                        print("Table", tableInfo["tableName"], "must not have a column named \"" + i + "\", which is a reserved column name.")
-                        valid = False
-            # @todo it has a name that will be recognized by the PostgresSQL database & server
-
-            if not valid:
-                print("Skipping creation of table", tableInfo.get("tableName", "???"), "due to schema violation(s).")
-                continue
+            if len(schema_violations) > 0:
+                print(f"Skipping creation of table {db_name}/{table_name} due to schema {"violation" if len(schema_violations) == 1 else "violations"}:")
+                for schema_violation in schema_violations:
+                    print(f" * {schema_violation}")
             
             with psycopg2.connect(**psycopg2config) as conn:
                 with conn.cursor() as cur:
                     # @TODO create a function to modify constraints rather than create new tables
-                    currentCommand: str = "CREATE TABLE " + tableInfo["tableName"] + " ("
+                    currentCommand: str = "CREATE TABLE " + table_name + " ("
 
                     # since SQL cannot tolerate trailing commas, I will add the primary key last and never give it a comma.
                     # add in all of the columns
                     for columnInfo in tableInfo["schema"]:
-                        # @TODO verify column validity
-                        if not "name" in columnInfo:
-                            print("Skipping a column in table", tableInfo["tableName"], "due to missing \"name\" key in column schema.")
+                        if not "name" in columnInfo or columnInfo["name"] is None or not type(columnInfo["name"]) is str or len(columnInfo["name"]) == 0:
+                            print(f"Columns must have a non-empty name under key \"name\". Skipping a column in {db_name}/{table_name}")
                         
-                        columnDisplayName = to_snake_case(columnInfo["name"])
+                        # validate column name
+                        column_name = to_snake_case(columnInfo["name"])
+                        schema_violations: List[str] = []
+
+                        if not validate_name(column_name, RESERVED_COLUMN_NAMES):
+                            schema_violations.append(f"{column_name} is a reserved column name.")
                         
+                        if not validate_suffix(column_name, RESERVED_COLUMN_SUFFIXES):
+                            schema_violations.append(f"{column_name} contains a reserved column name suffix ({RESERVED_COLUMN_SUFFIXES}).")
+                        
+                        if len(schema_violations) > 0:
+                            print(f"Skipping a column in {db_name}/{table_name} due to schema {"violation" if len(schema_violations) == 1 else "violations"}:")
+                            for schema_violation in schema_violations:
+                                print(f" * {schema_violation}")
+
                         # add in the column's name & datatype @TODO validate datatype
-                        currentCommand += columnDisplayName + " " + PSQLDATATYPES[columnInfo["datatype"]] + ","
+                        currentCommand += column_name + " " + PSQLDATATYPES[columnInfo["datatype"]] + ","
                         
                         # check out constraints
                         if columnInfo.get("unique", False) == True:
-                            currentCommand += "CONSTRAINT " + columnDisplayName + "_unique UNIQUE(" + columnDisplayName + "),"
+                            currentCommand += "CONSTRAINT " + column_name + "_unique UNIQUE(" + column_name + "),"
                         if columnInfo.get("optional", True) == False:
-                            currentCommand += "CONSTRAINT " + columnDisplayName + "_optional NOT NULL,"
+                            currentCommand += "CONSTRAINT " + column_name + "_optional NOT NULL,"
                         # @TODO CHECK (REGEX, number comparisons)
                         whitelist: list = columnInfo.get("whitelist", [])
                         if whitelist is list and len(whitelist) > 0: # @TODO datatype validation
-                            currentCommand += "CONSTRAINT " + columnDisplayName + "_whitelist CHECK (" + columnDisplayName + " IN ("
+                            currentCommand += "CONSTRAINT " + column_name + "_whitelist CHECK (" + column_name + " IN ("
                             for item in whitelist:
                                 if item is None: break # do NOT deal with null values.
                                 currentCommand += "\'" + str(item) + "\',"
@@ -176,7 +225,7 @@ if __name__ == "__main__":
                             currentCommand = currentCommand[:-1] + ")),"
                         # comments
                         if columnInfo.get("comments", False):
-                            currentCommand += columnDisplayName + "_comments text,"
+                            currentCommand += column_name + "_comments text,"
                         # @TODO foreign keys
                         # @TODO defaults
                         
