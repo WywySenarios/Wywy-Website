@@ -148,8 +148,8 @@ data:
 
           - name: Duration
             invertible: true
-            datatype: float
-            entrytype: textbox
+            datatype: interval
+            entrytype: duration textbox
             description: An estimate related to the event length. Positive values represent how long the event occured for. Negative values represent how long the event did not actively occur inside the respective time interval.
         descriptors:
           - name: Maintenance
