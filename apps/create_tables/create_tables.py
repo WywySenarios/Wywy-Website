@@ -334,14 +334,12 @@ if __name__ == "__main__":
 
         try:
             with conn.cursor() as cur:
-                cur.execute("SELECT EXISTS (SELECT FROM pg_database WHERE datname = %s);", (dbInfo["dbname"],))
+                cur.execute(sql.SQL("SELECT EXISTS (SELECT FROM pg_database WHERE datname = %s);"), (db_name,))
                 dbExists = cur.fetchone()[0]
                 
                 if not dbExists:
-                    try:
-                        cur.execute("CREATE DATABASE " + dbInfo["dbname"] + ";")
-                    except psycopg2.errors.DuplicateDatabase:
-                        pass
+                    cur.execute(sql.SQL("CREATE DATABASE {};").format(sql.Identifier(db_name)))
+                    print(f"Created database {db_name}")
         finally:
             conn.close()
 
