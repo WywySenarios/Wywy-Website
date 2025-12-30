@@ -32,6 +32,7 @@ PSQLDATATYPES: dict[str, str] = {
     "date": "date",
     "time": "time",
     "timestamp": "timestamp",
+    "interval": "interval",
 }
 CONSTRAINT_NAMES = {
     "pkey": "pkey",
