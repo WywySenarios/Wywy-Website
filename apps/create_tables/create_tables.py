@@ -228,7 +228,7 @@ def enforce_reserved_columns(conn, table_schema: dict) -> bool:
         # primary_tag column
         if table_schema.get("tagging", False): # if the schema enables tagging,
             if not column_exists(conn, table_name, "primary_tag"): # @TODO check constraints
-                cur.execute(sql.SQL("ALTER TABLE {} ADD COLUMN primary_tag text;").format(
+                cur.execute(sql.SQL("ALTER TABLE {} ADD COLUMN primary_tag INT;").format(
                     sql.Identifier(table_name),
                 ))
                 cur.execute(sql.SQL("ALTER TABLE {} ADD CONSTRAINT {} FOREIGN KEY (primary_tag) REFERENCES {}(id)").format(
@@ -253,26 +253,26 @@ TAGGING_TABLE_STATEMENTS: dict[TAGGING_TABLE_NAMES, sql.SQL] = {
                     CREATE TABLE {} (
                         id SERIAL PRIMARY KEY,
                         entry_id INT REFERENCES {} (id) NOT NULL,
-                        tag_id INT REFERENCES tag_names (id) NOT NULL
+                        tag_id INT REFERENCES {} (id) NOT NULL
                     );
                     """),
     "tag_aliases": sql.SQL("""
                          CREATE TABLE {} (
                             alias TEXT PRIMARY KEY,
-                            tag_id INT REFERENCES tag_names (id) NOT NULL
+                            tag_id INT REFERENCES {} (id) NOT NULL
                          );
                          """),
     "tag_groups": sql.SQL("""
                          CREATE TABLE {} (
                             id SERIAL PRIMARY KEY,
-                            tag_id INT REFERENCES tag_names (id) NOT NULL,
-                            group TEXT NOT NULL
+                            tag_id INT REFERENCES {} (id) NOT NULL,
+                            group_name TEXT NOT NULL
                          );
                          """),
 }
 
 def create_tagging_tables(conn, table_name: str):
-    """Creates related tagging tables if necessary.
+    """Creates related tagging tables if necessary, assuming that the table requires tagging.
 
     Args:
         conn (_type_): _description_
