@@ -134,7 +134,7 @@ def enforce_column(conn, table_name: str, column_schema: dict) -> bool:
     @param column_schema the column schema to enforce. This function assumes that column_schema is well-formed.
     @returns True if the column matches the schema, False if the column already exists under a different datatype.
     """
-    column_name = column_schema["name"]
+    column_name = to_lower_snake_case(column_schema["name"])
 
     # ensure that the column exists
     with conn.cursor() as cur:
@@ -143,7 +143,24 @@ def enforce_column(conn, table_name: str, column_schema: dict) -> bool:
             is_datatype_correct: bool = cur.fetchone()[0] == PSQLDATATYPES[column_schema["datatype"]]
             if not is_datatype_correct: return False
         else:
-            cur.execute("ALTER TABLE %s ADD %s %s", (table_name, column_name, PSQLDATATYPES[column_schema["datatype"]],))
+            # create enum columns in a special way
+            if column_schema["datatype"] == "enum":
+                cur.execute(sql.SQL("""
+                                        CREATE TYPE {} AS ENUM ({});
+                                        ALTER TABLE {} ADD COLUMN {} {};
+                                        """).format(
+                                            sql.Identifier(f"{table_name}_{column_name}_enum"),
+                                            sql.SQL(", ").join(map(sql.Literal, column_schema["values"])),
+                                            sql.Identifier(table_name),
+                                            sql.Identifier(column_name),
+                                            sql.Identifier(f"{table_name}_{column_name}_enum")
+                                        ))
+            else:
+                cur.execute(sql.SQL("ALTER TABLE {} ADD {} {};").format(
+                    sql.Identifier(table_name),
+                    sql.Identifier(column_name),
+                    sql.SQL(PSQLDATATYPES[column_schema["datatype"]])
+                ))
 
     # remove existing constraints
     with conn.cursor() as cur:
