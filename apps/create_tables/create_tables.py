@@ -400,6 +400,6 @@ if __name__ == "__main__":
 
                     # add in the reserved columns
                     enforce_reserved_columns(conn, tableInfo)
-            print(f"Finished creating table {db_name}/{table_name}")
+            print(f"Finished creating table {db_name}/{table_name}.")
     
     print("Finished creating tables.")
