@@ -382,61 +382,18 @@ if __name__ == "__main__":
             
             with psycopg2.connect(**psycopg2config) as conn:
                 with conn.cursor() as cur:
-                    # @TODO create a function to modify constraints rather than create new tables
-                    currentCommand: str = "CREATE TABLE " + table_name + " ("
-
-                    # since SQL cannot tolerate trailing commas, I will add the primary key last and never give it a comma.
-                    # add in all of the columns
-                    for columnInfo in tableInfo["schema"]:
-                        if not "name" in columnInfo or columnInfo["name"] is None or not type(columnInfo["name"]) is str or len(columnInfo["name"]) == 0:
-                            print(f"Columns must have a non-empty name under key \"name\". Skipping a column in {db_name}/{table_name}")
-                        
-                        # validate column name
-                        column_name = to_snake_case(columnInfo["name"])
-                        schema_violations: List[str] = []
-
-                        if not validate_name(column_name, RESERVED_COLUMN_NAMES):
-                            schema_violations.append(f"{column_name} is a reserved column name.")
-                        
-                        if not validate_suffix(column_name, RESERVED_COLUMN_SUFFIXES):
-                            schema_violations.append(f"{column_name} contains a reserved column name suffix ({RESERVED_COLUMN_SUFFIXES}).")
-                        
-                        if len(schema_violations) > 0:
-                            print(f"Skipping a column in {db_name}/{table_name} due to schema {"violation" if len(schema_violations) == 1 else "violations"}:")
-                            for schema_violation in schema_violations:
-                                print(f" * {schema_violation}")
-
-                        # add in the column's name & datatype @TODO validate datatype
-                        currentCommand += column_name + " " + PSQLDATATYPES[columnInfo["datatype"]] + ","
-                        
-                        # check out constraints
-                        if columnInfo.get("unique", False) == True:
-                            currentCommand += "CONSTRAINT " + column_name + "_unique UNIQUE(" + column_name + "),"
-                        if columnInfo.get("optional", True) == False:
-                            currentCommand += "CONSTRAINT " + column_name + "_optional NOT NULL,"
-                        # @TODO CHECK (REGEX, number comparisons)
-                        whitelist: list = columnInfo.get("whitelist", [])
-                        if whitelist is list and len(whitelist) > 0: # @TODO datatype validation
-                            currentCommand += "CONSTRAINT " + column_name + "_whitelist CHECK (" + column_name + " IN ("
-                            for item in whitelist:
-                                if item is None: break # do NOT deal with null values.
-                                currentCommand += "\'" + str(item) + "\',"
-                            
-                            # strip trailing comma & add closing brackets
-                            currentCommand = currentCommand[:-1] + ")),"
-                        # comments
-                        if columnInfo.get("comments", False):
-                            currentCommand += column_name + "_comments text,"
-                        # @TODO foreign keys
-                        # @TODO defaults
-                        
-                    # add in ID column
-                    currentCommand += "id SERIAL PRIMARY KEY"
+                    # create the table straight away
+                    cur.execute(sql.SQL("CREATE TABLE {} (id SERIAL PRIMARY KEY);").format(sql.Identifier(table_name)))
                     
-                    currentCommand += ")"
+                    # create tagging tables if necessary
+                    if tableInfo.get("tagging", False):
+                        create_tagging_tables(conn, table_name)
                     
-                    # try to execute the command
-                    cur.execute(currentCommand)
-                    # print(currentCommand)
+                    # add in the columns individually
+                    for column_schema in tableInfo["schema"]:
+                        enforce_column(conn, table_name, column_schema)
+
+                    # add in the reserved columns
+                    enforce_reserved_columns(conn, tableInfo)
     
     print("Finished creating tables.")
