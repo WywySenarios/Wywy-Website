@@ -361,7 +361,6 @@ if __name__ == "__main__":
                     tableExists = cur.fetchone()[0]
                     
                     if tableExists:
-                        print("Table \"", table_name, "\" already exists in database \"", dbInfo["dbname"] + "\"; skipping creation.", sep="")
                         continue
             
             # validate the table name
@@ -401,5 +400,6 @@ if __name__ == "__main__":
 
                     # add in the reserved columns
                     enforce_reserved_columns(conn, tableInfo)
+            print(f"Finished creating table {db_name}/{table_name}")
     
     print("Finished creating tables.")
