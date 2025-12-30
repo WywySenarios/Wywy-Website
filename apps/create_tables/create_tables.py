@@ -4,9 +4,10 @@
 """
 # imports
 from os import environ as env
-from typing import List
+from typing import List, Literal
 import re
 import psycopg2
+from psycopg2 import sql
 import yaml
 
 BASE_URL = "wywywebsite_database"
@@ -17,7 +18,7 @@ RESERVED_TABLE_NAMES = []
 RESERVED_TABLE_SUFFIXES = ["tags", "tag_aliases", "_tag_names", "tag_groups"]
 RESERVED_COLUMN_NAMES = ["id", "user", "users", "primary_tag"]
 RESERVED_COLUMN_SUFFIXES  = ["_comments"]
-PSQLDATATYPES = {
+PSQLDATATYPES: dict[str, str] = {
     "int": "integer",
     "integer": "integer",
     "float": "real",
@@ -31,6 +32,16 @@ PSQLDATATYPES = {
     "date": "date",
     "time": "time",
     "timestamp": "timestamp",
+}
+CONSTRAINT_NAMES = {
+    "pkey": "pkey",
+    "not_null": "not_null",
+    "min": "min",
+    "max": "max",
+    "values": "values",
+    "fkey": "fkey", # requires additional params afterward
+    "unique": "unique",
+    # "default": "default",
 }
 
 psycopg2config: dict = {
@@ -101,17 +112,23 @@ def table_exists(conn, table_name: str) -> bool:
     @param table_name the table to check for
     @returns True if the table exists, False if it does not.
     """
+    with conn.cursor() as cur:
+        cur.execute("SELECT EXISTS (SELECT FROM pg_tables WHERE tablename = %s);", (table_name,))
+        return cur.fetchone()[0]
 
-def column_exists(conn, table_name: str, column_name) -> bool:
+def column_exists(conn, table_name: str, column_name: str) -> bool:
     """Checks if the column inside the given table exists. Assumes that the table already exists.
     @param conn the connection to the database that contains the table that may contain the given column.
     @param table_name the name of the table that may contain the given column.
     @param column_name the column to check for
     @returns True if the column exists, False if it does not.
     """
+    with conn.cursor() as cur:
+        cur.execute("SELECT EXISTS (SELECT * FROM information_schema.columns WHERE table_name = %s AND column_name = %s);", (table_name, column_name,))
+        return cur.fetchone()[0]
 
 def enforce_column(conn, table_name: str, column_schema: dict) -> bool:
-    """Attempts to ensure that the column conforms to the given schema. Assumes that the respective table already exists.
+    """Attempts to ensure that the column conforms to the given schema. Assumes that the respective table already exists. Will remove all constraints and repopulate them without necessarily validating previous data. Chooses to keep rather than destroy old data.
     @param conn the connection to the database that contains the table that will contain the given column.
     @param table_name the name of the table that will contain the given column.
     @param column_schema the column schema to enforce. This function assumes that column_schema is well-formed.
@@ -122,34 +139,162 @@ def enforce_column(conn, table_name: str, column_schema: dict) -> bool:
     # ensure that the column exists
     with conn.cursor() as cur:
         if column_exists(conn, table_name, column_name):
-            cur.execute("verify the column datatype")
-            is_datatype_correct: bool = cur.fetchone()
+            cur.execute("SELECT datatype FROM information_schema.columns WHERE table_name=%s AND column_name=%s", (table_name, column_schema["name"],))
+            is_datatype_correct: bool = cur.fetchone()[0] == PSQLDATATYPES[column_schema["datatype"]]
             if not is_datatype_correct: return False
         else:
-            cur.execute("insert column")
+            cur.execute("ALTER TABLE %s ADD %s %s", (table_name, column_name, PSQLDATATYPES[column_schema["datatype"]],))
 
-    # ensure existing constraints conform to the schema.
-    existing_conformant_constraints: dict = {}
+    # remove existing constraints
     with conn.cursor() as cur:
-        cur.execute("get all existing constraints")
-        for constraint in cur.fetchall():
-            # check if the constraint conforms to the schema
-            # the respective constraint name should be everything after the last underscore.
-            pass
+        cur.execute("""
+                    SELECT
+                        constraint_name
+                    FROM
+                        information_schema.table_constraints
+                    WHERE
+                        table_name = %s AND constraint_name <> 'FOREIGN KEY' AND constraint_type NOT IN ('PRIMARY KEY', 'FOREIGN KEY');
+                    """, (table_name,))
+        constraints = cur.fetchall()
+        for (constraint_name,) in cur.fetchall():
+            cur.execute(sql.SQL(
+                "ALTER TABLE {} DROP CONSTRAINT {};"
+            ).format(
+                sql.Identifier(table_name),
+                sql.Identifier(constraint_name)
+            ))
+    # enforce schema
+    # @TODO enforce fkey
+    # check out constraints
+    with conn.cursor() as cur:
+        if column_schema.get("unique", False):
+            cur.execute(sql.SQL(
+                "ALTER TABLE {} ADD CONSTRAINT {} UNIQUE ({});"
+            ).format(
+                sql.Identifier(table_name),
+                sql.Identifier(f"{table_name}_{column_name}_unique"),
+                sql.Identifier(column_name),
+            ))
+        if not column_schema.get("optional", True):
+            cur.execute(sql.SQL(
+                "ALTER TABLE {} ADD CONSTRAINT {} NOT_NULL ({}) NOT VALID;"
+            ).format(
+                sql.Identifier(table_name),
+                sql.Identifier(f"{table_name}_{column_name}_unique"),
+                sql.Identifier(column_name),
+            ))
+        # @TODO CHECK (REGEX, number comparisons)
+    
+    # special checks for enum values:
+    # @TODO
+    
+    # check for the comments column
+    # do not remove old comments columns
+    comments_column_exists = column_exists(conn, table_name, column_name + "_comments")
+    if not "comments" in column_schema or not column_schema:
+        if not comments_column_exists:
+            with conn.cursor() as cur:
+                cur.execute(sql.SQL("ALTER TABLE {} ADD COLUMN {} text DEFAULT "''";").format(
+                    sql.Identifier(table_name),
+                    sql.Identifier(column_name + "_comments"),
+                ))
+                
+                cur.execute(sql.SQL("""
+                                    CREATE TYPE {} AS ENUM ({});
+                                    ALTER TABLE {} ADD COLUMN {} {};
+                                    """).format(
+                                        sql.Identifier(f"{table_name}_{column_name}_enum"),
+                                        sql.SQL(", ").join(map(sql.Literal, column_schema["values"])),
+                                        sql.Identifier(table_name),
+                                        sql.Identifier(column_name),
+                                        sql.Identifier(f"{table_name}_{column_name}_enum")
+                                    ))
+    elif comments_column_exists:
+        return False
+    return True
 
-    # ensure
 
 def enforce_reserved_columns(conn, table_schema: dict) -> bool:
-    """Attempts to ensure that the table's reserved columns conform to its schema. Assumes that the respective table already exists.
+    """Attempts to ensure that the table's reserved columns conform to its schema. Assumes that the respective tables already exist (the table itself and the tagging tables). (There's almost nothing this function can do to save the table if it doesn't conform to the schema) @TODO
     @param conn the connection to the database that contains the given table.
     @param table_schema the table schema to enforce. This function assumes that table_schema is well-formed.
     @returns True if the table matches the schema, False if there are reserved columns that should not exist.
     """
     with conn.cursor() as cur:
         # id column
-        if column_exists()
+        if not column_exists(conn, table_name, "id"): # @TODO check constraints & primary key status
+            return False
+        
         # primary_tag column
-        pass
+        if table_schema.get("tagging", False): # if the schema enables tagging,
+            if not column_exists(conn, table_name, "primary_tag"): # @TODO check constraints
+                cur.execute(sql.SQL("ALTER TABLE {} ADD COLUMN primary_tag text;").format(
+                    sql.Identifier(table_name),
+                ))
+                cur.execute(sql.SQL("ALTER TABLE {} ADD CONSTRAINT {} FOREIGN KEY (primary_tag) REFERENCES {}(id)").format(
+                    sql.Identifier(table_name),
+                    sql.Identifier("fk_primary_tags"),
+                    sql.Identifier(f"{table_name}_tags"),
+                ))
+        else: # if the schema does not specify tagging or disables tagging
+            if column_exists(conn, table_name, "primary_tag"):
+                return False
+    return True
+
+TAGGING_TABLE_NAMES = Literal["tag_names", "tags", "tag_aliases", "tag_groups"]
+TAGGING_TABLE_STATEMENTS: dict[TAGGING_TABLE_NAMES, sql.SQL] = {
+    "tag_names": sql.SQL("""
+                         CREATE TABLE {} (
+                            id SERIAL PRIMARY KEY,
+                            tag_name TEXT NOT NULL
+                         );
+                         """),
+    "tags": sql.SQL("""
+                    CREATE TABLE {} (
+                        id SERIAL PRIMARY KEY,
+                        entry_id INT REFERENCES {} (id) NOT NULL,
+                        tag_id INT REFERENCES tag_names (id) NOT NULL
+                    );
+                    """),
+    "tag_aliases": sql.SQL("""
+                         CREATE TABLE {} (
+                            alias TEXT PRIMARY KEY,
+                            tag_id INT REFERENCES tag_names (id) NOT NULL
+                         );
+                         """),
+    "tag_groups": sql.SQL("""
+                         CREATE TABLE {} (
+                            id SERIAL PRIMARY KEY,
+                            tag_id INT REFERENCES tag_names (id) NOT NULL,
+                            group TEXT NOT NULL
+                         );
+                         """),
+}
+
+def create_tagging_tables(conn, table_name: str):
+    """Creates related tagging tables if necessary.
+
+    Args:
+        conn (_type_): _description_
+        table_name (str): The name of the target table.
+    """
+    # go through every table in order (foreign key dependencies)
+    with conn.cursor() as cur:
+        # tag names
+        if not table_exists(conn, table_name + "_tag_names"):
+            cur.execute(TAGGING_TABLE_STATEMENTS["tag_names"].format(sql.Identifier(table_name + "_tag_names")))
+        
+        # tags
+        if not table_exists(conn, table_name + "_tags"):
+            cur.execute(TAGGING_TABLE_STATEMENTS["tags"].format(sql.Identifier(table_name + "_tags"), sql.Identifier(table_name)))
+        
+        # tag aliases
+        if not table_exists(conn, table_name + "_tag_aliases"):
+            cur.execute(TAGGING_TABLE_STATEMENTS["tag_aliases"].format(sql.Identifier(table_name + "_tag_aliases")))
+        
+        # tag groups
+        if not table_exists(conn, table_name + "_tag_groups"):
+            cur.execute(TAGGING_TABLE_STATEMENTS["tag_groups"].format(sql.Identifier(table_name + "_tag_groups")))
 
 if __name__ == "__main__":
     print("Attempting to create tables based on config.yml...")
