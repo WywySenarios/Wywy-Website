@@ -290,18 +290,19 @@ def create_tagging_tables(conn, table_name: str):
         # tag names
         if not table_exists(conn, table_name + "_tag_names"):
             cur.execute(TAGGING_TABLE_STATEMENTS["tag_names"].format(sql.Identifier(table_name + "_tag_names")))
-        
+    
+    with conn.cursor() as cur:
         # tags
         if not table_exists(conn, table_name + "_tags"):
-            cur.execute(TAGGING_TABLE_STATEMENTS["tags"].format(sql.Identifier(table_name + "_tags"), sql.Identifier(table_name)))
+            cur.execute(TAGGING_TABLE_STATEMENTS["tags"].format(sql.Identifier(table_name + "_tags"), sql.Identifier(table_name), sql.Identifier(f"{table_name}_tag_names")))
         
         # tag aliases
         if not table_exists(conn, table_name + "_tag_aliases"):
-            cur.execute(TAGGING_TABLE_STATEMENTS["tag_aliases"].format(sql.Identifier(table_name + "_tag_aliases")))
+            cur.execute(TAGGING_TABLE_STATEMENTS["tag_aliases"].format(sql.Identifier(table_name + "_tag_aliases"), sql.Identifier(f"{table_name}_tag_names")))
         
         # tag groups
         if not table_exists(conn, table_name + "_tag_groups"):
-            cur.execute(TAGGING_TABLE_STATEMENTS["tag_groups"].format(sql.Identifier(table_name + "_tag_groups")))
+            cur.execute(TAGGING_TABLE_STATEMENTS["tag_groups"].format(sql.Identifier(table_name + "_tag_groups"), sql.Identifier(f"{table_name}_tag_names")))
 
 if __name__ == "__main__":
     print("Attempting to create tables based on config.yml...")
