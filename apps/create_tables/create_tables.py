@@ -194,21 +194,10 @@ def enforce_column(conn, table_name: str, column_schema: dict) -> bool:
     if not "comments" in column_schema or not column_schema:
         if not comments_column_exists:
             with conn.cursor() as cur:
-                cur.execute(sql.SQL("ALTER TABLE {} ADD COLUMN {} text DEFAULT "''";").format(
+                cur.execute(sql.SQL("ALTER TABLE {} ADD COLUMN {} text DEFAULT '';").format(
                     sql.Identifier(table_name),
                     sql.Identifier(column_name + "_comments"),
                 ))
-                
-                cur.execute(sql.SQL("""
-                                    CREATE TYPE {} AS ENUM ({});
-                                    ALTER TABLE {} ADD COLUMN {} {};
-                                    """).format(
-                                        sql.Identifier(f"{table_name}_{column_name}_enum"),
-                                        sql.SQL(", ").join(map(sql.Literal, column_schema["values"])),
-                                        sql.Identifier(table_name),
-                                        sql.Identifier(column_name),
-                                        sql.Identifier(f"{table_name}_{column_name}_enum")
-                                    ))
     elif comments_column_exists:
         return False
     return True
