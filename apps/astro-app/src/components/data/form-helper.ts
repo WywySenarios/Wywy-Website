@@ -26,7 +26,7 @@ export function createFormSchemaAndHandlers(fieldsToEnter: DataColumn[], databas
 
     for (let columnInfo of fieldsToEnter) {
         // immediately ignore anything not needed on the form.
-        if (columnInfo.entrytype === "none") continue
+        // if (columnInfo.entrytype === "none") continue
 
         // throw things into the schema, adding in restrictions as necessary
         // @TODO add restrictions

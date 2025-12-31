@@ -121,7 +121,7 @@ export const oldInputElements: Record<oldInputElementName, oldInputElementFuncti
                         <Button
                             variant={"outline"}
                             className={cn(
-                                "w-[240px] pl-3 text-left font-normal",
+                                "w-60 pl-3 text-left font-normal",
                                 !field.field.value && "text-muted-foreground"
                             )}
                         >
@@ -151,6 +151,7 @@ export const oldInputElements: Record<oldInputElementName, oldInputElementFuncti
             <FormLabel className="text-lg font-semibold">{columnInfo.name}</FormLabel>
             <FormControl>
                 <TimePicker
+                    //@ts-ignore
                     defaultValue={columnInfo.defaultValue}
                     onChange={field.field.onChange}
                 />
