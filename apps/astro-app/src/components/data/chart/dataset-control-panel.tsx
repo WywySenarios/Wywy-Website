@@ -1,7 +1,7 @@
 import type { Dataset, TableInfo } from "@/env";
 import type { JSX } from "astro/jsx-runtime";
 import { useEffect, useState } from "react";
-import { LineChartCard } from "@/components/data/data-card";
+import { LineChartCard } from "@/components/data/chart/chart-card";
 import config from "@universal_root/config.yml";
 import { Button } from "@/components/ui/button";
 import {
