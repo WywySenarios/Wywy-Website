@@ -84,32 +84,32 @@ type TimeRestrictions = {
 type IntegerColumn = {
     datatype: "int" | "integer"
     defaultValue?: number
-} & (SliderRestrictions | RadioRestrictions | NoRestrictions)
+} & (SliderRestrictions | RadioRestrictions)
 
 type FloatColumn = {
     datatype: "float" | "number"
     defaultValue?: number
-} & (SliderRestrictions | RadioRestrictions | NoRestrictions)
+} & (SliderRestrictions | RadioRestrictions)
 
 type StringColumn = {
     datatype: "string" | "str" | "text"
     defaultValue?: string
-} & (TextboxRestrictiions | RadioRestrictions | NoRestrictions)
+} & (TextboxRestrictiions | RadioRestrictions)
 
 type BooleanColumn = {
     datatype: "bool" | "boolean"
     defaultValue?: boolean
-} & (RadioRestrictions | SwitchRestrictions | NoRestrictions)
+} & (RadioRestrictions | SwitchRestrictions)
 
 type DateColumn = {
     datatype: "date"
     defaultValue?: Date
-} & (DateRestrictions | NoRestrictions)
+} & (DateRestrictions)
 
 type TimeColumn = {
     datatype: "time"
     defaultValue?: Date // @TODO consider switching datatypes?
-} & (TimeRestrictions | NoRestrictions)
+} & (TimeRestrictions)
 
 type TimestampColumn = {
     datatype: "timestamp"
