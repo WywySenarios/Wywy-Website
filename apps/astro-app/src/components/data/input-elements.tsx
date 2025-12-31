@@ -80,7 +80,7 @@ export const oldInputElements: Record<oldInputElementName, oldInputElementFuncti
                 <RadioGroup onValueChange={field.field.onChange} defaultValue={field.field.value}>
                     {
                         // @ts-ignore
-                        columnInfo.whitelist.map((option: string) => (
+                        columnInfo.values.map((option: string) => (
                             // note that if two options have the same key, they will also have the same values. Pretty strange, huh?
                             <FormItem className="flex items-center gap-3 w-full" key={columnInfo.name + "-" + option + "-radio"}>
                                 <FormControl>

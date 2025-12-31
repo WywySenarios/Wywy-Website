@@ -63,7 +63,7 @@ type SliderRestrictions = {
 
 type RadioRestrictions = {
     entrytype: "radio",
-    whitelist: Array<string>,
+    values: Array<string>,
 }
 
 type SwitchRestrictions = {
@@ -80,11 +80,16 @@ type TimeRestrictions = {
     entrytype: "time",
 }
 
+type DropDownRestrictions<T> = {
+    entrytype: "dropdown",
+    values: Array<T>
+}
+
 // look at different datatypes
 type IntegerColumn = {
     datatype: "int" | "integer"
     defaultValue?: number
-} & (SliderRestrictions | RadioRestrictions)
+} & (SliderRestrictions | RadioRestrictions | DropDownRestrictions<number>)
 
 type FloatColumn = {
     datatype: "float" | "number"
@@ -94,7 +99,7 @@ type FloatColumn = {
 type StringColumn = {
     datatype: "string" | "str" | "text"
     defaultValue?: string
-} & (TextboxRestrictiions | RadioRestrictions)
+} & (TextboxRestrictiions)
 
 type BooleanColumn = {
     datatype: "bool" | "boolean"
@@ -115,6 +120,11 @@ type TimestampColumn = {
     datatype: "timestamp"
     defaultValue?: Date // @TODO consider switching datatypes?
 } & (TimeRestrictions | DateRestrictions)
+
+type EnumColumn = {
+    datatype: "enum"
+    defaultValues: string // @TODO ensure defaultValues is within values
+} & (DropDownRestrictions<string>)
 
 export type DataColumn = {
     name: string
