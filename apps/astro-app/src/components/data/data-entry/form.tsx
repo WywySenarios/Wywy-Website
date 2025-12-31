@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/form"
 
 import type { DataColumn } from "@root/src/env"
-import { oldInputElements, type oldInputElementFunction } from "@/components/data/input-elements"
+import { oldInputElements, type oldInputElementFunction, oldInputElementsAliases } from "@/components/data/input-elements"
 
 
 // Input elements!
@@ -23,7 +23,7 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onSubmitInvalid)} className="flex flex-col gap-4">
         {fieldsToEnter.map((columnInfo: DataColumn) => {
-          let inputElement: oldInputElementFunction = oldInputElements[inputElementsAliases[columnInfo.entrytype]]
+          let inputElement: oldInputElementFunction = oldInputElements[oldInputElementsAliases[columnInfo.entrytype]]
 
           if (inputElement === undefined) {
             console.warn(`No input element found for column ${columnInfo.name}. This is likely a bug.`)
