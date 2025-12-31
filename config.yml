@@ -195,7 +195,6 @@ data:
                 datatype: boolean
                 entrytype: switch
                 description: Was body wash used?
-              - name: 
           - name: dental
             schema:
               - name: Waterpik
