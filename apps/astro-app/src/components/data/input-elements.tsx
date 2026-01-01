@@ -169,18 +169,22 @@ function InputElement(
             case "calendar time":
                 body = <Calendar24 className="w-full" {...field} />
                 break
+            //@ts-ignore
             case "select":
                 body = <Select>
                     <SelectTrigger>
                         <SelectValue placeholder />
                     </SelectTrigger>
                     <SelectContent>
-                        {columnInfo.values.map((value: string) => <SelectItem value={value}>{value}</SelectItem>)}
+                        {//@ts-ignore
+                            columnInfo.values.map((value: string) => <SelectItem value={value}>{value}</SelectItem>)}
                     </SelectContent>
                 </Select>
                 break
+            //@ts-ignore
             case "search-select":
                 let values: SearchSelectData = []
+                //@ts-ignore
                 for (let i in columnInfo.values) {
                     values.push({ "value": i, "label": i })
                 }
