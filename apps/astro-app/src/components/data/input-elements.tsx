@@ -47,17 +47,17 @@ export function FormElement({
                 control={form.control}
                 name={columnInfo.name}
                 key={columnInfo.name + "-field"}
-                render={(field) => <InputElement field={field.field} columnInfo={columnInfo} />}
+                render={({ field }) => <InputElement field={field} columnInfo={columnInfo} />}
             />
             {columnInfo.comments ? <Controller
                 control={form.control}
                 name={columnInfo.name + "_comments"}
                 key={columnInfo.name + "_comments-field"}
-                render={(field) => <Field>
+                render={({ field }) => <Field>
                     <div className="w-full flex flex-col items-center gap-4">
                         <FieldLabel className="text-center text-base">Comments</FieldLabel>
                     </div>
-                    <Textarea {...field.field} />
+                    <Textarea {...field} />
                 </Field>}
             /> : null}
         </div>
