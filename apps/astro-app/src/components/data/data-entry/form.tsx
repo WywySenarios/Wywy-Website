@@ -13,7 +13,7 @@ export function FormForm({ fieldsToEnter, databaseName, tableName, dbURL }: { fi
     <form onSubmit={form.handleSubmit(onSubmit, onSubmitInvalid)} className="flex flex-col gap-4">
       {fieldsToEnter.map((columnInfo: DataColumn) => {
         return (
-          <FormElement form={form} columnInfo={columnInfo} />
+          <FormElement key={columnInfo.name + "-form-element"} form={form} columnInfo={columnInfo} />
         )
       }
       )
