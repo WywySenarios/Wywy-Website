@@ -80,6 +80,10 @@ type TimeRestrictions = {
     entrytype: "time",
 }
 
+type TimestampRestrictions = {
+    entrytype: "calendar time"
+}
+
 type SelectRestrictions = {
     entrytype: "select" | "search-select",
     values: Array<string>
@@ -119,7 +123,7 @@ type TimeColumn = {
 type TimestampColumn = {
     datatype: "timestamp"
     defaultValue?: Date // @TODO consider switching datatypes?
-} & (TimeRestrictions | DateRestrictions)
+} & (TimestampRestrictions)
 
 type EnumColumn = {
     datatype: "enum"
