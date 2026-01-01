@@ -3,11 +3,7 @@
 import { Button } from "@/components/ui/button"
 
 import type { DataColumn } from "@root/src/env"
-import { oldInputElements, type oldInputElementFunction, oldInputElementsAliases, InputElement, FormElement } from "@/components/data/input-elements"
-
-
-// Input elements!
-import { Textarea } from "@/components/ui/textarea"
+import { FormElement } from "@/components/data/input-elements"
 import { createFormSchemaAndHandlers } from "@/components/data/form-helper"
 
 export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }: { fieldsToEnter: Array<DataColumn>, databaseName: string, tableName: string, dbURL: string }) {
