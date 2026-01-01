@@ -1,11 +1,4 @@
 import {
-    FormControl,
-    FormDescription,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form"
-import {
     Field,
     FieldContent,
     FieldDescription,
@@ -25,7 +18,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@root/lib/utils"
-import type { JSX, JSXElementConstructor, ReactElement } from "react"
+import type { JSX } from "react"
 import { Textarea } from "@/components/ui/textarea"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
@@ -39,26 +32,39 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Button } from "@/components/ui/button"
 import type { DataColumn } from "@root/src/env"
 import { SearchSelect, type SearchSelectData } from "./input-element/search-select"
+import { Controller } from "react-hook-form"
 
-
-export type inputElementName = "textbox" | "linearSlider" | "switch" | "radio" | "calendar" | "time" | "timestamp" | "dropdown";
-
-export const inputElementsAliases: Record<string, inputElementName> = {
-    "textbox": "textbox",
-    "textarea": "textbox",
-    "linearSlider": "linearSlider",
-    "slider": "linearSlider",
-    "switch": "switch",
-    "radio": "radio",
-    "calendar": "calendar",
-    "time": "time",
-    "timestamp": "timestamp",
-    "dropdown": "dropdown",
+export function FormElement({
+    form,
+    columnInfo
+}: {
+    form: any,
+    columnInfo: DataColumn
+}) {
+    return (
+        <div className="rounded-lg border p-5 shadow-md" key={columnInfo.name}>
+            <Controller
+                control={form.control}
+                name={columnInfo.name}
+                key={columnInfo.name + "-field"}
+                render={(field) => <InputElement field={field.field} columnInfo={columnInfo} />}
+            />
+            {columnInfo.comments ? <Controller
+                control={form.control}
+                name={columnInfo.name + "_comments"}
+                key={columnInfo.name + "_comments-field"}
+                render={(field) => <Field>
+                    <div className="w-full flex flex-col items-center gap-4">
+                        <FieldLabel className="text-center text-base">Comments</FieldLabel>
+                    </div>
+                    <Textarea {...field.field} />
+                </Field>}
+            /> : null}
+        </div>
+    )
 }
 
-export type inputElementFunction = (field: any, columnInfo: DataColumn) => ReactElement<unknown, string | JSXElementConstructor<any>>
-
-export function InputElement(
+function InputElement(
     {
         field,
         columnInfo
@@ -96,7 +102,7 @@ export function InputElement(
                 </RadioGroup>
                 break
             default:
-                console.warn(`Invalid input element name for column ${columnInfo.name}.`)
+                console.warn(`No input element found for column ${columnInfo.name}. This is likely a bug.`)
                 body = <></>
                 break
         }
@@ -141,7 +147,7 @@ export function InputElement(
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
-                        {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
+                        {columnInfo.description && <FieldDescription>{columnInfo.description}</FieldDescription>}
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
@@ -178,7 +184,7 @@ export function InputElement(
                 body = <SearchSelect data={values} {...field} />
                 break
             default:
-                console.warn(`Invalid input element name for column ${columnInfo.name}.`)
+                console.warn(`No input element found for column ${columnInfo.name}. This is likely a bug.`)
                 body = <></>
                 break
         }
@@ -192,152 +198,7 @@ export function InputElement(
                     {body}
                     {columnInfo.description && <FieldDescription>{columnInfo.description}</FieldDescription>}
                 </Field>
-                {/* <div className="w-full flex flex-col items-center gap-4">
-                    <FormLabel className="text-base">Comments</FormLabel>
-                </div> */}
-                {/* {columnInfo.comments ? <Field
-                    key={columnInfo.name + "_comments-field"}
-                >
-                    <Textarea {...field} />
-                </Field> : null} */}
             </div>
         )
     }
-}
-
-export type oldInputElementName = "textbox" | "linearSlider" | "switch" | "radio" | "calendar" | "time" | "timestamp";
-
-export const oldInputElementsAliases: Record<string, oldInputElementName> = {
-    "textbox": "textbox",
-    "textarea": "textbox",
-    "linearSlider": "linearSlider",
-    "slider": "linearSlider",
-    "switch": "switch",
-    "radio": "radio",
-    "calendar": "calendar",
-    "time": "time",
-    "timestamp": "timestamp",
-}
-
-export type oldInputElementFunction = (field: any, columnInfo: DataColumn) => ReactElement<unknown, string | JSXElementConstructor<any>>
-
-export const oldInputElements: Record<oldInputElementName, oldInputElementFunction> = {
-    "textbox": (field, columnInfo) => <div className="w-full flex flex-col items-center">
-        <FormLabel className="text-lg font-semibold">{columnInfo.name}</FormLabel>
-        <FormItem className="w-full rounded-lg border p-3 shadow-sm">
-            <FormControl>
-                <Textarea placeholder={columnInfo.defaultValue} {...field.field} />
-            </FormControl>
-            {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
-        </FormItem>
-    </div>,
-    "linearSlider": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
-        <div className="w-full flex flex-col items-center gap-4">
-            <FormLabel className="text-lg font-semibold">{columnInfo.name}</FormLabel>
-            <FormControl>
-                {
-                    // @ts-ignore
-                    <Slider defaultVal={field.field.value} min={columnInfo.min ?? 0} max={columnInfo.max ?? 100} step={columnInfo.step ?? 1} onChange={field.field.onChange} {...field} />
-                }
-            </FormControl>
-            {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
-        </div>
-    </FormItem>,
-    "radio": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
-        <div className="w-full flex flex-col items-center">
-            <FormLabel className="text-lg font-semibold">{columnInfo.name}</FormLabel>
-            <FormControl>
-                <RadioGroup onValueChange={field.field.onChange} defaultValue={field.field.value}>
-                    {
-                        // @ts-ignore
-                        columnInfo.values.map((option: string) => (
-                            // note that if two options have the same key, they will also have the same values. Pretty strange, huh?
-                            <FormItem className="flex items-center gap-3 w-full" key={columnInfo.name + "-" + option + "-radio"}>
-                                <FormControl>
-                                    <RadioGroupItem
-                                        value={option}
-                                    />
-                                </FormControl>
-                                <FormLabel>{option}</FormLabel>
-                            </FormItem>
-                        ))
-                    }
-                    <FormMessage />
-                </RadioGroup>
-            </FormControl>
-            {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
-        </div ></FormItem>,
-    "switch": (field, columnInfo) => <FormItem className="w-full flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-        <div className="w-full space-y-0.5">
-            <FormLabel className="space-y-0.5 text-lg font-semibold">
-                <p>{columnInfo.name}</p>
-            </FormLabel>
-        </div>
-        <FormControl>
-            <Switch
-                checked={field.field.value}
-                onCheckedChange={field.field.onChange}
-            // className="w-2/12"
-            />
-        </FormControl>
-        {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
-    </FormItem>,
-    "calendar": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
-        <div className="w-full flex flex-col items-center gap-4">
-            <FormLabel className="text-lg font-semibold">{columnInfo.name}</FormLabel>
-            <Popover>
-                <PopoverTrigger asChild>
-                    <FormControl>
-                        <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-60 pl-3 text-left font-normal",
-                                !field.field.value && "text-muted-foreground"
-                            )}
-                        >
-                            {field.field.value ? (
-                                format(field.field.value, "PPP")
-                            ) : (
-                                <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                    </FormControl>
-                    {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                        mode="single"
-                        selected={field.field.value}
-                        onSelect={field.field.onChange}
-                        captionLayout="dropdown"
-                    />
-                </PopoverContent>
-            </Popover>
-        </div>
-    </FormItem>,
-    "time": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
-        <div className="w-full flex flex-col items-center gap-4">
-            <FormLabel className="text-lg font-semibold">{columnInfo.name}</FormLabel>
-            <FormControl>
-                <TimePicker
-                    //@ts-ignore
-                    defaultValue={columnInfo.defaultValue}
-                    onChange={field.field.onChange}
-                />
-            </FormControl>
-            {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
-        </div>
-    </FormItem>,
-    "timestamp": (field, columnInfo) => <FormItem className="rounded-lg border p-3 shadow-sm">
-        <div className="w-full flex flex-col items-center gap-4">
-            <FormLabel className="text-lg font-semibold">{columnInfo.name}</FormLabel>
-            <FormControl>
-                <Calendar24 onChange={(val) => {
-                    field.field.onChange(val);
-                }} {...field.field} />
-            </FormControl>
-            {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
-        </div>
-    </FormItem>,
 }
