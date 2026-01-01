@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/form"
 
 import type { DataColumn } from "@root/src/env"
-import { oldInputElements, type oldInputElementFunction, oldInputElementsAliases } from "@/components/data/input-elements"
+import { oldInputElements, type oldInputElementFunction, oldInputElementsAliases, InputElement } from "@/components/data/input-elements"
 
 
 // Input elements!
@@ -36,7 +36,7 @@ export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }:
                     control={form.control}
                     name={columnInfo.name}
                     key={columnInfo.name + "-field"}
-                    render={(field) => inputElement(field, columnInfo)}
+                    render={(field) => <InputElement field={field.field} columnInfo={columnInfo} />}
                   />
                   <div className="w-full flex flex-col items-center gap-4">
                     <FormLabel className="text-base">Comments</FormLabel>

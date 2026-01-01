@@ -5,8 +5,27 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
+import {
+    Field,
+    FieldContent,
+    FieldDescription,
+    FieldError,
+    FieldGroup,
+    FieldLabel,
+    FieldLegend,
+    FieldSeparator,
+    FieldSet,
+    FieldTitle,
+} from "@/components/ui/field"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@root/lib/utils"
-import type { JSXElementConstructor, ReactElement } from "react"
+import type { JSX, JSXElementConstructor, ReactElement } from "react"
 import { Textarea } from "@/components/ui/textarea"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
@@ -19,9 +38,10 @@ import { TimePicker } from "@root/src/components/ui/time-picker"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import type { DataColumn } from "@root/src/env"
+import { SearchSelect, type SearchSelectData } from "./input-element/search-select"
 
 
-export type inputElementName = "textbox" | "linearSlider" | "switch" | "radio" | "calendar" | "time" | "timestamp";
+export type inputElementName = "textbox" | "linearSlider" | "switch" | "radio" | "calendar" | "time" | "timestamp" | "dropdown";
 
 export const inputElementsAliases: Record<string, inputElementName> = {
     "textbox": "textbox",
@@ -33,6 +53,156 @@ export const inputElementsAliases: Record<string, inputElementName> = {
     "calendar": "calendar",
     "time": "time",
     "timestamp": "timestamp",
+    "dropdown": "dropdown",
+}
+
+export type inputElementFunction = (field: any, columnInfo: DataColumn) => ReactElement<unknown, string | JSXElementConstructor<any>>
+
+export function InputElement(
+    {
+        field,
+        columnInfo
+    }: {
+        field: any,
+        columnInfo: DataColumn
+    }
+): JSX.Element {
+    let grouped: boolean
+    switch (columnInfo.entrytype) {
+        case "radio":
+            grouped = true
+            break
+        default:
+            grouped = false
+    }
+
+    if (grouped) {
+        let body: JSX.Element
+
+        switch (columnInfo.entrytype) {
+            case "radio":
+                body = <RadioGroup onValueChange={field.field.onChange} defaultValue={field.field.value}>
+                    {
+                        columnInfo.values.map((option: string) => (
+                            // note that if two options have the same key, they will also have the same values. Pretty strange, huh?
+                            <Field className="flex items-center gap-3 w-full" key={columnInfo.name + "-" + option + "-radio"}>
+                                <RadioGroupItem
+                                    value={option}
+                                />
+                                <FieldLabel>{option}</FieldLabel>
+                            </Field>
+                        ))
+                    }
+                </RadioGroup>
+                break
+            default:
+                console.warn(`Invalid input element name for column ${columnInfo.name}.`)
+                body = <></>
+                break
+        }
+
+        return (
+            <FieldSet>
+                <FieldLabel>{columnInfo.name}</FieldLabel>
+                {columnInfo.description && <FieldDescription>{columnInfo.description}</FieldDescription>}
+                {body}
+            </FieldSet>
+        )
+    } else {
+        let body: JSX.Element
+        switch (columnInfo.entrytype) {
+            case "textbox":
+                body = <Textarea placeholder={columnInfo.defaultValue} {...field} />
+                break
+            case "linearSlider":
+                body = <Slider defaultVal={field.value} min={columnInfo.min ?? 0} max={columnInfo.max ?? 100} step={1} onChange={field.onChange} />
+                break
+            case "switch":
+                body = <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                // className="w-2/12"
+                />
+                break
+            case "calendar":
+                body = <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-60 pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                            )}
+                        >
+                            {field.value ? (
+                                format(field.value, "PPP")
+                            ) : (
+                                <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                        {columnInfo.description && <FormDescription>{columnInfo.description}</FormDescription>}
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            captionLayout="dropdown"
+                        />
+                    </PopoverContent>
+                </Popover>
+                break
+            case "time":
+                body = <TimePicker
+                    //@ts-ignore
+                    defaultValue={columnInfo.defaultValue}
+                    onChange={field.onChange}
+                />
+                break
+            case "select":
+                body = <Select>
+                    <SelectTrigger>
+                        <SelectValue placeholder />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {columnInfo.values.map((value: string) => <SelectItem value={value}>{value}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                break
+            case "search-select":
+                let values: SearchSelectData = []
+                for (let i in columnInfo.values) {
+                    values.push({ "value": i, "label": i })
+                }
+                body = <SearchSelect data={values} {...field} />
+                break
+            default:
+                console.warn(`Invalid input element name for column ${columnInfo.name}.`)
+                body = <></>
+                break
+        }
+
+        return (
+            <div className="rounded-lg border p-5 shadow-md" key={columnInfo.name}>
+                <Field className="w-full flex flex-col items-center gap-4">
+                    <FieldLabel className="items-center">
+                        <span className="w-full text-center text-lg font-semibold">{columnInfo.name}</span>
+                    </FieldLabel>
+                    {body}
+                    {columnInfo.description && <FieldDescription>{columnInfo.description}</FieldDescription>}
+                </Field>
+                {/* <div className="w-full flex flex-col items-center gap-4">
+                    <FormLabel className="text-base">Comments</FormLabel>
+                </div> */}
+                {/* {columnInfo.comments ? <Field
+                    key={columnInfo.name + "_comments-field"}
+                >
+                    <Textarea {...field} />
+                </Field> : null} */}
+            </div>
+        )
+    }
 }
 
 export type oldInputElementName = "textbox" | "linearSlider" | "switch" | "radio" | "calendar" | "time" | "timestamp";
