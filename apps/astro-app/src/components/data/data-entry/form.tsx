@@ -6,7 +6,7 @@ import type { DataColumn } from "@root/src/env"
 import { FormElement } from "@/components/data/input-elements"
 import { createFormSchemaAndHandlers } from "@/components/data/form-helper"
 
-export function DataEntryForm({ fieldsToEnter, databaseName, tableName, dbURL }: { fieldsToEnter: Array<DataColumn>, databaseName: string, tableName: string, dbURL: string }) {
+export function FormForm({ fieldsToEnter, databaseName, tableName, dbURL }: { fieldsToEnter: Array<DataColumn>, databaseName: string, tableName: string, dbURL: string }) {
   const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(fieldsToEnter, databaseName, tableName, dbURL)
 
   return (

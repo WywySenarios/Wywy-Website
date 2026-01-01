@@ -41,7 +41,7 @@ export interface TableInfo {
     tableName: string,
     read: bool,
     write: bool,
-    entrytype: "form" | "entries",
+    entrytype: "form" | "timer",
     schema: Array<DataColumn>
 }
 
@@ -80,16 +80,16 @@ type TimeRestrictions = {
     entrytype: "time",
 }
 
-type DropDownRestrictions<T> = {
-    entrytype: "dropdown",
-    values: Array<T>
+type SelectRestrictions = {
+    entrytype: "select" | "search-select",
+    values: Array<string>
 }
 
 // look at different datatypes
 type IntegerColumn = {
     datatype: "int" | "integer"
     defaultValue?: number
-} & (SliderRestrictions | RadioRestrictions | DropDownRestrictions<number>)
+} & (SliderRestrictions | RadioRestrictions)
 
 type FloatColumn = {
     datatype: "float" | "number"
@@ -124,7 +124,7 @@ type TimestampColumn = {
 type EnumColumn = {
     datatype: "enum"
     defaultValues: string // @TODO ensure defaultValues is within values
-} & (DropDownRestrictions<string>)
+} & (SelectRestrictions)
 
 export type DataColumn = {
     name: string
@@ -137,7 +137,7 @@ export type DataColumn = {
     comments?: boolean
     description?: string
     unique?: boolean
-} & (IntegerColumn | FloatColumn | StringColumn | BooleanColumn | DateColumn | TimeColumn | TimestampColumn)
+} & (IntegerColumn | FloatColumn | StringColumn | BooleanColumn | DateColumn | TimeColumn | TimestampColumn | EnumColumn)
 
 export type Dataset = Array<Array<any>>;
 // END - Database Related
