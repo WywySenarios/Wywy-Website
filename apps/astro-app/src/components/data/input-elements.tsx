@@ -26,7 +26,7 @@ import { Slider } from "@/components/ui/slider/labelslider"
 import { RadioGroup, RadioGroupItem } from "@root/src/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
 import { Calendar } from "@/components/ui/calendar"
-import { Calendar24 } from "@root/src/components/ui/timestamp-picker"
+import { Calendar24 } from "@root/src/components/data/input-element/timestamp-picker"
 import { TimePicker } from "@root/src/components/ui/time-picker"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
@@ -165,6 +165,9 @@ function InputElement(
                     defaultValue={columnInfo.defaultValue}
                     onChange={field.onChange}
                 />
+                break
+            case "calendar time":
+                body = <Calendar24 className="w-full" {...field} />
                 break
             case "select":
                 body = <Select>
