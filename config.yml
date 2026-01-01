@@ -27,7 +27,7 @@ data:
           - name: Date
             parser: date # the datatype that the parser should attempt to cast to
             datatype: timestamp
-            entrytype: timestamp
+            entrytype: calendar time
             description: The estimate of when you gained conciousness at the start of this (sleep-based) day.
 
           - name: Work Ethic
@@ -156,7 +156,7 @@ data:
             schema:
               - name: Maintenance Item
                 datatype: enum
-                entrytype: dropdown
+                entrytype: search-select
                 values:
                   - # subject to presumably intense debate
 
