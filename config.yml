@@ -134,7 +134,7 @@ data:
       - tableName: events
         read: true
         write: true
-        entrytype: stopwatch
+        entrytype: timer
         comments: true
         tagging: true
         schema:
