@@ -13,8 +13,10 @@ import { z } from "zod"
 
 /**
  * Creates a schema and two event handlers according to the supplied inputs, which are assumed to be good.
+ * @param fieldsToEnter The table schema in the form of an array of DataColumns.
  * @param databaseName The name of the database containing the table whose schema is to be replicated.
  * @param tableName The name of the table whose schema is to be replicated.
+ * @param dbURL The URL of the cache or database to POST to
  * @returns A zod schema, produced by `useForm`, a onSubmit handler, and a onSubmitInvalid handler.
  */
 export function createFormSchemaAndHandlers(fieldsToEnter: DataColumn[], databaseName: string, tableName: string, dbURL: string) {
