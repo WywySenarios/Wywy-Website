@@ -79,8 +79,8 @@ if (!tableInfo || !entrytype) {
     fieldsToEnter={tableInfo.schema}
     databaseName={databaseName}
     tableName={tableName}
-    dbURL={config.referenceUrls.db}
-    client:load
+    dbURL={config.referenceUrls.cache}
+    client:only="react"
   >
     <div slot="fallback">Loading...</div>
   </DataEntryForm>
