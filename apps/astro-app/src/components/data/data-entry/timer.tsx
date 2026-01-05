@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react";
 import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
 import { Columns } from "@/components/data/data-entry"
-import { useForm, type UseFormReturn } from "react-hook-form";
+import { useForm, type SubmitErrorHandler, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -26,7 +26,7 @@ export function TimerForm({
         [x: string]: any;
     }>>(useForm({ resolver: zodResolver(z.object({})) }));
     const [onSubmit, setOnSubmit] = useState<Function>(() => { });
-    const [onSubmitInvalid, setOnSubmitInvalid] = useState<Function>(() => { });
+    const [onSubmitInvalid, setOnSubmitInvalid] = useState<SubmitErrorHandler<{ [x: string]: any; }>>(() => { });
     //  { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(fieldsToEnter, databaseName, tableName, dbURL)
 
     // initally try to GET the start time
@@ -177,7 +177,8 @@ export function TimerForm({
                         <Button onClick={start}>Start</Button>
                         <Button disabled={!startTime} onClick={split}>End/Split</Button>
                         <Button disabled={startTime === undefined} onClick={cancel}>Cancel</Button>
-                    </div> </div>
+                    </div>
+                    </div>
             }
         </div>
     )
