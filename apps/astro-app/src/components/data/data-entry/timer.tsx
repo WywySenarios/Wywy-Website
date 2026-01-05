@@ -94,7 +94,7 @@ export function TimerForm({
         // @TODO don't hardcode start_time & end_time
         fetch(`${dbURL}/cache/${databaseName}/${tableName}`, {
             method: "POST",
-            body: JSON.stringify({output}),
+            body: JSON.stringify(output),
             mode: "cors",
             credentials: "include",
             headers: {
