@@ -6,7 +6,6 @@ import { Columns } from "@/components/data/data-entry"
 import { useForm, type SubmitErrorHandler, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type { Interface } from "readline";
 
 export function TimerForm({
     fieldsToEnter,
