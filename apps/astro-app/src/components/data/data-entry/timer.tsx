@@ -1,17 +1,11 @@
 import type { DataColumn } from "@/env"
-import {
-    DialogHeader,
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogTitle,
-    DialogTrigger,
-    DialogClose
-} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react";
 import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
 import { Columns } from "@/components/data/data-entry"
+import { useForm, type UseFormReturn } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 export function TimerForm({
     fieldsToEnter,
@@ -25,7 +19,33 @@ export function TimerForm({
     dbURL: string
 }) {
     const [startTime, setStartTime] = useState<Date | undefined>(undefined);
-    const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(fieldsToEnter, databaseName, tableName, dbURL)
+    const [form, setForm] = useState<UseFormReturn<{
+        [x: string]: any;
+    }, any, {
+        [x: string]: any;
+    }>>(useForm({ resolver: zodResolver(z.object({})) }));
+    const [onSubmit, setOnSubmit] = useState<Function>(() => { });
+    const [onSubmitInvalid, setOnSubmitInvalid] = useState<Function>(() => { });
+    //  { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(fieldsToEnter, databaseName, tableName, dbURL)
+
+    // initally try to GET the start time
+    useEffect(() => {
+        fetch(`${dbURL}/cache/${databaseName}/${tableName}`, {
+            method: "GET",
+            mode: "cors",
+            credentials: "include",
+            headers: {}
+        }).then((res: Response) => {
+            res.json().then((body: object) => {
+                console.log(body)
+                if ("Start Time" in body && body["Start Time"] !== undefined && typeof body["Start Time"] === "string" && body["Start Time"].length > 2) {
+                    let value: string = body["Start Time"].substring(1, body["Start Time"].length - 1)
+                    let newDate: Date = new Date(Date.parse(value));
+                    if (!isNaN(newDate.getTime())) setStartTime(newDate);
+                }
+            })
+        })
+    }, []);
 
     function submission(values: {
         [x: string]: any;
@@ -74,6 +94,10 @@ export function TimerForm({
 
         // reload the component with the correct start time
         setStartTime(newTime)
+        const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(fieldsToEnter, databaseName, tableName, dbURL)
+        setForm(form);
+        setOnSubmit(onSubmit);
+        setOnSubmitInvalid(onSubmitInvalid);
     }
 
     function cancel() {
@@ -92,61 +116,31 @@ export function TimerForm({
         setStartTime(undefined)
     }
 
-    // initally try to GET the start time
-    useEffect(() => {
-        fetch(`${dbURL}/cache/${databaseName}/${tableName}`, {
-            method: "GET",
-            mode: "cors",
-            credentials: "include",
-            headers: {}
-        }).then((res: Response) => {
-            res.json().then((body: object) => {
-                console.log(body)
-                if ("Start Time" in body && body["Start Time"] !== undefined && typeof body["Start Time"] === "string" && body["Start Time"].length > 2) {
-                    let value: string = body["Start Time"].substring(1, body["Start Time"].length - 1)
-                    let newDate: Date = new Date(Date.parse(value));
-                    if (!isNaN(newDate.getTime())) setStartTime(newDate);
-                }
-            })
-        })
-    }, [])
-
-
-
-    return <Dialog>
-        <div className="flex flex-col items-center">
-            <p>{startTime ? startTime?.toLocaleString() : "No start time."}</p>
-            <div className="flex flex-row justify-center">
-                <Button onClick={start}>Start</Button>
-                <DialogTrigger asChild>
-                    <Button>End/Split</Button>
-                </DialogTrigger>
-                <Button onClick={cancel}>Cancel</Button>
-            </div>
-        </div>
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Event</DialogTitle>
-                {/* <DialogDescription>
-                    This action cannot be undone. This will permanently delete your account
-                    and remove your data from our servers.
-                </DialogDescription> */}
-            </DialogHeader>
-            <form onSubmit={form.handleSubmit(submission, onSubmitInvalid)} className="flex flex-col gap-4">
-                {/* Submit & restart button */}
-                <DialogClose asChild>
-                    <Button type="submit" value="split"></Button>
-                </DialogClose>
-                {/* Columns */}
-                <Columns fieldsToEnter={fieldsToEnter} form={form} />
-                {/* Quick actions */}
-                {/* Tags */}
-                {/* Descriptors */}
-                {/* Submit button */}
-                <DialogClose asChild>
+    return (
+        <div>
+            {
+                startTime ? <form onSubmit={form.handleSubmit(submission, onSubmitInvalid)} className="flex flex-col gap-4">
+                    <Button disabled={startTime === undefined} onClick={cancel}>Cancel</Button>
+                    {/* Submit & restart button */}
+                    <Button type="submit" value="split">Submit & Restart</Button>
+                    {/* Columns */}
+                    <Columns fieldsToEnter={fieldsToEnter} form={form} />
+                    {/* Quick actions */}
+                    {/* Tags */}
+                    {/* Descriptors */}
+                    {/* Submit button */}
                     <Button type="submit">Submit</Button>
-                </DialogClose>
-            </form>
-        </DialogContent>
-    </Dialog>
+                </form> : <div className="flex flex-col items-center">
+                    <p>{startTime ? startTime?.toLocaleString() : "No start time."}</p>
+                    <div className="flex flex-row justify-center">
+                        <Button onClick={start}>Start</Button>
+                        {/* <Button disabled={!startTime} onClick={() => {
+                            // @TODO do not hardcode key
+                            window.location.href = `?Start Time=${startTime?.toISOString()}`;
+                        }}>End/Split</Button> */}
+                        {/* <Button disabled={startTime === undefined} onClick={cancel}>Cancel</Button> */}
+                    </div> </div>
+            }
+        </div>
+    )
 }
