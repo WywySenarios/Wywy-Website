@@ -37,12 +37,20 @@ export interface DatabaseInfo {
     tables: Array<TableInfo>
 }
 
+export interface DescriptorInfo {
+    name: string
+    schema: Array<DataColumn>
+}
+
 export interface TableInfo {
     tableName: string,
-    read: bool,
-    write: bool,
     entrytype: "form" | "timer",
+    read: boolean,
+    write: boolean,
+    comments: boolean,
+    tagging: boolean,
     schema: Array<DataColumn>
+    descriptors: Array<DescriptorInfo>
 }
 
 // look at the restrictions for different entry types
