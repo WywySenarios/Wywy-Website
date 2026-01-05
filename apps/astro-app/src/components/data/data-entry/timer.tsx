@@ -6,6 +6,7 @@ import { Columns } from "@/components/data/data-entry"
 import { useForm, type SubmitErrorHandler, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import type { Interface } from "readline";
 
 export function TimerForm({
     fieldsToEnter,
@@ -76,20 +77,25 @@ export function TimerForm({
     const csrftoken = getCookie("csrftoken");
     // END - CSRF token
 
-    function start() {
-        if (startTime !== undefined) return
-        let newTime: Date = new Date(Date.now());
-        console.log(newTime)
-        let newTimeISO: string = newTime.toISOString()
-        newTimeISO = newTimeISO.substring(0, newTimeISO.length - 1)
-
-        // store the new time in the cache
-        // @TODO don't hardcode start_time
+    function cache() {
+        interface outputType {
+            "Start Time"?: string
+            "End Time"?: string
+        }
+        let output: outputType = {}
+        // stringify the two dates if possible
+        if (startTime) {
+            output["Start Time"] = `'${startTime.toISOString().slice(0, -1)}'`;
+        }
+        if (endTime) {
+            output["End Time"] = `'${endTime.toISOString().slice(0, -1)}'`;
+        }
+        
+        // store values in cache
+        // @TODO don't hardcode start_time & end_time
         fetch(`${dbURL}/cache/${databaseName}/${tableName}`, {
             method: "POST",
-            body: JSON.stringify({
-                "Start Time": `'${newTimeISO}'`
-            }),
+            body: JSON.stringify({output}),
             mode: "cors",
             credentials: "include",
             headers: {
@@ -97,9 +103,13 @@ export function TimerForm({
                 "X-CSRFToken": csrftoken,
             }
         })
+    }
 
-        // reload the component with the correct start time
-        setStartTime(newTime)
+    useEffect(cache, [startTime, endTime]);
+
+    function start() {
+        if (startTime !== undefined) return
+        setStartTime(new Date(Date.now()))
     }
 
     /**
@@ -107,34 +117,7 @@ export function TimerForm({
      */
     function split() {
         // record the current time
-        let newEndTime: Date = new Date(Date.now());
-
-        // stringify the two dates
-        let startTimeISO: string = (startTime as Date).toISOString();
-        let endTimeISO: string = newEndTime.toISOString();
-        startTimeISO = startTimeISO.substring(0, startTimeISO.length - 1)
-        endTimeISO = endTimeISO.substring(0, endTimeISO.length - 1)
-        
-
-
-        // store values in cache
-        // @TODO don't hardcode start_time & end_time
-        fetch(`${dbURL}/cache/${databaseName}/${tableName}`, {
-            method: "POST",
-            body: JSON.stringify({
-                "Start Time": `'${startTimeISO}'`,
-                "End Time": `'${endTimeISO}'`
-            }),
-            mode: "cors",
-            credentials: "include",
-            headers: {
-                "Content-type": "application/json; charset=UTF-8",
-                "X-CSRFToken": csrftoken,
-            }
-        })
-
-        // reload the component with the correct start time
-        setEndTime(newEndTime);
+        setEndTime(new Date(Date.now()));
         const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(fieldsToEnter, databaseName, tableName, dbURL)
         setForm(form);
         setOnSubmit(onSubmit);
@@ -143,18 +126,8 @@ export function TimerForm({
 
     function cancel() {
         // empty the cache (store an empty object)
-        fetch(`${dbURL}/cache/${databaseName}/${tableName}`, {
-            method: "POST",
-            body: JSON.stringify({}),
-            mode: "cors",
-            credentials: "include",
-            headers: {
-                "Content-type": "application/json; charset=UTF-8",
-                "X-CSRFToken": csrftoken,
-            }
-        })
-
-        setStartTime(undefined)
+        setStartTime(undefined);
+        setEndTime(undefined);
     }
 
     return (
