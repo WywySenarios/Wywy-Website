@@ -124,6 +124,10 @@ export function TimerForm({
         setOnSubmitInvalid(onSubmitInvalid);
     }
 
+    function cancelSplit() {
+        setEndTime(undefined);
+    }
+
     function cancel() {
         // empty the cache (store an empty object)
         setStartTime(undefined);
@@ -134,7 +138,7 @@ export function TimerForm({
         <div>
             {
                 endTime ? <form onSubmit={form.handleSubmit(submission, onSubmitInvalid)} className="flex flex-col gap-4">
-                    <Button disabled={startTime === undefined} onClick={cancel}>Cancel</Button>
+                    <Button disabled={startTime === undefined} onClick={cancelSplit}>Cancel</Button>
                     {/* Submit & restart button */}
                     <Button type="submit" value="split">Submit & Restart</Button>
                     {/* Columns */}
