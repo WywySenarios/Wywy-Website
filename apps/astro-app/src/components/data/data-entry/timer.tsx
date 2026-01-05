@@ -19,6 +19,7 @@ export function TimerForm({
     dbURL: string
 }) {
     const [startTime, setStartTime] = useState<Date | undefined>(undefined);
+    const [endTime, setEndTime] = useState<Date | undefined>(undefined);
     const [form, setForm] = useState<UseFormReturn<{
         [x: string]: any;
     }, any, {
@@ -42,6 +43,11 @@ export function TimerForm({
                     let value: string = body["Start Time"].substring(1, body["Start Time"].length - 1)
                     let newDate: Date = new Date(Date.parse(value));
                     if (!isNaN(newDate.getTime())) setStartTime(newDate);
+                }
+                if ("End Time" in body && body["End Time"] !== undefined && typeof body["End Time"] === "string" && body["End Time"].length > 2) {
+                    let value: string = body["End Time"].substring(1, body["End Time"].length - 1)
+                    let newDate: Date = new Date(Date.parse(value));
+                    if (!isNaN(newDate.getTime())) setEndTime(newDate);
                 }
             })
         })
@@ -94,6 +100,41 @@ export function TimerForm({
 
         // reload the component with the correct start time
         setStartTime(newTime)
+    }
+
+    /**
+     * Splits the time & records the start & end time in the cache.
+     */
+    function split() {
+        // record the current time
+        let newEndTime: Date = new Date(Date.now());
+
+        // stringify the two dates
+        let startTimeISO: string = (startTime as Date).toISOString();
+        let endTimeISO: string = newEndTime.toISOString();
+        startTimeISO = startTimeISO.substring(0, startTimeISO.length - 1)
+        endTimeISO = endTimeISO.substring(0, endTimeISO.length - 1)
+        
+
+
+        // store values in cache
+        // @TODO don't hardcode start_time & end_time
+        fetch(`${dbURL}/cache/${databaseName}/${tableName}`, {
+            method: "POST",
+            body: JSON.stringify({
+                "Start Time": `'${startTimeISO}'`,
+                "End Time": `'${endTimeISO}'`
+            }),
+            mode: "cors",
+            credentials: "include",
+            headers: {
+                "Content-type": "application/json; charset=UTF-8",
+                "X-CSRFToken": csrftoken,
+            }
+        })
+
+        // reload the component with the correct start time
+        setEndTime(newEndTime);
         const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(fieldsToEnter, databaseName, tableName, dbURL)
         setForm(form);
         setOnSubmit(onSubmit);
@@ -119,7 +160,7 @@ export function TimerForm({
     return (
         <div>
             {
-                startTime ? <form onSubmit={form.handleSubmit(submission, onSubmitInvalid)} className="flex flex-col gap-4">
+                endTime ? <form onSubmit={form.handleSubmit(submission, onSubmitInvalid)} className="flex flex-col gap-4">
                     <Button disabled={startTime === undefined} onClick={cancel}>Cancel</Button>
                     {/* Submit & restart button */}
                     <Button type="submit" value="split">Submit & Restart</Button>
@@ -134,11 +175,8 @@ export function TimerForm({
                     <p>{startTime ? startTime?.toLocaleString() : "No start time."}</p>
                     <div className="flex flex-row justify-center">
                         <Button onClick={start}>Start</Button>
-                        {/* <Button disabled={!startTime} onClick={() => {
-                            // @TODO do not hardcode key
-                            window.location.href = `?Start Time=${startTime?.toISOString()}`;
-                        }}>End/Split</Button> */}
-                        {/* <Button disabled={startTime === undefined} onClick={cancel}>Cancel</Button> */}
+                        <Button disabled={!startTime} onClick={split}>End/Split</Button>
+                        <Button disabled={startTime === undefined} onClick={cancel}>Cancel</Button>
                     </div> </div>
             }
         </div>
