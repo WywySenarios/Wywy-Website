@@ -150,8 +150,7 @@ export function TimerForm({
                 </form> : <div className="flex flex-col items-center">
                     <p>{startTime ? startTime?.toLocaleString() : "No start time."}</p>
                     <div className="flex flex-row justify-center">
-                        <Button onClick={start}>Start</Button>
-                        <Button disabled={!startTime} onClick={split}>End/Split</Button>
+                        <Button onClick={startTime ? split : start}>{startTime ? "Split" : "Start"}</Button>
                         <Button disabled={startTime === undefined} onClick={cancel}>Cancel</Button>
                     </div>
                     </div>
