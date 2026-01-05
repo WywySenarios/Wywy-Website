@@ -1,6 +1,6 @@
 "use client"
 
-import type { DataColumn, TableInfo } from "@/env"
+import type { TableInfo } from "@/env"
 import type { JSX } from "astro/jsx-runtime"
 import { FormForm } from "@/components/data/data-entry/form"
 import { TimerForm } from "@/components/data/data-entry/timer"
@@ -10,26 +10,22 @@ import { TimerForm } from "@/components/data/data-entry/timer"
  * @param entrytype The entrytype of the form.
  * @param fieldsToEnter
  * @param databaseName The name of the database that this form gathers data for.
- * @param tableName The name of the table that this form gathers data for.
+ * @param tableInfo The 
  * @param dbURL The URL that the form will post to on submit.
  */
 export default function DataEntryForm({
-    entrytype,
-    fieldsToEnter,
     databaseName,
-    tableName,
+    tableInfo,
     dbURL
 }: {
-    entrytype: TableInfo["entrytype"],
-    fieldsToEnter: Array<DataColumn>,
     databaseName: string,
-    tableName: string,
+    tableInfo: TableInfo,
     dbURL: string
 }): JSX.Element {
-    switch (entrytype) {
+    switch (tableInfo.entrytype) {
         case "form":
-            return <FormForm fieldsToEnter={fieldsToEnter} databaseName={databaseName} tableName={tableName} dbURL={dbURL} />
+            return <FormForm databaseName={databaseName} tableInfo={tableInfo} dbURL={dbURL} />
         case "timer":
-            return <TimerForm fieldsToEnter={fieldsToEnter} databaseName={databaseName} tableName={tableName} dbURL={dbURL} />
+            return <TimerForm databaseName={databaseName} tableInfo={tableInfo} dbURL={dbURL} />
     }
 }

@@ -2,31 +2,29 @@
  * Helpers for form creation. Does anything that may universally apply to all forms of data entry.
  */
 import { zodResolver } from "@hookform/resolvers/zod"
-import type { DataColumn } from "@root/src/env"
-import { toSnakeCase } from "@root/src/utils"
+import type { TableInfo } from "@/env"
+import { toSnakeCase } from "@/utils"
 import { getFallbackValue, zodDatatypes, type zodPrimaryDatatypes } from "@root/src/utils/data"
 import type { ZodTypeAny } from "astro:schema"
-import type { JSXElementConstructor, ReactElement } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 
 /**
  * Creates a schema and two event handlers according to the supplied inputs, which are assumed to be good.
- * @param fieldsToEnter The table schema in the form of an array of DataColumns.
  * @param databaseName The name of the database containing the table whose schema is to be replicated.
- * @param tableName The name of the table whose schema is to be replicated.
+ * @param tableInfo The table full table schema.
  * @param dbURL The URL of the cache or database to POST to
  * @returns A zod schema, produced by `useForm`, a onSubmit handler, and a onSubmitInvalid handler.
  */
-export function createFormSchemaAndHandlers(fieldsToEnter: DataColumn[], databaseName: string, tableName: string, dbURL: string) {
+export function createFormSchemaAndHandlers(databaseName: string, tableInfo: TableInfo, dbURL: string) {
     // read the config and populate the zod schema
     let zodSchema: Record<string, ZodTypeAny> = {}
     // give Zod some default values to work with
     let defaultValues: Record<string, any> = {}
 
 
-    for (let columnInfo of fieldsToEnter) {
+    for (let columnInfo of tableInfo.schema) {
         // immediately ignore anything not needed on the form.
         // if (columnInfo.entrytype === "none") continue
 
@@ -61,7 +59,7 @@ export function createFormSchemaAndHandlers(fieldsToEnter: DataColumn[], databas
      */
     function onSubmit(values: z.infer<typeof formSchema>) {
         let formattedValues: Record<string, any> = {}
-        for (let field of fieldsToEnter) {
+        for (let field of tableInfo.schema) {
             // check the comments first
             if (values[field.name + "_comments"]) {
                 values[field.name + "_comments"] = `'${values[field.name + "_comments"]}'`;
@@ -87,7 +85,7 @@ export function createFormSchemaAndHandlers(fieldsToEnter: DataColumn[], databas
 
         // POST them to the SQL Receptionist!
         databaseName = toSnakeCase(databaseName);
-        tableName = toSnakeCase(tableName);
+        let tableName = toSnakeCase(tableInfo.tableName);
         console.log()
         console.log(`POSTING to: ${dbURL + "/" + databaseName + "/" + tableName}`)
         fetch(dbURL + "/" + databaseName + "/" + tableName, {

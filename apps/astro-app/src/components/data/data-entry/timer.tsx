@@ -1,4 +1,4 @@
-import type { DataColumn } from "@/env"
+import type { TableInfo } from "@/env"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react";
 import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
@@ -8,14 +8,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 export function TimerForm({
-    fieldsToEnter,
     databaseName,
-    tableName,
+    tableInfo,
     dbURL
 }: {
-    fieldsToEnter: Array<DataColumn>,
     databaseName: string,
-    tableName: string,
+    tableInfo: TableInfo,
     dbURL: string
 }) {
     const [startTime, setStartTime] = useState<Date | undefined>(undefined);
@@ -31,7 +29,7 @@ export function TimerForm({
 
     // initally try to GET the start time
     useEffect(() => {
-        fetch(`${dbURL}/cache/${databaseName}/${tableName}`, {
+        fetch(`${dbURL}/cache/${databaseName}/${tableInfo.tableName}`, {
             method: "GET",
             mode: "cors",
             credentials: "include",
@@ -92,7 +90,7 @@ export function TimerForm({
         
         // store values in cache
         // @TODO don't hardcode start_time & end_time
-        fetch(`${dbURL}/cache/${databaseName}/${tableName}`, {
+        fetch(`${dbURL}/cache/${databaseName}/${tableInfo.tableName}`, {
             method: "POST",
             body: JSON.stringify(output),
             mode: "cors",
@@ -117,7 +115,7 @@ export function TimerForm({
     function split() {
         // record the current time
         setEndTime(new Date(Date.now()));
-        const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(fieldsToEnter, databaseName, tableName, dbURL)
+        const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(databaseName, tableInfo, dbURL)
         setForm(form);
         setOnSubmit(onSubmit);
         setOnSubmitInvalid(onSubmitInvalid);
@@ -141,7 +139,7 @@ export function TimerForm({
                     {/* Submit & restart button */}
                     <Button type="submit" value="split">Submit & Restart</Button>
                     {/* Columns */}
-                    <Columns fieldsToEnter={fieldsToEnter} form={form} />
+                    <Columns fieldsToEnter={tableInfo.schema} form={form} />
                     {/* Quick actions */}
                     {/* Tags */}
                     {/* Descriptors */}
