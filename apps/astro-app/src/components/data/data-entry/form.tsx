@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 
 import type { TableInfo } from "@/env"
-import { createFormSchemaAndHandlers } from "@/components/data/form-helper"
+import { createFormSchemaAndHandlers, type OnSubmitInvalid } from "@/components/data/form-helper"
 import { Columns } from "@/components/data/data-entry"
 
 export function FormForm({
@@ -18,7 +18,7 @@ export function FormForm({
   const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(databaseName, tableInfo, dbURL)
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit, onSubmitInvalid)} className="flex flex-col gap-4">
+    <form onSubmit={form.handleSubmit(onSubmit, onSubmitInvalid as OnSubmitInvalid)} className="flex flex-col gap-4">
       <Columns fieldsToEnter={tableInfo.schema} form={form} />
       <Button type="submit">Submit</Button>
     </form>

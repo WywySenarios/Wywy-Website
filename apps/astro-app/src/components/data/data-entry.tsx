@@ -1,14 +1,14 @@
 import type { JSX } from "astro/jsx-runtime";
 import { FormElement } from "@/components/data/input-elements";
 import type { DataColumn, TableInfo } from "@/env";
-import type { UseFormReturn } from "react-hook-form";
+import type { Form } from "@/components/data/form-helper";
 
 export function Columns({
     fieldsToEnter,
     form
 }: {
     fieldsToEnter: Array<DataColumn>,
-    form: UseFormReturn<{ [x: string]: any; }>,
+    form: Form,
 }): JSX.Element {
     return (
         <div>

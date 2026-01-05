@@ -45,13 +45,13 @@ export function FormElement({
         <div className="rounded-lg border p-5 shadow-md" key={columnInfo.name}>
             <Controller
                 control={form.control}
-                name={columnInfo.name}
+                name={`data.${columnInfo.name}`}
                 key={columnInfo.name + "-field"}
                 render={({ field }) => <InputElement field={field} columnInfo={columnInfo} />}
             />
             {columnInfo.comments ? <Controller
                 control={form.control}
-                name={columnInfo.name + "_comments"}
+                name={`data.${columnInfo.name}_comments`}
                 key={columnInfo.name + "_comments-field"}
                 render={({ field }) => <Field>
                     <div className="w-full flex flex-col items-center gap-4">

@@ -6,9 +6,19 @@ import type { TableInfo } from "@/env"
 import { toSnakeCase } from "@/utils"
 import { getFallbackValue, zodDatatypes, type zodPrimaryDatatypes } from "@root/src/utils/data"
 import type { ZodTypeAny } from "astro:schema"
-import { useForm } from "react-hook-form"
+import { useForm, type SubmitErrorHandler, type UseFormReturn } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
+
+export interface FormSchema {
+    data: {
+        [x: string]: any;
+    }
+}
+
+export type Form = UseFormReturn<FormSchema>
+
+export type OnSubmitInvalid = SubmitErrorHandler<FormSchema>
 
 /**
  * Creates a schema and two event handlers according to the supplied inputs, which are assumed to be good.
@@ -46,10 +56,14 @@ export function createFormSchemaAndHandlers(databaseName: string, tableInfo: Tab
         if ("max" in columnInfo) { zodSchema[columnInfo.name] = zodSchema[columnInfo.name].max(columnInfo.max) }
     }
 
-    const formSchema = z.object(zodSchema)
-    const form = useForm<z.infer<typeof formSchema>>({
+    const formSchema = z.object({
+        data: z.object(zodSchema),
+    })
+    const form: Form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues,
+        defaultValues: {
+            data: defaultValues
+        },
     })
 
     /**
@@ -61,12 +75,12 @@ export function createFormSchemaAndHandlers(databaseName: string, tableInfo: Tab
         let formattedValues: Record<string, any> = {}
         for (let field of tableInfo.schema) {
             // check the comments first
-            if (values[field.name + "_comments"]) {
-                values[field.name + "_comments"] = `'${values[field.name + "_comments"]}'`;
+            if (values.data[field.name + "_comments"]) {
+                values.data[field.name + "_comments"] = `'${values.data[field.name + "_comments"]}'`;
             }
 
             // check if the user really wanted to submit that or not
-            if (!values[field.name]) {
+            if (!values.data[field.name]) {
                 continue
             }
 
@@ -78,7 +92,7 @@ export function createFormSchemaAndHandlers(databaseName: string, tableInfo: Tab
                 case "date":
                 case "time":
                 case "timestamp":
-                    values[field.name] = "'" + values[field.name] + "'"
+                    values.data[field.name] = "'" + values.data[field.name] + "'"
                     break;
             }
         }
@@ -113,8 +127,8 @@ export function createFormSchemaAndHandlers(databaseName: string, tableInfo: Tab
 
     function onSubmitInvalid(values: z.infer<typeof formSchema>) {
         // Create toast(s) to let to user know what went wrong.
-        for (let erroringField in values) {
-            toast(erroringField + ": " + values[erroringField]["message"])
+        for (let erroringField in values.data) {
+            toast(erroringField + ": " + values.data[erroringField]["message"])
         }
     }
 

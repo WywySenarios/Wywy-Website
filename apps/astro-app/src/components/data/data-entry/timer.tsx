@@ -1,9 +1,9 @@
 import type { TableInfo } from "@/env"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react";
-import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
+import { createFormSchemaAndHandlers, type Form, type OnSubmitInvalid } from "@/components/data/form-helper";
 import { Columns } from "@/components/data/data-entry"
-import { useForm, type SubmitErrorHandler, type UseFormReturn } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -18,13 +18,9 @@ export function TimerForm({
 }) {
     const [startTime, setStartTime] = useState<Date | undefined>(undefined);
     const [endTime, setEndTime] = useState<Date | undefined>(undefined);
-    const [form, setForm] = useState<UseFormReturn<{
-        [x: string]: any;
-    }, any, {
-        [x: string]: any;
-    }>>(useForm({ resolver: zodResolver(z.object({})) }));
+    const [form, setForm] = useState<Form>(useForm({ resolver: zodResolver(z.object({data: z.object({})})) }));
     const [onSubmit, setOnSubmit] = useState<Function>(() => { });
-    const [onSubmitInvalid, setOnSubmitInvalid] = useState<SubmitErrorHandler<{ [x: string]: any; }>>(() => { });
+    const [onSubmitInvalid, setOnSubmitInvalid] = useState<OnSubmitInvalid>(() => { });
     //  { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(fieldsToEnter, databaseName, tableName, dbURL)
 
     // initally try to GET the start time
@@ -118,7 +114,7 @@ export function TimerForm({
         const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(databaseName, tableInfo, dbURL)
         setForm(form);
         setOnSubmit(onSubmit);
-        setOnSubmitInvalid(onSubmitInvalid);
+        setOnSubmitInvalid(onSubmitInvalid as OnSubmitInvalid);
     }
 
     function cancelSplit() {
