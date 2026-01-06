@@ -146,11 +146,11 @@ data:
             datatype: timestamp
             entrytype: calendar time
 
-          - name: Duration
-            invertible: true
-            datatype: interval
-            entrytype: duration textbox
-            description: An estimate related to the event length. Positive values represent how long the event occured for. Negative values represent how long the event did not actively occur inside the respective time interval.
+          # - name: Duration
+          #   invertible: true
+          #   datatype: interval
+          #   entrytype: duration textbox
+          #   description: An estimate related to the event length. Positive values represent how long the event occured for. Negative values represent how long the event did not actively occur inside the respective time interval.
         descriptors:
           - name: Maintenance
             schema:
@@ -158,7 +158,7 @@ data:
                 datatype: enum
                 entrytype: search-select
                 values:
-                  - # subject to presumably intense debate
+                  -  # subject to presumably intense debate
 
           - name: Bathroom
             schema:
