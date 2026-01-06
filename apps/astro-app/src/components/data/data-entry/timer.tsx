@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button"
 import { useEffect, useState, type JSX } from "react";
 import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
 import { Columns } from "@/components/data/data-entry"
+import type z from "zod";
+import { toast } from "sonner";
 
 // child component to circumvent hook rules
 function TimerFormForm({
@@ -18,11 +20,9 @@ function TimerFormForm({
     tableInfo: TableInfo,
     dbURL: string
 }) {
-    const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(databaseName, tableInfo, dbURL)
+    const { form, formSchema, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(databaseName, tableInfo, dbURL)
 
-    function submission(values: {
-        [x: string]: any;
-    },
+    function submission(values: z.infer<typeof formSchema>,
         event?: React.BaseSyntheticEvent): void {
         const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
         const action = submitter?.getAttribute("value");
@@ -75,7 +75,6 @@ export function TimerForm({
             headers: {}
         }).then((res: Response) => {
             res.json().then((body: object) => {
-                console.log(body)
                 if ("Start Time" in body && body["Start Time"] !== undefined && typeof body["Start Time"] === "string" && body["Start Time"].length > 2) {
                     let value: string = body["Start Time"].substring(1, body["Start Time"].length - 1)
                     let newDate: Date = new Date(Date.parse(value));
@@ -123,16 +122,18 @@ export function TimerForm({
         
         // store values in cache
         // @TODO don't hardcode start_time & end_time
-        fetch(`${dbURL}/cache/${databaseName}/${tableInfo.tableName}`, {
-            method: "POST",
-            body: JSON.stringify(output),
-            mode: "cors",
-            credentials: "include",
-            headers: {
-                "Content-type": "application/json; charset=UTF-8",
-                "X-CSRFToken": csrftoken,
-            }
-        })
+        if (csrftoken)
+            fetch(`${dbURL}/cache/${databaseName}/${tableInfo.tableName}`, {
+                method: "POST",
+                body: JSON.stringify(output),
+                mode: "cors",
+                credentials: "include",
+                headers: {
+                    "Content-type": "application/json; charset=UTF-8",
+                    "X-CSRFToken": csrftoken,
+                }
+            })
+        else toast("Something went wrong when trying to store the start or end time.")
     }
 
     function start() {

@@ -4,24 +4,10 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { DescriptorInfo, TableInfo } from "@/env"
 import { toSnakeCase } from "@/utils"
-import { getFallbackValue, zodDatatypes, type zodPrimaryDatatypes } from "@root/src/utils/data"
-import { useForm, type SubmitErrorHandler, type UseFormReturn } from "react-hook-form"
+import { getFallbackValue, zodDatatypes } from "@root/src/utils/data"
+import { useForm, type FieldErrors, type UseFormReturn } from "react-hook-form"
 import { toast } from "sonner"
-import { z, ZodArray, ZodObject, type AnyZodObject, type ZodTypeAny } from "zod"
-
-export interface FormSchema {
-    data: {
-        [x: string]: any;
-    }
-    tags?: Array<string>
-    descriptors?: {
-        [x: string]: Array<{[x: string]: any}>
-    }
-}
-
-export type Form = UseFormReturn<FormSchema>
-
-export type OnSubmitInvalid = SubmitErrorHandler<FormSchema>
+import { z, ZodArray, type AnyZodObject, type ZodTypeAny } from "zod"
 
 function populateZodSchema(itemInfo: TableInfo | DescriptorInfo, schema: Record<string, ZodTypeAny>, defaultValues: Record<string, any>) {
     for (let columnInfo of itemInfo.schema) {
@@ -72,7 +58,7 @@ export function createFormSchemaAndHandlers(databaseName: string, tableInfo: Tab
             populateZodSchema(descriptor, thisSchema, thisDefaultValues)
 
             descriptorSchema[descriptor.name] = z.array(z.object(thisSchema))
-            descriptorDefaultValues[descriptor.name] = []
+            // descriptorDefaultValues[descriptor.name] = []
         }
     }
 
@@ -152,17 +138,24 @@ export function createFormSchemaAndHandlers(databaseName: string, tableInfo: Tab
         })
     }
 
-    function onSubmitInvalid(values: z.infer<typeof formSchema>) {
+    function onSubmitInvalid(errors: FieldErrors<z.infer<typeof formSchema>>): void {
         // Create toast(s) to let to user know what went wrong.
-        // @TODO raise issues for descriptors and tags when needed
-        console.log(values)
-        for (let erroringField in values.data) {
-            toast(erroringField + ": " + values.data[erroringField]["message"])
-        }
+        // @TODO fix type errors
+        console.log(errors)
+        for (const sectionName in errors)
+            
+            //@ts-ignore
+            for (const fieldName in errors[sectionName]) {
+                //@ts-ignore
+                const error = errors[sectionName][fieldName];
+
+                if (error?.message) toast(`${sectionName}: ${error.message}`);
+            }
     }
 
     return {
         form,
+        formSchema,
         onSubmit,
         onSubmitInvalid
     }
