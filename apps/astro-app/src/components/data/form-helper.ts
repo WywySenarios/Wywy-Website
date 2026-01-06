@@ -81,12 +81,12 @@ export function createFormSchemaAndHandlers(databaseName: string, tableInfo: Tab
         ...(tableInfo.tagging) && { tags: z.array(z.string())},
         ...(tableInfo.descriptors && descriptorSchema) && {descriptors: z.object(descriptorSchema)},
     })
-    const form: Form = useForm<z.infer<typeof formSchema>>({
+    const form: UseFormReturn<z.infer<typeof formSchema>> = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             data: dataDefaultValues,
             ...(tableInfo.tagging) && { tags: []},
-            ...(tableInfo.descriptors && descriptorSchema) && {descriptors: {}},
+            ...(tableInfo.descriptors && descriptorSchema) && {descriptors: descriptorDefaultValues},
         },
     })
 
@@ -96,11 +96,14 @@ export function createFormSchemaAndHandlers(databaseName: string, tableInfo: Tab
      * @param values The raw values the user inputted into the form.
      */
     function onSubmit(values: z.infer<typeof formSchema>) {
-        let formattedValues: Record<string, any> = {}
+        console.log("GRR")
+        let formattedValues: Record<string, any> = {
+            data: {}
+        }
         for (let field of tableInfo.schema) {
             // check the comments first
             if (values.data[field.name + "_comments"]) {
-                values.data[field.name + "_comments"] = `'${values.data[field.name + "_comments"]}'`;
+                formattedValues.data[field.name + "_comments"] = `'${values.data[field.name + "_comments"]}'`;
             }
 
             // check if the user really wanted to submit that or not
@@ -116,7 +119,7 @@ export function createFormSchemaAndHandlers(databaseName: string, tableInfo: Tab
                 case "date":
                 case "time":
                 case "timestamp":
-                    values.data[field.name] = "'" + values.data[field.name] + "'"
+                    formattedValues.data[field.name] = "'" + values.data[field.name] + "'"
                     break;
             }
         }
@@ -151,9 +154,10 @@ export function createFormSchemaAndHandlers(databaseName: string, tableInfo: Tab
 
     function onSubmitInvalid(values: z.infer<typeof formSchema>) {
         // Create toast(s) to let to user know what went wrong.
+        // @TODO raise issues for descriptors and tags when needed
+        console.log(values)
         for (let erroringField in values.data) {
             toast(erroringField + ": " + values.data[erroringField]["message"])
-            console.log(erroringField + ": " + values.data[erroringField]["message"])
         }
     }
 
