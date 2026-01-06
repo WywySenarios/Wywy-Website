@@ -1,11 +1,54 @@
 import type { TableInfo } from "@/env"
 import { Button } from "@/components/ui/button"
-import { useEffect, useState } from "react";
-import { createFormSchemaAndHandlers, type Form, type OnSubmitInvalid } from "@/components/data/form-helper";
+import { useEffect, useState, type JSX } from "react";
+import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
 import { Columns } from "@/components/data/data-entry"
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+
+function TimerFormForm({
+    start,
+    cancelButton,
+    databaseName,
+    tableInfo,
+    dbURL
+}: {
+    start: Function,
+    cancelButton: JSX.Element
+    databaseName: string,
+    tableInfo: TableInfo,
+    dbURL: string
+}) {
+    const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(databaseName, tableInfo, dbURL)
+    // setForm(form);
+    // setOnSubmit(onSubmit);
+    // setOnSubmitInvalid(onSubmitInvalid as OnSubmitInvalid);
+
+    function submission(values: {
+        [x: string]: any;
+    },
+        event?: React.BaseSyntheticEvent): void {
+        const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
+        const action = submitter?.getAttribute("value");
+
+        onSubmit(values);
+
+        if (action === "split") start()
+    }
+
+    return (
+        <form onSubmit={form.handleSubmit(submission, onSubmitInvalid)} className="flex flex-col gap-4">
+                    {cancelButton}
+                    {/* Submit & restart button */}
+                    <Button type="submit" value="split">Submit & Restart</Button>
+                    {/* Columns */}
+                    <Columns fieldsToEnter={tableInfo.schema} form={form} />
+                    {/* Quick actions */}
+                    {/* Tags */}
+                    {/* Descriptors */}
+                    {/* Submit button */}
+                    <Button type="submit">Submit</Button>
+                </form>
+    )
+}
 
 export function TimerForm({
     databaseName,
@@ -18,11 +61,9 @@ export function TimerForm({
 }) {
     const [startTime, setStartTime] = useState<Date | undefined>(undefined);
     const [endTime, setEndTime] = useState<Date | undefined>(undefined);
-    const [form, setForm] = useState<Form>(useForm({ resolver: zodResolver(z.object({data: z.object({})})) }));
-    const [onSubmit, setOnSubmit] = useState<Function>(() => { });
-    const [onSubmitInvalid, setOnSubmitInvalid] = useState<OnSubmitInvalid>(() => { });
-    //  { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(fieldsToEnter, databaseName, tableName, dbURL)
-
+    // const [form, setForm] = useState<Form>(useForm({ resolver: zodResolver(z.object({data: z.object({})})) }));
+    // const [onSubmit, setOnSubmit] = useState<Function>(() => { });
+    // const [onSubmitInvalid, setOnSubmitInvalid] = useState<OnSubmitInvalid>(() => { });
     // initally try to GET the start time
     useEffect(() => {
         fetch(`${dbURL}/cache/${databaseName}/${tableInfo.tableName}`, {
@@ -47,17 +88,7 @@ export function TimerForm({
         })
     }, []);
 
-    function submission(values: {
-        [x: string]: any;
-    },
-        event?: React.BaseSyntheticEvent): void {
-        const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
-        const action = submitter?.getAttribute("value");
-
-        onSubmit(values);
-
-        if (action === "split") start()
-    }
+    useEffect(cache, [startTime, endTime]);
 
     // START - CSRF token
     function getCookie(name: string) {
@@ -98,8 +129,6 @@ export function TimerForm({
         })
     }
 
-    useEffect(cache, [startTime, endTime]);
-
     function start() {
         if (startTime !== undefined) return
         setStartTime(new Date(Date.now()))
@@ -109,12 +138,7 @@ export function TimerForm({
      * Splits the time & records the start & end time in the cache.
      */
     function split() {
-        // record the current time
         setEndTime(new Date(Date.now()));
-        const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(databaseName, tableInfo, dbURL)
-        setForm(form);
-        setOnSubmit(onSubmit);
-        setOnSubmitInvalid(onSubmitInvalid as OnSubmitInvalid);
     }
 
     function cancelSplit() {
@@ -130,18 +154,7 @@ export function TimerForm({
     return (
         <div>
             {
-                endTime ? <form onSubmit={form.handleSubmit(submission, onSubmitInvalid)} className="flex flex-col gap-4">
-                    <Button disabled={startTime === undefined} onClick={cancelSplit}>Cancel</Button>
-                    {/* Submit & restart button */}
-                    <Button type="submit" value="split">Submit & Restart</Button>
-                    {/* Columns */}
-                    <Columns fieldsToEnter={tableInfo.schema} form={form} />
-                    {/* Quick actions */}
-                    {/* Tags */}
-                    {/* Descriptors */}
-                    {/* Submit button */}
-                    <Button type="submit">Submit</Button>
-                </form> : <div className="flex flex-col items-center">
+                endTime ? <TimerFormForm start={start} cancelButton={<Button disabled={startTime === undefined} onClick={cancelSplit}>Cancel</Button>} databaseName={databaseName} tableInfo={tableInfo} dbURL={dbURL} /> : <div className="flex flex-col items-center">
                     <p>{startTime ? startTime?.toLocaleString() : "No start time."}</p>
                     <div className="flex flex-row justify-center">
                         <Button onClick={startTime ? split : start}>{startTime ? "Split" : "Start"}</Button>
