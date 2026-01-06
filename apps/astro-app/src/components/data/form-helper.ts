@@ -2,23 +2,50 @@
  * Helpers for form creation. Does anything that may universally apply to all forms of data entry.
  */
 import { zodResolver } from "@hookform/resolvers/zod"
-import type { TableInfo } from "@/env"
+import type { DescriptorInfo, TableInfo } from "@/env"
 import { toSnakeCase } from "@/utils"
 import { getFallbackValue, zodDatatypes, type zodPrimaryDatatypes } from "@root/src/utils/data"
-import type { ZodTypeAny } from "astro:schema"
 import { useForm, type SubmitErrorHandler, type UseFormReturn } from "react-hook-form"
 import { toast } from "sonner"
-import { z } from "zod"
+import { z, ZodArray, ZodObject, type AnyZodObject, type ZodTypeAny } from "zod"
 
 export interface FormSchema {
     data: {
         [x: string]: any;
+    }
+    tags?: Array<string>
+    descriptors?: {
+        [x: string]: Array<{[x: string]: any}>
     }
 }
 
 export type Form = UseFormReturn<FormSchema>
 
 export type OnSubmitInvalid = SubmitErrorHandler<FormSchema>
+
+function populateZodSchema(itemInfo: TableInfo | DescriptorInfo, schema: Record<string, ZodTypeAny>, defaultValues: Record<string, any>) {
+    for (let columnInfo of itemInfo.schema) {
+        // immediately ignore anything not needed on the form.
+        // if (columnInfo.entrytype === "none") continue
+
+        // throw things into the schema, adding in restrictions as necessary
+        // @TODO add restrictions
+        schema[columnInfo.name] = zodDatatypes[columnInfo.datatype]
+        // find a default value and create the form element
+        defaultValues[columnInfo.name] = columnInfo.defaultValue ?? getFallbackValue(columnInfo.datatype)
+
+        // update schema if there should be comments for this column
+        // @TODO add length restriction
+        schema[`${columnInfo.name}_comments`] = z.string().optional()
+        defaultValues[`${columnInfo.name}_comments`] = ""
+
+        // look for any restrictions
+        // @ts-ignore thanks to the ColumnData type, this is guarenteed to be OK.
+        if ("min" in columnInfo) { schema[columnInfo.name] = schema[columnInfo.name].min(columnInfo.min) }
+        // @ts-ignore thanks to the ColumnData type, this is guarenteed to be OK.
+        if ("max" in columnInfo) { schema[columnInfo.name] = schema[columnInfo.name].max(columnInfo.max) }
+    }
+}
 
 /**
  * Creates a schema and two event handlers according to the supplied inputs, which are assumed to be good.
@@ -28,41 +55,38 @@ export type OnSubmitInvalid = SubmitErrorHandler<FormSchema>
  * @returns A zod schema, produced by `useForm`, a onSubmit handler, and a onSubmitInvalid handler.
  */
 export function createFormSchemaAndHandlers(databaseName: string, tableInfo: TableInfo, dbURL: string) {
-    // read the config and populate the zod schema
-    let zodSchema: Record<string, ZodTypeAny> = {}
-    // give Zod some default values to work with
-    let defaultValues: Record<string, any> = {}
+    // direct column related
+    let dataSchema: Record<string, ZodTypeAny> = {}
+    let dataDefaultValues: Record<string, any> = {}
+    
+    populateZodSchema(tableInfo, dataSchema, dataDefaultValues)
 
+    // descriptors
+    let descriptorSchema: Record<string, ZodArray<AnyZodObject>> = {}
+    let descriptorDefaultValues: Record<string, Array<Object>> = {}
+    if (tableInfo.tagging) {
+        for (let descriptor of tableInfo.descriptors) {
+            let thisSchema: Record<string, ZodTypeAny> = {}
+            let thisDefaultValues: Record<string, any> = {}
 
-    for (let columnInfo of tableInfo.schema) {
-        // immediately ignore anything not needed on the form.
-        // if (columnInfo.entrytype === "none") continue
+            populateZodSchema(descriptor, thisSchema, thisDefaultValues)
 
-        // throw things into the schema, adding in restrictions as necessary
-        // @TODO add restrictions
-        zodSchema[columnInfo.name] = zodDatatypes[columnInfo.datatype as zodPrimaryDatatypes]
-        // find a default value and create the form element
-        defaultValues[columnInfo.name] = columnInfo.defaultValue ?? getFallbackValue(columnInfo.datatype)
-
-        // update schema if there should be comments for this column
-        // @TODO add length restriction
-        zodSchema[columnInfo.name + "_comments"] = z.string().optional()
-        defaultValues[columnInfo.name + "_comments"] = undefined
-
-        // look for any restrictions
-        // @ts-ignore thanks to the ColumnData type, this is guarenteed to be OK.
-        if ("min" in columnInfo) { zodSchema[columnInfo.name] = zodSchema[columnInfo.name].min(columnInfo.min) }
-        // @ts-ignore thanks to the ColumnData type, this is guarenteed to be OK.
-        if ("max" in columnInfo) { zodSchema[columnInfo.name] = zodSchema[columnInfo.name].max(columnInfo.max) }
+            descriptorSchema[descriptor.name] = z.array(z.object(thisSchema))
+            descriptorDefaultValues[descriptor.name] = []
+        }
     }
 
     const formSchema = z.object({
-        data: z.object(zodSchema),
+        data: z.object(dataSchema),
+        ...(tableInfo.tagging) && { tags: z.array(z.string())},
+        ...(tableInfo.descriptors && descriptorSchema) && {descriptors: z.object(descriptorSchema)},
     })
     const form: Form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            data: defaultValues
+            data: dataDefaultValues,
+            ...(tableInfo.tagging) && { tags: []},
+            ...(tableInfo.descriptors && descriptorSchema) && {descriptors: {}},
         },
     })
 
@@ -129,6 +153,7 @@ export function createFormSchemaAndHandlers(databaseName: string, tableInfo: Tab
         // Create toast(s) to let to user know what went wrong.
         for (let erroringField in values.data) {
             toast(erroringField + ": " + values.data[erroringField]["message"])
+            console.log(erroringField + ": " + values.data[erroringField]["message"])
         }
     }
 
