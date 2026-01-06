@@ -4,6 +4,7 @@ import { useEffect, useState, type JSX } from "react";
 import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
 import { Columns } from "@/components/data/data-entry"
 
+// child component to circumvent hook rules
 function TimerFormForm({
     start,
     cancelButton,
@@ -18,9 +19,6 @@ function TimerFormForm({
     dbURL: string
 }) {
     const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(databaseName, tableInfo, dbURL)
-    // setForm(form);
-    // setOnSubmit(onSubmit);
-    // setOnSubmitInvalid(onSubmitInvalid as OnSubmitInvalid);
 
     function submission(values: {
         [x: string]: any;
@@ -50,6 +48,12 @@ function TimerFormForm({
     )
 }
 
+/**
+ * Timer based form component. Expects "Start Time" & "End Time" columns to be present.
+ * @param databaseName The name of the database that this form gathers data for.
+ * @param tableInfo The full table schema.
+ * @param dbURL The URL that the form will post to on submit.
+ */
 export function TimerForm({
     databaseName,
     tableInfo,
@@ -61,9 +65,7 @@ export function TimerForm({
 }) {
     const [startTime, setStartTime] = useState<Date | undefined>(undefined);
     const [endTime, setEndTime] = useState<Date | undefined>(undefined);
-    // const [form, setForm] = useState<Form>(useForm({ resolver: zodResolver(z.object({data: z.object({})})) }));
-    // const [onSubmit, setOnSubmit] = useState<Function>(() => { });
-    // const [onSubmitInvalid, setOnSubmitInvalid] = useState<OnSubmitInvalid>(() => { });
+
     // initally try to GET the start time
     useEffect(() => {
         fetch(`${dbURL}/cache/${databaseName}/${tableInfo.tableName}`, {
@@ -88,6 +90,7 @@ export function TimerForm({
         })
     }, []);
 
+    // automatically update the cache when the user changes either the start or the end time.
     useEffect(cache, [startTime, endTime]);
 
     // START - CSRF token
@@ -101,6 +104,9 @@ export function TimerForm({
     const csrftoken = getCookie("csrftoken");
     // END - CSRF token
 
+    /**
+     * Stores the startTime and endTime into the cache.
+     */
     function cache() {
         interface outputType {
             "Start Time"?: string
@@ -141,12 +147,17 @@ export function TimerForm({
         setEndTime(new Date(Date.now()));
     }
 
+    /**
+     * Undos and removes the end time from the cache but keeps the start time.
+     */
     function cancelSplit() {
         setEndTime(undefined);
     }
 
+    /**
+     * Completely empty the cache (both start and end times)
+     */
     function cancel() {
-        // empty the cache (store an empty object)
         setStartTime(undefined);
         setEndTime(undefined);
     }

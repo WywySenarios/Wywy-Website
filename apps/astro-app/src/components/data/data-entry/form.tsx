@@ -6,6 +6,12 @@ import type { TableInfo } from "@/env"
 import { createFormSchemaAndHandlers, type OnSubmitInvalid } from "@/components/data/form-helper"
 import { Columns } from "@/components/data/data-entry"
 
+/**
+ * Basic form component.
+ * @param databaseName The name of the database that this form gathers data for.
+ * @param tableInfo The full table schema.
+ * @param dbURL The URL that the form will post to on submit.
+ */
 export function FormForm({
     databaseName,
     tableInfo,

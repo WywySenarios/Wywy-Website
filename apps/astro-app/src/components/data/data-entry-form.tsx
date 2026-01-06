@@ -7,10 +7,8 @@ import { TimerForm } from "@/components/data/data-entry/timer"
 
 /**
  * Selects the correct form element to use. Expects there to be a valid Toast element inside the page.
- * @param entrytype The entrytype of the form.
- * @param fieldsToEnter
  * @param databaseName The name of the database that this form gathers data for.
- * @param tableInfo The 
+ * @param tableInfo The full table schema.
  * @param dbURL The URL that the form will post to on submit.
  */
 export default function DataEntryForm({
