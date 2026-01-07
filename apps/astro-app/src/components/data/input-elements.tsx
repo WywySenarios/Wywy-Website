@@ -246,7 +246,7 @@ function InputElement({
     }
 
     return (
-      <div className="rounded-lg border p-5 shadow-md" key={columnInfo.name}>
+      <div key={columnInfo.name}>
         <Field
           className="w-full flex flex-col items-center gap-4"
           orientation={fieldOrientation}
