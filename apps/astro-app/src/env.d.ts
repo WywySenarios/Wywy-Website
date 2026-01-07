@@ -121,17 +121,17 @@ type BooleanColumn = {
 
 type DateColumn = {
   datatype: "date";
-  defaultValue?: Date;
+  defaultValue?: string; // @TODO consider switching datatypes?
 } & DateRestrictions;
 
 type TimeColumn = {
   datatype: "time";
-  defaultValue?: Date; // @TODO consider switching datatypes?
+  defaultValue?: string; // @TODO consider switching datatypes?
 } & TimeRestrictions;
 
 type TimestampColumn = {
   datatype: "timestamp";
-  defaultValue?: Date; // @TODO consider switching datatypes?
+  defaultValue?: string; // @TODO consider switching datatypes?
 } & TimestampRestrictions;
 
 type EnumColumn = {

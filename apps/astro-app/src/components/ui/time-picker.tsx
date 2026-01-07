@@ -3,7 +3,9 @@ import { Input } from "@/components/ui/input";
 import { parseTime } from "@/utils";
 import { getFallbackValue } from "@root/src/utils/data";
 
-function convertToTimeString(date: Date): string {
+function toTimeString(date: Date): string {
+  if (isNaN(date.getTime())) return getFallbackValue("time");
+
   let output = date.toISOString().split("T")[1];
   output = output.substring(0, output.length - 1); // get rid of the trailing Z.
   return output;
@@ -19,18 +21,21 @@ export function TimePicker({
   defaultValue,
   onChange,
 }: {
-  defaultValue?: Date;
+  defaultValue?: string;
   onChange: (any: any) => void;
 }) {
   const [date, setDate] = React.useState<Date>(() => {
     if (defaultValue) {
-      onChange(convertToTimeString(defaultValue));
-      return defaultValue;
-    } else {
-      const output = new Date();
-      onChange(convertToTimeString(output));
-      return output;
+      const output: Date = new Date(Date.parse(defaultValue));
+      if (!isNaN(output.getTime())) {
+        onChange(toTimeString(output));
+        return output;
+      }
     }
+
+    const output = new Date();
+    onChange(toTimeString(output));
+    return output;
   });
 
   const onTimeChange = (val: string) => {
@@ -53,7 +58,7 @@ export function TimePicker({
     }
 
     setDate(output);
-    onChange(convertToTimeString(output));
+    onChange(toTimeString(output));
   };
 
   return (
@@ -62,9 +67,9 @@ export function TimePicker({
       id="time-picker"
       step="1"
       defaultValue={
-        defaultValue
-          ? convertToTimeString(defaultValue)
-          : getFallbackValue("time")
+        defaultValue === undefined
+          ? getFallbackValue("time")
+          : toTimeString(new Date(Date.parse(defaultValue)))
       }
       onChange={(val: React.ChangeEvent<HTMLInputElement>) => {
         onTimeChange(val.target.value);
