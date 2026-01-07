@@ -58,11 +58,7 @@ function TimerFormForm({
       )}
       {/* Descriptors */}
       {tableInfo.descriptors && (
-        <Descriptors
-          databaseName={databaseName}
-          tableInfo={tableInfo}
-          dbURL={dbURL}
-        />
+        <Descriptors tableInfo={tableInfo} form={form} />
       )}
       {/* Submit button */}
       <Button type="submit">Submit</Button>
