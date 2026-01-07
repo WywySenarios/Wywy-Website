@@ -1,7 +1,7 @@
 referenceUrls:
-  main: https://ericzhu.me
-  db: https://db.ericzhu.me
-  cache: https://cache.ericzhu.me
+  main: http://localhost:4321
+  db: http://localhost:2523
+  cache: http://localhost:8000
 
 # UNUSED SO FAR:
 # The location of python that you wish to run.
@@ -185,7 +185,7 @@ data:
                 datatype: enum
                 entrytype: radio
                 values: ["region", "building", "room"]
-          - name: shower
+          - name: Shower
             schema:
               - name: Shampoo
                 datatype: boolean
@@ -195,7 +195,7 @@ data:
                 datatype: boolean
                 entrytype: switch
                 description: Was body wash used?
-          - name: dental
+          - name: Dental
             schema:
               - name: Waterpik
                 datatype: boolean
