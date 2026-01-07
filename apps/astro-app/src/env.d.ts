@@ -136,7 +136,7 @@ type TimestampColumn = {
 
 type EnumColumn = {
   datatype: "enum";
-  defaultValues: string; // @TODO ensure defaultValues is within values
+  defaultValue: string; // @TODO ensure defaultValue is within values
 } & SelectRestrictions;
 
 export type DataColumn = {

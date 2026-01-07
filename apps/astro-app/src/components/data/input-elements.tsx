@@ -203,7 +203,6 @@ function InputElement({
       case "time":
         body = (
           <TimePicker
-            //@ts-ignore
             defaultValue={columnInfo.defaultValue}
             onChange={field.onChange}
           />
@@ -212,7 +211,6 @@ function InputElement({
       case "calendar time":
         body = <Calendar24 className="w-full" {...field} />;
         break;
-      //@ts-ignore
       case "select":
         body = (
           <Select>
@@ -220,25 +218,18 @@ function InputElement({
               <SelectValue placeholder />
             </SelectTrigger>
             <SelectContent>
-              {
-                //@ts-ignore
-                columnInfo.values.map((value: string) => (
-                  <SelectItem value={value}>{value}</SelectItem>
-                ))
-              }
+              {columnInfo.values.map((value: string) => (
+                <SelectItem value={value}>{value}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         );
         break;
-      //@ts-ignore
       case "search-select":
         let values: SearchSelectData = [];
-        //@ts-ignore
         for (let i in columnInfo.values) {
           values.push({
-            //@ts-ignore
             value: columnInfo.values[i],
-            //@ts-ignore
             label: columnInfo.values[i],
           });
         }
