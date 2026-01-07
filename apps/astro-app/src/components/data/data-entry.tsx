@@ -114,7 +114,8 @@ function DescriptorTab({
   });
 
   return (
-    <Card className="">
+    <Card>
+      <CardHeader>{descriptorInfo.name}</CardHeader>
       <CardContent>
         {fields.map((field: Record<"id", string>, index: number) => (
           <Descriptor
