@@ -2,12 +2,26 @@
  * Helpers for form creation. Does anything that may universally apply to all forms of data entry.
  */
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { DescriptorInfo, TableInfo } from "@/env";
+import type { DataColumn, DescriptorInfo, TableInfo } from "@/env";
 import { toSnakeCase } from "@/utils";
 import { getFallbackValue, zodDatatypes } from "@root/src/utils/data";
 import { useForm, type FieldErrors, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z, ZodArray, type AnyZodObject, type ZodTypeAny } from "zod";
+
+/**
+ *
+ * @param schema
+ * @returns The default values pertaining to the respective schema.
+ */
+export function getDefaultValues(schema: DataColumn[]): Record<string, any> {
+  let defaultValues: Record<string, any> = {};
+  for (let columnInfo of schema) {
+    defaultValues[columnInfo.name] =
+      columnInfo.defaultValue ?? getFallbackValue(columnInfo.datatype);
+  }
+  return defaultValues;
+}
 
 function populateZodSchema(
   itemInfo: TableInfo | DescriptorInfo,

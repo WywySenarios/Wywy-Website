@@ -1,17 +1,22 @@
 import type { JSX } from "astro/jsx-runtime";
 import { FormElement } from "@/components/data/input-elements";
 import type { DataColumn, DescriptorInfo, TableInfo } from "@/env";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { useState } from "react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus, Trash } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@radix-ui/react-tabs";
+import {
+  Controller,
+  useFieldArray,
+  type UseFieldArrayRemove,
+} from "react-hook-form";
+import { getDefaultValues } from "./form-helper";
 
 export function Columns({
   fieldsToEnter,
@@ -60,13 +65,15 @@ function Descriptor({
   index,
   descriptorInfo,
   form,
+  remove,
 }: {
   index: number;
   descriptorInfo: DescriptorInfo;
   form: any;
+  remove: UseFieldArrayRemove;
 }): JSX.Element {
   return (
-    <Card>
+    <div>
       {descriptorInfo.schema.map((columnInfo: DataColumn) => {
         return (
           <FormElement
@@ -79,7 +86,15 @@ function Descriptor({
           />
         );
       })}
-    </Card>
+      <Button
+        onClick={() => {
+          remove(index);
+        }}
+        className="w-full"
+      >
+        <Trash />
+      </Button>
+    </div>
   );
 }
 
@@ -90,14 +105,44 @@ function Descriptor({
  * @param form The controller for the overarching form.
  * @returns
  */
-function DescriptorType({
+function DescriptorTab({
   descriptorInfo,
   form,
 }: {
   descriptorInfo: DescriptorInfo;
   form: any;
 }): JSX.Element {
-  return null;
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: `descriptor.${descriptorInfo.name}`,
+  });
+
+  return (
+    <Card className="">
+      <CardContent>
+        {fields.map((field: Record<"id", string>, index: number) => (
+          <Descriptor
+            key={field.id}
+            index={index}
+            descriptorInfo={descriptorInfo}
+            form={form}
+            remove={remove}
+          />
+        ))}
+      </CardContent>
+
+      <CardFooter>
+        <Button
+          onClick={() => {
+            append(getDefaultValues(descriptorInfo.schema));
+          }}
+          className="w-full"
+        >
+          <Plus />
+        </Button>
+      </CardFooter>
+    </Card>
+  );
 }
 
 /**
@@ -113,66 +158,30 @@ export function Descriptors({
   tableInfo: TableInfo;
   form: any;
 }): JSX.Element {
-  interface DescriptorElementInfo {
-    index: number;
-    descriptorInfo: DescriptorInfo;
-  }
-  // assume that tableInfo contains descriptors
-  const [nextDescriptorName, setNextDescriptorName] = useState<string>(
-    tableInfo.descriptors[0].name
-  );
-  const [activeDescriptors, setActiveDescriptors] = useState<
-    Array<DescriptorElementInfo>
-  >([]);
-  const { fields, append, remove } = useFieldArray({
-    form,
-    name: "",
-  });
-
-  function addDescriptor() {
-    setActiveDescriptors([
-      {
-        index: 0,
-        // Since nextDescriptorName is guarenteed to be inside of taleInfo.descriptors (thanks to the Select component),
-        // we guarentee that the find method will return a DescriptorInfo and will not return undefined.
-        descriptorInfo: tableInfo.descriptors.find(
-          (e) => e.name == nextDescriptorName
-        ) as DescriptorInfo,
-      },
-      ...activeDescriptors,
-    ]);
-  }
+  if (tableInfo.descriptors.length == 0) return null;
 
   return (
-    <Card className="flex flex-col justify-center items-center">
-      {activeDescriptors.map((descriptorElementInfo: DescriptorElementInfo) => (
-        <Descriptor {...descriptorElementInfo} form={form} />
-      ))}
-      <div className="w-[50%] min-w-[180px] flex flex-row justify-center">
-        <Select
-          value={nextDescriptorName}
-          onValueChange={setNextDescriptorName}
-        >
-          <SelectTrigger className="w-[50%] min-w-[180px]">
-            <SelectValue placeholder={tableInfo.descriptors[0].name} />
-          </SelectTrigger>
-          <SelectContent>
+    <Card className="flex flex-col justify-center">
+      <CardHeader>Descriptors</CardHeader>
+      <CardContent>
+        <Tabs defaultValue={tableInfo.descriptors[0].name}>
+          <TabsList>
             {tableInfo.descriptors.map((descriptor: DescriptorInfo) => (
-              <SelectItem key={descriptor.name} value={descriptor.name}>
+              <TabsTrigger
+                key={`${descriptor.name}-tab-trigger`}
+                value={descriptor.name}
+              >
                 {descriptor.name}
-              </SelectItem>
+              </TabsTrigger>
             ))}
-          </SelectContent>
-        </Select>
-        <Button
-          type="button"
-          disabled={!nextDescriptorName}
-          onClick={addDescriptor}
-          variant="outline"
-        >
-          <Plus />
-        </Button>
-      </div>
+          </TabsList>
+          {tableInfo.descriptors.map((descriptor: DescriptorInfo) => (
+            <TabsContent key={`${descriptor.name}-tab`} value={descriptor.name}>
+              <DescriptorTab descriptorInfo={descriptor} form={form} />
+            </TabsContent>
+          ))}
+        </Tabs>
+      </CardContent>
     </Card>
   );
 }
