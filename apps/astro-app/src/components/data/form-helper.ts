@@ -99,7 +99,6 @@ export function createFormSchemaAndHandlers(
    * @param values The raw values the user inputted into the form.
    */
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("GRR");
     let formattedValues: Record<string, any> = {
       data: {},
     };
