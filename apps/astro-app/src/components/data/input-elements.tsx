@@ -36,22 +36,24 @@ import { Controller } from "react-hook-form"
 
 export function FormElement({
     form,
-    columnInfo
+    columnInfo,
+    controllerNamer = (strings: TemplateStringsArray, name: string) => `data.${strings[0]}${name}${strings[1]}`,
 }: {
     form: any,
-    columnInfo: DataColumn
+    columnInfo: DataColumn,
+    controllerNamer?: (strings: TemplateStringsArray, name: string) => string
 }) {
     return (
         <div className="rounded-lg border p-5 shadow-md" key={columnInfo.name}>
             <Controller
                 control={form.control}
-                name={`data.${columnInfo.name}`}
+                name={controllerNamer`${columnInfo.name}`}
                 key={columnInfo.name + "-field"}
                 render={({ field }) => <InputElement field={field} columnInfo={columnInfo} />}
             />
             {columnInfo.comments ? <Controller
                 control={form.control}
-                name={`data.${columnInfo.name}_comments`}
+                name={controllerNamer`${columnInfo.name}_comments`}
                 key={columnInfo.name + "_comments-field"}
                 render={({ field }) => <Field>
                     <div className="w-full flex flex-col items-center gap-4">
