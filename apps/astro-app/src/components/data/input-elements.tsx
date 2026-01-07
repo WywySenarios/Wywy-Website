@@ -107,14 +107,12 @@ function InputElement({
     switch (columnInfo.entrytype) {
       case "radio":
         body = (
-          <RadioGroup
-            onValueChange={field.field.onChange}
-            defaultValue={field.field.value}
-          >
+          <RadioGroup onValueChange={field.onChange} defaultValue={field.value}>
             {columnInfo.values.map((option: string) => (
               // note that if two options have the same key, they will also have the same values. Pretty strange, huh?
               <Field
-                className="flex items-center gap-3 w-full"
+                className="flex flex-row items-center gap-3"
+                orientation="horizontal"
                 key={columnInfo.name + "-" + option + "-radio"}
               >
                 <RadioGroupItem value={option} />
@@ -143,6 +141,9 @@ function InputElement({
     );
   } else {
     let body: JSX.Element;
+    let fieldOrientation: "horizontal" | "vertical" | "responsive" | undefined =
+      undefined;
+
     switch (columnInfo.entrytype) {
       case "textbox":
         body = <Textarea placeholder={columnInfo.defaultValue} {...field} />;
@@ -159,6 +160,7 @@ function InputElement({
         );
         break;
       case "switch":
+        fieldOrientation = "horizontal";
         body = (
           <Switch
             checked={field.value}
@@ -245,7 +247,10 @@ function InputElement({
 
     return (
       <div className="rounded-lg border p-5 shadow-md" key={columnInfo.name}>
-        <Field className="w-full flex flex-col items-center gap-4">
+        <Field
+          className="w-full flex flex-col items-center gap-4"
+          orientation={fieldOrientation}
+        >
           <FieldLabel className="items-center">
             <span className="w-full text-center text-lg font-semibold">
               {columnInfo.name}
