@@ -11,11 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsContent } from "@radix-ui/react-tabs";
-import {
-  Controller,
-  useFieldArray,
-  type UseFieldArrayRemove,
-} from "react-hook-form";
+import { useFieldArray, type UseFieldArrayRemove } from "react-hook-form";
 import { getDefaultValues } from "./form-helper";
 
 export function Columns({
@@ -26,7 +22,7 @@ export function Columns({
   form: any;
 }): JSX.Element {
   return (
-    <div>
+    <div className="flex flex-col gap-2">
       {fieldsToEnter.map((columnInfo: DataColumn) => {
         return (
           <FormElement
