@@ -147,7 +147,7 @@ export function createFormSchemaAndHandlers(
     let tableName = toSnakeCase(tableInfo.tableName);
     console.log();
     console.log(`POSTING to: ${dbURL + "/" + databaseName + "/" + tableName}`);
-    fetch(dbURL + "/" + databaseName + "/" + tableName, {
+    fetch(`${dbURL}/main/${databaseName}/${tableName}`, {
       method: "POST",
       body: JSON.stringify(values),
       mode: "cors",
