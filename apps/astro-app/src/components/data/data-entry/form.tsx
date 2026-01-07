@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 
-import type { TableInfo } from "@/env"
-import { createFormSchemaAndHandlers } from "@/components/data/form-helper"
-import { Columns } from "@/components/data/data-entry"
+import type { TableInfo } from "@/env";
+import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
+import { Columns } from "@/components/data/data-entry";
 
 /**
  * Basic form component.
@@ -13,20 +13,27 @@ import { Columns } from "@/components/data/data-entry"
  * @param dbURL The URL that the form will post to on submit.
  */
 export function FormForm({
+  databaseName,
+  tableInfo,
+  dbURL,
+}: {
+  databaseName: string;
+  tableInfo: TableInfo;
+  dbURL: string;
+}) {
+  const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(
     databaseName,
     tableInfo,
     dbURL
-}: {
-    databaseName: string,
-    tableInfo: TableInfo,
-    dbURL: string
-}) {
-  const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(databaseName, tableInfo, dbURL)
+  );
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit, onSubmitInvalid)} className="flex flex-col gap-4">
+    <form
+      onSubmit={form.handleSubmit(onSubmit, onSubmitInvalid)}
+      className="flex flex-col gap-4"
+    >
       <Columns fieldsToEnter={tableInfo.schema} form={form} />
       <Button type="submit">Submit</Button>
     </form>
-  )
+  );
 }
