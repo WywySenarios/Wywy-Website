@@ -177,15 +177,22 @@ export function createFormSchemaAndHandlers(
   ): void {
     // Create toast(s) to let to user know what went wrong.
     // @TODO fix type errors
-    console.log(errors);
+
+    console.log("onSubmitInvalid called.");
+
     //@ts-ignore
-    for (const sectionName in errors)
+    for (const sectionName in errors) {
+      //@ts-ignore
       for (const fieldName in errors[sectionName]) {
         //@ts-ignore
         const error = errors[sectionName][fieldName];
 
-        if (error?.message) toast(`${sectionName}: ${error.message}`);
+        if (error?.message) {
+          toast(`${sectionName}: ${error.message}`);
+          console.log(`${sectionName}: ${error.message}`);
+        }
       }
+    }
   }
 
   return {
