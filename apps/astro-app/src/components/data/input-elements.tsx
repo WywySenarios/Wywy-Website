@@ -235,7 +235,12 @@ function InputElement({
         let values: SearchSelectData = [];
         //@ts-ignore
         for (let i in columnInfo.values) {
-          values.push({ value: i, label: i });
+          values.push({
+            //@ts-ignore
+            value: columnInfo.values[i],
+            //@ts-ignore
+            label: columnInfo.values[i],
+          });
         }
         body = <SearchSelect data={values} {...field} />;
         break;
