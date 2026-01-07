@@ -71,7 +71,7 @@ export function createFormSchemaAndHandlers(
       populateZodSchema(descriptor, thisSchema, thisDefaultValues);
 
       descriptorSchema[descriptor.name] = z.array(z.object(thisSchema));
-      // descriptorDefaultValues[descriptor.name] = []
+      descriptorDefaultValues[descriptor.name] = [];
     }
   }
 
