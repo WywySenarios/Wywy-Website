@@ -126,7 +126,7 @@ function InputElement({
         break;
       default:
         console.warn(
-          `No input element found for column ${columnInfo.name}. This is likely a bug.`
+          `No input element found for column ${columnInfo.name} (entrytype: ${columnInfo.entrytype}). This is likely a bug.`
         );
         body = <></>;
         break;
@@ -246,7 +246,7 @@ function InputElement({
         break;
       default:
         console.warn(
-          `No input element found for column ${columnInfo.name}. This is likely a bug.`
+          `No input element found for column ${columnInfo.name} (entrytype: ${columnInfo.entrytype}). This is likely a bug.`
         );
         body = <></>;
         break;
