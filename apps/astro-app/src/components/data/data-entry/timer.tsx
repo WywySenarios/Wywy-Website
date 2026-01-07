@@ -2,7 +2,7 @@ import type { TableInfo } from "@/env"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState, type JSX } from "react";
 import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
-import { Columns } from "@/components/data/data-entry"
+import { Columns, Descriptors, Tags } from "@/components/data/data-entry"
 import type z from "zod";
 import { toast } from "sonner";
 
@@ -41,7 +41,9 @@ function TimerFormForm({
                     <Columns fieldsToEnter={tableInfo.schema} form={form} />
                     {/* Quick actions */}
                     {/* Tags */}
+                    {tableInfo.tagging && <Tags databaseName={databaseName} tableName={tableInfo.tableName} dbURL={dbURL}/>  }
                     {/* Descriptors */}
+                    {tableInfo.descriptors && <Descriptors databaseName={databaseName} tableInfo={tableInfo} dbURL={dbURL} /> }
                     {/* Submit button */}
                     <Button type="submit">Submit</Button>
                 </form>
