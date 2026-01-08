@@ -20,10 +20,10 @@
  */
 struct regex_iterator *create_regex_iterator(char *pattern, int num_matches,
                                              int cflags) {
-  struct regex_iterator *output = malloc(sizeof(struct regex_iterator));
-
   if (num_matches <= 0)
     return NULL;
+
+  struct regex_iterator *output = malloc(sizeof(struct regex_iterator));
 
   output->nmatch = num_matches + 1;
   output->matches = malloc(sizeof(regmatch_t) * num_matches);
