@@ -1,6 +1,9 @@
 """Helper script to create PostgreSQL tables based on the config.yml file.
 @TODO write to stderr on errors, and figure out warnings, too
 @TODO ensure that no table name or column name is used twice
+@TODO check column names & suffixes
+@TODO log enforcement failures
+@TODO more descriptive logging & verbosity settings
 """
 # imports
 from os import environ as env
@@ -15,9 +18,9 @@ BASE_URL = "wywywebsite_database"
 # Constants
 RESERVED_DATABASE_NAMES = ["info"]
 RESERVED_TABLE_NAMES = []
-RESERVED_TABLE_SUFFIXES = ["tags", "tag_aliases", "_tag_names", "tag_groups"]
+RESERVED_TABLE_SUFFIXES = ["tags", "tag_aliases", "_tag_names", "tag_groups", "descriptors"]
 RESERVED_COLUMN_NAMES = ["id", "user", "users", "primary_tag"]
-RESERVED_COLUMN_SUFFIXES  = ["_comments"]
+RESERVED_COLUMN_SUFFIXES  = ["comments"]
 PSQLDATATYPES: dict[str, str] = {
     "int": "integer",
     "integer": "integer",
@@ -33,6 +36,7 @@ PSQLDATATYPES: dict[str, str] = {
     "time": "time",
     "timestamp": "timestamp",
     "interval": "interval",
+    "enum": "enum"
 }
 CONSTRAINT_NAMES = {
     "pkey": "pkey",
@@ -102,8 +106,8 @@ def validate_suffix(name: str, reserved_suffixes: List[str]) -> bool:
     @returns Returns whether or not the name's suffix is reserved (validity)
     """
     for reserved_suffix in reserved_suffixes:
-        suffix_len = len(reserved_suffix)
-        if len(name) >= suffix_len and name[:-suffix_len] == reserved_suffix:
+        suffix_len = len(reserved_suffix) + 1
+        if len(name) >= suffix_len and name[:-suffix_len] == f"_{reserved_suffix}":
             return False
     return True
 
@@ -140,7 +144,7 @@ def enforce_column(conn, table_name: str, column_schema: dict) -> bool:
     # ensure that the column exists
     with conn.cursor() as cur:
         if column_exists(conn, table_name, column_name):
-            cur.execute("SELECT datatype FROM information_schema.columns WHERE table_name=%s AND column_name=%s", (table_name, column_schema["name"],))
+            cur.execute("SELECT data_type FROM information_schema.columns WHERE table_name=%s AND column_name=%s", (table_name, to_lower_snake_case(column_schema["name"]),))
             is_datatype_correct: bool = cur.fetchone()[0] == PSQLDATATYPES[column_schema["datatype"]]
             if not is_datatype_correct: return False
         else:
@@ -278,7 +282,7 @@ TAGGING_TABLE_STATEMENTS: dict[TAGGING_TABLE_NAMES, sql.SQL] = {
                          """),
 }
 
-def create_tagging_tables(conn, table_name: str):
+def enforce_tagging_tables(conn, table_name: str):
     """Creates related tagging tables if necessary, assuming that the table requires tagging.
 
     Args:
@@ -303,6 +307,26 @@ def create_tagging_tables(conn, table_name: str):
         # tag groups
         if not table_exists(conn, table_name + "_tag_groups"):
             cur.execute(TAGGING_TABLE_STATEMENTS["tag_groups"].format(sql.Identifier(table_name + "_tag_groups"), sql.Identifier(f"{table_name}_tag_names")))
+
+def enforce_descriptor_tables(conn, table_schema: dict) -> bool:
+    """Creates related descriptor tables if necessary, assuming that the table requires descriptors. @TODO reject invalid configs where there is a collision between different descriptor tables (extremely unlikely if the user is good-faith)
+
+    Args:
+        conn (_type_): Connection to the database containing the parent table.
+        table_schema (dict): The schema for the parent table.
+
+    Returns:
+        bool: Whether or not the tables already exist or have been created.
+    """
+    # create one table for every descriptor type.
+    for descriptor_schema in table_schema["descriptors"]:
+        descriptor_table_name: str = f"{to_lower_snake_case(table_schema["tableName"])}_{to_lower_snake_case(descriptor_schema["name"])}_descriptors"
+        if not table_exists(conn, descriptor_table_name):
+            with conn.cursor() as cur:
+                cur.execute(sql.SQL("CREATE TABLE {} (id SERIAL PRIMARY KEY);").format(sql.Identifier(descriptor_table_name)))
+
+        for column_schema in descriptor_schema["schema"]:
+            enforce_column(conn, descriptor_table_name, column_schema)
 
 if __name__ == "__main__":
     print("Attempting to create tables based on config.yml...")
@@ -353,15 +377,6 @@ if __name__ == "__main__":
                 continue
             # convert to lower_snake_case
             table_name = to_lower_snake_case(tableInfo["tableName"])
-
-            # skip any already created tables without raising any issues
-            with psycopg2.connect(**psycopg2config) as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT EXISTS (SELECT FROM pg_tables WHERE tablename = '" + table_name + "');")
-                    tableExists = cur.fetchone()[0]
-                    
-                    if tableExists:
-                        continue
             
             # validate the table name
             # do not check for nameless tables because this was previously validated
@@ -380,6 +395,28 @@ if __name__ == "__main__":
             if not "schema" in tableInfo or not (type(tableInfo["schema"]) is List or type(tableInfo["schema"]) is list) or len(tableInfo["schema"]) < 1 or not tableInfo["schema"]:
                 schema_violations.append(f"Table {tableInfo["tableName"]} must have least 1 column of data to store.")
 
+            # @TODO tagging related violations
+
+            # descriptor related violations
+            if "descriptors" in tableInfo:
+                # there are 1+ descriptors
+                if not "descriptors" in tableInfo or not (type(tableInfo["descriptors"]) is List or type(tableInfo["descriptors"] is list)) or len(tableInfo["descriptors"]) < 1:
+                    schema_violations.append(f"Table {tableInfo["tableName"]} must have at least 1 descriptor if descriptors are enabled.")
+
+                # descriptor validity
+                for descriptor_schema in tableInfo["descriptors"]:
+                    # require descriptor names. These names are subject to the same rules as column names.
+                    if "name" not in descriptor_schema or not isinstance(descriptor_schema["name"], str) or len(descriptor_schema["schema"]) == 0:
+                        schema_violations.append(f"Table {tableInf["tableName"]} contains a nameless descriptor.")
+                        continue
+
+                    # @TODO avoid reserved column names
+
+                    # @TODO avoid reserved column suffixes
+
+                    # there are 1+ columns
+                    if "schema" not in descriptor_schema or not (type(descriptor_schema["schema"]) is List or type(descriptor_schema["schema"]) is list):
+                        schema_violations.append(f"Descriptor {descriptor_schema["name"]} in table {tableInfo["tableName"]} must have a schema that consists of an array of columns schemas.")
             if len(schema_violations) > 0:
                 print(f"Skipping creation of table {db_name}/{table_name} due to schema {"violation" if len(schema_violations) == 1 else "violations"}:")
                 for schema_violation in schema_violations:
@@ -387,12 +424,19 @@ if __name__ == "__main__":
             
             with psycopg2.connect(**psycopg2config) as conn:
                 with conn.cursor() as cur:
-                    # create the table straight away
-                    cur.execute(sql.SQL("CREATE TABLE {} (id SERIAL PRIMARY KEY);").format(sql.Identifier(table_name)))
+                    # create the table if necessary
+                    cur.execute("SELECT EXISTS (SELECT FROM pg_tables WHERE tablename = '" + table_name + "');")
+                    tableExists = cur.fetchone()[0]
+                    if not tableExists:
+                        cur.execute(sql.SQL("CREATE TABLE {} (id SERIAL PRIMARY KEY);").format(sql.Identifier(table_name)))
                     
                     # create tagging tables if necessary
                     if tableInfo.get("tagging", False):
-                        create_tagging_tables(conn, table_name)
+                        enforce_tagging_tables(conn, table_name)
+
+                    # create descriptor tables if necessary
+                    if "descriptors" in tableInfo:
+                        enforce_descriptor_tables(conn, tableInfo)
                     
                     # add in the columns individually
                     for column_schema in tableInfo["schema"]:
