@@ -8,6 +8,7 @@ import { getFallbackValue, zodDatatypes } from "@root/src/utils/data";
 import { useForm, type FieldErrors, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z, ZodArray, type AnyZodObject, type ZodTypeAny } from "zod";
+import { getCSRFToken } from "@/utils/auth";
 
 /**
  *
@@ -147,6 +148,13 @@ export function createFormSchemaAndHandlers(
     let tableName = toSnakeCase(tableInfo.tableName);
     console.log();
     console.log(`POSTING to: ${dbURL + "/" + databaseName + "/" + tableName}`);
+    let csrftoken = getCSRFToken();
+    if (!csrftoken) {
+      toast(
+        "Something went wrong while trying to submit the form. We could not find your browser's CSRF Token."
+      );
+      return;
+    }
     fetch(`${dbURL}/main/${databaseName}/${tableName}`, {
       method: "POST",
       body: JSON.stringify(values),
@@ -154,6 +162,7 @@ export function createFormSchemaAndHandlers(
       credentials: "include",
       headers: {
         "Content-type": "application/json; charset=UTF-8",
+        "X-CSRFToken": csrftoken,
       },
     }).then((response) => {
       response.text().then((text: string) => {

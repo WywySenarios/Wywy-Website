@@ -5,6 +5,7 @@ import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
 import { Columns, Descriptors, Tags } from "@/components/data/data-entry";
 import type z from "zod";
 import { toast } from "sonner";
+import { getCSRFToken } from "@/utils/auth";
 
 // child component to circumvent hook rules
 function TimerFormForm({
@@ -126,17 +127,6 @@ export function TimerForm({
   // automatically update the cache when the user changes either the start or the end time.
   useEffect(cache, [startTime, endTime]);
 
-  // START - CSRF token
-  function getCookie(name: string) {
-    return document.cookie
-      .split("; ")
-      .find((row) => row.startsWith(name + "="))
-      ?.split("=")[1];
-  }
-
-  const csrftoken = getCookie("csrftoken");
-  // END - CSRF token
-
   /**
    * Stores the startTime and endTime into the cache.
    */
@@ -156,6 +146,7 @@ export function TimerForm({
 
     // store values in cache
     // @TODO don't hardcode start_time & end_time
+    let csrftoken = getCSRFToken();
     if (csrftoken)
       fetch(`${dbURL}/cache/${databaseName}/${tableInfo.tableName}`, {
         method: "POST",
