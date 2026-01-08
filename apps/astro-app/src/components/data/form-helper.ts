@@ -24,6 +24,49 @@ export function getDefaultValues(schema: DataColumn[]): Record<string, any> {
   return defaultValues;
 }
 
+/**
+ * Formats values so that the receiving server gets the values in the format it can understand. Ignores values that do not relate to columns in the schema and does not include them in the output.
+ * @param values The values that need to be formatted.
+ * @param schema The schema that relates to the given values.
+ * @returns An object filled with the formatted values, or a string with a corresponding error message if the schema does not match the values.
+ */
+function formatValues(
+  values: Record<string, any>,
+  schema: Array<DataColumn>
+): Record<string, any> | string {
+  let formattedValues: Record<string, any> = {};
+
+  for (let column_schema of schema) {
+    // check the comments first
+    if (column_schema.comments) {
+      formattedValues[`${column_schema}_comments`] =
+        values[`${column_schema.name}_comments`] ?? "''";
+    }
+
+    // check if the user really wanted to submit that or not
+    if (!values[column_schema.name]) {
+      continue;
+    }
+
+    // single-quote strings, dates, times, and timestamps
+    switch (column_schema.datatype) {
+      case "string":
+      case "str":
+      case "text":
+      case "date":
+      case "time":
+      case "timestamp":
+        formattedValues[column_schema.name] = `'${values[column_schema.name]}'`;
+        break;
+      default:
+        formattedValues[column_schema.name] = values[column_schema.name];
+        break;
+    }
+  }
+
+  return formattedValues;
+}
+
 function populateZodSchema(
   itemInfo: TableInfo | DescriptorInfo,
   schema: Record<string, ZodTypeAny>,
@@ -109,38 +152,28 @@ export function createFormSchemaAndHandlers(
   });
 
   /**
-   * Form submit handler.
+   * Form submit handler. @TODO consolidate the valid keys for formattedValues into a type.
    * Parses the schema into something the sql-receptionist will recognize.
    * @param values The raw values the user inputted into the form.
    */
   function onSubmit(values: z.infer<typeof formSchema>) {
     let formattedValues: Record<string, any> = {
-      data: {},
+      data: formatValues(values.data, tableInfo.schema),
     };
-    for (let field of tableInfo.schema) {
-      // check the comments first
-      if (values.data[field.name + "_comments"]) {
-        formattedValues.data[field.name + "_comments"] =
-          `'${values.data[field.name + "_comments"]}'`;
-      }
 
-      // check if the user really wanted to submit that or not
-      if (!values.data[field.name]) {
-        continue;
-      }
+    // @TODO tags
 
-      // single-quote strings, dates, times, and timestamps
-      switch (field.datatype) {
-        case "string":
-        case "str":
-        case "text":
-        case "date":
-        case "time":
-        case "timestamp":
-          formattedValues.data[field.name] =
-            "'" + values.data[field.name] + "'";
-          break;
-      }
+    if ("descriptors" in values) {
+      formattedValues.descriptors = {};
+
+      // format every descriptor type.
+      for (const descriptor_schema of tableInfo.descriptors)
+        if (values.descriptors[descriptor_schema.name])
+          formattedValues.descriptors[descriptor_schema.name] =
+            values.descriptors[descriptor_schema.name].map(
+              (value: { [x: string]: any }) =>
+                formatValues(value, descriptor_schema.schema)
+            );
     }
 
     // POST them to the SQL Receptionist!
@@ -157,7 +190,7 @@ export function createFormSchemaAndHandlers(
     }
     fetch(`${dbURL}/main/${databaseName}/${tableName}`, {
       method: "POST",
-      body: JSON.stringify(values),
+      body: JSON.stringify(formattedValues),
       mode: "cors",
       credentials: "include",
       headers: {
