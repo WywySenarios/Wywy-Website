@@ -200,14 +200,8 @@ export function createFormSchemaAndHandlers(
     }).then((response) => {
       response.text().then((text: string) => {
         if (response.ok) {
-          if (response.headers.get("Content-Type") == "text/plain") {
             toast(`Successfully submitted form!`);
           } else {
-            toast(
-              `The server has returned an unexpected response. Wywy is sad. ${text}`
-            );
-          }
-        } else {
           toast(`Error while submitting form: ${text}`);
         }
       });
