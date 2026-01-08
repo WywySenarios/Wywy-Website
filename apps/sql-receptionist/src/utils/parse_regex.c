@@ -48,14 +48,12 @@ void regex_iterator_load_target(struct regex_iterator *iter, char *new_target) {
 
 /**
  * Replaces the old target string of the given regex_iterator with the new
- * target string. Attempts to free the old target string.
+ * target string. Does not free pointer to the old target.
  * @param iter the regex_iterator to modify. This must not be NULL.
  * @param new_target the new target string. This should not be NULL.
  */
 void regex_iterator_replace_target(struct regex_iterator *iter,
                                    char *new_target) {
-  if (iter->target)
-    free(iter->target);
   iter->target = new_target;
 }
 
@@ -142,8 +140,8 @@ char *regex_iterator_get_match(struct regex_iterator *iter, int match_num) {
 }
 
 /**
- * Frees all pointers associated with a given regex iterator. Also frees the
- * target string and the iterator itself
+ * Frees all pointers associated with a given regex iterator. Does not free the
+ * target. Also frees the pointer to the iterator itself.
  * @param iter the regex_iterator to free.
  */
 void free_regex_iterator(struct regex_iterator *iter) {
@@ -154,7 +152,5 @@ void free_regex_iterator(struct regex_iterator *iter) {
     regfree(iter->preg);
   if (iter->matches)
     free(iter->matches);
-  if (iter->target)
-    free(iter->target);
   free(iter);
 }
