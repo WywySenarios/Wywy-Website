@@ -3,7 +3,7 @@
  * style. Does not have a has_next() function.
  */
 
-#include "utils/parse_regex.h"
+#include "utils/regex_iterator.h"
 #include <regex.h>
 #include <stdlib.h>
 #include <string.h>
