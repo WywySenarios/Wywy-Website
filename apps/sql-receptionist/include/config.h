@@ -12,7 +12,6 @@ struct postgres_config {
 struct data_column {
   const char *name;                  // @todo validation
   const char *datatype;              // @todo validation
-  const char *invalid_input_message; // optional
   bool comments;                     // optional, ?useless here?
   const char *entrytype;             // useless here
 };
@@ -31,6 +30,8 @@ struct table {
   const char *entrytype; // @todo validation
   struct data_column *schema;
   unsigned int schema_count;
+  struct descriptor *descriptors;
+  unsigned int descriptors_count;
 };
 
 struct db {

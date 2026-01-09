@@ -28,10 +28,6 @@ static const cyaml_schema_field_t data_column_fields_schema[] = {
     CYAML_FIELD_STRING_PTR("datatype", CYAML_FLAG_POINTER, struct data_column,
                            datatype, 0, CYAML_UNLIMITED),
 
-    CYAML_FIELD_STRING_PTR("invalidInputMessage", CYAML_FLAG_OPTIONAL,
-                           struct data_column, invalid_input_message, 0,
-                           CYAML_UNLIMITED),
-
     CYAML_FIELD_BOOL("comments", CYAML_FLAG_OPTIONAL, struct data_column,
                      comments),
 
@@ -70,6 +66,9 @@ static const cyaml_schema_field_t table_fields_schema[] = {
 
     CYAML_FIELD_SEQUENCE("schema", CYAML_FLAG_POINTER, struct table, schema,
                          &data_column_schema, 0, CYAML_UNLIMITED),
+    CYAML_FIELD_SEQUENCE("descriptors",
+                         CYAML_FLAG_POINTER | CYAML_FLAG_OPTIONAL, struct table,
+                         descriptors, &descriptor_schema, 0, CYAML_UNLIMITED),
     CYAML_FIELD_END};
 
 static const cyaml_schema_value_t table_schema = {
