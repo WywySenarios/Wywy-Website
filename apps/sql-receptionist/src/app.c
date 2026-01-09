@@ -523,29 +523,73 @@ void *handle_client(void *arg) {
   char *db_name = malloc(db_name_len + 1);
   strncpy(db_name, url + url_matches[1].rm_so, db_name_len);
   db_name[db_name_len] = '\0';
+
+  regex_t table_regex;
+  regcomp(
+      &table_regex,
+      "([a-zA-Z0-9_]+)_(tags|tag_aliases|_tag_names|tag_groups|descriptors)",
+      REG_EXTENDED);
+
+  regmatch_t table_matches[2 + 1];
+  char *table_name = NULL;
   int table_name_len = url_matches[2].rm_eo - url_matches[2].rm_so;
-  char *table_name = malloc(table_name_len + 1);
+  table_name = malloc(table_name_len + 1);
   strncpy(table_name, url + url_matches[2].rm_so, table_name_len);
   table_name[table_name_len] = '\0';
+  char *parent_table_name = NULL;
+  // do not free table_extension because it is a part of url
+  char *table_extension = NULL;
+
+  // check for child tables
+  if (regexec(&table_regex, url + url_matches[2].rm_so, 2 + 1, table_matches,
+              0) == 0) {
+    int parent_table_name_len =
+        url_matches[2].rm_eo - url_matches[2].rm_so -
+        (table_matches[2].rm_eo - table_matches[2].rm_so);
+    parent_table_name = malloc(parent_table_name_len + 1);
+    memcpy(table_name, table_name, parent_table_name_len);
+    parent_table_name[parent_table_name_len] = '\0';
+
+    // add an extra 1 to skip an underscore.
+    table_extension = url + url_matches[2].rm_so + table_name_len + 1;
+    printf("%s %s\n", parent_table_name, table_extension);
+  }
+  regfree(&table_regex);
+  printf("%s\n", table_name);
 
   for (unsigned int i = 0; i < global_config->dbs_count; i++) {
-    db = &global_config->dbs[i];
-    if (strcmp(db->db_name, db_name) == 0) {
-      for (unsigned int j = 0; j < db->tables_count; j++) {
-        if (strcmp(db->tables[j].table_name, table_name) == 0) {
-          table = &db->tables[j];
-          goto found_table;
-        }
-      }
+    if (strcmp(global_config->dbs[i].db_name, db_name) == 0) {
+      db = &global_config->dbs[i];
+      break;
     }
   }
-  // didn't find a table? Tell the client that there's no such table
-  if (table == NULL) {
-    build_response_default(400, response, response_len);
+
+  // didn't find a database?
+  if (!db) {
+    build_response(400, response, response_len, "Database not found.");
     goto no_table_end;
   }
 
-found_table:
+  if (parent_table_name) {
+    for (unsigned int i = 0; i < db->tables_count; i++) {
+      if (strcmp(db->tables[i].table_name, parent_table_name) == 0) {
+        table = &db->tables[i];
+      }
+    }
+  } else {
+    for (unsigned int i = 0; i < db->tables_count; i++) {
+      if (strcmp(db->tables[i].table_name, table_name) == 0) {
+        table = &db->tables[i];
+      }
+    }
+  }
+
+  // didn't find a table? Tell the client that there's no such table
+  if (!table) {
+    build_response(400, response, response_len, "Table not found.");
+    goto no_table_end;
+  }
+
   if (strcmp(method, "GET") == 0) {
     // check if the database & table may be accessed freely
     if (table->read) {
