@@ -158,6 +158,159 @@ char *url_decode(const char *src) {
 }
 
 /**
+ * Goes through the entry and checks for validity. Appends a related query to
+ * enter the entry.
+ * @param entry The entry to check and construct a query around.
+ * @param schema The schema to check the entry against.
+ * @param schema_count The size of the schema array.
+ * @param query The string to append the new query into.
+ * @param table_name The target table's name.
+ * @returns Whether or not the entry is valid.
+ */
+int construct_validate_query(json_t *entry, struct data_column *schema,
+                             unsigned int schema_count, char *query,
+                             char *table_name) {
+  const char *key;
+  const json_t *value;
+
+  int total_value_len = 0;
+  int total_key_len = 0;
+  int separator_len = 0;
+
+  json_object_foreach(entry, key, value) {
+    bool valid = false;
+
+    // check for the case in which the JSON key relates to comments instead
+    // of regular columns
+    regex_t comments_regex;
+    regcomp(&comments_regex, "_comments$", REG_EXTENDED);
+
+    regmatch_t comments_matches[1 + 1];
+    bool is_comments_column = !(regexec(&comments_regex, key, 1 + 1,
+                                        comments_matches, 0) == REG_NOMATCH);
+    regfree(&comments_regex);
+
+    char *target_column;
+
+    if (is_comments_column) {
+      target_column = malloc(strlen(key) - strlen("_comments") + 1);
+      strncpy(target_column, key, strlen(key) - strlen("_comments"));
+      target_column[strlen(key) - strlen("_comments")] = '\0';
+    } else {
+      target_column = malloc(strlen(key) + 1);
+      strcpy(target_column, key);
+    }
+
+    if (strcmp(target_column, "id") == 0) {
+      // skip id column (postgres autoincrement should handle it)
+      free(target_column);
+      continue;
+
+      // @TODO make sure postgres doesn't tweak out over incorrect next keys
+      // regex_t id_regex;
+      // regcomp(&id_regex, "^[0-9]+$", REG_EXTENDED);
+
+      // regmatch_t id_matches[1];
+      // valid = !(regexec(&id_regex, json_to_string(value), 1, id_matches, 0)
+      // ==
+      //           REG_NOMATCH);
+
+      // regfree(&id_regex);
+    } else
+      for (int i = 0; i < schema_count; i++) {
+        // find which entry in the schema matches
+
+        if (str_cci_cmp(target_column, schema[i].name) == 0) {
+          // check if the input is a comment and the column does not have
+          // comments.
+          if (is_comments_column) {
+            if (schema[i].comments == false) {
+              break;
+            }
+
+            // comments MUST have text
+            if (check_string(value) == 0) {
+              break;
+            }
+          } else {
+            dict_item *item =
+                linear_search(schema_datatypes, schema[i].datatype);
+            // check if the input's datatype mismatches
+            if (!item) {
+              break;
+            }
+            json_datatype_check_function *related_datatype_checker =
+                item->value;
+            if ((*related_datatype_checker)(value) == 0) {
+              break;
+            }
+          }
+
+          valid = true;
+          break;
+        }
+      }
+
+    // also remember to catch when the key is not inside the table's schema
+    if (!valid) {
+      free(target_column);
+      return 0;
+    } else {
+      // @todo optimize
+      // char *key_string = json_to_string(key);
+      char *value_string = json_to_string(value);
+      total_value_len += strlen(value_string);
+      total_key_len += strlen(key); // no need to use to_snake_case: it won't
+                                    // change the length of the string.
+      separator_len++;
+
+      // free(key_string);
+      free(value_string);
+    }
+    free(target_column);
+  }
+
+  separator_len--;
+  // get ready and put in all the correct values
+  char *column_names = malloc(total_key_len + separator_len + 1 + 1);
+  char *values = malloc(total_value_len + separator_len + 1 + 1);
+
+  // make them empty strings
+  strncpy(column_names, "", 1);
+  strncpy(values, "", 1);
+
+  json_object_foreach(entry, key, value) {
+    // char *key_string = json_to_string(key);
+    char *value_string = json_to_string(value);
+    char *snake_case_key = malloc(strlen(key) + 1);
+    strcpy(snake_case_key, key);
+    to_snake_case(snake_case_key);
+
+    strncat(column_names, snake_case_key, strlen(key) + 1);
+    strncat(column_names, ",", 1 + 1);
+    strncat(values, value_string, strlen(value_string) + 1);
+    strncat(values, ",", 1 + 1);
+
+    free(snake_case_key);
+    free(value_string);
+  }
+
+  // remove trailing commas
+  column_names[strlen(column_names) - 1] = '\0';
+  values[strlen(values) - 1] = '\0';
+
+  int incoming_query_len = strlen("INSERT INTO  ()\nVALUES();") +
+                           strlen(table_name) + total_value_len +
+                           total_key_len + 2 * separator_len + 1;
+  char *incoming_query = malloc(incoming_query_len);
+  snprintf(incoming_query, incoming_query_len,
+           "INSERT INTO %s (%s)\nVALUES(%s);", table_name, column_names,
+           values);
+
+  strncat(query, incoming_query, BUFFER_SIZE - strlen(query));
+}
+
+/**
  * Attempts to query the database with the given query.
  * This function assumes that the global config has the correct information on
  * the
@@ -711,147 +864,105 @@ found_table:
       entry = json_loads(body, 0, &entry_error);
 
       if (!entry) {
-        build_response_default(400, response, response_len);
+        // @TODO respond with line number, etc.
+        build_response_printf(400, response, response_len,
+                              strlen(entry_error.text), "%s", entry_error.text);
       }
 
-      const char *key;
-      const json_t *value;
+      char *query = malloc(BUFFER_SIZE + 1);
+      strcat(query, "BEGIN;");
 
-      int total_value_len = 0;
-      int total_key_len = 0;
-      int separator_len = 0;
+      // populate the query with all the information that needs to be committed.
+      // verify the validity of user input as we go. Exit if it is invalid.
 
-      json_object_foreach(entry, key, value) {
-        bool valid = false;
+      json_t *current_item;
 
-        // check for the case in which the JSON key relates to comments instead
-        // of regular columns
-        regex_t comments_regex;
-        regcomp(&comments_regex, "_comments$", REG_EXTENDED);
+      // go through the main data
+      current_item = json_object_get(entry, "data");
+      if (!current_item) {
+        build_response(400, response, response_len, "Missing main data.");
+        goto schema_mismatch_end;
+      }
+      if (!construct_validate_query(current_item, table->schema,
+                                    table->schema_count, query, table_name)) {
+        build_response(400, response, response_len,
+                       "The given entry does not conform to the schema.");
+        goto schema_mismatch_end;
+      }
 
-        regmatch_t comments_matches[1 + 1];
-        bool is_comments_column =
-            !(regexec(&comments_regex, key, 1 + 1, comments_matches, 0) ==
-              REG_NOMATCH);
-        regfree(&comments_regex);
+      // loop through every descriptor if needed
+      if (table->descriptors) {
+        json_t *all_descriptors = json_object_get(entry, "descriptors");
 
-        char *target_column;
-
-        if (is_comments_column) {
-          target_column = malloc(strlen(key) - strlen("_comments") + 1);
-          strncpy(target_column, key, strlen(key) - strlen("_comments"));
-          target_column[strlen(key) - strlen("_comments")] = '\0';
-        } else {
-          target_column = malloc(strlen(key) + 1);
-          strcpy(target_column, key);
+        // null and type check
+        if (!json_is_object(all_descriptors)) {
+          build_response(400, response, response_len, "Missing descriptors.");
+          goto schema_mismatch_end;
         }
 
-        if (strcmp(target_column, "id") == 0) {
-          // @TODO make sure postgres doesn't tweak out over incorrect next keys
-          regex_t id_regex;
-          regcomp(&id_regex, "^[0-9]+$", REG_EXTENDED);
+        const char *descriptor_name;
+        json_t *descriptors;
+        json_object_foreach(all_descriptors, descriptor_name, descriptors) {
+          // search for the correct schema @TODO better complexity
+          struct descriptor *cur = table->descriptors;
+          struct descriptor *descriptor_schema = NULL;
 
-          regmatch_t id_matches[1];
-          valid = !(regexec(&id_regex, json_to_string(value), 1, id_matches,
-                            0) == REG_NOMATCH);
-
-          regfree(&id_regex);
-        } else
-          for (int i = 0; i < table->schema_count; i++) {
-            // find which entry in the schema matches
-
-            if (str_cci_cmp(target_column, table->schema[i].name) == 0) {
-              // check if the input is a comment and the column does not have
-              // comments.
-              if (is_comments_column) {
-                if (table->schema[i].comments == false) {
-                  break;
-                }
-
-                // comments MUST have text
-                if (check_string(value) == 0) {
-                  break;
-                }
-              } else {
-                dict_item *item =
-                    linear_search(schema_datatypes, table->schema[i].datatype);
-                // check if the input's datatype mismatches
-                if (!item) {
-                  break;
-                }
-                json_datatype_check_function *related_datatype_checker =
-                    item->value;
-                if ((*related_datatype_checker)(value) == 0) {
-                  break;
-                }
-              }
-
-              valid = true;
+          for (int i = 0; i < table->descriptors_count; i++) {
+            if (strcmp(descriptor_name, cur->name) == 0) {
+              descriptor_schema = cur;
               break;
             }
+
+            cur += sizeof(struct descriptor);
           }
 
-        // also remember to catch when the key is not inside the table's schema
-        if (!valid) {
-          free(target_column);
-          build_response_default(400, response, response_len);
-          goto post_bad_input_end;
-        } else {
-          // @todo optimize
-          // char *key_string = json_to_string(key);
-          char *value_string = json_to_string(value);
-          total_value_len += strlen(value_string);
-          total_key_len +=
-              strlen(key); // no need to use to_snake_case: it won't change
-                           // the length of the string.
-          separator_len++;
+          if (!descriptor_schema) {
+            build_response_printf(
+                400, response, response_len,
+                strlen("Descriptor name  not found.") + strlen(descriptor_name),
+                "Descriptor name %s not found.", descriptor_name);
+            goto schema_mismatch_end;
+          }
 
-          // free(key_string);
-          free(value_string);
+          if (!json_is_array(descriptors)) {
+            build_response(400, response, response_len, "Descriptors ");
+            goto schema_mismatch_end;
+          }
+
+          // loop through every descriptor
+          int index;
+          json_t *descriptor;
+          json_array_foreach(descriptors, index, descriptor) {
+            if (!json_is_object(descriptor)) {
+              build_response(400, response, response_len,
+                             "Invalid or empty descriptor.");
+              goto schema_mismatch_end;
+            }
+            if (!construct_validate_query(descriptor, descriptor_schema->schema,
+                                          descriptor_schema->schema_count,
+                                          query, table_name)) {
+              build_response_printf(400, response, response_len,
+                                    strlen("A  descriptor did not conform to "
+                                           "the schema.") +
+                                        strlen(descriptor_name),
+                                    "A %s descriptor did "
+                                    "not conform to the "
+                                    "schema.",
+                                    descriptor_name);
+              goto schema_mismatch_end;
+            }
+          }
         }
-        free(target_column);
+      } else if (json_object_get(entry, "descriptors")) {
+        build_response_printf(400, response, response_len,
+                              strlen("Table  does not have descriptors.") +
+                                  strlen(table_name) + 1,
+                              "Table %s does not "
+                              "have descriptors.",
+                              table_name);
       }
 
-      separator_len--;
-      // get ready and put in all the correct values
-      char *column_names = malloc(total_key_len + separator_len + 1 + 1);
-      char *values = malloc(total_value_len + separator_len + 1 + 1);
-
-      // make them empty strings
-      strncpy(column_names, "", 1);
-      strncpy(values, "", 1);
-
-      json_object_foreach(entry, key, value) {
-        // char *key_string = json_to_string(key);
-        char *value_string = json_to_string(value);
-        char *snake_case_key = malloc(strlen(key) + 1);
-        strcpy(snake_case_key, key);
-        to_snake_case(snake_case_key);
-
-        strncat(column_names, snake_case_key, strlen(key) + 1);
-        strncat(column_names, ",", 1 + 1);
-        strncat(values, value_string, strlen(value_string) + 1);
-        strncat(values, ",", 1 + 1);
-
-        free(snake_case_key);
-        free(value_string);
-      }
-
-      // remove trailing commas
-      column_names[strlen(column_names) - 1] = '\0';
-      values[strlen(values) - 1] = '\0';
-
-      int query_len = strlen("INSERT INTO  ()\nVALUES();") +
-                      strlen(table_name) + total_value_len + total_key_len +
-                      2 * separator_len + 1;
-      char *query = malloc(query_len);
-      // strcat(query, "INSERT INTO (");
-      // memcpy(query, column_names, total_key_len + separator_len);
-      // strcat(query, ")\nVALUES (");
-      // memcpy(query, values, total_value_len + separator_len);
-      // strcat(query, ");");
-      snprintf(query, query_len, "INSERT INTO %s (%s)\nVALUES(%s);", table_name,
-               column_names, values);
+      strncat(query, "COMMIT;", BUFFER_SIZE - strlen(query));
 
       PGconn *conn = NULL;
       PGresult *res = NULL;
@@ -872,8 +983,8 @@ found_table:
         PQclear(res);
       if (conn)
         PQfinish(conn);
+    schema_mismatch_end:
       free(query);
-      // free memory
     post_bad_input_end:
       free(body);
     bad_body_end:
