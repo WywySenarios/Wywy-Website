@@ -551,7 +551,6 @@ void *handle_client(void *arg) {
 
     // add an extra 1 to skip an underscore.
     table_extension = url + url_matches[2].rm_so + table_name_len + 1;
-    printf("%s %s\n", parent_table_name, table_extension);
   }
   regfree(&table_regex);
   printf("%s\n", table_name);
@@ -587,6 +586,41 @@ void *handle_client(void *arg) {
   if (!table) {
     build_response(400, response, response_len, "Table not found.");
     goto no_table_end;
+  }
+
+  // validate table extension if needed
+  if (table_extension) {
+    // tagging related
+    if (strcmp(table_extension, "tags") == 0 ||
+        strcmp(table_extension, "tag_aliases") == 0 ||
+        strcmp(table_extension, "tag_names") == 0 ||
+        strcmp(table_extension, "tag_groups") == 0) {
+      if (!table->tagging) {
+        build_response_printf(400, response, response_len,
+                              strlen("Tagging is not enabled for table /") +
+                                  strlen(table_name) + strlen(db_name),
+                              "Tagging is not enabled for table %s/%s", db_name,
+                              table_name);
+        goto no_table_end;
+      }
+    } else if (strcmp(table_extension, "descriptors")) {
+      if (!table->descriptors) {
+        build_response_printf(
+            400, response, response_len,
+            strlen("Descriptors are not enabled for table /") +
+                strlen(table_name) + strlen(db_name),
+            "Descriptors are not enabled for table %s/%s", db_name, table_name);
+        goto no_table_end;
+      }
+    } else {
+      build_response_printf(400, response, response_len,
+                            strlen(" is not a valid table extension.") +
+                                strlen(table_extension),
+                            "%s is not a valid "
+                            "table extension.",
+                            table_extension);
+      goto no_table_end;
+    }
   }
 
   if (strcmp(method, "GET") == 0) {
@@ -1048,6 +1082,8 @@ void *handle_client(void *arg) {
 no_table_end:
   free(db_name);
   free(table_name);
+  free(parent_table_name);
+  // do not free table_extension because it is a part of url
 
 bad_url_end:
   free(url);
