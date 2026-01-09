@@ -17,10 +17,17 @@ struct data_column {
   const char *entrytype;             // useless here
 };
 
+struct descriptor {
+  const char *name;
+  struct data_column *schema;
+  unsigned int schema_count;
+};
+
 struct table {
   char *table_name;      // @todo validation
   bool read;             // @todo validation
   bool write;            // @todo validation
+  bool tagging;
   const char *entrytype; // @todo validation
   struct data_column *schema;
   unsigned int schema_count;

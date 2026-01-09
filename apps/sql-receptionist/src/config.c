@@ -45,6 +45,16 @@ static const cyaml_schema_value_t data_column_schema = {
                         data_column_fields_schema /* Field schema for mapping */
                         )};
 
+static const cyaml_schema_field_t descriptor_fields_schema[] = {
+    CYAML_FIELD_STRING_PTR("name", CYAML_FLAG_POINTER, struct descriptor, name,
+                           0, CYAML_UNLIMITED),
+    CYAML_FIELD_SEQUENCE("schema", CYAML_FLAG_POINTER, struct descriptor,
+                         schema, &data_column_schema, 0, CYAML_UNLIMITED),
+    CYAML_FIELD_END};
+
+static const cyaml_schema_value_t descriptor_schema = {CYAML_VALUE_MAPPING(
+    CYAML_FLAG_OPTIONAL, struct descriptor, descriptor_fields_schema)};
+
 static const cyaml_schema_field_t table_fields_schema[] = {
     CYAML_FIELD_STRING_PTR("tableName", CYAML_FLAG_POINTER, struct table,
                            table_name, 0, CYAML_UNLIMITED),
@@ -52,6 +62,8 @@ static const cyaml_schema_field_t table_fields_schema[] = {
     CYAML_FIELD_BOOL("read", CYAML_FLAG_DEFAULT, struct table, read),
 
     CYAML_FIELD_BOOL("write", CYAML_FLAG_DEFAULT, struct table, write),
+
+    CYAML_FIELD_BOOL("tagging", CYAML_FLAG_OPTIONAL, struct table, tagging),
 
     CYAML_FIELD_STRING_PTR("entrytype", CYAML_FLAG_POINTER, struct table,
                            entrytype, 0, CYAML_UNLIMITED),
