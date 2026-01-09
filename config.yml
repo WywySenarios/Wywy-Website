@@ -135,7 +135,6 @@ data:
         read: true
         write: true
         entrytype: timer
-        comments: true
         tagging: true
         schema:
           - name: Start Time
