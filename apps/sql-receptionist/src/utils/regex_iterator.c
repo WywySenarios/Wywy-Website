@@ -26,7 +26,7 @@ struct regex_iterator *create_regex_iterator(char *pattern, int num_matches,
   struct regex_iterator *output = malloc(sizeof(struct regex_iterator));
 
   output->nmatch = num_matches + 1;
-  output->matches = malloc(sizeof(regmatch_t) * num_matches);
+  output->matches = malloc(sizeof(regmatch_t) * (num_matches + 1));
   if (regcomp(output->preg, pattern, cflags) != 0) {
     free(output->matches);
     free(output);
@@ -70,10 +70,9 @@ int regex_iterator_peek(struct regex_iterator *iter, int eflags) {
     return REG_NOMATCH;
 
   if (iter->cur)
-    return regexec(iter->preg, iter->cur, iter->nmatch + 1, iter->matches,
-                   eflags);
+    return regexec(iter->preg, iter->cur, iter->nmatch, iter->matches, eflags);
   else
-    return regexec(iter->preg, iter->target, iter->nmatch + 1, iter->matches,
+    return regexec(iter->preg, iter->target, iter->nmatch, iter->matches,
                    eflags);
 }
 
@@ -150,7 +149,6 @@ void free_regex_iterator(struct regex_iterator *iter) {
 
   if (iter->preg)
     regfree(iter->preg);
-  if (iter->matches)
-    free(iter->matches);
+  free(iter->matches);
   free(iter);
 }
