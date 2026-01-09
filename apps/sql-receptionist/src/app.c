@@ -525,10 +525,9 @@ void *handle_client(void *arg) {
   db_name[db_name_len] = '\0';
 
   regex_t table_regex;
-  regcomp(
-      &table_regex,
-      "([a-zA-Z0-9_]+)_(tags|tag_aliases|_tag_names|tag_groups|descriptors)",
-      REG_EXTENDED);
+  regcomp(&table_regex,
+          "([a-zA-Z0-9_]+)_(tags|tag_aliases|tag_names|tag_groups|descriptors)",
+          REG_EXTENDED);
 
   regmatch_t table_matches[2 + 1];
   char *table_name = NULL;
