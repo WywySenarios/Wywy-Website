@@ -308,6 +308,7 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
            values);
 
   strncat(query, incoming_query, BUFFER_SIZE - strlen(query));
+  return 1;
 }
 
 /**
