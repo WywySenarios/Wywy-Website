@@ -910,11 +910,11 @@ void *handle_client(void *arg) {
 
       struct data_column *schema = NULL;
       int schema_count = -1;
-      if (strcmp(target_type, "data")) {
+      if (strcmp(target_type, "data") == 0) {
         // no additional checks needed
         schema = table->schema;
-        schema_count = schema_count;
-      } else if (strcmp(target_type, "descriptors")) {
+        schema_count = table->schema_count;
+      } else if (strcmp(target_type, "descriptors") == 0) {
         if (!table->descriptors) {
           build_response_printf(400, response, response_len,
                                 strlen("Table  does not have descriptors.") +
@@ -934,18 +934,17 @@ void *handle_client(void *arg) {
           schema_count = table->descriptors[i].schema_count;
           break;
         }
-      }
 
-      if (!schema || schema_count == -1) {
-        build_response(400, response, response_len,
-                       "Descriptor schema not found.");
-        goto schema_mismatch_end;
-      }
-      // } else if (strcmp(target_type, "tags")) {
-      // } else if (strcmp(target_type, "tag_aliases")) {
-      // } else if (strcmp(target_type, "tag_names")) {
-      // } else if (strcmp(target_type, "tag_groups")) {
-      else {
+        if (!schema || schema_count == -1) {
+          build_response(400, response, response_len,
+                         "Descriptor schema not found.");
+          goto schema_mismatch_end;
+        }
+        // } else if (strcmp(target_type, "tags")) {
+        // } else if (strcmp(target_type, "tag_aliases")) {
+        // } else if (strcmp(target_type, "tag_names")) {
+        // } else if (strcmp(target_type, "tag_groups")) {
+      } else {
         build_response(400, response, response_len,
                        "Invalid target table type.");
         goto schema_mismatch_end;
