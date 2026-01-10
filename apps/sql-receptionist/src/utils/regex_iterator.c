@@ -25,6 +25,8 @@ struct regex_iterator *create_regex_iterator(char *pattern, int num_matches,
 
   struct regex_iterator *output = malloc(sizeof(struct regex_iterator));
 
+  output->preg = malloc(sizeof(regex_t));
+
   output->nmatch = num_matches + 1;
   output->matches = malloc(sizeof(regmatch_t) * (num_matches + 1));
   if (regcomp(output->preg, pattern, cflags) != 0) {
