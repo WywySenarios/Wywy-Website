@@ -36,7 +36,7 @@
 #define BUFFER_SIZE 104857600 - 1
 #define MAX_ENTRY_SIZE 1048576 - 1
 #define AUTH_DB_NAME "auth" // @todo make this configurable
-#define MAX_URL_SECTIONS 3  // must be 2 or larger
+#define MAX_URL_SECTIONS 4  // must be 2 or larger
 #define MAX_REGEX_MATCHES 25
 #define limit "20"
 #define NUM_DATATYPES_KEYS 1
@@ -896,102 +896,74 @@ void *handle_client(void *arg) {
         // @TODO respond with line number, etc.
         build_response_printf(400, response, response_len,
                               strlen(entry_error.text), "%s", entry_error.text);
+        goto schema_mismatch_end;
       }
 
       char *query = malloc(BUFFER_SIZE + 1);
-      strcat(query, "BEGIN;");
 
-      // populate the query with all the information that needs to be committed.
-      // verify the validity of user input as we go. Exit if it is invalid.
-
-      json_t *current_item;
-
-      // go through the main data
-      current_item = json_object_get(entry, "data");
-      if (!current_item) {
-        build_response(400, response, response_len, "Missing main data.");
+      char *target_type = url_segments[2];
+      if (!target_type) {
+        build_response(400, response, response_len,
+                       "No target table type supplied.");
         goto schema_mismatch_end;
       }
-      if (!construct_validate_query(current_item, table->schema,
-                                    table->schema_count, query, table_name)) {
+
+      struct data_column *schema = NULL;
+      int schema_count = -1;
+      if (strcmp(target_type, "data")) {
+        // no additional checks needed
+        schema = table->schema;
+        schema_count = schema_count;
+      } else if (strcmp(target_type, "descriptors")) {
+        if (!table->descriptors) {
+          build_response_printf(400, response, response_len,
+                                strlen("Table  does not have descriptors.") +
+                                    strlen(table_name),
+                                "Table %s does not "
+                                "have descriptors.",
+                                table_name);
+          goto schema_mismatch_end;
+        }
+
+        char *descriptor_name = url_segments[3];
+
+        // look for the respective descriptor
+        for (int i = 0; i < table->descriptors_count; i++) {
+          if (strcmp(table->descriptors[i].name, descriptor_name) == 0)
+            schema = table->descriptors[i].schema;
+          schema_count = table->descriptors[i].schema_count;
+          break;
+        }
+      }
+
+      if (!schema || schema_count == -1) {
+        build_response(400, response, response_len,
+                       "Descriptor schema not found.");
+        goto schema_mismatch_end;
+      }
+      // } else if (strcmp(target_type, "tags")) {
+      // } else if (strcmp(target_type, "tag_aliases")) {
+      // } else if (strcmp(target_type, "tag_names")) {
+      // } else if (strcmp(target_type, "tag_groups")) {
+      else {
+        build_response(400, response, response_len,
+                       "Invalid target table type.");
+        goto schema_mismatch_end;
+      }
+
+      if (!schema || schema_count == -1) {
+        build_response(
+            500, response, response_len,
+            "Bad target table schema. Contact website maintainer for a fix.");
+        goto schema_mismatch_end;
+      }
+
+      if (!construct_validate_query(entry, schema, schema_count, query,
+                                    table_name)) {
         build_response(400, response, response_len,
                        "The given entry does not conform to the schema.");
         goto schema_mismatch_end;
       }
-
-      // loop through every descriptor if needed
-      if (table->descriptors) {
-        json_t *all_descriptors = json_object_get(entry, "descriptors");
-
-        // null and type check
-        if (!json_is_object(all_descriptors)) {
-          build_response(400, response, response_len, "Missing descriptors.");
-          goto schema_mismatch_end;
-        }
-
-        const char *descriptor_name;
-        json_t *descriptors;
-        json_object_foreach(all_descriptors, descriptor_name, descriptors) {
-          // search for the correct schema @TODO better complexity
-          struct descriptor *cur = table->descriptors;
-          struct descriptor *descriptor_schema = NULL;
-
-          for (int i = 0; i < table->descriptors_count; i++) {
-            if (strcmp(descriptor_name, cur->name) == 0) {
-              descriptor_schema = cur;
-              break;
-            }
-
-            cur += sizeof(struct descriptor);
-          }
-
-          if (!descriptor_schema) {
-            build_response_printf(
-                400, response, response_len,
-                strlen("Descriptor name  not found.") + strlen(descriptor_name),
-                "Descriptor name %s not found.", descriptor_name);
-            goto schema_mismatch_end;
-          }
-
-          if (!json_is_array(descriptors)) {
-            build_response(400, response, response_len, "Descriptors ");
-            goto schema_mismatch_end;
-          }
-
-          // loop through every descriptor
-          int index;
-          json_t *descriptor;
-          json_array_foreach(descriptors, index, descriptor) {
-            if (!json_is_object(descriptor)) {
-              build_response(400, response, response_len,
-                             "Invalid or empty descriptor.");
-              goto schema_mismatch_end;
-            }
-            if (!construct_validate_query(descriptor, descriptor_schema->schema,
-                                          descriptor_schema->schema_count,
-                                          query, table_name)) {
-              build_response_printf(400, response, response_len,
-                                    strlen("A  descriptor did not conform to "
-                                           "the schema.") +
-                                        strlen(descriptor_name),
-                                    "A %s descriptor did "
-                                    "not conform to the "
-                                    "schema.",
-                                    descriptor_name);
-              goto schema_mismatch_end;
-            }
-          }
-        }
-      } else if (json_object_get(entry, "descriptors")) {
-        build_response_printf(400, response, response_len,
-                              strlen("Table  does not have descriptors.") +
-                                  strlen(table_name) + 1,
-                              "Table %s does not "
-                              "have descriptors.",
-                              table_name);
-      }
-
-      strncat(query, "COMMIT;", BUFFER_SIZE - strlen(query));
 
       PGconn *conn = NULL;
       PGresult *res = NULL;
