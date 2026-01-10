@@ -364,7 +364,6 @@ ExecStatusType sql_query(char *dbname, char *query, PGresult **res,
  * request.
  */
 void *handle_client(void *arg) {
-  printf("Hey");
   // variables that are always used:
   int client_fd = *((int *)arg);
   char *buffer = malloc(BUFFER_SIZE * sizeof(char));
@@ -498,7 +497,7 @@ void *handle_client(void *arg) {
   char *url = url_decode(encoded_url);
   free(encoded_url);
 
-  url_regex = create_regex_iterator("([^/^?]+)[/?]", 1, REG_EXTENDED);
+  url_regex = create_regex_iterator("([^/^?]+)[/?]?", 1, REG_EXTENDED);
 
   regex_iterator_load_target(url_regex, url);
 
