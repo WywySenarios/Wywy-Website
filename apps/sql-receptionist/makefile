@@ -1,7 +1,7 @@
 SRC := $(shell find src -name "*.c")
 CC = gcc
 CFLAGS = -I/usr/include/postgresql -Iinclude
-LDFLAGS = -L/usr/lib/x86_64-linux-gnu/ -lpq -lcyaml -ljansson
+LDFLAGS = -L/usr/lib/x86_64-linux-gnu/ -g -lpq -lcyaml -ljansson
 TARGET = app
 
 app:
