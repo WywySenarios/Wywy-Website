@@ -1022,11 +1022,11 @@ end:
   regfree(&regex);
 
   close(client_fd);
-  // free(*response);
-  // free(response);
-  // free(response_len);
-  // free(arg);
-  // free(buffer);
+  free(*response);
+  free(response);
+  free(response_len);
+  free(arg);
+  free(buffer);
   return NULL;
 }
 
