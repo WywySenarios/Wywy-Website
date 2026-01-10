@@ -917,7 +917,7 @@ void *handle_client(void *arg) {
       } else if (strcmp(target_type, "descriptors") == 0) {
         if (!table->descriptors) {
           build_response_printf(400, response, response_len,
-                                strlen("Table  does not have descriptors.") +
+                                strlen("Table does not have descriptors.") +
                                     strlen(table_name),
                                 "Table %s does not "
                                 "have descriptors.",
