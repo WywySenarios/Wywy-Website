@@ -213,7 +213,7 @@ def enforce_column(conn, table_name: str, column_schema: dict) -> bool:
     # check for the comments column
     # do not remove old comments columns
     comments_column_exists = column_exists(conn, table_name, column_name + "_comments")
-    if not "comments" in column_schema or not column_schema:
+    if "comments" in column_schema and column_schema["comments"]:
         if not comments_column_exists:
             with conn.cursor() as cur:
                 cur.execute(sql.SQL("ALTER TABLE {} ADD COLUMN {} text DEFAULT '';").format(
