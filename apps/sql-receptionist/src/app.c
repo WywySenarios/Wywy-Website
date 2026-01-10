@@ -11,6 +11,7 @@
 #include "server/responses.h"
 #include "utils/format_string.h"
 #include "utils/json/datatype_validation.h"
+#include "utils/regex_iterator.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
 #include <ctype.h>
@@ -35,7 +36,7 @@
 #define BUFFER_SIZE 104857600 - 1
 #define MAX_ENTRY_SIZE 1048576 - 1
 #define AUTH_DB_NAME "auth" // @todo make this configurable
-#define MAX_URL_SECTIONS 3
+#define MAX_URL_SECTIONS 3  // must be 2 or larger
 #define MAX_REGEX_MATCHES 25
 #define limit "20"
 #define NUM_DATATYPES_KEYS 1
@@ -363,11 +364,24 @@ ExecStatusType sql_query(char *dbname, char *query, PGresult **res,
  * request.
  */
 void *handle_client(void *arg) {
+  // variables that are always used:
   int client_fd = *((int *)arg);
   char *buffer = malloc(BUFFER_SIZE * sizeof(char));
   char **response = malloc(sizeof(char *));
   *response = malloc(BUFFER_SIZE * 2 * sizeof(char));
   size_t *response_len = malloc(sizeof(size_t *));
+
+  // variables that are generally useful:
+  char *url_segments[MAX_URL_SECTIONS];
+  for (int i = 0; i < MAX_URL_SECTIONS; i++)
+    url_segments[i] = NULL;
+  char *method = NULL;
+  char *database_name = NULL;
+  struct db *database = NULL;
+  // the parent table name
+  char *table_name = NULL;
+  struct table *table = NULL;
+  // additional URL segments AFTER the database name and the table name
 
   // receive request data from client and store into buffer
   ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
@@ -385,34 +399,29 @@ void *handle_client(void *arg) {
 
   regmatch_t matches[3];
 
-  regex_t url_regex;
-  regcomp(&url_regex, "([^/]+)/([^/]+)(/([^/]+))?", REG_EXTENDED); // "[^/]+"
-
-  regmatch_t url_matches[MAX_URL_SECTIONS + 1];
-
   // Does the request have a URL?
   if (regexec(&regex, buffer, 3, matches, 0) == REG_NOMATCH) {
     build_response_default(400, response, response_len);
-    goto unsuccessful_regex_end;
+    goto end;
   }
 
   // extract database name and table name from request
   // @todo validate the request
   if (matches[1].rm_so == -1 || matches[2].rm_so == -1) {
     build_response_default(400, response, response_len);
-    goto unsuccessful_regex_end;
+    goto end;
   }
 
   // Extract the method
   int method_len = matches[1].rm_eo - matches[1].rm_so;
-  char *method = malloc(method_len + 1);
+  method = malloc(method_len + 1);
   strncpy(method, buffer + matches[1].rm_so, method_len);
   method[method_len] = '\0';
 
   // immediately check for OPTIONS requests
   if (strcmp(method, "OPTIONS") == 0) {
     build_response_default(204, response, response_len);
-    goto options_end;
+    goto end;
   }
 
   // @todo special/reserved URLs
@@ -427,7 +436,7 @@ void *handle_client(void *arg) {
       REG_NOMATCH) {
     regfree(&raw_cookie_regex);
     build_response_default(403, response, response_len);
-    goto options_end;
+    goto end;
   }
 
   int raw_cookies_len =
@@ -487,6 +496,70 @@ void *handle_client(void *arg) {
   char *url = url_decode(encoded_url);
   free(encoded_url);
 
+  struct regex_iterator *url_regex =
+      create_regex_iterator("([^/^?]+)[/?]", 1, REG_EXTENDED);
+
+  regex_iterator_load_target(url_regex, url);
+
+  // START - check URL
+
+  // look for as many url sections as possible
+  for (int i = 0; i < MAX_URL_SECTIONS; i++) {
+    if (regex_iterator_match(url_regex, 0) != 0)
+      break;
+    url_segments[i] = regex_iterator_get_match(url_regex, 1);
+    if (!url_segments[i]) {
+      build_response(500, response, response_len, "Memory allocation failed.");
+      perror("URL section malloc failure");
+      goto end;
+    }
+    regex_iterator_advance_cur(url_regex);
+  }
+
+  // get database name
+  database_name = url_segments[0];
+
+  // ensure that there is a target database
+  if (!database_name) {
+    build_response(400, response, response_len,
+                   "Database name was not supplied.");
+    goto end;
+  }
+
+  for (unsigned int i = 0; i < global_config->dbs_count; i++) {
+    if (strcmp(global_config->dbs[i].db_name, database_name) == 0) {
+      database = &global_config->dbs[i];
+      break;
+    }
+  }
+
+  // ensure that there is a target database
+  if (!database) {
+    build_response(400, response, response_len, "Database not found.");
+    goto end;
+  }
+
+  table_name = url_segments[1];
+
+  // ensure that there is a target table
+  if (!table_name) {
+    build_response(400, response, response_len, "Table name not supplied.");
+    goto end;
+  }
+
+  for (unsigned int i = 0; i < database->tables_count; i++) {
+    if (strcmp(database->tables[i].table_name, table_name) == 0) {
+      table = &database->tables[i];
+    }
+  }
+
+  // ensure that there is a target table
+  if (!table) {
+    build_response(400, response, response_len, "Table not found.");
+    goto end;
+  }
+  // END - check URL
+
   // @todo handle memory?
   // handle querystring
   char *querystring = NULL;
@@ -497,17 +570,6 @@ void *handle_client(void *arg) {
     querystring = qmark + 1; // everything after is the querystring
   }
 
-  // does the URL have 2 or 3 segments?
-  if (regexec(&url_regex, url, MAX_URL_SECTIONS + 1, url_matches, 0) ==
-      REG_NOMATCH) {
-    build_response_default(400, response, response_len);
-    goto bad_url_end;
-  }
-
-  if (url_matches[1].rm_so == -1 || url_matches[2].rm_so == -1) {
-    build_response_default(400, response, response_len);
-    goto bad_url_end;
-  }
   // decide what to do
   // first ensure that the method is uppercase
   // @todo verify if this is really needed
@@ -516,112 +578,6 @@ void *handle_client(void *arg) {
   }
 
   // search for the relevant table & database
-  struct db *db = NULL;
-  struct table *table = NULL;
-
-  int db_name_len = url_matches[1].rm_eo - url_matches[1].rm_so;
-  char *db_name = malloc(db_name_len + 1);
-  strncpy(db_name, url + url_matches[1].rm_so, db_name_len);
-  db_name[db_name_len] = '\0';
-
-  regex_t table_regex;
-  regcomp(&table_regex,
-          "([a-zA-Z0-9_]+)_(tags|tag_aliases|tag_names|tag_groups|descriptors)",
-          REG_EXTENDED);
-
-  regmatch_t table_matches[2 + 1];
-  char *table_name = NULL;
-  int table_name_len = url_matches[2].rm_eo - url_matches[2].rm_so;
-  table_name = malloc(table_name_len + 1);
-  strncpy(table_name, url + url_matches[2].rm_so, table_name_len);
-  table_name[table_name_len] = '\0';
-  char *parent_table_name = NULL;
-  // do not free table_extension because it is a part of url
-  char *table_extension = NULL;
-
-  // check for child tables
-  if (regexec(&table_regex, url + url_matches[2].rm_so, 2 + 1, table_matches,
-              0) == 0) {
-    int parent_table_name_len =
-        url_matches[2].rm_eo - url_matches[2].rm_so -
-        (table_matches[2].rm_eo - table_matches[2].rm_so);
-    parent_table_name = malloc(parent_table_name_len + 1);
-    memcpy(table_name, table_name, parent_table_name_len);
-    parent_table_name[parent_table_name_len] = '\0';
-
-    // add an extra 1 to skip an underscore.
-    table_extension = url + url_matches[2].rm_so + table_name_len + 1;
-  }
-  regfree(&table_regex);
-  printf("%s\n", table_name);
-
-  for (unsigned int i = 0; i < global_config->dbs_count; i++) {
-    if (strcmp(global_config->dbs[i].db_name, db_name) == 0) {
-      db = &global_config->dbs[i];
-      break;
-    }
-  }
-
-  // didn't find a database?
-  if (!db) {
-    build_response(400, response, response_len, "Database not found.");
-    goto no_table_end;
-  }
-
-  if (parent_table_name) {
-    for (unsigned int i = 0; i < db->tables_count; i++) {
-      if (strcmp(db->tables[i].table_name, parent_table_name) == 0) {
-        table = &db->tables[i];
-      }
-    }
-  } else {
-    for (unsigned int i = 0; i < db->tables_count; i++) {
-      if (strcmp(db->tables[i].table_name, table_name) == 0) {
-        table = &db->tables[i];
-      }
-    }
-  }
-
-  // didn't find a table? Tell the client that there's no such table
-  if (!table) {
-    build_response(400, response, response_len, "Table not found.");
-    goto no_table_end;
-  }
-
-  // validate table extension if needed
-  if (table_extension) {
-    // tagging related
-    if (strcmp(table_extension, "tags") == 0 ||
-        strcmp(table_extension, "tag_aliases") == 0 ||
-        strcmp(table_extension, "tag_names") == 0 ||
-        strcmp(table_extension, "tag_groups") == 0) {
-      if (!table->tagging) {
-        build_response_printf(400, response, response_len,
-                              strlen("Tagging is not enabled for table /") +
-                                  strlen(table_name) + strlen(db_name),
-                              "Tagging is not enabled for table %s/%s", db_name,
-                              table_name);
-        goto no_table_end;
-      }
-    } else if (strcmp(table_extension, "descriptors")) {
-      if (!table->descriptors) {
-        build_response_printf(
-            400, response, response_len,
-            strlen("Descriptors are not enabled for table /") +
-                strlen(table_name) + strlen(db_name),
-            "Descriptors are not enabled for table %s/%s", db_name, table_name);
-        goto no_table_end;
-      }
-    } else {
-      build_response_printf(400, response, response_len,
-                            strlen(" is not a valid table extension.") +
-                                strlen(table_extension),
-                            "%s is not a valid "
-                            "table extension.",
-                            table_extension);
-      goto no_table_end;
-    }
-  }
 
   if (strcmp(method, "GET") == 0) {
     // check if the database & table may be accessed freely
@@ -632,58 +588,49 @@ void *handle_client(void *arg) {
       // @todo still vulnerable to changing the config
 
       // check for the case where the user wants to get the next id
-      if (url_matches[3].rm_so != -1) {
-        int command_len = url_matches[3].rm_eo - url_matches[3].rm_so;
-        char *command = malloc(command_len + 1);
-        strncpy(command, url + url_matches[3].rm_so, command_len);
-        command[command_len] = '\0';
+      if (url_segments[2] && strcmp(url_segments[2], "get_next_id") == 0) {
+        PGconn *conn = NULL;
+        PGresult *res = NULL;
 
-        if (strcmp(command, "get_next_id") == 0) {
-          PGconn *conn = NULL;
-          PGresult *res = NULL;
+        size_t query_len =
+            strlen("SELECT MAX(id) AS highest_id\nFROM ;") + strlen(table_name);
+        char *query = malloc(query_len + 1);
 
-          size_t query_len = strlen("SELECT MAX(id) AS highest_id\nFROM ;") +
-                             strlen(table_name);
-          char *query = malloc(query_len + 1);
+        snprintf(query, query_len, "SELECT MAX(id) AS highest_id\nFROM%s;",
+                 table_name);
 
-          snprintf(query, query_len, "SELECT MAX(id) AS highest_id\nFROM %s;",
-                   table_name);
-
-          ExecStatusType sql_query_status =
-              sql_query(db_name, query, &res, &conn);
-          if (sql_query_status == PGRES_TUPLES_OK ||
-              sql_query_status == PGRES_COMMAND_OK) {
-            char *highest_id_str = PQgetvalue(res, 0, 0);
-            if (highest_id_str && strlen(highest_id_str) > 0) {
-              build_response(200, response, response_len, highest_id_str);
-            } else {
-              build_response(200, response, response_len, "1");
-            }
+        ExecStatusType sql_query_status =
+            sql_query(database_name, query, &res, &conn);
+        if (sql_query_status == PGRES_TUPLES_OK ||
+            sql_query_status == PGRES_COMMAND_OK) {
+          char *highest_id_str = PQgetvalue(res, 0, 0);
+          if (highest_id_str && strlen(highest_id_str) > 0) {
+            build_response(200, response, response_len, highest_id_str);
           } else {
-            // @todo determine if it's the client's fault or the server's fault
-            build_response_printf(500, response, response_len,
-                                  strlen(PQresStatus(sql_query_status)) + 2 +
-                                      strlen(PQerrorMessage(conn)) + 1,
-                                  "%s: %s", PQresStatus(sql_query_status),
-                                  PQerrorMessage(conn));
+            build_response(200, response, response_len, "1");
           }
-
-          if (res)
-            PQclear(res);
-          if (conn)
-            PQfinish(conn);
-          free(query);
         } else {
-          build_response_default(400, response, response_len);
+          // @todo determine if it's the client's fault or the server's fault
+          build_response_printf(500, response, response_len,
+                                strlen(PQresStatus(sql_query_status)) + 2 +
+                                    strlen(PQerrorMessage(conn)) + 1,
+                                "%s: %s", PQresStatus(sql_query_status),
+                                PQerrorMessage(conn));
         }
 
-        goto no_table_end;
+        if (res)
+          PQclear(res);
+        if (conn)
+          PQfinish(conn);
+        free(query);
+
+        goto end;
       }
 
       // REQUIRES querystring to run
       if (querystring == NULL) {
         build_response_default(400, response, response_len);
-        goto no_table_end;
+        goto end;
       }
 
       regex_t querystring_regex;
@@ -817,7 +764,7 @@ void *handle_client(void *arg) {
 
         // attempt to query the database
         ExecStatusType sql_query_status =
-            sql_query(db_name, query, &res, &conn);
+            sql_query(database_name, query, &res, &conn);
         if (sql_query_status == PGRES_TUPLES_OK ||
             sql_query_status ==
                 PGRES_COMMAND_OK) { // if the query is successful,
@@ -1044,7 +991,8 @@ void *handle_client(void *arg) {
 
       PGconn *conn = NULL;
       PGresult *res = NULL;
-      ExecStatusType sql_query_status = sql_query(db_name, query, &res, &conn);
+      ExecStatusType sql_query_status =
+          sql_query(database_name, query, &res, &conn);
       if (sql_query_status != PGRES_COMMAND_OK &&
           sql_query_status != PGRES_TUPLES_OK) {
         build_response_printf(500, response, response_len,
@@ -1078,31 +1026,24 @@ void *handle_client(void *arg) {
     build_response_default(400, response, response_len);
   }
 
-  // free memory
-no_table_end:
-  free(db_name);
-  free(table_name);
-  free(parent_table_name);
-  // do not free table_extension because it is a part of url
-
 bad_url_end:
   free(url);
 
 bad_auth_end:
   regfree(&cookie_regex);
 
-unsuccessful_regex_end:
-  regfree(&url_regex);
-
-options_end:
-  free(method);
-  regfree(&regex);
-
 end:
   // send HTTP response to client
   send(client_fd, *response, *response_len, 0);
 
   printf("Response:\n%s\n\n", *response);
+
+  for (int i = 0; i < MAX_URL_SECTIONS; i++) {
+    free(url_segments[i]);
+  }
+  free_regex_iterator(url_regex);
+  free(method);
+  regfree(&regex);
 
   close(client_fd);
   free(*response);
