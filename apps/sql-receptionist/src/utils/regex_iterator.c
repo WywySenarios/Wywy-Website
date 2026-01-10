@@ -5,6 +5,7 @@
 
 #include "utils/regex_iterator.h"
 #include <regex.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -46,6 +47,7 @@ struct regex_iterator *create_regex_iterator(char *pattern, int num_matches,
  */
 void regex_iterator_load_target(struct regex_iterator *iter, char *new_target) {
   iter->target = new_target;
+  iter->cur = new_target;
 }
 
 /**
@@ -57,6 +59,7 @@ void regex_iterator_load_target(struct regex_iterator *iter, char *new_target) {
 void regex_iterator_replace_target(struct regex_iterator *iter,
                                    char *new_target) {
   iter->target = new_target;
+  iter->cur = new_target;
 }
 
 /**
@@ -67,40 +70,23 @@ void regex_iterator_replace_target(struct regex_iterator *iter,
  * @param eflags the eflags to pass into regexec.
  * @return the result of regexec.
  */
-int regex_iterator_peek(struct regex_iterator *iter, int eflags) {
-  if (!iter->target)
-    return REG_NOMATCH;
-
-  if (iter->cur)
-    return regexec(iter->preg, iter->cur, iter->nmatch, iter->matches, eflags);
-  else
-    return regexec(iter->preg, iter->target, iter->nmatch, iter->matches,
-                   eflags);
-}
-
-/**
- * Attempts to query the given target. Returns REG_NOMATCH when there is no
- * target. May fail if the regex_iterator is not valid. This does not modify the
- * regex_iterator's target string.
- * @param iter the regex_iterator to run the query on. This must not be NULL.
- * @param eflags the eflags to pass into regexec.
- * @return the result of regexec.
- */
-int regex_iterator_match_next(struct regex_iterator *iter, int eflags) {
-  if (!iter->target)
-    return REG_NOMATCH;
-
-  // make sure there is a valid cur to use.
+int regex_iterator_match(struct regex_iterator *iter, int eflags) {
   if (!iter->cur)
-    iter->cur = iter->target;
+    return REG_NOMATCH;
 
-  int output = regexec(iter->preg, iter->target, iter->nmatch + 1,
-                       iter->matches, eflags);
+  return regexec(iter->preg, iter->cur, iter->nmatch, iter->matches, eflags);
+}
 
-  // advance cur
-  iter->cur += iter->matches[0].rm_eo;
+/**
+ * Attempts to advance the target regex_iterator's cursor.
+ * @param iter the target regex_iterator.
+ */
+void regex_iterator_advance_cur(struct regex_iterator *iter) {
+  if (!iter->cur)
+    return;
 
-  return output;
+  if (has_match(iter, 0))
+    iter->cur += iter->matches[0].rm_eo;
 }
 
 /**
@@ -134,7 +120,7 @@ char *regex_iterator_get_match(struct regex_iterator *iter, int match_num) {
       iter->matches[match_num].rm_eo - iter->matches[match_num].rm_so;
   char *output = malloc(output_len + 1);
 
-  memcpy(output, iter->target + iter->matches[match_num].rm_so, output_len);
+  memcpy(output, iter->cur + iter->matches[match_num].rm_so, output_len);
   output[output_len] = '\0';
 
   return output;
