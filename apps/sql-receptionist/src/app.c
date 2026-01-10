@@ -527,6 +527,8 @@ void *handle_client(void *arg) {
     goto end;
   }
 
+  to_lower_snake_case(database_name);
+
   for (unsigned int i = 0; i < global_config->dbs_count; i++) {
     if (strcmp(global_config->dbs[i].db_name, database_name) == 0) {
       database = &global_config->dbs[i];
@@ -547,6 +549,8 @@ void *handle_client(void *arg) {
     build_response(400, response, response_len, "Table name not supplied.");
     goto end;
   }
+
+  to_lower_snake_case(table_name);
 
   for (unsigned int i = 0; i < database->tables_count; i++) {
     if (strcmp(database->tables[i].table_name, table_name) == 0) {
