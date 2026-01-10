@@ -364,6 +364,7 @@ ExecStatusType sql_query(char *dbname, char *query, PGresult **res,
  * request.
  */
 void *handle_client(void *arg) {
+  printf("Hey");
   // variables that are always used:
   int client_fd = *((int *)arg);
   char *buffer = malloc(BUFFER_SIZE * sizeof(char));
@@ -376,6 +377,7 @@ void *handle_client(void *arg) {
   for (int i = 0; i < MAX_URL_SECTIONS; i++)
     url_segments[i] = NULL;
   char *method = NULL;
+  struct regex_iterator *url_regex = NULL;
   char *database_name = NULL;
   struct db *database = NULL;
   // the parent table name
@@ -496,8 +498,7 @@ void *handle_client(void *arg) {
   char *url = url_decode(encoded_url);
   free(encoded_url);
 
-  struct regex_iterator *url_regex =
-      create_regex_iterator("([^/^?]+)[/?]", 1, REG_EXTENDED);
+  url_regex = create_regex_iterator("([^/^?]+)[/?]", 1, REG_EXTENDED);
 
   regex_iterator_load_target(url_regex, url);
 
@@ -1046,11 +1047,11 @@ end:
   regfree(&regex);
 
   close(client_fd);
-  free(*response);
-  free(response);
-  free(response_len);
-  free(arg);
-  free(buffer);
+  // free(*response);
+  // free(response);
+  // free(response_len);
+  // free(arg);
+  // free(buffer);
   return NULL;
 }
 
