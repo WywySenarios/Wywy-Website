@@ -51,18 +51,6 @@ void regex_iterator_load_target(struct regex_iterator *iter, char *new_target) {
 }
 
 /**
- * Replaces the old target string of the given regex_iterator with the new
- * target string. Does not free pointer to the old target.
- * @param iter the regex_iterator to modify. This must not be NULL.
- * @param new_target the new target string. This should not be NULL.
- */
-void regex_iterator_replace_target(struct regex_iterator *iter,
-                                   char *new_target) {
-  iter->target = new_target;
-  iter->cur = new_target;
-}
-
-/**
  * Attempts to query the given target. Returns REG_NOMATCH when there is no
  * target. May fail if the regex_iterator is not valid. This does not modify the
  * regex_iterator's target string.
