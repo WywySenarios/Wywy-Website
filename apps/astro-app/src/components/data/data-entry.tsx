@@ -51,10 +51,11 @@ export function Tags({}: {
 }
 
 /**
- * Renders the form components for a descriptor. ?????/
+ * Renders the form components for a descriptor.
  * @param index The index of the Zod schema this relates to. Specifically, the controller name will be: "descriptors.${name}[${index}]..."
  * @param descriptorInfo The schema for the respective descriptor.
  * @param form The controller for the overarching form.
+ * @param remove The function that removes this descriptor's link to the form.
  * @returns
  */
 function Descriptor({
