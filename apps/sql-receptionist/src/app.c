@@ -11,6 +11,7 @@
 #include "server/responses.h"
 #include "utils/format_string.h"
 #include "utils/json/datatype_validation.h"
+#include "utils/regex_item.h"
 #include "utils/regex_iterator.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
@@ -166,7 +167,8 @@ char *url_decode(const char *src) {
  * @param schema_count The size of the schema array.
  * @param query The string to append the new query into.
  * @param table_name The target table's name.
- * @returns Whether or not the entry is valid.
+ * @returns 0 if the query is invalid, 1 if the query is valid, -1 if the
+ * checking failed.
  */
 int construct_validate_query(json_t *entry, struct data_column *schema,
                              unsigned int schema_count, char *query,
@@ -183,23 +185,22 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
 
     // check for the case in which the JSON key relates to comments instead
     // of regular columns
-    regex_t comments_regex;
-    regcomp(&comments_regex, "_comments$", REG_EXTENDED);
-
-    regmatch_t comments_matches[1 + 1];
-    bool is_comments_column = !(regexec(&comments_regex, key, 1 + 1,
-                                        comments_matches, 0) == REG_NOMATCH);
-    regfree(&comments_regex);
+    int is_comments_column = regex_check("_comments$", 1, REG_EXTENDED, 0, key);
 
     char *target_column;
 
-    if (is_comments_column) {
+    switch (is_comments_column) {
+    case 0:
+      target_column = malloc(strlen(key) + 1);
+      strcpy(target_column, key);
+      break;
+    case 1:
       target_column = malloc(strlen(key) - strlen("_comments") + 1);
       strncpy(target_column, key, strlen(key) - strlen("_comments"));
       target_column[strlen(key) - strlen("_comments")] = '\0';
-    } else {
-      target_column = malloc(strlen(key) + 1);
-      strcpy(target_column, key);
+      break;
+    default:
+      return -1;
     }
 
     if (strcmp(target_column, "id") == 0) {
@@ -208,15 +209,37 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
       continue;
 
       // @TODO make sure postgres doesn't tweak out over incorrect next keys
-      // regex_t id_regex;
-      // regcomp(&id_regex, "^[0-9]+$", REG_EXTENDED);
-
-      // regmatch_t id_matches[1];
-      // valid = !(regexec(&id_regex, json_to_string(value), 1, id_matches, 0)
-      // ==
-      //           REG_NOMATCH);
-
-      // regfree(&id_regex);
+      switch (
+          regex_check("^[0-9]+$", 0, REG_EXTENDED, 0, json_to_string(value))) {
+      case 0:
+        valid = true;
+        break;
+      case 1:
+        valid = false;
+        break;
+      default:
+        // @todo cleaner looking way of exiting
+        free(target_column);
+        return -1;
+        break;
+      }
+    } else if (strcmp(target_column, "primary_tag") == 0) {
+      // it's hard to validate FOREIGN KEY so we'll let Postgres take care of
+      // this.
+      switch (
+          regex_check("^[0-9]+$", 0, REG_EXTENDED, 0, json_to_string(value))) {
+      case 0:
+        valid = true;
+        break;
+      case 1:
+        valid = false;
+        break;
+      default:
+        // @todo cleaner looking way of exiting
+        free(target_column);
+        return -1;
+        break;
+      }
     } else
       for (int i = 0; i < schema_count; i++) {
         // find which entry in the schema matches
@@ -600,6 +623,7 @@ void *handle_client(void *arg) {
         size_t query_len =
             strlen("SELECT MAX(id) AS highest_id\nFROM ;") + strlen(table_name);
         char *query = malloc(query_len + 1);
+        *query = '\0';
 
         snprintf(query, query_len, "SELECT MAX(id) AS highest_id\nFROM%s;",
                  table_name);
@@ -958,10 +982,19 @@ void *handle_client(void *arg) {
         goto schema_mismatch_end;
       }
 
-      if (!construct_validate_query(entry, schema, schema_count, query,
-                                    table_name)) {
+      switch (construct_validate_query(entry, schema, schema_count, query,
+                                       table_name)) {
+      case 0:
         build_response(400, response, response_len,
-                       "The given entry does not conform to the schema.");
+                       "The given entry does not "
+                       "conform to the schema.");
+        goto schema_mismatch_end;
+      case 1:
+        break;
+      default:
+        build_response(
+            500, response, response_len,
+            "Something went wrong while checking your entry with the schema.");
         goto schema_mismatch_end;
       }
 
