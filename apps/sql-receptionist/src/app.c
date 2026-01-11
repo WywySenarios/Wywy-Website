@@ -176,8 +176,8 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
   const char *key;
   const json_t *value;
 
-  int total_value_len = 0;
-  int total_key_len = 0;
+  int values_len = 0;
+  int column_names_len = 0;
   int separator_len = 0;
 
   json_object_foreach(entry, key, value) {
@@ -206,16 +206,15 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
     if (strcmp(target_column, "id") == 0) {
       // skip id column (postgres autoincrement should handle it)
       free(target_column);
-      continue;
 
       // @TODO make sure postgres doesn't tweak out over incorrect next keys
       switch (
           regex_check("^[0-9]+$", 0, REG_EXTENDED, 0, json_to_string(value))) {
       case 0:
-        valid = true;
+        valid = false;
         break;
       case 1:
-        valid = false;
+        valid = true;
         break;
       default:
         // @todo cleaner looking way of exiting
@@ -229,10 +228,10 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
       switch (
           regex_check("^[0-9]+$", 0, REG_EXTENDED, 0, json_to_string(value))) {
       case 0:
-        valid = true;
+        valid = false;
         break;
       case 1:
-        valid = false;
+        valid = true;
         break;
       default:
         // @todo cleaner looking way of exiting
@@ -281,23 +280,23 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
       return 0;
     } else {
       // @todo optimize
-      // char *key_string = json_to_string(key);
       char *value_string = json_to_string(value);
-      total_value_len += strlen(value_string);
-      total_key_len += strlen(key); // no need to use to_snake_case: it won't
-                                    // change the length of the string.
-      separator_len++;
+      values_len += strlen(value_string) + 1;
+      column_names_len +=
+          strlen(key) + 1; // no need to use to_snake_case: it won't
+                           // change the length of the string.
 
       // free(key_string);
       free(value_string);
     }
     free(target_column);
   }
+  values_len--;
+  column_names_len--;
 
-  separator_len--;
   // get ready and put in all the correct values
-  char *column_names = malloc(total_key_len + separator_len + 1 + 1);
-  char *values = malloc(total_value_len + separator_len + 1 + 1);
+  char *column_names = malloc(column_names_len + 1);
+  char *values = malloc(values_len + 1);
 
   // make them empty strings
   strncpy(column_names, "", 1);
@@ -307,7 +306,7 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
     // char *key_string = json_to_string(key);
     char *value_string = json_to_string(value);
     char *snake_case_key = malloc(strlen(key) + 1);
-    strcpy(snake_case_key, key);
+    strncpy(snake_case_key, key, strlen(key));
     to_snake_case(snake_case_key);
 
     strncat(column_names, snake_case_key, strlen(key) + 1);
@@ -324,9 +323,8 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
   values[strlen(values) - 1] = '\0';
 
   int incoming_query_len = strlen("INSERT INTO  ()\nVALUES();") +
-                           strlen(table_name) +
-                           (total_key_len + separator_len + 1) +
-                           (total_value_len + separator_len + 1) + 1;
+                           strlen(table_name) + (column_names_len) +
+                           (values_len) + 1;
   char *incoming_query = malloc(incoming_query_len);
   snprintf(incoming_query, incoming_query_len,
            "INSERT INTO %s (%s)\nVALUES(%s);", table_name, column_names,
