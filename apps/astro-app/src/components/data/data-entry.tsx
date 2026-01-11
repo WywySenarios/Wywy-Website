@@ -126,6 +126,7 @@ function Descriptor({
           remove(index);
         }}
         className="w-full"
+        type="button"
       >
         <Trash />
       </Button>
