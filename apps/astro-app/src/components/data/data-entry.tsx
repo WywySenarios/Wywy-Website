@@ -13,6 +13,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsContent } from "@radix-ui/react-tabs";
 import { useFieldArray, type UseFieldArrayRemove } from "react-hook-form";
 import { getDefaultValues } from "./form-helper";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export function Columns({
   fieldsToEnter,
@@ -42,12 +44,48 @@ export function Columns({
  * @param tableName The name of the table that this form gathers data for.
  * @returns
  */
-export function Tags({}: {
+export function Tags({
+  databaseName,
+  tableName,
+  dbURL,
+}: {
   databaseName: string;
   tableName: string;
   dbURL: string;
 }): JSX.Element {
-  return <></>;
+  interface tag_name {
+    id: number;
+    tag_name: string;
+  }
+
+  const [tags, setTags] = useState<Array<tag_name>>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    fetch(`${dbURL}/tags/${databaseName}/${tableName}`).then(
+      (res: Response) => {
+        if (res.ok)
+          res
+            .json()
+            .then((data) => {
+              setTags(data["tags"]);
+              setLoading(false);
+            })
+            .catch(() => {
+              toast(
+                "Failed to get the tag names. Please reload the page to try again."
+              );
+              setLoading(false);
+            });
+      }
+    );
+  }, []);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  } else {
+    return <Card></Card>;
+  }
 }
 
 /**
