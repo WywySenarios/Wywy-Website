@@ -12,7 +12,7 @@
 int regex_check(char *pattern, int num_matches, int cflags, int eflags,
                 const char *target) {
   int output = -1;
-  if (num_matches <= 0)
+  if (num_matches < 0)
     return -1;
 
   regex_t *preg = malloc(sizeof(regex_t));
