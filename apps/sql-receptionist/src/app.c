@@ -301,8 +301,9 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
   values[strlen(values) - 1] = '\0';
 
   int incoming_query_len = strlen("INSERT INTO  ()\nVALUES();") +
-                           strlen(table_name) + total_value_len +
-                           total_key_len + 2 * separator_len + 1;
+                           strlen(table_name) +
+                           (total_key_len + separator_len + 1) +
+                           (total_value_len + separator_len + 1) + 1;
   char *incoming_query = malloc(incoming_query_len);
   snprintf(incoming_query, incoming_query_len,
            "INSERT INTO %s (%s)\nVALUES(%s);", table_name, column_names,
