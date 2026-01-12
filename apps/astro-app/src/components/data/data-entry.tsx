@@ -192,7 +192,7 @@ export function Tags({
           <Button
             onClick={() => {
               // @TODO better default value
-              append(tags[0].tag_name);
+              append(nextTag ? nextTag : tags[0].tag_name);
             }}
             className="w-full"
             type="button"
