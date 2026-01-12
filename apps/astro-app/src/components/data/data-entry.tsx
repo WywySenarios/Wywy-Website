@@ -1,5 +1,8 @@
 import type { JSX } from "astro/jsx-runtime";
-import { FormElement } from "@/components/data/input-elements";
+import {
+  ConstantFormElement,
+  FormElement,
+} from "@/components/data/input-elements";
 import type { DataColumn, DescriptorInfo, TableInfo } from "@/env";
 import {
   Card,
@@ -15,6 +18,7 @@ import { useFieldArray, type UseFieldArrayRemove } from "react-hook-form";
 import { getDefaultValues } from "./form-helper";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { SearchSelect } from "./input-element/search-select";
 
 export function Columns({
   fieldsToEnter,
@@ -38,6 +42,69 @@ export function Columns({
   );
 }
 
+export interface TagName {
+  id: string;
+  tag_name: string;
+}
+interface TagNameRaw {
+  id: number;
+  tag_name: string;
+}
+
+function Tag({
+  index,
+  form,
+  tags,
+  remove,
+}: {
+  index: number;
+  form: any;
+  tags: Array<TagName>;
+  remove: Function;
+}): JSX.Element {
+  const tagColumn: DataColumn = {
+    name: index == 0 ? "Primary Tag" : "Tag",
+    datatype: "enum",
+    entrytype: "search-select",
+    values: tags.map((tagInfo: TagName) => tagInfo.tag_name),
+    defaultValue: tags[0].tag_name,
+  };
+
+  function controllerNamer(
+    strings: TemplateStringsArray,
+    name: string
+  ): string {
+    return `tags[${index}]`;
+  }
+
+  return (
+    <div>
+      {index == 0 ? (
+        <FormElement
+          form={form}
+          columnInfo={tagColumn}
+          controllerNamer={controllerNamer}
+        />
+      ) : (
+        <div className="flex flex-row items-center justify-center gap-2">
+          <ConstantFormElement
+            form={form}
+            columnInfo={tagColumn}
+            controllerNamer={controllerNamer}
+          />
+          <Button
+            onClick={() => {
+              remove(index);
+            }}
+          >
+            <Trash />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /**
  * The tagging related form component.
  * @param databaseName The name of the database that this form gathers data for.
@@ -45,24 +112,26 @@ export function Columns({
  * @returns
  */
 export function Tags({
+  form,
   databaseName,
-  tableName,
+  tableInfo,
   dbURL,
 }: {
+  form: any;
   databaseName: string;
-  tableName: string;
+  tableInfo: TableInfo;
   dbURL: string;
 }): JSX.Element {
-  interface tag_name {
-    id: number;
-    tag_name: string;
-  }
-
-  const [tags, setTags] = useState<Array<tag_name>>([]);
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: `tags`,
+  });
+  const [tags, setTags] = useState<Array<TagName>>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [nextTag, setNextTag] = useState<string>("");
 
   useEffect(() => {
-    fetch(`${dbURL}/tags/${databaseName}/${tableName}`).then(
+    fetch(`${dbURL}/tags/${databaseName}/${tableInfo.tableName}`).then(
       (res: Response) => {
         if (res.ok)
           res
@@ -80,11 +149,61 @@ export function Tags({
       }
     );
   }, []);
+  useEffect(() => {
+    // @TODO better default value
+    if (fields.length == 0 && tags.length > 0) append(tags[0].tag_name);
+
+    console.log(
+      tags.map((value: TagName) => {
+        return {
+          value: value.id,
+          label: value.tag_name,
+        };
+      })
+    );
+  }, [tags]);
 
   if (loading) {
     return <p>Loading...</p>;
   } else {
-    return <Card></Card>;
+    return (
+      <Card>
+        <CardHeader>Tags</CardHeader>
+        <CardContent className="flex flex-col gap-2 justify-center">
+          {fields.map((field: Record<"id", string>, index: number) => (
+            <Tag
+              key={field.id}
+              index={index}
+              form={form}
+              tags={tags}
+              remove={remove}
+            ></Tag>
+          ))}
+        </CardContent>
+        <CardFooter>
+          <SearchSelect
+            data={tags.map((value: TagName) => {
+              return {
+                value: value.id,
+                label: value.tag_name,
+              };
+            })}
+            value={nextTag}
+            onChange={setNextTag}
+          />
+          <Button
+            onClick={() => {
+              // @TODO better default value
+              append(tags[0].tag_name);
+            }}
+            className="w-full"
+            type="button"
+          >
+            <Plus />
+          </Button>
+        </CardFooter>
+      </Card>
+    );
   }
 }
 
