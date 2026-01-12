@@ -44,6 +44,59 @@ import {
 } from "./input-element/search-select";
 import { Controller } from "react-hook-form";
 
+export interface FormElementProps {
+  form: any;
+  columnInfo: DataColumn;
+  controllerNamer?: (strings: TemplateStringsArray, name: string) => string;
+}
+
+export function ConstantFormElement({
+  form,
+  columnInfo,
+  controllerNamer = (strings: TemplateStringsArray, name: string) =>
+    `data.${strings[0]}${name}${strings[1]}`,
+}: FormElementProps): JSX.Element {
+  return (
+    <Controller
+      control={form.control}
+      name={controllerNamer`${columnInfo.name}`}
+      key={columnInfo.name + "-field"}
+      render={({ field }) => <p>{field.value}</p>}
+    />
+  );
+}
+
+export function SingleFormElement({
+  title,
+  orientation = "horizontal",
+  description = undefined,
+  body = null,
+}: {
+  title: string;
+  description?: string | undefined;
+  orientation?: "horizontal" | "vertical" | "responsive" | null | undefined;
+  body?: ReactNode | null;
+}) {
+  return (
+    <div>
+      <Field
+        className="w-full flex flex-col items-center gap-4"
+        orientation={orientation}
+      >
+        <FieldLabel className="items-center">
+          <span className="w-full text-center text-lg font-semibold">
+            {title}
+          </span>
+        </FieldLabel>
+        {body}
+        {description && <FieldDescription>{description}</FieldDescription>}
+      </Field>
+    </div>
+  );
+}
+
+export function SearchSelectField() {}
+
 export function FormElement({
   form,
   columnInfo,
@@ -249,22 +302,13 @@ function InputElement({
     }
 
     return (
-      <div key={columnInfo.name}>
-        <Field
-          className="w-full flex flex-col items-center gap-4"
-          orientation={fieldOrientation}
-        >
-          <FieldLabel className="items-center">
-            <span className="w-full text-center text-lg font-semibold">
-              {columnInfo.name}
-            </span>
-          </FieldLabel>
-          {body}
-          {columnInfo.description && (
-            <FieldDescription>{columnInfo.description}</FieldDescription>
-          )}
-        </Field>
-      </div>
+      <SingleFormElement
+        key={columnInfo.name}
+        orientation={fieldOrientation}
+        title={columnInfo.name}
+        body={body}
+        description={columnInfo.description}
+      />
     );
   }
 }
