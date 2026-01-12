@@ -66,8 +66,9 @@ function Tag({
     name: index == 0 ? "Primary Tag" : "Tag",
     datatype: "enum",
     entrytype: "search-select",
-    values: tags.map((tagInfo: TagName) => tagInfo.tag_name),
-    defaultValue: tags[0].tag_name,
+    values: tags.map((tagInfo: TagName) => String(tagInfo.id)),
+    labels: tags.map((tagInfo: TagName) => tagInfo.tag_name),
+    defaultValue: String(tags[0].id),
   };
 
   function controllerNamer(

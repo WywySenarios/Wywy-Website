@@ -37,7 +37,7 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import type { DataColumn } from "@root/src/env";
+import type { DataColumn, EnumColumn, SelectRestrictions } from "@/env";
 import {
   SearchSelect,
   type SearchSelectData,
@@ -53,15 +53,35 @@ export interface FormElementProps {
 export function ConstantFormElement({
   form,
   columnInfo,
+  label,
   controllerNamer = (strings: TemplateStringsArray, name: string) =>
     `data.${strings[0]}${name}${strings[1]}`,
-}: FormElementProps): JSX.Element {
+}: FormElementProps & { label?: string }): JSX.Element {
+  type StringArray = string[];
+
+  function checkForLabels(
+    column: DataColumn
+  ): (EnumColumn & SelectRestrictions) | undefined {
+    if (column.datatype == "enum" && column.entrytype == "search-select")
+      // && column.defaultValue instanceof string
+      return column;
+    return undefined;
+  }
+
   return (
     <Controller
       control={form.control}
       name={controllerNamer`${columnInfo.name}`}
       key={columnInfo.name + "-field"}
-      render={({ field }) => <p>{field.value}</p>}
+      render={({ field }) => (
+        <p>
+          {checkForLabels(columnInfo)?.labels?.at(
+            checkForLabels(columnInfo)?.values.findIndex(
+              (val: string) => field.value == val
+            ) ?? 0
+          ) ?? field.value}
+        </p>
+      )}
     />
   );
 }
@@ -273,8 +293,12 @@ function InputElement({
               <SelectValue placeholder />
             </SelectTrigger>
             <SelectContent>
-              {columnInfo.values.map((value: string) => (
-                <SelectItem value={value}>{value}</SelectItem>
+              {columnInfo.values.map((value: string, index: number) => (
+                <SelectItem value={value}>
+                  {columnInfo.labels?.at(index)
+                    ? columnInfo.labels[index]
+                    : value}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -283,10 +307,12 @@ function InputElement({
       case "search-select":
         body = (
           <SearchSelect
-            data={columnInfo.values.map((value: string) => {
+            data={columnInfo.values.map((value: string, index: number) => {
               return {
                 value: value,
-                label: value,
+                label: columnInfo.labels?.at(index)
+                  ? columnInfo.labels[index]
+                  : value,
               };
             })}
             {...field}

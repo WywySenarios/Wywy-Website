@@ -96,6 +96,7 @@ type TimestampRestrictions = {
 type SelectRestrictions = {
   entrytype: "select" | "search-select";
   values: Array<string>;
+  labels?: Array<string>;
 };
 
 // look at different datatypes
