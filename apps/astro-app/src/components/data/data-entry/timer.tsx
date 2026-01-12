@@ -53,7 +53,8 @@ function TimerFormForm({
       {tableInfo.tagging && (
         <Tags
           databaseName={databaseName}
-          tableName={tableInfo.tableName}
+          tableInfo={tableInfo}
+          form={form}
           dbURL={dbURL}
         />
       )}
