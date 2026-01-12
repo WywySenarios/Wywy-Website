@@ -159,7 +159,7 @@ export function Tags({
   }, []);
   useEffect(() => {
     // @TODO better default value
-    if (fields.length == 0 && tags.length > 0) append(tags[0].tag_name);
+    if (fields.length == 0 && tags.length > 0) append(tags[0].id);
   }, [tags]);
 
   if (loading) {
@@ -193,7 +193,7 @@ export function Tags({
           <Button
             onClick={() => {
               // @TODO better default value
-              append(nextTag ? nextTag : tags[0].tag_name);
+              append(nextTag ? nextTag : tags[0].id);
             }}
             className="w-full"
             type="button"
