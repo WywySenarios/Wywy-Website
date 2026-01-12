@@ -159,15 +159,6 @@ export function Tags({
   useEffect(() => {
     // @TODO better default value
     if (fields.length == 0 && tags.length > 0) append(tags[0].tag_name);
-
-    console.log(
-      tags.map((value: TagName) => {
-        return {
-          value: value.id,
-          label: value.tag_name,
-        };
-      })
-    );
   }, [tags]);
 
   if (loading) {
