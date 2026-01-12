@@ -135,7 +135,7 @@ export function createFormSchemaAndHandlers(
 
   const formSchema = z.object({
     data: z.object(dataSchema),
-    ...(tableInfo.tagging && { tags: z.array(z.string()) }),
+    ...(tableInfo.tagging && { tags: z.array(z.string()).min(1) }),
     ...(tableInfo.descriptors &&
       descriptorSchema && { descriptors: z.object(descriptorSchema) }),
   });
@@ -200,8 +200,8 @@ export function createFormSchemaAndHandlers(
     }).then((response) => {
       response.text().then((text: string) => {
         if (response.ok) {
-            toast(`Successfully submitted form!`);
-          } else {
+          toast(`Successfully submitted form!`);
+        } else {
           toast(`Error while submitting form: ${text}`);
         }
       });
