@@ -162,6 +162,20 @@ export function createFormSchemaAndHandlers(
     };
 
     // @TODO tags
+    if ("tags" in values) {
+      if ("primary_tag" in formattedValues.data) {
+        toast("Primary tag already set? Contact dev for a fix.");
+        return;
+      }
+
+      formattedValues.data["primary_tag"] = (values.tags as String[]).shift();
+
+      if (!formattedValues.data["primary_tag"]) {
+        toast("Primary tag must be a non-empty string.");
+      }
+
+      formattedValues["tags"] = values.tags;
+    }
 
     if ("descriptors" in values) {
       formattedValues.descriptors = {};
