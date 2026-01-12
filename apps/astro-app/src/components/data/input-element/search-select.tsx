@@ -22,13 +22,20 @@ export type SearchSelectData = Record<"value" | "label", string>[];
 export function SearchSelect({
   data,
   value,
+  defaultValue,
   onChange,
 }: {
   data: SearchSelectData;
   value: string;
+  defaultValue?: string;
   onChange: (value: string) => void;
 }) {
   const [open, setOpen] = React.useState(false);
+
+  const currentItem = data.find(
+    (item) => item.value === (value ? value : defaultValue)
+  );
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -38,9 +45,7 @@ export function SearchSelect({
           aria-expanded={open}
           className="w-[200px] justify-between"
         >
-          {value
-            ? data.find((item) => item.value === value)?.label
-            : "Select..."}
+          {currentItem ? currentItem.label : "Select..."}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
