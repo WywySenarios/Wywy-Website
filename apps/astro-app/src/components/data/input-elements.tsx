@@ -228,14 +228,17 @@ function InputElement({
         );
         break;
       case "search-select":
-        let values: SearchSelectData = [];
-        for (let i in columnInfo.values) {
-          values.push({
-            value: columnInfo.values[i],
-            label: columnInfo.values[i],
-          });
-        }
-        body = <SearchSelect data={values} {...field} />;
+        body = (
+          <SearchSelect
+            data={columnInfo.values.map((value: string) => {
+              return {
+                value: value,
+                label: value,
+              };
+            })}
+            {...field}
+          />
+        );
         break;
       default:
         console.warn(
