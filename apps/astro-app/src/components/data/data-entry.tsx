@@ -137,7 +137,14 @@ export function Tags({
           res
             .json()
             .then((data) => {
-              setTags(data["tags"]);
+              setTags(
+                data["tags"].map((item: TagNameRaw) => {
+                  return {
+                    id: String(item.id),
+                    tag_name: item.tag_name,
+                  };
+                })
+              );
               setLoading(false);
             })
             .catch(() => {
