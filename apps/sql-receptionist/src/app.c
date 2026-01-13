@@ -413,6 +413,11 @@ void *handle_client(void *arg) {
   PGresult *res = NULL;
   char *query = NULL;
 
+  // check for failed memory allocation
+  if (!buffer || !response || !response_len) {
+    goto end;
+  }
+
   // receive request data from client and store into buffer
   ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
 
