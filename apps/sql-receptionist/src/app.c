@@ -410,7 +410,9 @@ void *handle_client(void *arg) {
   // the parent table name
   char *table_name = NULL;
   struct table *table = NULL;
-  // additional URL segments AFTER the database name and the table name
+  PGconn *conn = NULL;
+  PGresult *res = NULL;
+  char *query = NULL;
 
   // receive request data from client and store into buffer
   ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
@@ -626,8 +628,7 @@ void *handle_client(void *arg) {
 
         size_t query_len =
             strlen("SELECT MAX(id) AS highest_id\nFROM ;") + strlen(table_name);
-        char *query = malloc(query_len + 1);
-        *query = '\0';
+        query = malloc(query_len + 1);
 
         snprintf(query, query_len, "SELECT MAX(id) AS highest_id\nFROM%s;",
                  table_name);
@@ -779,11 +780,9 @@ void *handle_client(void *arg) {
       // are the mandatory request params valid? We need something to select and
       // an order to sort it by.
       if (select && order_by) {
-        PGconn *conn = NULL;
-        PGresult *res = NULL;
-        char *query = malloc(strlen("SELECT \nFROM \nORDER BY id \nLIMIT;") +
-                             strlen(select) + strlen(table_name) +
-                             strlen(order_by) + strlen(limit) + 1);
+        query = malloc(strlen("SELECT \nFROM \nORDER BY id \nLIMIT;") +
+                       strlen(select) + strlen(table_name) + strlen(order_by) +
+                       strlen(limit) + 1);
         char *output = malloc(BUFFER_SIZE); // @todo be more specific
 
         // decide the SQL query:
@@ -873,12 +872,6 @@ void *handle_client(void *arg) {
                                 "%s: %s", PQresStatus(sql_query_status),
                                 PQerrorMessage(conn));
         }
-
-        if (res)
-          PQclear(res);
-        if (conn)
-          PQfinish(conn);
-        free(query);
       } else {
         build_response_default(400, response, response_len);
       }
@@ -1004,8 +997,6 @@ void *handle_client(void *arg) {
         goto schema_mismatch_end;
       }
 
-      PGconn *conn = NULL;
-      PGresult *res = NULL;
       ExecStatusType sql_query_status =
           sql_query(database_name, query, &res, &conn);
       if (sql_query_status != PGRES_COMMAND_OK &&
@@ -1020,12 +1011,7 @@ void *handle_client(void *arg) {
                        "Entry successfully added.");
       }
 
-      if (res)
-        PQclear(res);
-      if (conn)
-        PQfinish(conn);
     schema_mismatch_end:
-      free(query);
     post_bad_input_end:
       free(body);
     bad_body_end:
@@ -1051,20 +1037,22 @@ bad_auth_end:
 end:
   // send HTTP response to client
   send(client_fd, *response, *response_len, 0);
+  close(client_fd);
 
+  free(arg); // free client_fd
+  free(buffer);
+  free(*response);
+  free(response);
+  free(response_len);
+  regfree(&regex);
+  free(method);
   for (int i = 0; i < MAX_URL_SECTIONS; i++) {
     free(url_segments[i]);
   }
   free_regex_iterator(url_regex);
-  free(method);
-  regfree(&regex);
-
-  close(client_fd);
-  free(*response);
-  free(response);
-  free(response_len);
-  free(arg); // free client_fd
-  free(buffer);
+  PQfinish(conn);
+  PQclear(res);
+  free(query);
   return NULL;
 }
 
