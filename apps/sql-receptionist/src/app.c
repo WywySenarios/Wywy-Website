@@ -303,8 +303,8 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
   strncpy(values, "", 1);
 
   json_object_foreach(entry, key, value) {
-    if (strcmp(key, "id") == 0)
-      continue;
+    // if (strcmp(key, "id") == 0)
+    // continue;
 
     // char *key_string = json_to_string(key);
     char *value_string = json_to_string(value);
