@@ -334,6 +334,7 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
            values);
 
   strncat(query, incoming_query, BUFFER_SIZE - strlen(query));
+  free(incoming_query);
   return 1;
 }
 
@@ -1030,7 +1031,8 @@ void *handle_client(void *arg) {
     bad_body_end:
       regfree(&body_regex);
       // free json object??? how ???
-      json_decref(entry);
+      // FIX LATER: causes memory & multithreading issues??
+      // json_decref(entry);
     } else {
       // user does not have write access to the respective table
       build_response_default(403, response, response_len);
@@ -1050,8 +1052,6 @@ end:
   // send HTTP response to client
   send(client_fd, *response, *response_len, 0);
 
-  printf("Response:\n%s\n\n", *response);
-
   for (int i = 0; i < MAX_URL_SECTIONS; i++) {
     free(url_segments[i]);
   }
@@ -1063,7 +1063,7 @@ end:
   free(*response);
   free(response);
   free(response_len);
-  free(arg);
+  free(arg); // free client_fd
   free(buffer);
   return NULL;
 }
