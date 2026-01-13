@@ -396,7 +396,6 @@ void *handle_client(void *arg) {
   int client_fd = *((int *)arg);
   char *buffer = malloc(BUFFER_SIZE * sizeof(char));
   char **response = malloc(sizeof(char *));
-  *response = malloc(BUFFER_SIZE * 2 * sizeof(char));
   size_t *response_len = malloc(sizeof(size_t *));
 
   // variables that are generally useful:
@@ -1036,7 +1035,9 @@ bad_auth_end:
 
 end:
   // send HTTP response to client
-  send(client_fd, *response, *response_len, 0);
+  // @TODO determine if NULL checks are necessary
+  if (response && *response && response_len)
+    send(client_fd, *response, *response_len, 0);
   close(client_fd);
 
   free(arg); // free client_fd
