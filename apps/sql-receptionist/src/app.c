@@ -353,7 +353,9 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
  */
 ExecStatusType sql_query(char *dbname, char *query, PGresult **res,
                          PGconn **conn) {
-  printf("Query: %s\n", query);
+  if (getenv("SQL_RECEPTIONIST_LOG_QUERIES") &&
+      strcmp(getenv("SQL_RECEPTIONIST_LOG_QUERIES"), "TRUE") == 0)
+    printf("Query: %s\n", query);
 
   if (*conn == NULL) {
     size_t conninfo_size = 1 + strlen("dbname= user= password= host= port=") +
@@ -909,7 +911,9 @@ void *handle_client(void *arg) {
       strncpy(body, buffer + body_matches[1].rm_so, body_len);
       body[body_len] = '\0';
 
-      printf("Body: %s\n\n", body);
+      if (getenv("SQL_RECEPTIONIST_LOG_INPUT") &&
+          strcmp(getenv("SQL_RECEPTIONIST_LOG_INPUT"), "TRUE") == 0)
+        printf("Body: %s\n\n", body);
 
       json_t *entry;
       json_error_t entry_error;
