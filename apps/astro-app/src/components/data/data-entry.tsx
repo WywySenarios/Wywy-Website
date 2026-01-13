@@ -292,6 +292,7 @@ function DescriptorTab({
             append(getDefaultValues(descriptorInfo.schema));
           }}
           className="w-full"
+          type="button"
         >
           <Plus />
         </Button>
