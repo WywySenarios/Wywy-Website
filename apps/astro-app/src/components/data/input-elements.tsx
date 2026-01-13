@@ -236,8 +236,7 @@ function InputElement({
         fieldOrientation = "horizontal";
         body = (
           <Switch
-            checked={field.value}
-            onCheckedChange={field.onChange}
+            {...field}
             // className="w-2/12"
           />
         );
