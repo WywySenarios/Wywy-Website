@@ -124,7 +124,6 @@ switch (slug) {
     targetTableName = `${tableName}_${slug}`;
     break;
   default:
-    console.log(slug.slice("descriptors/".length));
     schema = tableInfo.descriptors.find(
       (descriptorInfo: DescriptorInfo) =>
         descriptorInfo.name == slug.slice("descriptors/".length)
@@ -145,19 +144,13 @@ switch (slug) {
   useAstroDefaultCSS={false}
 >
   <LoginDialog client:load slot="top-bar-button2" />
-  <!-- <DataEntryForm
-    databaseName={databaseName}
-    tableInfo={tableInfo}
-    dbURL={config.referenceUrls.cache}
-    client:only="react"
-  >
-    <div slot="fallback">Loading...</div>
-  </DataEntryForm> -->
   <EntryTable
     schema={schema}
     databaseName={databaseName}
     parentTableName={tableName}
     tableName={targetTableName}
+    databaseURL={config.referenceUrls.db}
+    cacheURL={config.referenceUrls.cache}
     type={type}
     client:load
   />
