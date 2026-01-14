@@ -171,7 +171,7 @@ export function createFormSchemaAndHandlers(
       formattedValues.data["primary_tag"] = (values.tags as String[]).shift();
 
       if (!formattedValues.data["primary_tag"]) {
-        toast("Primary tag must be a non-empty string.");
+        toast("Primary tag cannot be empty.");
       }
 
       formattedValues["tags"] = values.tags;
