@@ -2,7 +2,7 @@
  * Helpers for form creation. Does anything that may universally apply to all forms of data entry.
  */
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { DataColumn, DescriptorInfo, TableInfo } from "@/env";
+import type { DataColumn, TableInfo } from "@/env";
 import { toSnakeCase } from "@/utils";
 import { getFallbackValue, zodDatatypes } from "@root/src/utils/data";
 import { useForm, type FieldErrors, type UseFormReturn } from "react-hook-form";
@@ -30,10 +30,10 @@ export function getDefaultValues(schema: DataColumn[]): Record<string, any> {
  * @param schema The schema that relates to the given values.
  * @returns An object filled with the formatted values, or a string with a corresponding error message if the schema does not match the values.
  */
-function formatValues(
+export function formatValues(
   values: Record<string, any>,
   schema: Array<DataColumn>
-): Record<string, any> | string {
+): Record<string, any> {
   let formattedValues: Record<string, any> = {};
 
   for (let column_schema of schema) {
