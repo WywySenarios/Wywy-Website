@@ -17,8 +17,8 @@ export type zodPrimaryDatatypes =
   | "enum";
 
 export const zodDatatypes: Record<zodPrimaryDatatypes, ZodTypeAny> = {
-  integer: z.number(),
-  int: z.number(),
+  integer: z.number().int(),
+  int: z.number().int(),
   float: z.number(),
   number: z.number(),
   string: z.string(),
