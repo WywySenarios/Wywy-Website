@@ -48,7 +48,9 @@ export const zodDatatypes: Record<zodPrimaryDatatypes, ZodTypeAny> = {
 
 export function getFallbackValue(datatype: "int" | "integer"): number;
 export function getFallbackValue(datatype: "float" | "number"): number;
-export function getFallbackValue(datatype: "string" | "str" | "text"): number;
+export function getFallbackValue(
+  datatype: "string" | "str" | "text" | "enum"
+): string;
 export function getFallbackValue(datatype: "bool" | "boolean"): boolean;
 export function getFallbackValue(
   datatype: "date" | "time" | "timestamp"
@@ -65,6 +67,7 @@ export function getFallbackValue(
     case "string":
     case "str":
     case "text":
+    case "enum":
       return "";
     case "bool":
     case "boolean":
@@ -75,8 +78,6 @@ export function getFallbackValue(
       return "01:00:00";
     case "timestamp":
       return "0001-01-01T01:00:00";
-    case "enum":
-      return undefined;
     default:
       return null;
   }
