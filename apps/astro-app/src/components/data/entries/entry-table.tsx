@@ -145,6 +145,8 @@ function TagsTable({
   databaseName,
   parentTableName,
   tableName,
+  databaseURL,
+  cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
   return <></>;
 }
@@ -161,11 +163,10 @@ function TagNamesTable({
   databaseName,
   parentTableName,
   tableName,
+  databaseURL,
+  cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
-  function onSubmit() {
-    //
-  }
-  return <Table></Table>;
+  return <></>;
 }
 /**
  * A tags aliases table. May create or remove tag aliases. The user is not prevented from removing all aliases from a given tag, nor are they barred from removing the respective tag's direct name.
@@ -180,6 +181,8 @@ function TagAliasesTable({
   databaseName,
   parentTableName,
   tableName,
+  databaseURL,
+  cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
   return <></>;
 }
@@ -196,6 +199,8 @@ function TagGroupsTable({
   databaseName,
   parentTableName,
   tableName,
+  databaseURL,
+  cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
   return <></>;
 }
