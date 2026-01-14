@@ -11,6 +11,7 @@
 #include "postgres.h"
 #include "server/responses.h"
 #include "utils/format_string.h"
+#include "utils/http.h"
 #include "utils/json/datatype_validation.h"
 #include "utils/regex_item.h"
 #include "utils/regex_iterator.h"
@@ -132,33 +133,6 @@ json_datatype_check_function schema_datatypes_values[] = {
     check_bool,    check_datelike, check_timelike, check_timestamplike,
 };
 static dict schema_datatypes;
-
-/**
- * Decodes URLs, like "test%20test" -> "test test"
- * @param src The encoded URL to decode.
- * @return A pointer to a series of characters representing the decoded URL.
- */
-char *url_decode(const char *src) {
-  size_t src_len = strlen(src);
-  char *decoded = malloc(src_len + 1);
-  size_t decoded_len = 0;
-
-  // decode %2x to hex
-  for (size_t i = 0; i < src_len; i++) {
-    if (src[i] == '%' && i + 2 < src_len) {
-      int hex_val;
-      sscanf(src + i + 1, "%2x", &hex_val);
-      decoded[decoded_len++] = hex_val;
-      i += 2;
-    } else {
-      decoded[decoded_len++] = src[i];
-    }
-  }
-
-  // add null terminator
-  decoded[decoded_len] = '\0';
-  return decoded;
-}
 
 /**
  * Goes through the entry and checks for validity. Appends a related query to
