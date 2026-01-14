@@ -15,16 +15,15 @@ int regex_check(char *pattern, int num_matches, int cflags, int eflags,
   if (num_matches < 0)
     return -1;
 
-  regex_t *preg = malloc(sizeof(regex_t));
+  regex_t preg;
 
-  if (!preg || regcomp(preg, pattern, cflags) != 0) {
-    free(preg);
+  if (regcomp(&preg, pattern, cflags) != 0) {
     return -1;
   }
 
   regmatch_t matches[num_matches + 1];
 
-  switch (regexec(preg, target, num_matches + 1, matches, eflags)) {
+  switch (regexec(&preg, target, num_matches + 1, matches, eflags)) {
   case 0:
     output = 1;
     break;
@@ -32,7 +31,7 @@ int regex_check(char *pattern, int num_matches, int cflags, int eflags,
     output = 0;
     break;
   }
-  free(preg);
+  regfree(&preg);
   return output;
 }
 
