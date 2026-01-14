@@ -101,6 +101,47 @@ export function populateZodSchema(
 }
 
 /**
+ * Attempt to submit a form externally.
+ * @param targetURL The URL of the endpoint to submit to.
+ * @param values The values to submit, which will be serialized with JSON.stringify.
+ * @param csrftoken The browser's CSRF token. Will fail if not provided.
+ */
+export function submitForm(
+  targetURL: string,
+  values: Record<string, any>,
+  csrftoken?: string | undefined
+): void {
+  console.log(`POSTING to: ${targetURL}`);
+  console.log(values);
+
+  if (!csrftoken) {
+    toast(
+      "Something went wrong while trying to submit the form. We could not find your browser's CSRF Token."
+    );
+    return;
+  }
+
+  fetch(targetURL, {
+    method: "POST",
+    body: JSON.stringify(values),
+    mode: "cors",
+    credentials: "include",
+    headers: {
+      "Content-type": "application/json; charset=UTF-8",
+      "X-CSRFToken": csrftoken,
+    },
+  }).then((response) => {
+    response.text().then((text: string) => {
+      if (response.ok) {
+        toast(`Successfully submitted form!`);
+      } else {
+        toast(`Error while submitting form: ${text}`);
+      }
+    });
+  });
+}
+
+/**
  * Creates a schema and two event handlers according to the supplied inputs, which are assumed to be good.
  * @param databaseName The name of the database containing the table whose schema is to be replicated.
  * @param tableInfo The table full table schema.
@@ -190,36 +231,12 @@ export function createFormSchemaAndHandlers(
             );
     }
 
-    // POST them to the SQL Receptionist!
-    databaseName = toSnakeCase(databaseName);
-    let tableName = toSnakeCase(tableInfo.tableName);
-    console.log();
-    console.log(`POSTING to: ${dbURL + "/" + databaseName + "/" + tableName}`);
-    let csrftoken = getCSRFToken();
-    if (!csrftoken) {
-      toast(
-        "Something went wrong while trying to submit the form. We could not find your browser's CSRF Token."
-      );
-      return;
-    }
-    fetch(`${dbURL}/main/${databaseName}/${tableName}`, {
-      method: "POST",
-      body: JSON.stringify(formattedValues),
-      mode: "cors",
-      credentials: "include",
-      headers: {
-        "Content-type": "application/json; charset=UTF-8",
-        "X-CSRFToken": csrftoken,
-      },
-    }).then((response) => {
-      response.text().then((text: string) => {
-        if (response.ok) {
-          toast(`Successfully submitted form!`);
-        } else {
-          toast(`Error while submitting form: ${text}`);
-        }
-      });
-    });
+    // POST to cache
+    submitForm(
+      `${dbURL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}`,
+      formattedValues,
+      getCSRFToken()
+    );
   }
 
   function onSubmitInvalid(
