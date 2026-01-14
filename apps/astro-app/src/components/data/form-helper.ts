@@ -67,12 +67,12 @@ function formatValues(
   return formattedValues;
 }
 
-function populateZodSchema(
-  itemInfo: TableInfo | DescriptorInfo,
+export function populateZodSchema(
+  itemInfo: DataColumn[],
   schema: Record<string, ZodTypeAny>,
   defaultValues: Record<string, any>
 ) {
-  for (let columnInfo of itemInfo.schema) {
+  for (let columnInfo of itemInfo) {
     // immediately ignore anything not needed on the form.
     // if (columnInfo.entrytype === "none") continue
 
@@ -116,7 +116,7 @@ export function createFormSchemaAndHandlers(
   let dataSchema: Record<string, ZodTypeAny> = {};
   let dataDefaultValues: Record<string, any> = {};
 
-  populateZodSchema(tableInfo, dataSchema, dataDefaultValues);
+  populateZodSchema(tableInfo.schema, dataSchema, dataDefaultValues);
 
   // descriptors
   let descriptorSchema: Record<string, ZodArray<AnyZodObject>> = {};
@@ -126,7 +126,7 @@ export function createFormSchemaAndHandlers(
       let thisSchema: Record<string, ZodTypeAny> = {};
       let thisDefaultValues: Record<string, any> = {};
 
-      populateZodSchema(descriptor, thisSchema, thisDefaultValues);
+      populateZodSchema(descriptor.schema, thisSchema, thisDefaultValues);
 
       descriptorSchema[descriptor.name] = z.array(z.object(thisSchema));
       descriptorDefaultValues[descriptor.name] = [];
