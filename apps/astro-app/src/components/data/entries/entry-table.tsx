@@ -2,6 +2,7 @@
 
 import type { DescriptorInfo, TableInfo } from "@/env";
 import type { JSX } from "astro/jsx-runtime";
+import { Table } from "@/components/ui/table";
 
 /**
  * Renders an EntryTable to view and modify entries on specific tables.
@@ -9,6 +10,8 @@ import type { JSX } from "astro/jsx-runtime";
  * @param databaseName The name of the target database
  * @param parentTableName The name of the parent table, or the target table if the table has no parent.
  * @param tableName The name of the target table.
+ * @param databaseURL The URL of the master database.
+ * @param cacheURL The URL of the cache database.
  * @param type The type of table to render. Is either undefined (generic) or a tagging table type.
  * @returns an EntryTable component.
  */
@@ -17,12 +20,16 @@ function EntryTable({
   databaseName,
   parentTableName,
   tableName,
+  databaseURL,
+  cacheURL,
   type,
 }: {
   schema?: TableInfo | DescriptorInfo | undefined;
   databaseName: string;
   parentTableName: string;
   tableName: string;
+  databaseURL: string;
+  cacheURL: string;
   type?: undefined | "tags" | "tag_names" | "tag_aliases" | "tag_groups";
 }): JSX.Element {
   switch (type) {
@@ -35,6 +42,8 @@ function EntryTable({
           databaseName={databaseName}
           parentTableName={parentTableName}
           tableName={tableName}
+          databaseURL={databaseURL}
+          cacheURL={cacheURL}
         />
       );
     case "tags":
@@ -43,6 +52,8 @@ function EntryTable({
           databaseName={databaseName}
           parentTableName={parentTableName}
           tableName={tableName}
+          databaseURL={databaseURL}
+          cacheURL={cacheURL}
         />
       );
     case "tag_names":
@@ -51,6 +62,8 @@ function EntryTable({
           databaseName={databaseName}
           parentTableName={parentTableName}
           tableName={tableName}
+          databaseURL={databaseURL}
+          cacheURL={cacheURL}
         />
       );
     case "tag_aliases":
@@ -59,6 +72,8 @@ function EntryTable({
           databaseName={databaseName}
           parentTableName={parentTableName}
           tableName={tableName}
+          databaseURL={databaseURL}
+          cacheURL={cacheURL}
         />
       );
     case "tag_groups":
@@ -67,6 +82,8 @@ function EntryTable({
           databaseName={databaseName}
           parentTableName={parentTableName}
           tableName={tableName}
+          databaseURL={databaseURL}
+          cacheURL={cacheURL}
         />
       );
   }
@@ -85,6 +102,8 @@ function NoTable(): JSX.Element {
  * @param databaseName The name of the database that contains the target table.
  * @param parentTableName The name of the parent table (or the target table if there is no parent).
  * @param tableName The name of the target table.
+ * @param databaseURL The URL of the master database.
+ * @param cacheURL The URL of the cache database.
  * @returns
  */
 function GenericEntryTable({
@@ -92,11 +111,15 @@ function GenericEntryTable({
   databaseName,
   parentTableName,
   tableName,
+  databaseURL,
+  cacheURL,
 }: {
   schema: TableInfo | DescriptorInfo;
   databaseName: string;
   parentTableName: string;
   tableName: string;
+  databaseURL: string;
+  cacheURL: string;
 }): JSX.Element {
   return <></>;
 }
@@ -105,6 +128,8 @@ interface TaggingEntryTableProps {
   databaseName: string;
   parentTableName: string;
   tableName: string;
+  databaseURL: string;
+  cacheURL: string;
 }
 
 /**
@@ -112,6 +137,8 @@ interface TaggingEntryTableProps {
  * @param databaseName The name of the database that contains the target table.
  * @param parentTableName The name of the parent table (or the target table if there is no parent).
  * @param tableName The name of the target table.
+ * @param databaseURL The URL of the master database.
+ * @param cacheURL The URL of the cache database.
  * @returns
  */
 function TagsTable({
@@ -126,6 +153,8 @@ function TagsTable({
  * @param databaseName The name of the database that contains the target table.
  * @param parentTableName The name of the parent table (or the target table if there is no parent).
  * @param tableName The name of the target table.
+ * @param databaseURL The URL of the master database.
+ * @param cacheURL The URL of the cache database.
  * @returns
  */
 function TagNamesTable({
@@ -133,13 +162,18 @@ function TagNamesTable({
   parentTableName,
   tableName,
 }: TaggingEntryTableProps): JSX.Element {
-  return <></>;
+  function onSubmit() {
+    //
+  }
+  return <Table></Table>;
 }
 /**
  * A tags aliases table. May create or remove tag aliases. The user is not prevented from removing all aliases from a given tag, nor are they barred from removing the respective tag's direct name.
  * @param databaseName The name of the database that contains the target table.
  * @param parentTableName The name of the parent table (or the target table if there is no parent).
  * @param tableName The name of the target table.
+ * @param databaseURL The URL of the master database.
+ * @param cacheURL The URL of the cache database.
  * @returns
  */
 function TagAliasesTable({
@@ -154,6 +188,8 @@ function TagAliasesTable({
  * @param databaseName The name of the database that contains the target table.
  * @param parentTableName The name of the parent table (or the target table if there is no parent).
  * @param tableName The name of the target table.
+ * @param databaseURL The URL of the master database.
+ * @param cacheURL The URL of the cache database.
  * @returns
  */
 function TagGroupsTable({
