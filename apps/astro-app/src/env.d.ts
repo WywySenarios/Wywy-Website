@@ -72,7 +72,7 @@ type SliderRestrictions = {
 
 type RadioRestrictions = {
   entrytype: "radio";
-  values: Array<string>;
+  values: [string, ...string[]];
 };
 
 type SwitchRestrictions = {
@@ -95,7 +95,7 @@ type TimestampRestrictions = {
 
 type SelectRestrictions = {
   entrytype: "select" | "search-select";
-  values: Array<string>;
+  values: [string, ...string[]];
   labels?: Array<string>;
 };
 
