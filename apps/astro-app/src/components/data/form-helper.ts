@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DataColumn, TableInfo } from "@/env";
 import { toSnakeCase } from "@/utils";
-import { getFallbackValue, zodDatatypes } from "@root/src/utils/data";
+import { getFallbackValue, getZodType } from "@/utils/data";
 import { useForm, type FieldErrors, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z, ZodArray, type AnyZodObject, type ZodTypeAny } from "zod";
@@ -76,9 +76,8 @@ export function populateZodSchema(
     // immediately ignore anything not needed on the form.
     // if (columnInfo.entrytype === "none") continue
 
-    // throw things into the schema, adding in restrictions as necessary
-    // @TODO add restrictions
-    schema[columnInfo.name] = zodDatatypes[columnInfo.datatype];
+    // throw things into the schema, adding in restrictions as necessary (handled by getZodType)
+    schema[columnInfo.name] = getZodType(columnInfo);
     // find a default value and create the form element
     defaultValues[columnInfo.name] =
       columnInfo.defaultValue ?? getFallbackValue(columnInfo.datatype);
@@ -87,16 +86,6 @@ export function populateZodSchema(
     // @TODO add length restriction
     schema[`${columnInfo.name}_comments`] = z.string().optional();
     defaultValues[`${columnInfo.name}_comments`] = "";
-
-    // look for any restrictions
-    // @ts-ignore thanks to the ColumnData type, this is guarenteed to be OK.
-    if ("min" in columnInfo) {
-      schema[columnInfo.name] = schema[columnInfo.name].min(columnInfo.min);
-    }
-    // @ts-ignore thanks to the ColumnData type, this is guarenteed to be OK.
-    if ("max" in columnInfo) {
-      schema[columnInfo.name] = schema[columnInfo.name].max(columnInfo.max);
-    }
   }
 }
 
