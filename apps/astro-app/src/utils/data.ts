@@ -1,4 +1,5 @@
 import { z, type ZodTypeAny } from "zod";
+import type { TableInfo } from "@/env";
 
 // map strings to Zod datatypes
 export type zodPrimaryDatatypes =
@@ -81,4 +82,12 @@ export function getFallbackValue(
     default:
       return null;
   }
+}
+
+/**
+ * Checks if tagging is enabled on the given table.
+ * @param tableInfo The schema of the table to check.
+ */
+export function isTaggingEnabled(tableInfo: TableInfo): boolean {
+  return tableInfo.tagging;
 }
