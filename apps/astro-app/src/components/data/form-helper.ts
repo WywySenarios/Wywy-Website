@@ -104,15 +104,15 @@ export function populateZodSchema(
  * Attempt to submit a form externally.
  * @param targetURL The URL of the endpoint to submit to.
  * @param values The values to submit, which will be serialized with JSON.stringify.
- * @param csrftoken The browser's CSRF token. Will fail if not provided.
  */
 export function submitForm(
   targetURL: string,
-  values: Record<string, any>,
-  csrftoken?: string | undefined
+  values: Record<string, any>
 ): void {
   console.log(`POSTING to: ${targetURL}`);
   console.log(values);
+
+  let csrftoken: string | undefined = getCSRFToken();
 
   if (!csrftoken) {
     toast(
@@ -234,8 +234,7 @@ export function createFormSchemaAndHandlers(
     // POST to cache
     submitForm(
       `${dbURL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}`,
-      formattedValues,
-      getCSRFToken()
+      formattedValues
     );
   }
 
