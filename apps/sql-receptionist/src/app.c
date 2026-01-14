@@ -87,9 +87,6 @@ dict_item *linear_search(dict dict, const char *key) {
 }
 
 typedef int (*json_datatype_check_function)(const json_t *json);
-/**
- *
- */
 static char *json_to_string(const json_t *value) {
   char *output;
   if (!value) {
@@ -157,12 +154,12 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
 
   json_object_foreach(entry, key, value) {
     bool valid = false;
+    char *value_string = json_to_string(value);
+    char *target_column = NULL;
 
     // check for the case in which the JSON key relates to comments instead
     // of regular columns
     int is_comments_column = regex_check("_comments$", 1, REG_EXTENDED, 0, key);
-
-    char *target_column;
 
     switch (is_comments_column) {
     case 0:
@@ -183,8 +180,7 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
       free(target_column);
 
       // @TODO make sure postgres doesn't tweak out over incorrect next keys
-      switch (
-          regex_check("^[0-9]+$", 0, REG_EXTENDED, 0, json_to_string(value))) {
+      switch (regex_check("^[0-9]+$", 0, REG_EXTENDED, 0, value_string)) {
       case 0:
         valid = false;
         break;
@@ -200,8 +196,7 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
     } else if (strcmp(target_column, "primary_tag") == 0) {
       // it's hard to validate FOREIGN KEY so we'll let Postgres take care of
       // this.
-      switch (
-          regex_check("^[0-9]+$", 0, REG_EXTENDED, 0, json_to_string(value))) {
+      switch (regex_check("^[0-9]+$", 0, REG_EXTENDED, 0, value_string)) {
       case 0:
         valid = false;
         break;
@@ -252,19 +247,17 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
     // also remember to catch when the key is not inside the table's schema
     if (!valid) {
       free(target_column);
+      free(value_string);
       return 0;
     } else {
       // @todo optimize
-      char *value_string = json_to_string(value);
       values_len += strlen(value_string) + 1;
       column_names_len +=
           strlen(key) + 1; // no need to use to_snake_case: it won't
                            // change the length of the string.
-
-      // free(key_string);
-      free(value_string);
     }
     free(target_column);
+    free(value_string);
   }
   values_len--;
   column_names_len--;
@@ -281,7 +274,6 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
     // if (strcmp(key, "id") == 0)
     // continue;
 
-    // char *key_string = json_to_string(key);
     char *value_string = json_to_string(value);
     char *snake_case_key = malloc(strlen(key) + 1);
     strncpy(snake_case_key, key, strlen(key));
