@@ -702,13 +702,14 @@ void *handle_client(void *arg) {
       // are the mandatory request params valid? We need something to select and
       // an order to sort it by.
       if (select && order_by) {
-        query = malloc(strlen("SELECT \nFROM \nORDER BY id \nLIMIT;") +
-                       strlen(select) + strlen(table_name) + strlen(order_by) +
-                       strlen(limit) + 1);
+        size_t query_len = strlen("SELECT \nFROM \nORDER BY id \nLIMIT;") +
+                           strlen(select) + strlen(table_name) +
+                           strlen(order_by) + strlen(limit);
+        query = malloc(query_len + 1);
         char *output = malloc(BUFFER_SIZE); // @todo be more specific
 
         // decide the SQL query:
-        snprintf(query, BUFFER_SIZE,
+        snprintf(query, query_len,
                  "SELECT %s\nFROM %s\nORDER BY id %s\nLIMIT %s", select,
                  table_name, order_by, limit);
         // add in the optional request params
