@@ -710,12 +710,11 @@ void *handle_client(void *arg) {
 
         // decide the SQL query:
         snprintf(query, query_len,
-                 "SELECT %s\nFROM %s\nORDER BY id %s\nLIMIT %s", select,
+                 "SELECT %s\nFROM %s\nORDER BY id %s\nLIMIT %s;", select,
                  table_name, order_by, limit);
         // add in the optional request params
         // @todo min/max
         // add in the last thing
-        strcat(query, ";");
 
         // attempt to query the database
         ExecStatusType sql_query_status =
