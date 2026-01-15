@@ -692,6 +692,11 @@ void *handle_client(void *arg) {
       // string or the last &
       querystring_regex =
           create_regex_iterator("[&]?([^=]+)=([^&]+)", 2, REG_EXTENDED);
+      if (!querystring_regex) {
+        build_response(400, response, response_len,
+                       "Something went wrong while parsing the querystring.");
+        goto end;
+      }
       regex_iterator_load_target(querystring_regex, querystring);
 
       // many of these need to be non-null:
