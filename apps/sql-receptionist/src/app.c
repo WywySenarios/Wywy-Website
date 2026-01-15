@@ -132,6 +132,104 @@ json_datatype_check_function schema_datatypes_values[] = {
 static dict schema_datatypes;
 
 /**
+ * Attempts to query the database and builds a response based on the query.
+ * Expects the query to be a SELECT query. @TODO optimize by finding the columns
+ * before-hand
+ * @param database_name The target database's name.
+ * @param query The query to execute.
+ * @param res The response variable to pass into sql_query
+ * @param conn The connection to pass into sql_query
+ * @param response The response variable to pass into build_response... .
+ * @param response_len The response length variable to pass into
+ * build_response... .
+ */
+void generic_select_query_and_respond(char *database_name, char *query,
+                                      PGresult **res, PGconn **conn,
+                                      char **response, size_t *response_len) {
+  ExecStatusType sql_query_status =
+      sql_query(database_name, query, res, conn, global_config);
+  if (sql_query_status == PGRES_TUPLES_OK ||
+      sql_query_status == PGRES_COMMAND_OK) { // if the query is successful,
+    // convert the query information into JSON
+    char *output = malloc(BUFFER_SIZE);       // @todo be more specific
+    char *column_names = malloc(BUFFER_SIZE); // @todo be more specific
+    column_names[0] = '\0';
+    char *output_arrs = malloc(BUFFER_SIZE); // @todo be more specific
+    output_arrs[0] = '\0';
+    // catch malloc failure
+    if (!output || !column_names || !output_arrs) {
+      build_response(500, response, response_len,
+                     "Something went wrong when fetching the query results.");
+    }
+
+    // add in the column names
+    for (int col = 0; col < PQnfields(*res); col++) {
+      strcat(column_names, "\"");
+      strcat(column_names, PQfname(*res, col));
+      strcat(column_names, "\",");
+    }
+    // remove trailing comma
+    column_names[strlen(column_names) - 1] = '\0';
+
+    // add in "[...]," for all the arrays
+    // @todo optimize
+    for (int row = 0; row < PQntuples(*res); row++) {
+      char *entry_arr = malloc(MAX_ENTRY_SIZE);
+      strcpy(entry_arr, "[");
+
+      for (int col = 0; col < PQnfields(*res); col++) {
+        if (!PQgetisnull(*res, row, col)) {
+          int requires_quotes = 0;
+          // @todo binary search optimization
+          switch (PQftype(*res, col)) {
+          case 25:
+          case 1082:
+          case 1083:
+          case 1114:
+            requires_quotes = 1;
+            strcat(entry_arr, "\"");
+            break;
+          default:
+            requires_quotes = 0;
+            break;
+          }
+
+          strcat(entry_arr, PQgetvalue(*res, row, col));
+          if (requires_quotes) {
+            strcat(entry_arr, "\"");
+          }
+        } else
+          strcat(entry_arr, "null");
+        strcat(entry_arr, ",");
+      }
+      // remove trailing comma
+      entry_arr[strlen(entry_arr) - 1] = ']';
+
+      strcat(entry_arr, ",");
+
+      strcat(output_arrs, entry_arr);
+      free(entry_arr);
+    }
+    // remove the trailing comma
+    output_arrs[strlen(output_arrs) - 1] = '\0';
+
+    snprintf(output, BUFFER_SIZE, "{\"columns\":[%s],\"data\":[%s]}",
+             column_names, output_arrs);
+    build_response(200, response, response_len, output);
+    free(column_names);
+    free(output_arrs);
+    free(output);
+  } else {
+    // @todo determine if it's the client's fault or the server's fault
+    build_response_printf(500, response, response_len,
+                          strlen(PQresStatus(sql_query_status)) + 2 +
+                              strlen(PQerrorMessage(*conn)) + 1,
+                          "%s: %s", PQresStatus(sql_query_status),
+                          PQerrorMessage(*conn));
+  }
+}
+
+/**
  * Goes through the entry and checks for validity. Appends a related query to
  * enter the entry.
  * @param entry The entry to check and construct a query around.
@@ -734,83 +832,8 @@ void *handle_client(void *arg) {
         // add in the last thing
 
         // attempt to query the database
-        ExecStatusType sql_query_status =
-            sql_query(database_name, query, &res, &conn, global_config);
-        if (sql_query_status == PGRES_TUPLES_OK ||
-            sql_query_status ==
-                PGRES_COMMAND_OK) { // if the query is successful,
-          // convert the query information into JSON
-          char *column_names = malloc(BUFFER_SIZE); // @todo be more specific
-          column_names[0] = '\0';
-
-          // add in the column names
-          for (int col = 0; col < PQnfields(res); col++) {
-            strcat(column_names, "\"");
-            strcat(column_names, PQfname(res, col));
-            strcat(column_names, "\",");
-          }
-          // remove trailing comma
-          column_names[strlen(column_names) - 1] = '\0';
-
-          char *output_arrs = malloc(BUFFER_SIZE); // @todo be more specific
-          output_arrs[0] = '\0';
-
-          // add in "[...]," for all the arrays
-          // @todo optimize
-          for (int row = 0; row < PQntuples(res); row++) {
-            char *entry_arr = malloc(MAX_ENTRY_SIZE);
-            strcpy(entry_arr, "[");
-
-            for (int col = 0; col < PQnfields(res); col++) {
-              if (!PQgetisnull(res, row, col)) {
-                int requires_quotes = 0;
-                // @todo binary search optimization
-                switch (PQftype(res, col)) {
-                case 25:
-                case 1082:
-                case 1083:
-                case 1114:
-                  requires_quotes = 1;
-                  strcat(entry_arr, "\"");
-                  break;
-                default:
-                  requires_quotes = 0;
-                  break;
-                }
-
-                strcat(entry_arr, PQgetvalue(res, row, col));
-                if (requires_quotes) {
-                  strcat(entry_arr, "\"");
-                }
-              } else
-                strcat(entry_arr, "null");
-              strcat(entry_arr, ",");
-            }
-            // remove trailing comma
-            entry_arr[strlen(entry_arr) - 1] = ']';
-
-            strcat(entry_arr, ",");
-
-            strcat(output_arrs, entry_arr);
-            free(entry_arr);
-          }
-          // remove the trailing comma
-          output_arrs[strlen(output_arrs) - 1] = '\0';
-
-          snprintf(output, BUFFER_SIZE, "{\"columns\":[%s],\"data\":[%s]}",
-                   column_names, output_arrs);
-          build_response(200, response, response_len, output);
-          free(column_names);
-          free(output_arrs);
-          free(output);
-        } else {
-          // @todo determine if it's the client's fault or the server's fault
-          build_response_printf(500, response, response_len,
-                                strlen(PQresStatus(sql_query_status)) + 2 +
-                                    strlen(PQerrorMessage(conn)) + 1,
-                                "%s: %s", PQresStatus(sql_query_status),
-                                PQerrorMessage(conn));
-        }
+        generic_select_query_and_respond(database_name, query, &res, &conn,
+                                         response, response_len);
       } else {
         build_response_default(400, response, response_len);
       }
