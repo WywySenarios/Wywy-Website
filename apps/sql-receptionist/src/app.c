@@ -718,7 +718,7 @@ void *handle_client(void *arg) {
 
         // attempt to query the database
         ExecStatusType sql_query_status =
-            sql_query(database_name, query, &res, &conn);
+            sql_query(database_name, query, &res, &conn, global_config);
         if (sql_query_status == PGRES_TUPLES_OK ||
             sql_query_status ==
                 PGRES_COMMAND_OK) { // if the query is successful,
@@ -920,7 +920,7 @@ void *handle_client(void *arg) {
       }
 
       ExecStatusType sql_query_status =
-          sql_query(database_name, query, &res, &conn);
+          sql_query(database_name, query, &res, &conn, global_config);
       if (sql_query_status != PGRES_COMMAND_OK &&
           sql_query_status != PGRES_TUPLES_OK) {
         build_response_printf(500, response, response_len,

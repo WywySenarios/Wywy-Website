@@ -3,18 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const struct config *global_config = NULL;
-
-/**
- * Loads in a config.
- * @param cfg The config to load in.
- */
-void init(const struct config *cfg) {
-  global_config = cfg;
-
-  // @TODO check validity
-}
-
 /**
  * Attempts to query the database with the given query.
  * This function assumes that the global config has the correct information on
@@ -30,10 +18,11 @@ void init(const struct config *cfg) {
  * connection if *conn is NULL, and assumes that the connection is correct if it
  * is not NULL. As a result, this function alone does NOT guarentee that the
  * connection refers to the given database name.
+ * @param config The global config.
  * @return The status of the query as per PQstatus().
  */
 ExecStatusType sql_query(char *dbname, char *query, PGresult **res,
-                         PGconn **conn) {
+                         PGconn **conn, const struct config *global_config) {
   if (getenv("SQL_RECEPTIONIST_LOG_QUERIES") &&
       strcmp(getenv("SQL_RECEPTIONIST_LOG_QUERIES"), "TRUE") == 0)
     printf("Query: %s\n", query);
