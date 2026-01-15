@@ -487,7 +487,8 @@ void *handle_client(void *arg) {
   if (regexec(&raw_cookie_regex, buffer, 1 + 1, raw_cookie_matches, 0) ==
       REG_NOMATCH) {
     regfree(&raw_cookie_regex);
-    build_response_default(403, response, response_len);
+    build_response(403, response, response_len,
+                   "Authentication failed. No username or password provided.");
     goto end;
   }
 
@@ -534,7 +535,7 @@ void *handle_client(void *arg) {
 
   free(raw_cookies);
   if (!(admin_username && admin_password)) {
-    build_response_default(403, response, response_len);
+    build_response(403, response, response_len, "Authentication failed.");
     goto bad_auth_end;
   }
   // @todo non-admin cookies
