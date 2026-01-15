@@ -327,6 +327,7 @@ void *handle_client(void *arg) {
   // the parent table name
   char *table_name = NULL;
   struct table *table = NULL;
+  struct regex_iterator *querystring_regex = NULL;
   PGconn *conn = NULL;
   PGresult *res = NULL;
   char *query = NULL;
@@ -589,12 +590,11 @@ void *handle_client(void *arg) {
         goto end;
       }
 
-      regex_t querystring_regex;
       // slash all &'s separate, and the first = sign after the start of the
       // string or the last &
-      regcomp(&querystring_regex, "[&]?([^=]+)=([^&]+)", REG_EXTENDED);
-
-      regmatch_t querystring_matches[2 + 1];
+      querystring_regex =
+          create_regex_iterator("[&]?([^=]+)=([^&]+)", 2, REG_EXTENDED);
+      regex_iterator_load_target(querystring_regex, querystring);
 
       // many of these need to be non-null:
       char *select = NULL;
@@ -603,100 +603,117 @@ void *handle_client(void *arg) {
       int min_type = -1; // 1 for inclusive, 0 for exclusive
       char *max = NULL;
       int max_type = -1; // 1 for inclusive, 0 for exclusive
-
-      char *querystring_copy = querystring;
+      char *start_index = NULL;
 
       // read every querystring value
       // store every single valid key-value pair.
-      while (regexec(&querystring_regex, querystring_copy, 2 + 1,
-                     querystring_matches, 0) != REG_NOMATCH) {
-        int item_name_len =
-            querystring_matches[1].rm_eo - querystring_matches[1].rm_so;
-        char *item_name = malloc(item_name_len + 1);
-        strncpy(item_name, querystring_copy + querystring_matches[1].rm_so,
-                item_name_len);
-        item_name[item_name_len] = '\0';
-
-        int value_len =
-            querystring_matches[2].rm_eo - querystring_matches[2].rm_so;
-        char *value = malloc(value_len + 1);
-        strncpy(value, querystring_copy + querystring_matches[2].rm_so,
-                value_len);
-        value[value_len] = '\0';
-
-        // change the querystring pointer so that it now looks for the next
-        // match in the string
-        // @todo please don't brute force by copying most of the string, just
-        // edit the pointer value or something...
-        querystring_copy = querystring_copy + querystring_matches[2].rm_eo;
+      char *key = NULL;
+      char *value = NULL;
+      int valid = 0;
+      while (regex_iterator_match(querystring_regex, 0) == 0) {
+        key = regex_iterator_get_match(querystring_regex, 1);
+        value = regex_iterator_get_match(querystring_regex, 2);
+        valid = 0;
 
         // what type is it?
-        if (strcmp(item_name, "SELECT") == 0) {
+        if (strcmp(key, "SELECT") == 0) {
           if (strcmp(value, "*") == 0) {
             select = "*";
           } else {
             for (unsigned i = 0; i < table->schema_count; i++) {
               if (strcmp(value, (*table).schema[i].name)) {
                 select = value;
+                valid = 1;
                 break;
               }
             }
           }
-        } else if (strcmp(item_name, "ORDER_BY") == 0) {
+        } else if (strcmp(key, "ORDER_BY") == 0) {
           if (strcmp(value, "ASC") == 0) {
             order_by = "ASC";
+            valid = 1;
           } else if (strcmp(value, "DSC") == 0) {
             order_by = "DSC";
+            valid = 1;
           }
-        } else if (strcmp(item_name, "MIN_INCLUSIVE") == 0) {
-          regex_t minmax_regex;
-          regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
-
-          regmatch_t minmax_matches[2];
-          if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 &&
-              min_type == -1) {
-            min = value;
-            min_type = 1;
+        } else if (strcmp(key, "MIN_INCLUSIVE") == 0) {
+          valid = regex_check("^[0-9]$", 0, REG_EXTENDED, 0, value);
+          if (valid == 1) {
+            if (min_type == -1) {
+              min = value;
+              min_type = 1;
+            } else {
+              valid = 0;
+            }
           }
-          regfree(&minmax_regex);
-        } else if (strcmp(item_name, "MAX_INCLUSIVE") == 0) {
-          regex_t minmax_regex;
-          regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
-
-          regmatch_t minmax_matches[2];
-          if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 &&
-              min_type == -1) {
-            max = value;
-            max_type = 1;
+        } else if (strcmp(key, "MAX_INCLUSIVE") == 0) {
+          valid = regex_check("^[0-9]$", 0, REG_EXTENDED, 0, value);
+          if (valid == 1) {
+            if (max_type == -1) {
+              max = value;
+              max_type = 1;
+            } else {
+              valid = 0;
+            }
           }
-          regfree(&minmax_regex);
-        } else if (strcmp(item_name, "MIN_EXCLUSIVE") == 0) {
-          regex_t minmax_regex;
-          regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
-
-          regmatch_t minmax_matches[2];
-          if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 &&
-              min_type == -1) {
-            min = value;
-            min_type = 0;
+        } else if (strcmp(key, "MIN_EXCLUSIVE") == 0) {
+          valid = regex_check("^[0-9]$", 0, REG_EXTENDED, 0, value);
+          if (valid == 1) {
+            if (min_type == -1) {
+              min = value;
+              min_type = 0;
+            } else {
+              valid = 0;
+            }
           }
-          regfree(&minmax_regex);
-        } else if (strcmp(item_name, "MAX_EXCLUSIVE") == 0) {
-          regex_t minmax_regex;
-          regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
-
-          regmatch_t minmax_matches[2];
-          if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 &&
-              min_type == -1) {
-            max = value;
-            max_type = 0;
+        } else if (strcmp(key, "MAX_EXCLUSIVE") == 0) {
+          valid = regex_check("^[0-9]$", 0, REG_EXTENDED, 0, value);
+          if (valid == 1) {
+            if (max_type == -1) {
+              max = value;
+              max_type = 0;
+            } else {
+              valid = 0;
+            }
           }
-          regfree(&minmax_regex);
+        } else {
+          build_response_printf(400, response, response_len,
+                                strlen("Invalid querystring key: \"\".") +
+                                    strlen(key),
+                                "Invalid querystring key: \"%s\".", key);
+          free(key);
+          free(value);
+          goto end;
         }
 
         // } else if (strcmp(item_name, "INDEX_BY")) {
-        free(item_name);
-        free(value);
+        switch (valid) {
+        case 0:
+          build_response_printf(400, response, response_len,
+                                strlen("Key value pair \"\", \"\" is "
+                                       "invalid.") +
+                                    strlen(key) + strlen(value),
+                                "Key value pair \"%s\", "
+                                "\"%s\" is invalid.",
+                                key, value);
+          free(key);
+          free(value);
+          goto end;
+        case 1:
+          free(key);
+          free(value);
+          break;
+        default:
+          build_response_printf(
+              400, response, response_len,
+              strlen("Something went wrong when checing querystring key "
+                     "\"\".") +
+                  strlen(key),
+              "Something went wrong when checing querystring key \"%s\".", key);
+          free(key);
+          free(value);
+          goto end;
+        }
       }
 
       // are the mandatory request params valid? We need something to select and
@@ -974,6 +991,7 @@ end:
     free(url_segments[i]);
   }
   free_regex_iterator(url_regex);
+  free_regex_iterator(querystring_regex);
   PQfinish(conn);
   PQclear(res);
   free(query);
