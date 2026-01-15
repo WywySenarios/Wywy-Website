@@ -5,6 +5,12 @@ import type { JSX } from "astro/jsx-runtime";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+/**
+ * Fetches the data from the endpoint and assumes the data to be of the specified type.
+ * @param URL Endpoint/source URL
+ * @param setLoading The function to set the loading state of the caller.
+ * @param setData The function to set the data of the caller.
+ */
 function getData<T>(
   URL: string,
   setLoading: (value: boolean) => void,
