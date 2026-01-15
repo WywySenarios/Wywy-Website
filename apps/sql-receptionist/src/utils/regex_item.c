@@ -41,16 +41,15 @@ regmatch_t *query_regex(char *pattern, int num_matches, int cflags, int eflags,
     return NULL;
 
   regmatch_t *output = malloc(sizeof(regmatch_t) * (num_matches + 1));
-  regex_t *preg = malloc(sizeof(regex_t));
+  regex_t preg;
 
-  if (!output || !preg || regcomp(preg, pattern, cflags) != 0 ||
-      regexec(preg, target, num_matches + 1, output, eflags) != 0) {
+  if (!output || regcomp(&preg, pattern, cflags) != 0 ||
+      regexec(&preg, target, num_matches + 1, output, eflags) != 0) {
     free(output);
-    free(preg);
     return NULL;
   }
 
-  free(preg);
+  regfree(&preg);
   return output;
 }
 
