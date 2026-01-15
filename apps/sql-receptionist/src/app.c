@@ -678,7 +678,7 @@ void *handle_client(void *arg) {
                                 "%s: %s", PQresStatus(sql_query_status),
                                 PQerrorMessage(conn));
         }
-      } else if (strcmp(url_segments[2], "tag_names")) {
+      } else if (strcmp(url_segments[2], "tag_names") == 0) {
         // check if tagging is enabled
         if (!table->tagging) {
           build_response_printf(400, response, response_len,
@@ -694,7 +694,7 @@ void *handle_client(void *arg) {
         snprintf(query, query_len, "SELECT * FROM %s_tag_names;", table_name);
         generic_select_query_and_respond(database_name, query, &res, &conn,
                                          response, response_len);
-      } else if (strcmp(url_segments[2], "tag_aliases")) {
+      } else if (strcmp(url_segments[2], "tag_aliases") == 0) {
         // check if tagging is enabled
         if (!table->tagging) {
           build_response_printf(400, response, response_len,
