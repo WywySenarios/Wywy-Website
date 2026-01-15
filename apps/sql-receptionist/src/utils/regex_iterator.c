@@ -96,7 +96,7 @@ int has_match(struct regex_iterator *iter, int group_num) {
 /**
  * Gets the ith match number (0 -> entire string that was regex'd). May behave
  * unexpectedly if match_num is invalid. May fail if the iterator never tried to
- * match or if the iterator is invalid.
+ * match or if the iterator is invalid. Returns NULL if memory allocation fails.
  * @param iter the related regex iterator. This must not be NULL.
  * @param match_num the match that will be extracted.
  */
@@ -107,6 +107,8 @@ char *regex_iterator_get_match(struct regex_iterator *iter, int match_num) {
   int output_len =
       iter->matches[match_num].rm_eo - iter->matches[match_num].rm_so;
   char *output = malloc(output_len + 1);
+  if (!output)
+    return NULL;
 
   memcpy(output, iter->cur + iter->matches[match_num].rm_so, output_len);
   output[output_len] = '\0';
