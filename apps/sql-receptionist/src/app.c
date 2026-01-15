@@ -220,7 +220,6 @@ void generic_select_query_and_respond(char *database_name, char *query,
     free(output_arrs);
     free(output);
   } else {
-    // @todo determine if it's the client's fault or the server's fault
     build_response_printf(500, response, response_len,
                           strlen(PQresStatus(sql_query_status)) + 2 +
                               strlen(PQerrorMessage(*conn)) + 1,
@@ -671,7 +670,6 @@ void *handle_client(void *arg) {
             build_response(200, response, response_len, "1");
           }
         } else {
-          // @todo determine if it's the client's fault or the server's fault
           build_response_printf(500, response, response_len,
                                 strlen(PQresStatus(sql_query_status)) + 2 +
                                     strlen(PQerrorMessage(conn)) + 1,
