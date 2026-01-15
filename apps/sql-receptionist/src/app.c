@@ -821,7 +821,6 @@ void *handle_client(void *arg) {
                            strlen(select) + strlen(table_name) +
                            strlen(order_by) + strlen(limit);
         query = malloc(query_len + 1);
-        char *output = malloc(BUFFER_SIZE); // @todo be more specific
 
         // decide the SQL query:
         snprintf(query, query_len,
