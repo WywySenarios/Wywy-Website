@@ -2,6 +2,13 @@
 
 import type { DescriptorInfo, TableInfo } from "@/env";
 import type { JSX } from "astro/jsx-runtime";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableRow,
+} from "@/components/ui/table";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -169,6 +176,26 @@ interface TaggingEntryTableProps {
   cacheURL: string;
 }
 
+interface TagsData {
+  columns: Array<"id" | "entry_id" | "tag_id">;
+  data: Array<Array<string | number>>;
+}
+
+interface TagNamesData {
+  columns: Array<"tag_names" | "id">;
+  data: Array<Array<string | number>>;
+}
+
+interface TagAliasesData {
+  columns: Array<"alias" | "tag_id">;
+  data: Array<Array<string | number>>;
+}
+
+interface TagGroupsData {
+  columns: Array<"id" | "tag_id" | "group_name">;
+  data: Array<Array<string | number>>;
+}
+
 /**
  * A tags editor table. May add or remove tags links from tags to generic entries.
  * @param databaseName The name of the database that contains the target table.
@@ -185,6 +212,30 @@ function TagsTable({
   databaseURL,
   cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
+  const [data, setData] = useState<TagsData>();
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
+
+  // load in data from
+  useEffect(() => {
+    getData(
+      `${databaseURL}/${databaseName}/${parentTableName}/tags`,
+      setLoading,
+      setData
+    );
+  }, []);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (!data) {
+    return <p>Something went wrong!</p>;
+  }
+
   return <></>;
 }
 /**
@@ -203,6 +254,30 @@ function TagNamesTable({
   databaseURL,
   cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
+  const [data, setData] = useState<TagNamesData>();
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
+
+  // load in data from
+  useEffect(() => {
+    getData(
+      `${databaseURL}/${databaseName}/${parentTableName}/tag_names`,
+      setLoading,
+      setData
+    );
+  }, []);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (!data) {
+    return <p>Something went wrong!</p>;
+  }
+
   return <></>;
 }
 /**
@@ -221,6 +296,30 @@ function TagAliasesTable({
   databaseURL,
   cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
+  const [data, setData] = useState<TagAliasesData>();
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
+
+  // load in data from
+  useEffect(() => {
+    getData(
+      `${databaseURL}/${databaseName}/${parentTableName}/tag_aliases`,
+      setLoading,
+      setData
+    );
+  }, []);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (!data) {
+    return <p>Something went wrong!</p>;
+  }
+
   return <></>;
 }
 /**
@@ -239,6 +338,30 @@ function TagGroupsTable({
   databaseURL,
   cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
+  const [data, setData] = useState<TagGroupsData>();
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
+
+  // load in data from
+  useEffect(() => {
+    getData(
+      `${databaseURL}/${databaseName}/${parentTableName}/tag_groups`,
+      setLoading,
+      setData
+    );
+  }, []);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (!data) {
+    return <p>Something went wrong!</p>;
+  }
+
   return <></>;
 }
 
