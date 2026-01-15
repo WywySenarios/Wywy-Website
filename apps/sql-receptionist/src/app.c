@@ -557,7 +557,7 @@ void *handle_client(void *arg) {
                  table_name);
 
         ExecStatusType sql_query_status =
-            sql_query(database_name, query, &res, &conn);
+            sql_query(database_name, query, &res, &conn, global_config);
         if (sql_query_status == PGRES_TUPLES_OK ||
             sql_query_status == PGRES_COMMAND_OK) {
           char *highest_id_str = PQgetvalue(res, 0, 0);
@@ -815,7 +815,6 @@ void *handle_client(void *arg) {
         build_response_default(400, response, response_len);
       }
 
-      regfree(&querystring_regex);
       // free(select);
       // free(order_by);
       if (min) {
