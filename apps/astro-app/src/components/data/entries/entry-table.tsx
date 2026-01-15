@@ -2,7 +2,38 @@
 
 import type { DescriptorInfo, TableInfo } from "@/env";
 import type { JSX } from "astro/jsx-runtime";
-import { Table } from "@/components/ui/table";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+function getData<T>(
+  URL: string,
+  setLoading: (value: boolean) => void,
+  setData: (value: T) => void
+): void {
+  fetch(URL, {
+    method: "GET",
+    mode: "cors",
+    credentials: "include",
+    headers: {
+      "Content-type": "application/json; charset=UTF-8",
+    },
+  }).then((response: Response) => {
+    response
+      .json()
+      .catch((reason) => {
+        toast(`Something went wrong while loading data: ${reason}`);
+        setLoading(false);
+      })
+      .then((body: Record<string, any>) => {
+        setData(body as T);
+        setLoading(false);
+      })
+      .catch((reason) => {
+        toast(`Something went wrong while loading data: ${reason}`);
+        setLoading(false);
+      });
+  });
+}
 
 /**
  * Renders an EntryTable to view and modify entries on specific tables.
