@@ -642,11 +642,16 @@ void *handle_client(void *arg) {
       // @todo allow-list input validation
       // @todo still vulnerable to changing the config
 
-      // check for the case where the user wants to get the next id
-      if (url_segments[2] && strcmp(url_segments[2], "get_next_id") == 0) {
-        PGconn *conn = NULL;
-        PGresult *res = NULL;
+      if (!url_segments[2]) {
+        goto regular_table;
+      }
 
+      /*
+       * Special endpoints:
+       * get_next_id
+       * tag_names & tag_aliases are restricted to SELECT * FROM ...;
+       */
+      if (strcmp(url_segments[2], "get_next_id") == 0) {
         size_t query_len =
             strlen("SELECT MAX(id) AS highest_id\nFROM ;") + strlen(table_name);
         query = malloc(query_len + 1);
@@ -672,16 +677,44 @@ void *handle_client(void *arg) {
                                 "%s: %s", PQresStatus(sql_query_status),
                                 PQerrorMessage(conn));
         }
+      } else if (strcmp(url_segments[2], "tag_names")) {
+        // check if tagging is enabled
+        if (!table->tagging) {
+          build_response_printf(400, response, response_len,
+                                strlen("Tagging is not enabled on table \"\""),
+                                "Tagging is not enabled on table \"%s\"",
+                                table_name);
+          goto end;
+        }
 
-        if (res)
-          PQclear(res);
-        if (conn)
-          PQfinish(conn);
-        free(query);
+        size_t query_len =
+            strlen("SELECT * FROM _tag_names;") + strlen(table_name);
+        query = malloc(query_len + 1);
+        snprintf(query, query_len, "SELECT * FROM %s_tag_names;", table_name);
+        generic_select_query_and_respond(database_name, query, &res, &conn,
+                                         response, response_len);
+      } else if (strcmp(url_segments[2], "tag_aliases")) {
+        // check if tagging is enabled
+        if (!table->tagging) {
+          build_response_printf(400, response, response_len,
+                                strlen("Tagging is not enabled on table \"\""),
+                                "Tagging is not enabled on table \"%s\"",
+                                table_name);
+          goto end;
+        }
 
+        size_t query_len =
+            strlen("SELECT * FROM _tag_aliases;") + strlen(table_name);
+        query = malloc(query_len + 1);
+        snprintf(query, query_len, "SELECT * FROM %s_tag_aliases;", table_name);
+        generic_select_query_and_respond(database_name, query, &res, &conn,
+                                         response, response_len);
         goto end;
+      } else {
+        build_response(400, response, response_len, "Bad URL");
       }
-
+      goto end;
+    regular_table: // @todo catch tags & tag_groups
       // REQUIRES querystring to run
       if (querystring == NULL) {
         build_response_default(400, response, response_len);
