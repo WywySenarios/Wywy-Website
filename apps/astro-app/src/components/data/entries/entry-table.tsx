@@ -2,14 +2,7 @@
 
 import type { DescriptorInfo, TableInfo } from "@/env";
 import type { JSX } from "astro/jsx-runtime";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableRow,
-} from "@/components/ui/table";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { toast } from "sonner";
 
 /**
@@ -18,10 +11,10 @@ import { toast } from "sonner";
  * @param setLoading The function to set the loading state of the caller.
  * @param setData The function to set the data of the caller.
  */
-function getData<T>(
+function getData<T extends TableData>(
   URL: string,
-  setLoading: (value: boolean) => void,
-  setData: (value: T) => void
+  setLoading: Dispatch<SetStateAction<boolean>>,
+  setData: Dispatch<SetStateAction<T>>
 ): void {
   fetch(URL, {
     method: "GET",
@@ -38,7 +31,30 @@ function getData<T>(
         setLoading(false);
       })
       .then((body: Record<string, any>) => {
-        setData(body as T);
+        let valid = true;
+        let output: T = body as T;
+        // set the body as an invalid value if there's an issue
+        // check if the columns might relate to the data
+        valid = valid && output.columns.length != output.data.length;
+        // check if there's any data
+        valid = valid && output.columns.length != 0 && output.data.length != 0;
+        // check if the number of entries is consistent.
+        let numEntries = body.data[0].length;
+        for (const column in output.data) {
+          if (column.length != numEntries) {
+            valid = false;
+            break;
+          }
+        }
+
+        if (valid) {
+          setData(output);
+        } else {
+          setData({
+            data: [],
+            columns: [],
+          } as TableData as T);
+        }
         setLoading(false);
       })
       .catch((reason) => {
@@ -176,24 +192,25 @@ interface TaggingEntryTableProps {
   cacheURL: string;
 }
 
-interface TagsData {
+interface TableData {
+  columns: Array<string>;
+  data: Array<Array<string | number>>;
+}
+
+interface TagsData extends TableData {
   columns: Array<"id" | "entry_id" | "tag_id">;
-  data: Array<Array<string | number>>;
 }
 
-interface TagNamesData {
-  columns: Array<"tag_names" | "id">;
-  data: Array<Array<string | number>>;
+interface TagNamesData extends TableData {
+  columns: Array<"tag_name" | "id">;
 }
 
-interface TagAliasesData {
+interface TagAliasesData extends TableData {
   columns: Array<"alias" | "tag_id">;
-  data: Array<Array<string | number>>;
 }
 
-interface TagGroupsData {
+interface TagGroupsData extends TableData {
   columns: Array<"id" | "tag_id" | "group_name">;
-  data: Array<Array<string | number>>;
 }
 
 /**
