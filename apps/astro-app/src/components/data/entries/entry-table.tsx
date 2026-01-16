@@ -45,28 +45,33 @@ function getData<T extends TableData>(
       .then((body: Record<string, any>) => {
         let valid = true;
         let output: T = body as T;
-        // set the body as an invalid value if there's an issue
-        // check if the columns might relate to the data
-        valid = valid && output.columns.length != output.data.length;
-        // check if there's any data
-        valid = valid && output.columns.length != 0 && output.data.length != 0;
-        // check if the number of entries is consistent.
-        let numEntries = body.data[0].length;
-        for (const column in output.data) {
-          if (column.length != numEntries) {
-            valid = false;
-            break;
+        // special catch: no data
+        if (output.data.length != 0) {
+          // set the body as an invalid value if there's an issue
+          // check if the columns might relate to the data
+          valid = valid && output.columns.length != output.data.length;
+          // check if there's any data
+          valid = valid && output.columns.length != 0;
+
+          // check if the number of entries is consistent.
+          let numEntries = output.data[0].length;
+          for (const column in output.data) {
+            if (column.length != numEntries) {
+              valid = false;
+              break;
+            }
+          }
+
+          if (valid) {
+            setData(output);
+          } else {
+            setData({
+              data: [],
+              columns: [],
+            } as TableData as T);
           }
         }
 
-        if (valid) {
-          setData(output);
-        } else {
-          setData({
-            data: [],
-            columns: [],
-          } as TableData as T);
-        }
         setLoading(false);
       })
       .catch((reason) => {
