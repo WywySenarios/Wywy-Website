@@ -337,7 +337,15 @@ function TagsTable({
     return <p>Something went wrong!</p>;
   }
 
-  return <></>;
+  return (
+    <TaggingTable
+      data={data}
+      databaseName={databaseName}
+      tableName={tableName}
+      type="tags"
+      cacheURL={cacheURL}
+    />
+  );
 }
 /**
  * A tag name editor table. May create new tags but cannot remove old tags.
@@ -380,7 +388,15 @@ function TagNamesTable({
     return <p>Something went wrong!</p>;
   }
 
-  return <></>;
+  return (
+    <TaggingTable
+      data={data}
+      databaseName={databaseName}
+      tableName={tableName}
+      type="tag_names"
+      cacheURL={cacheURL}
+    />
+  );
 }
 /**
  * A tags aliases table. May create or remove tag aliases. The user is not prevented from removing all aliases from a given tag, nor are they barred from removing the respective tag's direct name.
@@ -423,7 +439,15 @@ function TagAliasesTable({
     return <p>Something went wrong!</p>;
   }
 
-  return <></>;
+  return (
+    <TaggingTable
+      data={data}
+      databaseName={databaseName}
+      tableName={tableName}
+      type="tag_aliases"
+      cacheURL={cacheURL}
+    />
+  );
 }
 /**
  * A tag group editor table. May create or remove links from tags to tag groups.
@@ -466,7 +490,15 @@ function TagGroupsTable({
     return <p>Something went wrong!</p>;
   }
 
-  return <></>;
+  return (
+    <TaggingTable
+      data={data}
+      databaseName={databaseName}
+      tableName={tableName}
+      type="tag_groups"
+      cacheURL={cacheURL}
+    />
+  );
 }
 
 export default EntryTable;
