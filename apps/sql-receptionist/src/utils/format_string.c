@@ -1,6 +1,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#define strlen_safe(s) (s == NULL ? 0 : strlen(s))
+
 /**
  * Attempts to convert a given string to snake case.
  * @param src The string to convert. This function does not free src, but it
