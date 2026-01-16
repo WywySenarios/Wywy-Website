@@ -1,7 +1,11 @@
 #include <ctype.h>
 #include <string.h>
 
-#define strlen_safe(s) (s == NULL ? 0 : strlen(s))
+/**
+ * @param s The string to check.
+ * @returns The string length of s if it exists, and 0 otherwise.
+ */
+int strlen_safe(char *s) { return s == NULL ? 0 : strlen(s); }
 
 /**
  * Attempts to convert a given string to snake case.
