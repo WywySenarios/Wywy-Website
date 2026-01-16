@@ -410,13 +410,12 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
   column_names[strlen(column_names) - 1] = '\0';
   values[strlen(values) - 1] = '\0';
 
-  int incoming_query_len = strlen("INSERT INTO  ()\nVALUES();") +
+  int incoming_query_len = strlen("INSERT INTO  () VALUES();") +
                            strlen(table_name) + (column_names_len) +
                            (values_len) + 1;
   char *incoming_query = malloc(incoming_query_len);
   snprintf(incoming_query, incoming_query_len,
-           "INSERT INTO %s (%s)\nVALUES(%s);", table_name, column_names,
-           values);
+           "INSERT INTO %s (%s) VALUES(%s);", table_name, column_names, values);
 
   strncat(query, incoming_query, BUFFER_SIZE - strlen(query));
   free(incoming_query);
