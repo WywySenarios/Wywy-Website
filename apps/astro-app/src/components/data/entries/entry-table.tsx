@@ -4,6 +4,18 @@ import type { DescriptorInfo, TableInfo } from "@/env";
 import type { JSX } from "astro/jsx-runtime";
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { toast } from "sonner";
+import {
+  Table,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { createTaggingTableFormSchemaAndHandlers } from "./entry-form-helper";
+import { TaggingTableEntry } from "./entry";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 /**
  * Fetches the data from the endpoint and assumes the data to be of the specified type.
@@ -223,6 +235,72 @@ interface TagGroupsData extends TableData {
     Array<string | number>,
     Array<string | number>,
   ];
+}
+
+function TaggingTable({
+  data,
+  databaseName,
+  parentTableName,
+  type,
+  cacheURL,
+}: {
+  data: TableData;
+  databaseName: string;
+  parentTableName: string;
+  type: "tags" | "tag_names" | "tag_aliases" | "tag_groups";
+  cacheURL: string;
+}) {
+  const { controller, onSubmit, onSubmitInvalid } =
+    createTaggingTableFormSchemaAndHandlers(
+      databaseName,
+      parentTableName,
+      type,
+      cacheURL
+    );
+
+  return (
+    <form onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {data.columns.map((columnName: string) => (
+              <TableHead
+                className="text-center"
+                key={`entry-table-head-${columnName}`}
+              >
+                {columnName}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        {data.data[0].map((value: string | number, entryIndex: number) => {
+          return (
+            <TableRow key={`entry-table-row-${entryIndex}`}>
+              {data.columns.map((value, columnIndex: number) => (
+                <TableCell
+                  key={`entry-table-cell-${columnIndex}-${entryIndex}`}
+                >
+                  {data.data[entryIndex][columnIndex]}
+                </TableCell>
+              ))}
+            </TableRow>
+          );
+        })}
+        <TableFooter>
+          <TableRow>
+            {data.columns.map((columnName: string) => (
+              <TableCell key={`entry-table-footer-${columnName}`}>
+                <TaggingTableEntry controller={controller} name={columnName} />
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableFooter>
+      </Table>
+      <Button className="w-full" type="submit">
+        <Plus />
+      </Button>
+    </form>
+  );
 }
 
 /**
