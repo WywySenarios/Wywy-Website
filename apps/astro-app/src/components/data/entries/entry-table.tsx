@@ -85,8 +85,7 @@ function getData<T extends TableData>(
  * Renders an EntryTable to view and modify entries on specific tables.
  * @param schema The schema of the table.
  * @param databaseName The name of the target database
- * @param parentTableName The name of the parent table, or the target table if the table has no parent.
- * @param tableName The name of the target table.
+ * @param tableName The name of the parent table, or the target table if the table has no parent.
  * @param databaseURL The URL of the master database.
  * @param cacheURL The URL of the cache database.
  * @param type The type of table to render. Is either undefined (generic) or a tagging table type.
@@ -95,7 +94,6 @@ function getData<T extends TableData>(
 function EntryTable({
   schema,
   databaseName,
-  parentTableName,
   tableName,
   databaseURL,
   cacheURL,
@@ -103,7 +101,6 @@ function EntryTable({
 }: {
   schema?: TableInfo | DescriptorInfo | undefined;
   databaseName: string;
-  parentTableName: string;
   tableName: string;
   databaseURL: string;
   cacheURL: string;
@@ -117,7 +114,6 @@ function EntryTable({
         <GenericEntryTable
           schema={schema}
           databaseName={databaseName}
-          parentTableName={parentTableName}
           tableName={tableName}
           databaseURL={databaseURL}
           cacheURL={cacheURL}
@@ -127,7 +123,6 @@ function EntryTable({
       return (
         <TagsTable
           databaseName={databaseName}
-          parentTableName={parentTableName}
           tableName={tableName}
           databaseURL={databaseURL}
           cacheURL={cacheURL}
@@ -137,7 +132,6 @@ function EntryTable({
       return (
         <TagNamesTable
           databaseName={databaseName}
-          parentTableName={parentTableName}
           tableName={tableName}
           databaseURL={databaseURL}
           cacheURL={cacheURL}
@@ -147,7 +141,6 @@ function EntryTable({
       return (
         <TagAliasesTable
           databaseName={databaseName}
-          parentTableName={parentTableName}
           tableName={tableName}
           databaseURL={databaseURL}
           cacheURL={cacheURL}
@@ -157,7 +150,6 @@ function EntryTable({
       return (
         <TagGroupsTable
           databaseName={databaseName}
-          parentTableName={parentTableName}
           tableName={tableName}
           databaseURL={databaseURL}
           cacheURL={cacheURL}
@@ -177,8 +169,7 @@ function NoTable(): JSX.Element {
  * A generic entry editor table.
  * @param schema The table schema.
  * @param databaseName The name of the database that contains the target table.
- * @param parentTableName The name of the parent table (or the target table if there is no parent).
- * @param tableName The name of the target table.
+ * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param databaseURL The URL of the master database.
  * @param cacheURL The URL of the cache database.
  * @returns
@@ -186,14 +177,12 @@ function NoTable(): JSX.Element {
 function GenericEntryTable({
   schema,
   databaseName,
-  parentTableName,
   tableName,
   databaseURL,
   cacheURL,
 }: {
   schema: TableInfo | DescriptorInfo;
   databaseName: string;
-  parentTableName: string;
   tableName: string;
   databaseURL: string;
   cacheURL: string;
@@ -203,7 +192,6 @@ function GenericEntryTable({
 
 interface TaggingEntryTableProps {
   databaseName: string;
-  parentTableName: string;
   tableName: string;
   databaseURL: string;
   cacheURL: string;
@@ -245,20 +233,20 @@ interface TagGroupsData extends TableData {
 function TaggingTable({
   data,
   databaseName,
-  parentTableName,
+  tableName,
   type,
   cacheURL,
 }: {
   data: TableData;
   databaseName: string;
-  parentTableName: string;
+  tableName: string;
   type: "tags" | "tag_names" | "tag_aliases" | "tag_groups";
   cacheURL: string;
 }) {
   const { controller, onSubmit, onSubmitInvalid } =
     createTaggingTableFormSchemaAndHandlers(
       databaseName,
-      parentTableName,
+      tableName,
       type,
       cacheURL
     );
@@ -311,15 +299,13 @@ function TaggingTable({
 /**
  * A tags editor table. May add or remove tags links from tags to generic entries.
  * @param databaseName The name of the database that contains the target table.
- * @param parentTableName The name of the parent table (or the target table if there is no parent).
- * @param tableName The name of the target table.
+ * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param databaseURL The URL of the master database.
  * @param cacheURL The URL of the cache database.
  * @returns
  */
 function TagsTable({
   databaseName,
-  parentTableName,
   tableName,
   databaseURL,
   cacheURL,
@@ -337,7 +323,7 @@ function TagsTable({
   // load in data from
   useEffect(() => {
     getData(
-      `${databaseURL}/${databaseName}/${parentTableName}/tags`,
+      `${databaseURL}/${databaseName}/${tableName}/tags`,
       setLoading,
       setData
     );
@@ -356,15 +342,13 @@ function TagsTable({
 /**
  * A tag name editor table. May create new tags but cannot remove old tags.
  * @param databaseName The name of the database that contains the target table.
- * @param parentTableName The name of the parent table (or the target table if there is no parent).
- * @param tableName The name of the target table.
+ * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param databaseURL The URL of the master database.
  * @param cacheURL The URL of the cache database.
  * @returns
  */
 function TagNamesTable({
   databaseName,
-  parentTableName,
   tableName,
   databaseURL,
   cacheURL,
@@ -382,7 +366,7 @@ function TagNamesTable({
   // load in data from
   useEffect(() => {
     getData(
-      `${databaseURL}/${databaseName}/${parentTableName}/tag_names`,
+      `${databaseURL}/${databaseName}/${tableName}/tag_names`,
       setLoading,
       setData
     );
@@ -401,15 +385,13 @@ function TagNamesTable({
 /**
  * A tags aliases table. May create or remove tag aliases. The user is not prevented from removing all aliases from a given tag, nor are they barred from removing the respective tag's direct name.
  * @param databaseName The name of the database that contains the target table.
- * @param parentTableName The name of the parent table (or the target table if there is no parent).
- * @param tableName The name of the target table.
+ * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param databaseURL The URL of the master database.
  * @param cacheURL The URL of the cache database.
  * @returns
  */
 function TagAliasesTable({
   databaseName,
-  parentTableName,
   tableName,
   databaseURL,
   cacheURL,
@@ -427,7 +409,7 @@ function TagAliasesTable({
   // load in data from
   useEffect(() => {
     getData(
-      `${databaseURL}/${databaseName}/${parentTableName}/tag_aliases`,
+      `${databaseURL}/${databaseName}/${tableName}/tag_aliases`,
       setLoading,
       setData
     );
@@ -446,15 +428,13 @@ function TagAliasesTable({
 /**
  * A tag group editor table. May create or remove links from tags to tag groups.
  * @param databaseName The name of the database that contains the target table.
- * @param parentTableName The name of the parent table (or the target table if there is no parent).
- * @param tableName The name of the target table.
+ * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param databaseURL The URL of the master database.
  * @param cacheURL The URL of the cache database.
  * @returns
  */
 function TagGroupsTable({
   databaseName,
-  parentTableName,
   tableName,
   databaseURL,
   cacheURL,
@@ -472,7 +452,7 @@ function TagGroupsTable({
   // load in data from
   useEffect(() => {
     getData(
-      `${databaseURL}/${databaseName}/${parentTableName}/tag_groups`,
+      `${databaseURL}/${databaseName}/${tableName}/tag_groups`,
       setLoading,
       setData
     );
