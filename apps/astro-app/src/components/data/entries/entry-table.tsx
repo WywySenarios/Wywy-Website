@@ -199,18 +199,30 @@ interface TableData {
 
 interface TagsData extends TableData {
   columns: Array<"id" | "entry_id" | "tag_id">;
+  data: [
+    Array<string | number>,
+    Array<string | number>,
+    Array<string | number>,
+  ];
 }
 
 interface TagNamesData extends TableData {
   columns: Array<"tag_name" | "id">;
+  data: [Array<string | number>, Array<string | number>];
 }
 
 interface TagAliasesData extends TableData {
   columns: Array<"alias" | "tag_id">;
+  data: [Array<string | number>, Array<string | number>];
 }
 
 interface TagGroupsData extends TableData {
   columns: Array<"id" | "tag_id" | "group_name">;
+  data: [
+    Array<string | number>,
+    Array<string | number>,
+    Array<string | number>,
+  ];
 }
 
 /**
@@ -252,7 +264,7 @@ function TagsTable({
     return <p>Loading...</p>;
   }
 
-  if (!data) {
+  if (data.data.length != 3) {
     return <p>Something went wrong!</p>;
   }
 
@@ -297,7 +309,7 @@ function TagNamesTable({
     return <p>Loading...</p>;
   }
 
-  if (!data) {
+  if (data.data.length != 2) {
     return <p>Something went wrong!</p>;
   }
 
@@ -342,7 +354,7 @@ function TagAliasesTable({
     return <p>Loading...</p>;
   }
 
-  if (!data) {
+  if (data.data.length != 2) {
     return <p>Something went wrong!</p>;
   }
 
@@ -387,7 +399,7 @@ function TagGroupsTable({
     return <p>Loading...</p>;
   }
 
-  if (!data) {
+  if (data.data.length != 3) {
     return <p>Something went wrong!</p>;
   }
 
