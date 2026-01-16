@@ -62,11 +62,6 @@ void build_response(int status_code, char **response, size_t *response_len,
   }
   const char *status_code_name = get_status_code_name(status_code);
 
-  if (getenv("SQL_RECEPTIONIST_LOG_RESPONSES") &&
-      strcmp(getenv("SQL_RECEPTIONIST_LOG_RESPONSES"), "TRUE") == 0)
-    printf("Constructing %d %s response: %s\n\n", status_code, status_code_name,
-           body);
-
   *response_len = strlen("HTTP/1.1 xxx \r\n"
                          "Content-Type: text/plain\r\n"
                          "Access-Control-Allow-Origin: \r\n"
@@ -107,6 +102,8 @@ void build_response_printf(int status_code, char **response,
   va_start(arg, pattern);
   vsnprintf(body, text_size, pattern, arg);
   va_end(arg);
+
+  printf("BODY: %s\n", body);
 
   build_response(status_code, response, response_len, body);
 

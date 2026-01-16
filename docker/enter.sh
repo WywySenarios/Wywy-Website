@@ -2,7 +2,7 @@
 # Check if an argument is provided
 if [ -z "$1" ]; then
   echo "Error: No argument provided."
-  echo "Usage: $0 <astro|sqlr|pgres|create_tables>"
+  echo "Usage: $0 <astro|sqlr|pgres>"
   exit 1
 fi
 
