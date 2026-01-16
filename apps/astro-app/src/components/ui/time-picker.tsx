@@ -1,14 +1,12 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
+import { parse } from "date-fns";
 import { parseTime } from "@/utils";
-import { getFallbackValue } from "@root/src/utils/data";
 
-function toTimeString(date: Date): string {
-  if (isNaN(date.getTime())) return getFallbackValue("time");
-
-  let output = date.toISOString().split("T")[1];
-  output = output.substring(0, output.length - 1); // get rid of the trailing Z.
-  return output;
+function convertToTimeString(date: Date): string {
+    let output = date.toISOString().split("T")[1];
+    output = output.substring(0, output.length - 1); // get rid of the trailing Z.
+    return output;
 }
 
 /**
@@ -17,64 +15,59 @@ function toTimeString(date: Date): string {
  * @param defaultValue @type {string} This is expected to be a valid time string in the format. The component creation may fail if it is not.
  * @returns @type {ReactElement}
  */
-export function TimePicker({
-  defaultValue,
-  onChange,
-}: {
-  defaultValue?: string;
-  onChange: (any: any) => void;
-}) {
-  const [date, setDate] = React.useState<Date>(() => {
-    if (defaultValue) {
-      const output: Date = new Date(Date.parse(defaultValue));
-      if (!isNaN(output.getTime())) {
-        onChange(toTimeString(output));
+export function TimePicker({ defaultValue, onChange }: { defaultValue: string, onChange: (any: any) => void }) {
+    const [date, setDate] = React.useState<Date | undefined>(() => {
+        let output = new Date();
+        if (defaultValue) {
+            try {
+                output = parse(defaultValue, "HH:mm:ss", output)
+                onChange(convertToTimeString(output));
+                return output;
+            } catch {
+                output = new Date();
+                onChange(convertToTimeString(output));
+                return output;
+            }
+        }
+
+        output = new Date();
+        onChange(convertToTimeString(output));
         return output;
-      }
+    });
+
+    const onTimeChange = (val: string) => {
+        if (!val) {
+            return
+        }
+        let output: Date;
+        if (date) {
+            output = new Date(date);
+        } else {
+            output = new Date();
+        }
+
+        // copy over values if possible
+        let copy = parseTime(val);
+        if (copy && !isNaN(copy.getTime())) {
+            output.setHours(copy.getHours());
+            output.setMinutes(copy.getMinutes());
+            output.setSeconds(copy.getSeconds());
+        }
+
+        setDate(output);
+        onChange(convertToTimeString(output));
     }
 
-    const output = new Date();
-    onChange(toTimeString(output));
-    return output;
-  });
-
-  const onTimeChange = (val: string) => {
-    if (!val) {
-      return;
-    }
-    let output: Date;
-    if (date) {
-      output = new Date(date);
-    } else {
-      output = new Date();
-    }
-
-    // copy over values if possible
-    let copy = parseTime(val);
-    if (copy && !isNaN(copy.getTime())) {
-      output.setHours(copy.getHours());
-      output.setMinutes(copy.getMinutes());
-      output.setSeconds(copy.getSeconds());
-    }
-
-    setDate(output);
-    onChange(toTimeString(output));
-  };
-
-  return (
-    <Input
-      type="time"
-      id="time-picker"
-      step="1"
-      defaultValue={
-        defaultValue === undefined
-          ? getFallbackValue("time")
-          : toTimeString(new Date(Date.parse(defaultValue)))
-      }
-      onChange={(val: React.ChangeEvent<HTMLInputElement>) => {
-        onTimeChange(val.target.value);
-      }}
-      className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-    />
-  );
+    return (
+        <Input
+            type="time"
+            id="time-picker"
+            step="1"
+            defaultValue={defaultValue}
+            onChange={(val: React.ChangeEvent<HTMLInputElement>) => {
+                onTimeChange(val.target.value);
+            }}
+            className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+        />
+    );
 }
