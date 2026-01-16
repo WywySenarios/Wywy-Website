@@ -59,7 +59,7 @@ services:
       wywywebsite_database:
         condition: service_healthy
     command: bash -c "make clean && make && ./app"
-  
+
   wywywebsite_create_tables:
     container_name: wywywebsite_create_tables
     tty: true
@@ -79,6 +79,10 @@ services:
         - action: sync+restart
           path: ./../config.yml
           target: /config.yml
+          initial_sync: true
+        - action: sync+restart
+          path: ./../apps/create_tables
+          target: ./apps/create_tables
           initial_sync: true
     depends_on:
       wywywebsite_database:
@@ -102,7 +106,8 @@ services:
     ports:
       - ${POSTGRES_PORT}:${POSTGRES_PORT}
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "${DB_USERNAME}", "-p", "${POSTGRES_PORT}" ]
+      test:
+        ["CMD", "pg_isready", "-U", "${DB_USERNAME}", "-p", "${POSTGRES_PORT}"]
       interval: 5m
       timeout: 5s
       start_period: 3s
