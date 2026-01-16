@@ -13,10 +13,10 @@ FROM postgres:18 AS db
 USER root
 
 RUN apt-get update
-RUN apt-get install curl -y
+RUN apt-get install lftp -y
 
 COPY --chown=postgres:postgres apps/postgres/backup.sh .
-# COPY --from=build /usr/bin/lftp /usr/bin/lftp
+# COPY --chown=postgres:postgres /usr/bin/lftp /usr/bin/lftp
 # COPY --from=build /usr/bin/curl /usr/bin/curl
 
 RUN chmod +x backup.sh
