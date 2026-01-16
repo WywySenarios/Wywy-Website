@@ -8,9 +8,13 @@
  */
 
 #include "config.h"
+#include "postgres.h"
 #include "server/responses.h"
 #include "utils/format_string.h"
+#include "utils/http.h"
 #include "utils/json/datatype_validation.h"
+#include "utils/regex_item.h"
+#include "utils/regex_iterator.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
 #include <ctype.h>
@@ -35,7 +39,7 @@
 #define BUFFER_SIZE 104857600 - 1
 #define MAX_ENTRY_SIZE 1048576 - 1
 #define AUTH_DB_NAME "auth" // @todo make this configurable
-#define MAX_URL_SECTIONS 3
+#define MAX_URL_SECTIONS 4  // must be 2 or larger
 #define MAX_REGEX_MATCHES 25
 #define limit "20"
 #define NUM_DATATYPES_KEYS 1
@@ -83,9 +87,6 @@ dict_item *linear_search(dict dict, const char *key) {
 }
 
 typedef int (*json_datatype_check_function)(const json_t *json);
-/**
- *
- */
 static char *json_to_string(const json_t *value) {
   char *output;
   if (!value) {
@@ -131,77 +132,274 @@ json_datatype_check_function schema_datatypes_values[] = {
 static dict schema_datatypes;
 
 /**
- * Decodes URLs, like "test%20test" -> "test test"
- * @param src The encoded URL to decode.
- * @return A pointer to a series of characters representing the decoded URL.
+ * Attempts to query the database and builds a response based on the query.
+ * Expects the query to be a SELECT query. @TODO optimize by finding the columns
+ * before-hand
+ * @param database_name The target database's name.
+ * @param query The query to execute.
+ * @param res The response variable to pass into sql_query
+ * @param conn The connection to pass into sql_query
+ * @param response The response variable to pass into build_response... .
+ * @param response_len The response length variable to pass into
+ * build_response... .
  */
-char *url_decode(const char *src) {
-  size_t src_len = strlen(src);
-  char *decoded = malloc(src_len + 1);
-  size_t decoded_len = 0;
-
-  // decode %2x to hex
-  for (size_t i = 0; i < src_len; i++) {
-    if (src[i] == '%' && i + 2 < src_len) {
-      int hex_val;
-      sscanf(src + i + 1, "%2x", &hex_val);
-      decoded[decoded_len++] = hex_val;
-      i += 2;
-    } else {
-      decoded[decoded_len++] = src[i];
+void generic_select_query_and_respond(char *database_name, char *query,
+                                      PGresult **res, PGconn **conn,
+                                      char **response, size_t *response_len) {
+  ExecStatusType sql_query_status =
+      sql_query(database_name, query, res, conn, global_config);
+  if (sql_query_status == PGRES_TUPLES_OK ||
+      sql_query_status == PGRES_COMMAND_OK) { // if the query is successful,
+    // convert the query information into JSON
+    char *output = malloc(BUFFER_SIZE);       // @todo be more specific
+    char *column_names = malloc(BUFFER_SIZE); // @todo be more specific
+    column_names[0] = '\0';
+    char *output_arrs = malloc(BUFFER_SIZE); // @todo be more specific
+    output_arrs[0] = '\0';
+    // catch malloc failure
+    if (!output || !column_names || !output_arrs) {
+      build_response(500, response, response_len,
+                     "Something went wrong when fetching the query results.");
     }
-  }
 
-  // add null terminator
-  decoded[decoded_len] = '\0';
-  return decoded;
+    // add in the column names
+    for (int col = 0; col < PQnfields(*res); col++) {
+      strcat(column_names, "\"");
+      strcat(column_names, PQfname(*res, col));
+      strcat(column_names, "\",");
+    }
+    // remove trailing comma
+    column_names[strlen(column_names) - 1] = '\0';
+
+    // add in "[...]," for all the arrays
+    // @todo optimize
+    for (int row = 0; row < PQntuples(*res); row++) {
+      char *entry_arr = malloc(MAX_ENTRY_SIZE);
+      strcpy(entry_arr, "[");
+
+      for (int col = 0; col < PQnfields(*res); col++) {
+        if (!PQgetisnull(*res, row, col)) {
+          int requires_quotes = 0;
+          // @todo binary search optimization
+          switch (PQftype(*res, col)) {
+          case 25:
+          case 1082:
+          case 1083:
+          case 1114:
+            requires_quotes = 1;
+            strcat(entry_arr, "\"");
+            break;
+          default:
+            requires_quotes = 0;
+            break;
+          }
+
+          strcat(entry_arr, PQgetvalue(*res, row, col));
+          if (requires_quotes) {
+            strcat(entry_arr, "\"");
+          }
+        } else
+          strcat(entry_arr, "null");
+        strcat(entry_arr, ",");
+      }
+      // remove trailing comma
+      entry_arr[strlen(entry_arr) - 1] = ']';
+
+      strcat(entry_arr, ",");
+
+      strcat(output_arrs, entry_arr);
+      free(entry_arr);
+    }
+    // remove the trailing comma
+    output_arrs[strlen(output_arrs) - 1] = '\0';
+
+    snprintf(output, BUFFER_SIZE, "{\"columns\":[%s],\"data\":[%s]}",
+             column_names, output_arrs);
+    build_response(200, response, response_len, output);
+    free(column_names);
+    free(output_arrs);
+    free(output);
+  } else {
+    build_response_printf(500, response, response_len,
+                          strlen(PQresStatus(sql_query_status)) + 2 +
+                              strlen(PQerrorMessage(*conn)) + 1,
+                          "%s: %s", PQresStatus(sql_query_status),
+                          PQerrorMessage(*conn));
+  }
 }
 
 /**
- * Attempts to query the database with the given query.
- * This function assumes that the global config has the correct information on
- * the
- * @param dbname A pointer to a sequence of characters representing the database
- * name to connect to. This function does NOT free dbname.
- * @param query A pointer to a sequence of characters representing the query to
- * execute. This function does NOT free query.
- * @param res A double pointer to a PGresult pointer that will be set to the
- * result of the query. This function does NOT free *res.
- * @param conn A double pointer to a PGconn pointer that will be set to the
- * connection used. This function does NOT free *conn. This function creates a
- * connection if *conn is NULL, and assumes that the connection is correct if it
- * is not NULL. As a result, this function alone does NOT guarentee that the
- * connection refers to the given database name.
- * @return The status of the query as per PQstatus().
+ * Goes through the entry and checks for validity. Appends a related query to
+ * enter the entry.
+ * @param entry The entry to check and construct a query around.
+ * @param schema The schema to check the entry against.
+ * @param schema_count The size of the schema array.
+ * @param query The string to append the new query into.
+ * @param table_name The target table's name.
+ * @returns 0 if the query is invalid, 1 if the query is valid, -1 if the
+ * checking failed.
  */
-ExecStatusType sql_query(char *dbname, char *query, PGresult **res,
-                         PGconn **conn) {
-  printf("Query: %s\n", query);
+int construct_validate_query(json_t *entry, struct data_column *schema,
+                             unsigned int schema_count, char *query,
+                             char *table_name) {
+  const char *key;
+  const json_t *value;
 
-  if (*conn == NULL) {
-    size_t conninfo_size = 1 + strlen("dbname= user= password= host= port=") +
-                           strlen(dbname) + strlen(getenv("DB_USERNAME")) +
-                           strlen(getenv("DB_PASSWORD")) +
-                           strlen(global_config->postgres.host) + 5;
-    char *conninfo = malloc(conninfo_size);
-    snprintf(conninfo, conninfo_size,
-             "dbname=%s user=%s password=%s host=%s port=%s", dbname,
-             getenv("DB_USERNAME"), getenv("DB_PASSWORD"),
-             global_config->postgres.host, getenv("POSTGRES_PORT"));
+  int values_len = 0;
+  int column_names_len = 0;
+  int separator_len = 0;
 
-    *conn = PQconnectdb(conninfo);
-    free(conninfo);
+  json_object_foreach(entry, key, value) {
+    bool valid = false;
+    char *value_string = json_to_string(value);
+    char *target_column = NULL;
+
+    // check for the case in which the JSON key relates to comments instead
+    // of regular columns
+    int is_comments_column = regex_check("_comments$", 1, REG_EXTENDED, 0, key);
+
+    switch (is_comments_column) {
+    case 0:
+      target_column = malloc(strlen(key) + 1);
+      strcpy(target_column, key);
+      break;
+    case 1:
+      target_column = malloc(strlen(key) - strlen("_comments") + 1);
+      strncpy(target_column, key, strlen(key) - strlen("_comments"));
+      target_column[strlen(key) - strlen("_comments")] = '\0';
+      break;
+    default:
+      return -1;
+    }
+
+    if (strcmp(target_column, "id") == 0) {
+      // skip id column (postgres autoincrement should handle it)
+      free(target_column);
+
+      // @TODO make sure postgres doesn't tweak out over incorrect next keys
+      switch (regex_check("^[0-9]+$", 0, REG_EXTENDED, 0, value_string)) {
+      case 0:
+        valid = false;
+        break;
+      case 1:
+        valid = true;
+        break;
+      default:
+        // @todo cleaner looking way of exiting
+        free(target_column);
+        return -1;
+        break;
+      }
+    } else if (strcmp(target_column, "primary_tag") == 0) {
+      // it's hard to validate FOREIGN KEY so we'll let Postgres take care of
+      // this.
+      switch (regex_check("^[0-9]+$", 0, REG_EXTENDED, 0, value_string)) {
+      case 0:
+        valid = false;
+        break;
+      case 1:
+        valid = true;
+        break;
+      default:
+        // @todo cleaner looking way of exiting
+        free(target_column);
+        return -1;
+        break;
+      }
+    } else
+      for (int i = 0; i < schema_count; i++) {
+        // find which entry in the schema matches
+
+        if (str_cci_cmp(target_column, schema[i].name) == 0) {
+          // check if the input is a comment and the column does not have
+          // comments.
+          if (is_comments_column) {
+            if (schema[i].comments == false) {
+              break;
+            }
+
+            // comments MUST have text
+            if (check_string(value) == 0) {
+              break;
+            }
+          } else {
+            dict_item *item =
+                linear_search(schema_datatypes, schema[i].datatype);
+            // check if the input's datatype mismatches
+            if (!item) {
+              break;
+            }
+            json_datatype_check_function *related_datatype_checker =
+                item->value;
+            if ((*related_datatype_checker)(value) == 0) {
+              break;
+            }
+          }
+
+          valid = true;
+          break;
+        }
+      }
+
+    // also remember to catch when the key is not inside the table's schema
+    if (!valid) {
+      free(target_column);
+      free(value_string);
+      return 0;
+    } else {
+      // @todo optimize
+      values_len += strlen(value_string) + 1;
+      column_names_len +=
+          strlen(key) + 1; // no need to use to_snake_case: it won't
+                           // change the length of the string.
+    }
+    free(target_column);
+    free(value_string);
+  }
+  values_len--;
+  column_names_len--;
+
+  // get ready and put in all the correct values
+  char *column_names = malloc(column_names_len + 1);
+  char *values = malloc(values_len + 1);
+
+  // make them empty strings
+  strncpy(column_names, "", 1);
+  strncpy(values, "", 1);
+
+  json_object_foreach(entry, key, value) {
+    // if (strcmp(key, "id") == 0)
+    // continue;
+
+    char *value_string = json_to_string(value);
+    char *snake_case_key = malloc(strlen(key) + 1);
+    strncpy(snake_case_key, key, strlen(key));
+    to_snake_case(snake_case_key);
+
+    strncat(column_names, snake_case_key, strlen(key) + 1);
+    strncat(column_names, ",", 1 + 1);
+    strncat(values, value_string, strlen(value_string) + 1);
+    strncat(values, ",", 1 + 1);
+
+    free(snake_case_key);
+    free(value_string);
   }
 
-  if (PQstatus(*conn) != CONNECTION_OK) {
-    return PGRES_FATAL_ERROR;
-  }
+  // remove trailing commas
+  column_names[strlen(column_names) - 1] = '\0';
+  values[strlen(values) - 1] = '\0';
 
-  // Submit & Execute query
-  *res = PQexec(*conn, query);
-  ExecStatusType status = PQresultStatus(*res);
+  int incoming_query_len = strlen("INSERT INTO  ()\nVALUES();") +
+                           strlen(table_name) + (column_names_len) +
+                           (values_len) + 1;
+  char *incoming_query = malloc(incoming_query_len);
+  snprintf(incoming_query, incoming_query_len,
+           "INSERT INTO %s (%s)\nVALUES(%s);", table_name, column_names,
+           values);
 
-  return status;
+  strncat(query, incoming_query, BUFFER_SIZE - strlen(query));
+  free(incoming_query);
+  return 1;
 }
 
 /**
@@ -209,11 +407,32 @@ ExecStatusType sql_query(char *dbname, char *query, PGresult **res,
  * request.
  */
 void *handle_client(void *arg) {
+  // variables that are always used:
   int client_fd = *((int *)arg);
   char *buffer = malloc(BUFFER_SIZE * sizeof(char));
   char **response = malloc(sizeof(char *));
-  *response = malloc(BUFFER_SIZE * 2 * sizeof(char));
   size_t *response_len = malloc(sizeof(size_t *));
+
+  // variables that are generally useful:
+  char *url_segments[MAX_URL_SECTIONS];
+  for (int i = 0; i < MAX_URL_SECTIONS; i++)
+    url_segments[i] = NULL;
+  char *method = NULL;
+  struct regex_iterator *url_regex = NULL;
+  char *database_name = NULL;
+  struct db *database = NULL;
+  // the parent table name
+  char *table_name = NULL;
+  struct table *table = NULL;
+  struct regex_iterator *querystring_regex = NULL;
+  PGconn *conn = NULL;
+  PGresult *res = NULL;
+  char *query = NULL;
+
+  // check for failed memory allocation
+  if (!buffer || !response || !response_len) {
+    goto end;
+  }
 
   // receive request data from client and store into buffer
   ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
@@ -231,34 +450,29 @@ void *handle_client(void *arg) {
 
   regmatch_t matches[3];
 
-  regex_t url_regex;
-  regcomp(&url_regex, "([^/]+)/([^/]+)(/([^/]+))?", REG_EXTENDED); // "[^/]+"
-
-  regmatch_t url_matches[MAX_URL_SECTIONS + 1];
-
   // Does the request have a URL?
   if (regexec(&regex, buffer, 3, matches, 0) == REG_NOMATCH) {
     build_response_default(400, response, response_len);
-    goto unsuccessful_regex_end;
+    goto end;
   }
 
   // extract database name and table name from request
   // @todo validate the request
   if (matches[1].rm_so == -1 || matches[2].rm_so == -1) {
     build_response_default(400, response, response_len);
-    goto unsuccessful_regex_end;
+    goto end;
   }
 
   // Extract the method
   int method_len = matches[1].rm_eo - matches[1].rm_so;
-  char *method = malloc(method_len + 1);
+  method = malloc(method_len + 1);
   strncpy(method, buffer + matches[1].rm_so, method_len);
   method[method_len] = '\0';
 
   // immediately check for OPTIONS requests
   if (strcmp(method, "OPTIONS") == 0) {
     build_response_default(204, response, response_len);
-    goto options_end;
+    goto end;
   }
 
   // @todo special/reserved URLs
@@ -272,8 +486,9 @@ void *handle_client(void *arg) {
   if (regexec(&raw_cookie_regex, buffer, 1 + 1, raw_cookie_matches, 0) ==
       REG_NOMATCH) {
     regfree(&raw_cookie_regex);
-    build_response_default(403, response, response_len);
-    goto options_end;
+    build_response(403, response, response_len,
+                   "Authentication failed. No username or password provided.");
+    goto end;
   }
 
   int raw_cookies_len =
@@ -319,7 +534,7 @@ void *handle_client(void *arg) {
 
   free(raw_cookies);
   if (!(admin_username && admin_password)) {
-    build_response_default(403, response, response_len);
+    build_response(403, response, response_len, "Authentication failed.");
     goto bad_auth_end;
   }
   // @todo non-admin cookies
@@ -333,6 +548,73 @@ void *handle_client(void *arg) {
   char *url = url_decode(encoded_url);
   free(encoded_url);
 
+  url_regex = create_regex_iterator("([^/^?]+)[/?]?", 1, REG_EXTENDED);
+
+  regex_iterator_load_target(url_regex, url);
+
+  // START - check URL
+
+  // look for as many url sections as possible
+  for (int i = 0; i < MAX_URL_SECTIONS; i++) {
+    if (regex_iterator_match(url_regex, 0) != 0)
+      break;
+    url_segments[i] = regex_iterator_get_match(url_regex, 1);
+    if (!url_segments[i]) {
+      build_response(500, response, response_len, "Memory allocation failed.");
+      perror("URL section malloc failure");
+      goto end;
+    }
+    regex_iterator_advance_cur(url_regex);
+  }
+
+  // get database name
+  database_name = url_segments[0];
+
+  // ensure that there is a target database
+  if (!database_name) {
+    build_response(400, response, response_len,
+                   "Database name was not supplied.");
+    goto end;
+  }
+
+  to_lower_snake_case(database_name);
+
+  for (unsigned int i = 0; i < global_config->dbs_count; i++) {
+    if (strcmp(global_config->dbs[i].db_name, database_name) == 0) {
+      database = &global_config->dbs[i];
+      break;
+    }
+  }
+
+  // ensure that there is a target database
+  if (!database) {
+    build_response(400, response, response_len, "Database not found.");
+    goto end;
+  }
+
+  table_name = url_segments[1];
+
+  // ensure that there is a target table
+  if (!table_name) {
+    build_response(400, response, response_len, "Table name not supplied.");
+    goto end;
+  }
+
+  to_lower_snake_case(table_name);
+
+  for (unsigned int i = 0; i < database->tables_count; i++) {
+    if (strcmp(database->tables[i].table_name, table_name) == 0) {
+      table = &database->tables[i];
+    }
+  }
+
+  // ensure that there is a target table
+  if (!table) {
+    build_response(400, response, response_len, "Table not found.");
+    goto end;
+  }
+  // END - check URL
+
   // @todo handle memory?
   // handle querystring
   char *querystring = NULL;
@@ -343,17 +625,6 @@ void *handle_client(void *arg) {
     querystring = qmark + 1; // everything after is the querystring
   }
 
-  // does the URL have 2 or 3 segments?
-  if (regexec(&url_regex, url, MAX_URL_SECTIONS + 1, url_matches, 0) ==
-      REG_NOMATCH) {
-    build_response_default(400, response, response_len);
-    goto bad_url_end;
-  }
-
-  if (url_matches[1].rm_so == -1 || url_matches[2].rm_so == -1) {
-    build_response_default(400, response, response_len);
-    goto bad_url_end;
-  }
   // decide what to do
   // first ensure that the method is uppercase
   // @todo verify if this is really needed
@@ -362,36 +633,7 @@ void *handle_client(void *arg) {
   }
 
   // search for the relevant table & database
-  struct db *db = NULL;
-  struct table *table = NULL;
 
-  int db_name_len = url_matches[1].rm_eo - url_matches[1].rm_so;
-  char *db_name = malloc(db_name_len + 1);
-  strncpy(db_name, url + url_matches[1].rm_so, db_name_len);
-  db_name[db_name_len] = '\0';
-  int table_name_len = url_matches[2].rm_eo - url_matches[2].rm_so;
-  char *table_name = malloc(table_name_len + 1);
-  strncpy(table_name, url + url_matches[2].rm_so, table_name_len);
-  table_name[table_name_len] = '\0';
-
-  for (unsigned int i = 0; i < global_config->dbs_count; i++) {
-    db = &global_config->dbs[i];
-    if (strcmp(db->db_name, db_name) == 0) {
-      for (unsigned int j = 0; j < db->tables_count; j++) {
-        if (strcmp(db->tables[j].table_name, table_name) == 0) {
-          table = &db->tables[j];
-          goto found_table;
-        }
-      }
-    }
-  }
-  // didn't find a table? Tell the client that there's no such table
-  if (table == NULL) {
-    build_response_default(400, response, response_len);
-    goto no_table_end;
-  }
-
-found_table:
   if (strcmp(method, "GET") == 0) {
     // check if the database & table may be accessed freely
     if (table->read) {
@@ -400,67 +642,94 @@ found_table:
       // @todo allow-list input validation
       // @todo still vulnerable to changing the config
 
-      // check for the case where the user wants to get the next id
-      if (url_matches[3].rm_so != -1) {
-        int command_len = url_matches[3].rm_eo - url_matches[3].rm_so;
-        char *command = malloc(command_len + 1);
-        strncpy(command, url + url_matches[3].rm_so, command_len);
-        command[command_len] = '\0';
-
-        if (strcmp(command, "get_next_id") == 0) {
-          PGconn *conn = NULL;
-          PGresult *res = NULL;
-
-          size_t query_len = strlen("SELECT MAX(id) AS highest_id\nFROM ;") +
-                             strlen(table_name);
-          char *query = malloc(query_len + 1);
-
-          snprintf(query, query_len, "SELECT MAX(id) AS highest_id\nFROM %s;",
-                   table_name);
-
-          ExecStatusType sql_query_status =
-              sql_query(db_name, query, &res, &conn);
-          if (sql_query_status == PGRES_TUPLES_OK ||
-              sql_query_status == PGRES_COMMAND_OK) {
-            char *highest_id_str = PQgetvalue(res, 0, 0);
-            if (highest_id_str && strlen(highest_id_str) > 0) {
-              build_response(200, response, response_len, highest_id_str);
-            } else {
-              build_response(200, response, response_len, "1");
-            }
-          } else {
-            // @todo determine if it's the client's fault or the server's fault
-            build_response_printf(500, response, response_len,
-                                  strlen(PQresStatus(sql_query_status)) + 2 +
-                                      strlen(PQerrorMessage(conn)) + 1,
-                                  "%s: %s", PQresStatus(sql_query_status),
-                                  PQerrorMessage(conn));
-          }
-
-          if (res)
-            PQclear(res);
-          if (conn)
-            PQfinish(conn);
-          free(query);
-        } else {
-          build_response_default(400, response, response_len);
-        }
-
-        goto no_table_end;
+      if (!url_segments[2]) {
+        goto regular_table;
       }
 
+      /*
+       * Special endpoints:
+       * get_next_id
+       * tag_names & tag_aliases are restricted to SELECT * FROM ...;
+       */
+      if (strcmp(url_segments[2], "get_next_id") == 0) {
+        size_t query_len =
+            strlen("SELECT MAX(id) AS highest_id\nFROM ;") + strlen(table_name);
+        query = malloc(query_len + 1);
+
+        snprintf(query, query_len, "SELECT MAX(id) AS highest_id\nFROM%s;",
+                 table_name);
+
+        ExecStatusType sql_query_status =
+            sql_query(database_name, query, &res, &conn, global_config);
+        if (sql_query_status == PGRES_TUPLES_OK ||
+            sql_query_status == PGRES_COMMAND_OK) {
+          char *highest_id_str = PQgetvalue(res, 0, 0);
+          if (highest_id_str && strlen(highest_id_str) > 0) {
+            build_response(200, response, response_len, highest_id_str);
+          } else {
+            build_response(200, response, response_len, "1");
+          }
+        } else {
+          build_response_printf(500, response, response_len,
+                                strlen(PQresStatus(sql_query_status)) + 2 +
+                                    strlen(PQerrorMessage(conn)) + 1,
+                                "%s: %s", PQresStatus(sql_query_status),
+                                PQerrorMessage(conn));
+        }
+      } else if (strcmp(url_segments[2], "tag_names") == 0) {
+        // check if tagging is enabled
+        if (!table->tagging) {
+          build_response_printf(400, response, response_len,
+                                strlen("Tagging is not enabled on table \"\""),
+                                "Tagging is not enabled on table \"%s\"",
+                                table_name);
+          goto end;
+        }
+
+        size_t query_len =
+            strlen("SELECT * FROM _tag_names;") + strlen(table_name);
+        query = malloc(query_len + 1);
+        snprintf(query, query_len, "SELECT * FROM %s_tag_names;", table_name);
+        generic_select_query_and_respond(database_name, query, &res, &conn,
+                                         response, response_len);
+      } else if (strcmp(url_segments[2], "tag_aliases") == 0) {
+        // check if tagging is enabled
+        if (!table->tagging) {
+          build_response_printf(400, response, response_len,
+                                strlen("Tagging is not enabled on table \"\""),
+                                "Tagging is not enabled on table \"%s\"",
+                                table_name);
+          goto end;
+        }
+
+        size_t query_len =
+            strlen("SELECT * FROM _tag_aliases;") + strlen(table_name);
+        query = malloc(query_len + 1);
+        snprintf(query, query_len, "SELECT * FROM %s_tag_aliases;", table_name);
+        generic_select_query_and_respond(database_name, query, &res, &conn,
+                                         response, response_len);
+        goto end;
+      } else {
+        build_response(400, response, response_len, "Bad URL");
+      }
+      goto end;
+    regular_table: // @todo catch tags & tag_groups
       // REQUIRES querystring to run
       if (querystring == NULL) {
         build_response_default(400, response, response_len);
-        goto no_table_end;
+        goto end;
       }
 
-      regex_t querystring_regex;
       // slash all &'s separate, and the first = sign after the start of the
       // string or the last &
-      regcomp(&querystring_regex, "[&]?([^=]+)=([^&]+)", REG_EXTENDED);
-
-      regmatch_t querystring_matches[2 + 1];
+      querystring_regex =
+          create_regex_iterator("[&]?([^=]+)=([^&]+)", 2, REG_EXTENDED);
+      if (!querystring_regex) {
+        build_response(400, response, response_len,
+                       "Something went wrong while parsing the querystring.");
+        goto end;
+      }
+      regex_iterator_load_target(querystring_regex, querystring);
 
       // many of these need to be non-null:
       char *select = NULL;
@@ -469,210 +738,142 @@ found_table:
       int min_type = -1; // 1 for inclusive, 0 for exclusive
       char *max = NULL;
       int max_type = -1; // 1 for inclusive, 0 for exclusive
-
-      char *querystring_copy = querystring;
+      char *start_index = NULL;
 
       // read every querystring value
       // store every single valid key-value pair.
-      while (regexec(&querystring_regex, querystring_copy, 2 + 1,
-                     querystring_matches, 0) != REG_NOMATCH) {
-        int item_name_len =
-            querystring_matches[1].rm_eo - querystring_matches[1].rm_so;
-        char *item_name = malloc(item_name_len + 1);
-        strncpy(item_name, querystring_copy + querystring_matches[1].rm_so,
-                item_name_len);
-        item_name[item_name_len] = '\0';
-
-        int value_len =
-            querystring_matches[2].rm_eo - querystring_matches[2].rm_so;
-        char *value = malloc(value_len + 1);
-        strncpy(value, querystring_copy + querystring_matches[2].rm_so,
-                value_len);
-        value[value_len] = '\0';
-
-        // change the querystring pointer so that it now looks for the next
-        // match in the string
-        // @todo please don't brute force by copying most of the string, just
-        // edit the pointer value or something...
-        querystring_copy = querystring_copy + querystring_matches[2].rm_eo;
+      char *key = NULL;
+      char *value = NULL;
+      int valid = 0;
+      while (regex_iterator_match(querystring_regex, 0) == 0) {
+        key = regex_iterator_get_match(querystring_regex, 1);
+        value = regex_iterator_get_match(querystring_regex, 2);
+        valid = 0;
 
         // what type is it?
-        if (strcmp(item_name, "SELECT") == 0) {
+        if (strcmp(key, "SELECT") == 0) {
           if (strcmp(value, "*") == 0) {
             select = "*";
           } else {
             for (unsigned i = 0; i < table->schema_count; i++) {
               if (strcmp(value, (*table).schema[i].name)) {
                 select = value;
+                valid = 1;
                 break;
               }
             }
           }
-        } else if (strcmp(item_name, "ORDER_BY") == 0) {
+        } else if (strcmp(key, "ORDER_BY") == 0) {
           if (strcmp(value, "ASC") == 0) {
             order_by = "ASC";
+            valid = 1;
           } else if (strcmp(value, "DSC") == 0) {
             order_by = "DSC";
+            valid = 1;
           }
-        } else if (strcmp(item_name, "MIN_INCLUSIVE") == 0) {
-          regex_t minmax_regex;
-          regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
-
-          regmatch_t minmax_matches[2];
-          if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 &&
-              min_type == -1) {
-            min = value;
-            min_type = 1;
+        } else if (strcmp(key, "MIN_INCLUSIVE") == 0) {
+          valid = regex_check("^[0-9]$", 0, REG_EXTENDED, 0, value);
+          if (valid == 1) {
+            if (min_type == -1) {
+              min = value;
+              min_type = 1;
+            } else {
+              valid = 0;
+            }
           }
-          regfree(&minmax_regex);
-        } else if (strcmp(item_name, "MAX_INCLUSIVE") == 0) {
-          regex_t minmax_regex;
-          regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
-
-          regmatch_t minmax_matches[2];
-          if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 &&
-              min_type == -1) {
-            max = value;
-            max_type = 1;
+        } else if (strcmp(key, "MAX_INCLUSIVE") == 0) {
+          valid = regex_check("^[0-9]$", 0, REG_EXTENDED, 0, value);
+          if (valid == 1) {
+            if (max_type == -1) {
+              max = value;
+              max_type = 1;
+            } else {
+              valid = 0;
+            }
           }
-          regfree(&minmax_regex);
-        } else if (strcmp(item_name, "MIN_EXCLUSIVE") == 0) {
-          regex_t minmax_regex;
-          regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
-
-          regmatch_t minmax_matches[2];
-          if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 &&
-              min_type == -1) {
-            min = value;
-            min_type = 0;
+        } else if (strcmp(key, "MIN_EXCLUSIVE") == 0) {
+          valid = regex_check("^[0-9]$", 0, REG_EXTENDED, 0, value);
+          if (valid == 1) {
+            if (min_type == -1) {
+              min = value;
+              min_type = 0;
+            } else {
+              valid = 0;
+            }
           }
-          regfree(&minmax_regex);
-        } else if (strcmp(item_name, "MAX_EXCLUSIVE") == 0) {
-          regex_t minmax_regex;
-          regcomp(&minmax_regex, "[0-9]", REG_EXTENDED);
-
-          regmatch_t minmax_matches[2];
-          if (regexec(&minmax_regex, value, 2, minmax_matches, 0) != 0 &&
-              min_type == -1) {
-            max = value;
-            max_type = 0;
+        } else if (strcmp(key, "MAX_EXCLUSIVE") == 0) {
+          valid = regex_check("^[0-9]$", 0, REG_EXTENDED, 0, value);
+          if (valid == 1) {
+            if (max_type == -1) {
+              max = value;
+              max_type = 0;
+            } else {
+              valid = 0;
+            }
           }
-          regfree(&minmax_regex);
+        } else {
+          build_response_printf(400, response, response_len,
+                                strlen("Invalid querystring key: \"\".") +
+                                    strlen(key),
+                                "Invalid querystring key: \"%s\".", key);
+          free(key);
+          free(value);
+          goto end;
         }
 
         // } else if (strcmp(item_name, "INDEX_BY")) {
-        free(item_name);
-        free(value);
+        switch (valid) {
+        case 0:
+          build_response_printf(400, response, response_len,
+                                strlen("Key value pair \"\", \"\" is "
+                                       "invalid.") +
+                                    strlen(key) + strlen(value),
+                                "Key value pair \"%s\", "
+                                "\"%s\" is invalid.",
+                                key, value);
+          free(key);
+          free(value);
+          goto end;
+        case 1:
+          free(key);
+          free(value);
+          break;
+        default:
+          build_response_printf(
+              400, response, response_len,
+              strlen("Something went wrong when checing querystring key "
+                     "\"\".") +
+                  strlen(key),
+              "Something went wrong when checing querystring key \"%s\".", key);
+          free(key);
+          free(value);
+          goto end;
+        }
       }
 
       // are the mandatory request params valid? We need something to select and
       // an order to sort it by.
       if (select && order_by) {
-        PGconn *conn = NULL;
-        PGresult *res = NULL;
-        char *query = malloc(strlen("SELECT \nFROM \nORDER BY id \nLIMIT;") +
-                             strlen(select) + strlen(table_name) +
-                             strlen(order_by) + strlen(limit) + 1);
-        char *output = malloc(BUFFER_SIZE); // @todo be more specific
+        size_t query_len = strlen("SELECT \nFROM \nORDER BY id \nLIMIT;") +
+                           strlen(select) + strlen(table_name) +
+                           strlen(order_by) + strlen(limit);
+        query = malloc(query_len + 1);
 
         // decide the SQL query:
-        snprintf(query, BUFFER_SIZE,
-                 "SELECT %s\nFROM %s\nORDER BY id %s\nLIMIT %s", select,
+        snprintf(query, query_len,
+                 "SELECT %s\nFROM %s\nORDER BY id %s\nLIMIT %s;", select,
                  table_name, order_by, limit);
         // add in the optional request params
         // @todo min/max
         // add in the last thing
-        strcat(query, ";");
 
         // attempt to query the database
-        ExecStatusType sql_query_status =
-            sql_query(db_name, query, &res, &conn);
-        if (sql_query_status == PGRES_TUPLES_OK ||
-            sql_query_status ==
-                PGRES_COMMAND_OK) { // if the query is successful,
-          // convert the query information into JSON
-          char *column_names = malloc(BUFFER_SIZE); // @todo be more specific
-          column_names[0] = '\0';
-
-          // add in the column names
-          for (int col = 0; col < PQnfields(res); col++) {
-            strcat(column_names, "\"");
-            strcat(column_names, PQfname(res, col));
-            strcat(column_names, "\",");
-          }
-          // remove trailing comma
-          column_names[strlen(column_names) - 1] = '\0';
-
-          char *output_arrs = malloc(BUFFER_SIZE); // @todo be more specific
-          output_arrs[0] = '\0';
-
-          // add in "[...]," for all the arrays
-          // @todo optimize
-          for (int row = 0; row < PQntuples(res); row++) {
-            char *entry_arr = malloc(MAX_ENTRY_SIZE);
-            strcpy(entry_arr, "[");
-
-            for (int col = 0; col < PQnfields(res); col++) {
-              if (!PQgetisnull(res, row, col)) {
-                int requires_quotes = 0;
-                // @todo binary search optimization
-                switch (PQftype(res, col)) {
-                case 25:
-                case 1082:
-                case 1083:
-                case 1114:
-                  requires_quotes = 1;
-                  strcat(entry_arr, "\"");
-                  break;
-                default:
-                  requires_quotes = 0;
-                  break;
-                }
-
-                strcat(entry_arr, PQgetvalue(res, row, col));
-                if (requires_quotes) {
-                  strcat(entry_arr, "\"");
-                }
-              } else
-                strcat(entry_arr, "null");
-              strcat(entry_arr, ",");
-            }
-            // remove trailing comma
-            entry_arr[strlen(entry_arr) - 1] = ']';
-
-            strcat(entry_arr, ",");
-
-            strcat(output_arrs, entry_arr);
-            free(entry_arr);
-          }
-          // remove the trailing comma
-          output_arrs[strlen(output_arrs) - 1] = '\0';
-
-          snprintf(output, BUFFER_SIZE, "{\"columns\":[%s],\"data\":[%s]}",
-                   column_names, output_arrs);
-          build_response(200, response, response_len, output);
-          free(column_names);
-          free(output_arrs);
-          free(output);
-        } else {
-          // @todo determine if it's the client's fault or the server's fault
-          build_response_printf(500, response, response_len,
-                                strlen(PQresStatus(sql_query_status)) + 2 +
-                                    strlen(PQerrorMessage(conn)) + 1,
-                                "%s: %s", PQresStatus(sql_query_status),
-                                PQerrorMessage(conn));
-        }
-
-        if (res)
-          PQclear(res);
-        if (conn)
-          PQfinish(conn);
-        free(query);
+        generic_select_query_and_respond(database_name, query, &res, &conn,
+                                         response, response_len);
       } else {
         build_response_default(400, response, response_len);
       }
 
-      regfree(&querystring_regex);
       // free(select);
       // free(order_by);
       if (min) {
@@ -704,158 +905,97 @@ found_table:
       strncpy(body, buffer + body_matches[1].rm_so, body_len);
       body[body_len] = '\0';
 
-      printf("Body: %s\n\n", body);
+      if (getenv("SQL_RECEPTIONIST_LOG_INPUT") &&
+          strcmp(getenv("SQL_RECEPTIONIST_LOG_INPUT"), "TRUE") == 0)
+        printf("Body: %s\n\n", body);
 
       json_t *entry;
       json_error_t entry_error;
       entry = json_loads(body, 0, &entry_error);
 
       if (!entry) {
-        build_response_default(400, response, response_len);
+        // @TODO respond with line number, etc.
+        build_response_printf(400, response, response_len,
+                              strlen(entry_error.text), "%s", entry_error.text);
+        goto schema_mismatch_end;
       }
 
-      const char *key;
-      const json_t *value;
+      char *query = malloc(BUFFER_SIZE + 1);
 
-      int total_value_len = 0;
-      int total_key_len = 0;
-      int separator_len = 0;
+      char *target_type = url_segments[2];
+      if (!target_type) {
+        build_response(400, response, response_len,
+                       "No target table type supplied.");
+        goto schema_mismatch_end;
+      }
 
-      json_object_foreach(entry, key, value) {
-        bool valid = false;
-
-        // check for the case in which the JSON key relates to comments instead
-        // of regular columns
-        regex_t comments_regex;
-        regcomp(&comments_regex, "_comments$", REG_EXTENDED);
-
-        regmatch_t comments_matches[1 + 1];
-        bool is_comments_column =
-            !(regexec(&comments_regex, key, 1 + 1, comments_matches, 0) ==
-              REG_NOMATCH);
-        regfree(&comments_regex);
-
-        char *target_column;
-
-        if (is_comments_column) {
-          target_column = malloc(strlen(key) - strlen("_comments") + 1);
-          strncpy(target_column, key, strlen(key) - strlen("_comments"));
-          target_column[strlen(key) - strlen("_comments")] = '\0';
-        } else {
-          target_column = malloc(strlen(key) + 1);
-          strcpy(target_column, key);
+      struct data_column *schema = NULL;
+      int schema_count = -1;
+      if (strcmp(target_type, "data") == 0) {
+        // no additional checks needed
+        schema = table->schema;
+        schema_count = table->schema_count;
+      } else if (strcmp(target_type, "descriptors") == 0) {
+        if (!table->descriptors) {
+          build_response_printf(400, response, response_len,
+                                strlen("Table does not have descriptors.") +
+                                    strlen(table_name),
+                                "Table %s does not "
+                                "have descriptors.",
+                                table_name);
+          goto schema_mismatch_end;
         }
 
-        if (strcmp(target_column, "id") == 0) {
-          // @TODO make sure postgres doesn't tweak out over incorrect next keys
-          regex_t id_regex;
-          regcomp(&id_regex, "^[0-9]+$", REG_EXTENDED);
+        char *descriptor_name = url_segments[3];
 
-          regmatch_t id_matches[1];
-          valid = !(regexec(&id_regex, json_to_string(value), 1, id_matches,
-                            0) == REG_NOMATCH);
-
-          regfree(&id_regex);
-        } else
-          for (int i = 0; i < table->schema_count; i++) {
-            // find which entry in the schema matches
-
-            if (str_cci_cmp(target_column, table->schema[i].name) == 0) {
-              // check if the input is a comment and the column does not have
-              // comments.
-              if (is_comments_column) {
-                if (table->schema[i].comments == false) {
-                  break;
-                }
-
-                // comments MUST have text
-                if (check_string(value) == 0) {
-                  break;
-                }
-              } else {
-                dict_item *item =
-                    linear_search(schema_datatypes, table->schema[i].datatype);
-                // check if the input's datatype mismatches
-                if (!item) {
-                  break;
-                }
-                json_datatype_check_function *related_datatype_checker =
-                    item->value;
-                if ((*related_datatype_checker)(value) == 0) {
-                  break;
-                }
-              }
-
-              valid = true;
-              break;
-            }
-          }
-
-        // also remember to catch when the key is not inside the table's schema
-        if (!valid) {
-          free(target_column);
-          build_response_default(400, response, response_len);
-          goto post_bad_input_end;
-        } else {
-          // @todo optimize
-          // char *key_string = json_to_string(key);
-          char *value_string = json_to_string(value);
-          total_value_len += strlen(value_string);
-          total_key_len +=
-              strlen(key); // no need to use to_snake_case: it won't change
-                           // the length of the string.
-          separator_len++;
-
-          // free(key_string);
-          free(value_string);
+        // look for the respective descriptor
+        for (int i = 0; i < table->descriptors_count; i++) {
+          if (strcmp(table->descriptors[i].name, descriptor_name) == 0)
+            schema = table->descriptors[i].schema;
+          schema_count = table->descriptors[i].schema_count;
+          break;
         }
-        free(target_column);
+
+        if (!schema || schema_count == -1) {
+          build_response(400, response, response_len,
+                         "Descriptor schema not found.");
+          goto schema_mismatch_end;
+        }
+        // } else if (strcmp(target_type, "tags")) {
+        // } else if (strcmp(target_type, "tag_aliases")) {
+        // } else if (strcmp(target_type, "tag_names")) {
+        // } else if (strcmp(target_type, "tag_groups")) {
+      } else {
+        build_response(400, response, response_len,
+                       "Invalid target table type.");
+        goto schema_mismatch_end;
       }
 
-      separator_len--;
-      // get ready and put in all the correct values
-      char *column_names = malloc(total_key_len + separator_len + 1 + 1);
-      char *values = malloc(total_value_len + separator_len + 1 + 1);
-
-      // make them empty strings
-      strncpy(column_names, "", 1);
-      strncpy(values, "", 1);
-
-      json_object_foreach(entry, key, value) {
-        // char *key_string = json_to_string(key);
-        char *value_string = json_to_string(value);
-        char *snake_case_key = malloc(strlen(key) + 1);
-        strcpy(snake_case_key, key);
-        to_snake_case(snake_case_key);
-
-        strncat(column_names, snake_case_key, strlen(key) + 1);
-        strncat(column_names, ",", 1 + 1);
-        strncat(values, value_string, strlen(value_string) + 1);
-        strncat(values, ",", 1 + 1);
-
-        free(snake_case_key);
-        free(value_string);
+      if (!schema || schema_count == -1) {
+        build_response(
+            500, response, response_len,
+            "Bad target table schema. Contact website maintainer for a fix.");
+        goto schema_mismatch_end;
       }
 
-      // remove trailing commas
-      column_names[strlen(column_names) - 1] = '\0';
-      values[strlen(values) - 1] = '\0';
+      switch (construct_validate_query(entry, schema, schema_count, query,
+                                       table_name)) {
+      case 0:
+        build_response(400, response, response_len,
+                       "The given entry does not "
+                       "conform to the schema.");
+        goto schema_mismatch_end;
+      case 1:
+        break;
+      default:
+        build_response(
+            500, response, response_len,
+            "Something went wrong while checking your entry with the schema.");
+        goto schema_mismatch_end;
+      }
 
-      int query_len = strlen("INSERT INTO  ()\nVALUES();") +
-                      strlen(table_name) + total_value_len + total_key_len +
-                      2 * separator_len + 1;
-      char *query = malloc(query_len);
-      // strcat(query, "INSERT INTO (");
-      // memcpy(query, column_names, total_key_len + separator_len);
-      // strcat(query, ")\nVALUES (");
-      // memcpy(query, values, total_value_len + separator_len);
-      // strcat(query, ");");
-      snprintf(query, query_len, "INSERT INTO %s (%s)\nVALUES(%s);", table_name,
-               column_names, values);
-
-      PGconn *conn = NULL;
-      PGresult *res = NULL;
-      ExecStatusType sql_query_status = sql_query(db_name, query, &res, &conn);
+      ExecStatusType sql_query_status =
+          sql_query(database_name, query, &res, &conn, global_config);
       if (sql_query_status != PGRES_COMMAND_OK &&
           sql_query_status != PGRES_TUPLES_OK) {
         build_response_printf(500, response, response_len,
@@ -868,18 +1008,14 @@ found_table:
                        "Entry successfully added.");
       }
 
-      if (res)
-        PQclear(res);
-      if (conn)
-        PQfinish(conn);
-      free(query);
-      // free memory
+    schema_mismatch_end:
     post_bad_input_end:
       free(body);
     bad_body_end:
       regfree(&body_regex);
       // free json object??? how ???
-      json_decref(entry);
+      // FIX LATER: causes memory & multithreading issues??
+      // json_decref(entry);
     } else {
       // user does not have write access to the respective table
       build_response_default(403, response, response_len);
@@ -889,36 +1025,34 @@ found_table:
     build_response_default(400, response, response_len);
   }
 
-  // free memory
-no_table_end:
-  free(db_name);
-  free(table_name);
-
 bad_url_end:
   free(url);
 
 bad_auth_end:
   regfree(&cookie_regex);
 
-unsuccessful_regex_end:
-  regfree(&url_regex);
-
-options_end:
-  free(method);
-  regfree(&regex);
-
 end:
   // send HTTP response to client
-  send(client_fd, *response, *response_len, 0);
-
-  printf("Response:\n%s\n\n", *response);
-
+  // @TODO determine if NULL checks are necessary
+  if (response && *response && response_len)
+    send(client_fd, *response, *response_len, 0);
   close(client_fd);
+
+  free(arg); // free client_fd
+  free(buffer);
   free(*response);
   free(response);
   free(response_len);
-  free(arg);
-  free(buffer);
+  regfree(&regex);
+  free(method);
+  for (int i = 0; i < MAX_URL_SECTIONS; i++) {
+    free(url_segments[i]);
+  }
+  free_regex_iterator(url_regex);
+  free_regex_iterator(querystring_regex);
+  PQfinish(conn);
+  PQclear(res);
+  free(query);
   return NULL;
 }
 
@@ -1053,7 +1187,6 @@ int main(int argc, char const *argv[]) {
         0) {
       perror("thread create");
       close(*client_fd);
-      free(client_fd);
       // @todo send a nice error msg
     } else {
       pthread_detach(thread_id);
