@@ -94,8 +94,8 @@ export function Calendar24({ onChange, defaultValue }: { onChange: (val: any) =>
   };
 
   return (
-    <div className="flex gap-4">
-      <div className="flex flex-col gap-3">
+    <div className="flex flex-row w-full items-center gap-4">
+      <div className="flex items-center flex-col gap-3">
         <Label htmlFor="date-picker" className="px-1">
           Date
         </Label>
@@ -123,7 +123,7 @@ export function Calendar24({ onChange, defaultValue }: { onChange: (val: any) =>
           </PopoverContent>
         </Popover>
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="flex items-center flex-col w-full gap-3">
         <Label htmlFor="time-picker" className="px-1">
           Time
         </Label>

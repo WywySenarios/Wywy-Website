@@ -1,0 +1,158 @@
+---
+/*
+ * @TODO redirect if dataHarvesting is disabled
+ */
+import type { DatabaseInfo, DescriptorInfo, TableInfo } from "@/env";
+import config from "@universal_root/config.yml";
+import Layout from "@/layouts/Layout.astro";
+
+import EntryTable from "@/components/data/entries/entry-table";
+import { Toaster } from "@/components/ui/sonner";
+import LoginDialog from "@/components/auth/login-dialog";
+
+export const prerender = true;
+export function getStaticPaths() {
+  const taggingTableNames: Array<
+    "tags" | "tag_names" | "tag_aliases" | "tag_groups"
+  > = ["tags", "tag_aliases", "tag_names", "tag_groups"];
+  let output: Array<{
+    params: {
+      slug?:
+        | undefined
+        | string
+        | "tags"
+        | "tag_names"
+        | "tag_aliases"
+        | "tag_groups";
+      databaseName: string;
+      tableName: string;
+    };
+  }> = [];
+
+  Object.values(config.data as DatabaseInfo[]).map((dbinfo: DatabaseInfo) =>
+    Object.values(dbinfo.tables).map((tableInfo: TableInfo) => {
+      // regular tables
+      output.push({
+        params: {
+          databaseName: dbinfo.dbname,
+          tableName: tableInfo.tableName,
+        },
+      });
+      if (tableInfo.tagging === true) {
+        // tagging tables
+        for (const slug of taggingTableNames)
+          output.push({
+            params: {
+              slug: slug,
+              databaseName: dbinfo.dbname,
+              tableName: tableInfo.tableName,
+            },
+          });
+      }
+
+      tableInfo.descriptors?.map((descriptorInfo: DescriptorInfo) => {
+        // descriptor tables
+        output.push({
+          params: {
+            slug: `descriptors/${descriptorInfo.name}`,
+            databaseName: dbinfo.dbname,
+            tableName: tableInfo.tableName,
+          },
+        });
+      });
+    })
+  );
+
+  return output;
+} // It's crucial that this page loads as quickly as possible to provide the best experience.
+
+const { databaseName, tableName, slug } = Astro.params;
+let pageTitle: string;
+if (slug) {
+  pageTitle =
+    databaseName.charAt(0).toUpperCase() +
+    databaseName.slice(1) +
+    "/" +
+    tableName.charAt(0).toUpperCase() +
+    tableName.slice(1) +
+    "/" +
+    slug +
+    " Entry Editor";
+} else {
+  pageTitle =
+    databaseName.charAt(0).toUpperCase() +
+    databaseName.slice(1) +
+    "/" +
+    tableName.charAt(0).toUpperCase() +
+    tableName.slice(1) +
+    " Entry Editor";
+}
+
+function invalidConfig(message?: string): Response {
+  // @TODO more communicative and fancier redirect page (maybe to a home page in /data?)
+  return Astro.redirect("/");
+}
+
+const databaseInfo: DatabaseInfo | undefined = config.data.find(
+  (databaseInfo: DatabaseInfo) => databaseInfo.dbname == databaseName
+);
+if (!databaseInfo) {
+  return invalidConfig();
+}
+const tableInfo: TableInfo | undefined = databaseInfo.tables.find(
+  (tableInfo) => tableInfo.tableName == tableName
+);
+if (!tableInfo) {
+  return invalidConfig();
+}
+let targetTableName: string = "";
+let schema: TableInfo | DescriptorInfo | undefined = undefined;
+let type: undefined | "tags" | "tag_names" | "tag_aliases" | "tag_groups" =
+  undefined;
+
+// add descriptor info if needed
+switch (slug) {
+  case undefined:
+    schema = tableInfo;
+    targetTableName = tableName;
+    break;
+  case "tags":
+  case "tag_names":
+  case "tag_aliases":
+  case "tag_groups":
+    type = slug;
+    targetTableName = `${tableName}_${slug}`;
+    break;
+  default:
+    schema = tableInfo.descriptors.find(
+      (descriptorInfo: DescriptorInfo) =>
+        descriptorInfo.name == slug.slice("descriptors/".length)
+    );
+    if (!schema) {
+      return invalidConfig(
+        `Descriptor "${slug.slice("descriptors/".length)}" not found.`
+      );
+    }
+    targetTableName = `${tableName}_${schema.name}_descriptors`;
+    break;
+}
+---
+
+<Layout
+  title={pageTitle}
+  css_color_palette="light_mode"
+  useAstroDefaultCSS={false}
+>
+  <LoginDialog client:load slot="top-bar-button2" />
+  <EntryTable
+    schema={schema}
+    databaseName={databaseName}
+    parentTableName={tableName}
+    tableName={targetTableName}
+    databaseURL={config.referenceUrls.db}
+    cacheURL={config.referenceUrls.cache}
+    type={type}
+    client:load
+  />
+  <Toaster client:idle />
+</Layout>

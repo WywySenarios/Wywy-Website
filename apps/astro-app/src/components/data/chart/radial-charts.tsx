@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { TrendingUp, Variable } from "lucide-react"
+import { TrendingUp, Variable } from "lucide-react";
 import {
   Label,
   PolarGrid,
   PolarRadiusAxis,
   RadialBar,
   RadialBarChart,
-} from "recharts"
+} from "recharts";
 
 import {
   Card,
@@ -16,8 +16,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { type ChartConfig, ChartContainer } from "@/components/ui/chart"
+} from "@/components/ui/card";
+import { type ChartConfig, ChartContainer } from "@/components/ui/chart";
 // import { type CollectionEntry } from "astro:content";
 
 interface RadialChartsProps {
@@ -25,9 +25,7 @@ interface RadialChartsProps {
   info: any;
   x: string;
 }
-let chartData = [
-  { type: "safari", visitors: 200, fill: "#fcba03" },
-]
+let chartData = [{ type: "safari", visitors: 200, fill: "#fcba03" }];
 
 const chartConfig = {
   visitors: {
@@ -37,7 +35,7 @@ const chartConfig = {
     label: "Safari",
     color: "#fcba03",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 export function RadialCharts({ info, x }: RadialChartsProps) {
   // const info = fullInfo.data;
@@ -55,11 +53,11 @@ export function RadialCharts({ info, x }: RadialChartsProps) {
         <CardDescription>January - June 2024</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-wrap gap-4 pb-0">
-          {
-            info.buckets.map((bucket: string) => {
-              return <RadialChart x={x} datum={info.data} title={bucket} key={bucket}/>;
-            })
-          }
+        {info.buckets.map((bucket: string) => {
+          return (
+            <RadialChart x={x} datum={info.data} title={bucket} key={bucket} />
+          );
+        })}
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 font-medium leading-none">
@@ -70,7 +68,7 @@ export function RadialCharts({ info, x }: RadialChartsProps) {
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }
 
 interface RadialChartProps {
@@ -81,7 +79,6 @@ interface RadialChartProps {
 
 const RadialChart = ({ x, datum, title }: RadialChartProps) => {
   return (
-
     <ChartContainer
       config={chartConfig}
       className="mx-auto aspect-square max-w-[250px] min-w-[15vw]"
@@ -127,7 +124,7 @@ const RadialChart = ({ x, datum, title }: RadialChartProps) => {
                       Visitors
                     </tspan>
                   </text>
-                )
+                );
               }
             }}
           />
@@ -135,4 +132,4 @@ const RadialChart = ({ x, datum, title }: RadialChartProps) => {
       </RadialBarChart>
     </ChartContainer>
   );
-}
+};
