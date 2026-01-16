@@ -10,8 +10,7 @@ fi
 
 echo "Preparing to backup..."
 
-# lftp -d -u "$BACKUP_SERVER_USER,$BACKUP_SERVER_PASSWORD" ftp://$BACKUP_SERVER_HOST -e "put \"$1\"; exit"
-curl -T "$1" ftp://$BACKUP_SERVER_USER:$BACKUP_SERVER_PASSWORD@$BACKUP_SERVER_HOST/
+lftp -d -u "$BACKUP_SERVER_USER,$BACKUP_SERVER_PASSWORD" ftp://$BACKUP_SERVER_HOST -e "put \"$1\"; exit"
 
 echo "Backup presumably succeeded!"
 

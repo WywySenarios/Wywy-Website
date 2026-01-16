@@ -92,7 +92,7 @@ export function SingleFormElement({
   description = undefined,
   body = null,
 }: {
-  title: string;
+  title: string | null;
   description?: string | undefined;
   orientation?: "horizontal" | "vertical" | "responsive" | null | undefined;
   body?: ReactNode | null;
@@ -103,11 +103,13 @@ export function SingleFormElement({
         className="w-full flex flex-col items-center gap-4"
         orientation={orientation}
       >
-        <FieldLabel className="items-center">
-          <span className="w-full text-center text-lg font-semibold">
-            {title}
-          </span>
-        </FieldLabel>
+        {title ? (
+          <FieldLabel className="items-center">
+            <span className="w-full text-center text-lg font-semibold">
+              {title}
+            </span>
+          </FieldLabel>
+        ) : null}
         {body}
         {description && <FieldDescription>{description}</FieldDescription>}
       </Field>

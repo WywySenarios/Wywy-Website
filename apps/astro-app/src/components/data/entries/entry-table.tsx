@@ -2,15 +2,20 @@
 
 import type { DescriptorInfo, TableInfo } from "@/env";
 import type { JSX } from "astro/jsx-runtime";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { toast } from "sonner";
 import {
   Table,
-  TableBody,
   TableCell,
   TableFooter,
+  TableHead,
+  TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { createTaggingTableFormSchemaAndHandlers } from "./entry-form-helper";
+import { TaggingTableEntry } from "./entry";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 /**
  * Fetches the data from the endpoint and assumes the data to be of the specified type.
@@ -18,10 +23,10 @@ import { toast } from "sonner";
  * @param setLoading The function to set the loading state of the caller.
  * @param setData The function to set the data of the caller.
  */
-function getData<T>(
+function getData<T extends TableData>(
   URL: string,
-  setLoading: (value: boolean) => void,
-  setData: (value: T) => void
+  setLoading: Dispatch<SetStateAction<boolean>>,
+  setData: Dispatch<SetStateAction<T>>
 ): void {
   fetch(URL, {
     method: "GET",
@@ -38,7 +43,35 @@ function getData<T>(
         setLoading(false);
       })
       .then((body: Record<string, any>) => {
-        setData(body as T);
+        let valid = true;
+        let output: T = body as T;
+        // special catch: no data
+        if (output.data.length != 0) {
+          // set the body as an invalid value if there's an issue
+          // check if the columns might relate to the data
+          valid = valid && output.columns.length != output.data.length;
+          // check if there's any data
+          valid = valid && output.columns.length != 0;
+
+          // check if the number of entries is consistent.
+          let numEntries = output.data[0].length;
+          for (const column in output.data) {
+            if (column.length != numEntries) {
+              valid = false;
+              break;
+            }
+          }
+
+          if (valid) {
+            setData(output);
+          } else {
+            setData({
+              data: [],
+              columns: [],
+            } as TableData as T);
+          }
+        }
+
         setLoading(false);
       })
       .catch((reason) => {
@@ -52,8 +85,7 @@ function getData<T>(
  * Renders an EntryTable to view and modify entries on specific tables.
  * @param schema The schema of the table.
  * @param databaseName The name of the target database
- * @param parentTableName The name of the parent table, or the target table if the table has no parent.
- * @param tableName The name of the target table.
+ * @param tableName The name of the parent table, or the target table if the table has no parent.
  * @param databaseURL The URL of the master database.
  * @param cacheURL The URL of the cache database.
  * @param type The type of table to render. Is either undefined (generic) or a tagging table type.
@@ -62,7 +94,6 @@ function getData<T>(
 function EntryTable({
   schema,
   databaseName,
-  parentTableName,
   tableName,
   databaseURL,
   cacheURL,
@@ -70,7 +101,6 @@ function EntryTable({
 }: {
   schema?: TableInfo | DescriptorInfo | undefined;
   databaseName: string;
-  parentTableName: string;
   tableName: string;
   databaseURL: string;
   cacheURL: string;
@@ -84,7 +114,6 @@ function EntryTable({
         <GenericEntryTable
           schema={schema}
           databaseName={databaseName}
-          parentTableName={parentTableName}
           tableName={tableName}
           databaseURL={databaseURL}
           cacheURL={cacheURL}
@@ -94,7 +123,6 @@ function EntryTable({
       return (
         <TagsTable
           databaseName={databaseName}
-          parentTableName={parentTableName}
           tableName={tableName}
           databaseURL={databaseURL}
           cacheURL={cacheURL}
@@ -104,7 +132,6 @@ function EntryTable({
       return (
         <TagNamesTable
           databaseName={databaseName}
-          parentTableName={parentTableName}
           tableName={tableName}
           databaseURL={databaseURL}
           cacheURL={cacheURL}
@@ -114,7 +141,6 @@ function EntryTable({
       return (
         <TagAliasesTable
           databaseName={databaseName}
-          parentTableName={parentTableName}
           tableName={tableName}
           databaseURL={databaseURL}
           cacheURL={cacheURL}
@@ -124,7 +150,6 @@ function EntryTable({
       return (
         <TagGroupsTable
           databaseName={databaseName}
-          parentTableName={parentTableName}
           tableName={tableName}
           databaseURL={databaseURL}
           cacheURL={cacheURL}
@@ -144,8 +169,7 @@ function NoTable(): JSX.Element {
  * A generic entry editor table.
  * @param schema The table schema.
  * @param databaseName The name of the database that contains the target table.
- * @param parentTableName The name of the parent table (or the target table if there is no parent).
- * @param tableName The name of the target table.
+ * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param databaseURL The URL of the master database.
  * @param cacheURL The URL of the cache database.
  * @returns
@@ -153,14 +177,12 @@ function NoTable(): JSX.Element {
 function GenericEntryTable({
   schema,
   databaseName,
-  parentTableName,
   tableName,
   databaseURL,
   cacheURL,
 }: {
   schema: TableInfo | DescriptorInfo;
   databaseName: string;
-  parentTableName: string;
   tableName: string;
   databaseURL: string;
   cacheURL: string;
@@ -170,49 +192,128 @@ function GenericEntryTable({
 
 interface TaggingEntryTableProps {
   databaseName: string;
-  parentTableName: string;
   tableName: string;
   databaseURL: string;
   cacheURL: string;
 }
 
-interface TagsData {
+interface TableData {
+  columns: Array<string>;
+  data: Array<Array<string | number>>;
+}
+
+interface TagsData extends TableData {
   columns: Array<"id" | "entry_id" | "tag_id">;
-  data: Array<Array<string | number>>;
+  data: [
+    Array<string | number>,
+    Array<string | number>,
+    Array<string | number>,
+  ];
 }
 
-interface TagNamesData {
-  columns: Array<"tag_names" | "id">;
-  data: Array<Array<string | number>>;
+interface TagNamesData extends TableData {
+  columns: Array<"tag_name" | "id">;
+  data: [Array<string | number>, Array<string | number>];
 }
 
-interface TagAliasesData {
+interface TagAliasesData extends TableData {
   columns: Array<"alias" | "tag_id">;
-  data: Array<Array<string | number>>;
+  data: [Array<string | number>, Array<string | number>];
 }
 
-interface TagGroupsData {
+interface TagGroupsData extends TableData {
   columns: Array<"id" | "tag_id" | "group_name">;
-  data: Array<Array<string | number>>;
+  data: [
+    Array<string | number>,
+    Array<string | number>,
+    Array<string | number>,
+  ];
+}
+
+function TaggingTable({
+  data,
+  databaseName,
+  tableName,
+  type,
+  cacheURL,
+}: {
+  data: TableData;
+  databaseName: string;
+  tableName: string;
+  type: "tags" | "tag_names" | "tag_aliases" | "tag_groups";
+  cacheURL: string;
+}) {
+  const { controller, onSubmit, onSubmitInvalid } =
+    createTaggingTableFormSchemaAndHandlers(
+      databaseName,
+      tableName,
+      type,
+      cacheURL
+    );
+
+  return (
+    <form onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {data.columns.map((columnName: string) => (
+              <TableHead
+                className="text-center"
+                key={`entry-table-head-${columnName}`}
+              >
+                {columnName}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        {data.data[0].map((value: string | number, entryIndex: number) => {
+          return (
+            <TableRow key={`entry-table-row-${entryIndex}`}>
+              {data.columns.map((value, columnIndex: number) => (
+                <TableCell
+                  key={`entry-table-cell-${columnIndex}-${entryIndex}`}
+                >
+                  {data.data[entryIndex][columnIndex]}
+                </TableCell>
+              ))}
+            </TableRow>
+          );
+        })}
+        <TableFooter>
+          <TableRow>
+            {data.columns.map((columnName: string) => (
+              <TableCell key={`entry-table-footer-${columnName}`}>
+                <TaggingTableEntry controller={controller} name={columnName} />
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableFooter>
+      </Table>
+      <Button className="w-full" type="submit">
+        <Plus />
+      </Button>
+    </form>
+  );
 }
 
 /**
  * A tags editor table. May add or remove tags links from tags to generic entries.
  * @param databaseName The name of the database that contains the target table.
- * @param parentTableName The name of the parent table (or the target table if there is no parent).
- * @param tableName The name of the target table.
+ * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param databaseURL The URL of the master database.
  * @param cacheURL The URL of the cache database.
  * @returns
  */
 function TagsTable({
   databaseName,
-  parentTableName,
   tableName,
   databaseURL,
   cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
-  const [data, setData] = useState<TagsData>();
+  const [data, setData] = useState<TagsData>({
+    columns: ["id", "entry_id", "tag_id"],
+    data: [[], [], []],
+  });
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -222,7 +323,7 @@ function TagsTable({
   // load in data from
   useEffect(() => {
     getData(
-      `${databaseURL}/${databaseName}/${parentTableName}/tags`,
+      `${databaseURL}/${databaseName}/${tableName}/tags`,
       setLoading,
       setData
     );
@@ -232,29 +333,38 @@ function TagsTable({
     return <p>Loading...</p>;
   }
 
-  if (!data) {
+  if (data.data.length != 3) {
     return <p>Something went wrong!</p>;
   }
 
-  return <></>;
+  return (
+    <TaggingTable
+      data={data}
+      databaseName={databaseName}
+      tableName={tableName}
+      type="tags"
+      cacheURL={cacheURL}
+    />
+  );
 }
 /**
  * A tag name editor table. May create new tags but cannot remove old tags.
  * @param databaseName The name of the database that contains the target table.
- * @param parentTableName The name of the parent table (or the target table if there is no parent).
- * @param tableName The name of the target table.
+ * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param databaseURL The URL of the master database.
  * @param cacheURL The URL of the cache database.
  * @returns
  */
 function TagNamesTable({
   databaseName,
-  parentTableName,
   tableName,
   databaseURL,
   cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
-  const [data, setData] = useState<TagNamesData>();
+  const [data, setData] = useState<TagNamesData>({
+    columns: ["id", "tag_name"],
+    data: [[], []],
+  });
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -264,7 +374,7 @@ function TagNamesTable({
   // load in data from
   useEffect(() => {
     getData(
-      `${databaseURL}/${databaseName}/${parentTableName}/tag_names`,
+      `${databaseURL}/${databaseName}/${tableName}/tag_names`,
       setLoading,
       setData
     );
@@ -274,29 +384,38 @@ function TagNamesTable({
     return <p>Loading...</p>;
   }
 
-  if (!data) {
+  if (data.data.length != 2) {
     return <p>Something went wrong!</p>;
   }
 
-  return <></>;
+  return (
+    <TaggingTable
+      data={data}
+      databaseName={databaseName}
+      tableName={tableName}
+      type="tag_names"
+      cacheURL={cacheURL}
+    />
+  );
 }
 /**
  * A tags aliases table. May create or remove tag aliases. The user is not prevented from removing all aliases from a given tag, nor are they barred from removing the respective tag's direct name.
  * @param databaseName The name of the database that contains the target table.
- * @param parentTableName The name of the parent table (or the target table if there is no parent).
- * @param tableName The name of the target table.
+ * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param databaseURL The URL of the master database.
  * @param cacheURL The URL of the cache database.
  * @returns
  */
 function TagAliasesTable({
   databaseName,
-  parentTableName,
   tableName,
   databaseURL,
   cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
-  const [data, setData] = useState<TagAliasesData>();
+  const [data, setData] = useState<TagAliasesData>({
+    columns: ["alias", "tag_id"],
+    data: [[], []],
+  });
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -306,7 +425,7 @@ function TagAliasesTable({
   // load in data from
   useEffect(() => {
     getData(
-      `${databaseURL}/${databaseName}/${parentTableName}/tag_aliases`,
+      `${databaseURL}/${databaseName}/${tableName}/tag_aliases`,
       setLoading,
       setData
     );
@@ -316,29 +435,38 @@ function TagAliasesTable({
     return <p>Loading...</p>;
   }
 
-  if (!data) {
+  if (data.data.length != 2) {
     return <p>Something went wrong!</p>;
   }
 
-  return <></>;
+  return (
+    <TaggingTable
+      data={data}
+      databaseName={databaseName}
+      tableName={tableName}
+      type="tag_aliases"
+      cacheURL={cacheURL}
+    />
+  );
 }
 /**
  * A tag group editor table. May create or remove links from tags to tag groups.
  * @param databaseName The name of the database that contains the target table.
- * @param parentTableName The name of the parent table (or the target table if there is no parent).
- * @param tableName The name of the target table.
+ * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param databaseURL The URL of the master database.
  * @param cacheURL The URL of the cache database.
  * @returns
  */
 function TagGroupsTable({
   databaseName,
-  parentTableName,
   tableName,
   databaseURL,
   cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
-  const [data, setData] = useState<TagGroupsData>();
+  const [data, setData] = useState<TagGroupsData>({
+    columns: ["id", "tag_id", "group_name"],
+    data: [[], [], []],
+  });
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -348,7 +476,7 @@ function TagGroupsTable({
   // load in data from
   useEffect(() => {
     getData(
-      `${databaseURL}/${databaseName}/${parentTableName}/tag_groups`,
+      `${databaseURL}/${databaseName}/${tableName}/tag_groups`,
       setLoading,
       setData
     );
@@ -358,11 +486,19 @@ function TagGroupsTable({
     return <p>Loading...</p>;
   }
 
-  if (!data) {
+  if (data.data.length != 3) {
     return <p>Something went wrong!</p>;
   }
 
-  return <></>;
+  return (
+    <TaggingTable
+      data={data}
+      databaseName={databaseName}
+      tableName={tableName}
+      type="tag_groups"
+      cacheURL={cacheURL}
+    />
+  );
 }
 
 export default EntryTable;
