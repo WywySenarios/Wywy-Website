@@ -212,7 +212,10 @@ function TagsTable({
   databaseURL,
   cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
-  const [data, setData] = useState<TagsData>();
+  const [data, setData] = useState<TagsData>({
+    columns: ["id", "entry_id", "tag_id"],
+    data: [[], [], []],
+  });
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -254,7 +257,10 @@ function TagNamesTable({
   databaseURL,
   cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
-  const [data, setData] = useState<TagNamesData>();
+  const [data, setData] = useState<TagNamesData>({
+    columns: ["id", "tag_name"],
+    data: [[], []],
+  });
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -296,7 +302,10 @@ function TagAliasesTable({
   databaseURL,
   cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
-  const [data, setData] = useState<TagAliasesData>();
+  const [data, setData] = useState<TagAliasesData>({
+    columns: ["alias", "tag_id"],
+    data: [[], []],
+  });
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -338,7 +347,10 @@ function TagGroupsTable({
   databaseURL,
   cacheURL,
 }: TaggingEntryTableProps): JSX.Element {
-  const [data, setData] = useState<TagGroupsData>();
+  const [data, setData] = useState<TagGroupsData>({
+    columns: ["id", "tag_id", "group_name"],
+    data: [[], [], []],
+  });
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
