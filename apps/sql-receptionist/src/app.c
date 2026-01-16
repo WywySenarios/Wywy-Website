@@ -394,7 +394,7 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
 
     char *value_string = json_to_string(value);
     char *snake_case_key = malloc(strlen(key) + 1);
-    strncpy(snake_case_key, key, strlen(key));
+    strncpy(snake_case_key, key, strlen(key) + 1);
     to_snake_case(snake_case_key);
 
     strncat(column_names, snake_case_key, strlen(key) + 1);
