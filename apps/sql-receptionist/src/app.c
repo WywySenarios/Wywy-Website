@@ -121,6 +121,27 @@ static char *json_to_string(const json_t *value) {
 
 // nice global variables!
 static struct config *global_config = NULL;
+
+static struct data_column tags_schema[] = {
+    {"entry_id", "int", false, ""},
+    {"tag_id", "int", false, ""},
+};
+static int tags_schema_count = 2;
+static struct data_column tag_names_schema[] = {
+    {"tag_name", "string", false, ""},
+};
+static int tag_names_schema_count = 1;
+static struct data_column tag_aliases_schema[] = {
+    {"alias", "string", false, ""},
+    {"tag_id", "int", false, ""},
+};
+static int tag_aliases_schema_count = 2;
+static struct data_column tag_groups_schema[] = {
+    {"tag_id", "int", false, ""},
+    {"group_name", "string", false, ""},
+};
+static int tag_groups_schema_count = 2;
+
 char *schema_datatypes_keys[] = {"int",     "integer", "float", "number",
                                  "string",  "str",     "text",  "bool",
                                  "boolean", "date",    "time",  "timestamp"};
@@ -400,6 +421,13 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
   strncat(query, incoming_query, BUFFER_SIZE - strlen(query));
   free(incoming_query);
   return 1;
+}
+
+char *replace_table_name(char *table_name, const char *suffix) {
+  size_t table_len = strlen(table_name) + strlen(suffix) + 1;
+  table_name = realloc(table_name, strlen(table_name) + strlen(suffix) + 1);
+  memcpy(table_name + strlen(table_name), suffix, strlen(suffix) + 1);
+  return table_name;
 }
 
 /**
@@ -956,15 +984,41 @@ void *handle_client(void *arg) {
           break;
         }
 
+        // @TODO update target table name
+        size_t suffix_len =
+            strlen(descriptor_name) + strlen("_descriptors") + 1;
+        char *suffix = malloc(suffix_len);
+        snprintf(suffix, suffix_len, "%s_descriptors", descriptor_name);
+
         if (!schema || schema_count == -1) {
           build_response(400, response, response_len,
                          "Descriptor schema not found.");
           goto schema_mismatch_end;
         }
-        // } else if (strcmp(target_type, "tags")) {
-        // } else if (strcmp(target_type, "tag_aliases")) {
-        // } else if (strcmp(target_type, "tag_names")) {
-        // } else if (strcmp(target_type, "tag_groups")) {
+      } else if (strcmp(target_type, "tags") == 0) {
+        schema = tags_schema;
+        schema_count = tags_schema_count;
+
+        // update target table name
+        table_name = replace_table_name(table_name, "_tags");
+      } else if (strcmp(target_type, "tag_names") == 0) {
+        schema = tag_names_schema;
+        schema_count = tag_names_schema_count;
+
+        // update target table name
+        table_name = replace_table_name(table_name, "_tag_names");
+      } else if (strcmp(target_type, "tag_aliases") == 0) {
+        schema = tag_aliases_schema;
+        schema_count = tag_aliases_schema_count;
+
+        // update target table name
+        table_name = replace_table_name(table_name, "_tag_aliases");
+      } else if (strcmp(target_type, "tag_groups") == 0) {
+        schema = tag_groups_schema;
+        schema_count = tag_groups_schema_count;
+
+        // update target table name
+        table_name = replace_table_name(table_name, "_tag_groups");
       } else {
         build_response(400, response, response_len,
                        "Invalid target table type.");
