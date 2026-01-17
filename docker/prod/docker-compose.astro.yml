@@ -22,4 +22,4 @@ volumes:
 
 secrets:
   wywywebsite-astro-cloudflare:
-    file: ./../secrets/astro-cloudflare-token.txt
+    file: ./../../secrets/astro-cloudflare-token.txt
