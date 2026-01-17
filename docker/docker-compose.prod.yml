@@ -22,7 +22,7 @@ services:
     ports:
       - 2523:2523
     depends_on:
-      database:
+      wywywebsite_database:
         condition: service_healthy
     command: ./app
 
@@ -41,7 +41,7 @@ services:
       - DB_USERNAME=${DB_USERNAME}
       - POSTGRES_PORT=${POSTGRES_PORT}
     depends_on:
-      database:
+      wywywebsite_database:
         condition: service_healthy
     command: python3 create_tables.py
 
