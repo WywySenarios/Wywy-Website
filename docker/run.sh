@@ -9,7 +9,7 @@ fi
 case "$1" in
     prod)
         case "$2" in 
-            astro) docker compose -f docker-compose.yml
+            astro) docker compose -f prod/docker-compose.yml
         esac
         docker compose -f docker-compose.prod.yml up
         ;;
