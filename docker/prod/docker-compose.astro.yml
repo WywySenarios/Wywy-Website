@@ -1,0 +1,25 @@
+services:
+  wywywebsite_astro-app:
+    container_name: wywywebsite_astro
+    working_dir: /apps/astro-app
+    build:
+      context: ../
+      dockerfile: apps/astro-app/Dockerfile
+      target: runtime
+    environment:
+      CLOUDFLARE_API_TOKEN_FILE: /run/secrets/wywywebsite-astro-cloudflare
+    entrypoint: /entrypoint.sh
+    secrets:
+      - wywywebsite-astro-cloudflare
+    ports:
+      - 4321:4321
+    volumes:
+      - ../apps/astro-app:/apps/astro-app
+      - astro-node_modules:/apps/astro-app/node_modules
+
+volumes:
+  astro-node_modules:
+
+secrets:
+  wywywebsite-astro-cloudflare:
+    file: ./../secrets/astro-cloudflare-token.txt
