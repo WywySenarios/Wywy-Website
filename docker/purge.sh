@@ -1,7 +1,7 @@
-sudo docker kill $(sudo docker ps -q)
+docker kill $(docker ps -q)
 
-sudo docker rm $(sudo docker ps -a -q)
+docker rm $(docker ps -a -q)
 
-sudo docker rmi $(sudo docker images -q)
+docker rmi $(docker images -q)
 
-sudo docker system prune -af
+docker system prune -af

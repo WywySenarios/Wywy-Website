@@ -8,10 +8,13 @@ fi
 
 case "$1" in
     prod)
-        sudo docker compose -f docker-compose.prod.yml up
+        case "$2" in 
+            astro) docker compose -f docker-compose.yml
+        esac
+        docker compose -f docker-compose.prod.yml up
         ;;
     dev)
-        sudo docker compose -f docker-compose.dev.yml up --watch
+        docker compose -f docker-compose.dev.yml up --watch
         ;;
     *)
         echo "Error: Invalid argument '$1'. Expected 'prod' or 'dev'"
