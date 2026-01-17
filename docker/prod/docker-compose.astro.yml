@@ -3,7 +3,7 @@ services:
     container_name: wywywebsite_astro
     working_dir: /apps/astro-app
     build:
-      context: ../
+      context: ../../
       dockerfile: apps/astro-app/Dockerfile
       target: runtime
     environment:
@@ -14,7 +14,7 @@ services:
     ports:
       - 4321:4321
     volumes:
-      - ../apps/astro-app:/apps/astro-app
+      - ../../apps/astro-app:/apps/astro-app
       - astro-node_modules:/apps/astro-app/node_modules
 
 volumes:
