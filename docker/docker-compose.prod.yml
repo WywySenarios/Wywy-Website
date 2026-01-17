@@ -1,24 +1,6 @@
 services:
-  # wywywebsite_astro-app:
-  #   container_name: wywywebsite_astro
-  #   working_dir: /apps/astro-app
-  #   build:
-  #     context: ../
-  #     dockerfile: apps/astro-app/Dockerfile
-  #     target: runtime
-  #   environment:
-  #     CLOUDFLARE_API_TOKEN_FILE: /run/secrets/wywywebsite-astro-cloudflare
-  #   entrypoint: /entrypoint.sh
-  #   secrets:
-  #     - wywywebsite-astro-cloudflare
-  #   ports:
-  #     - 4321:4321
-  #   volumes:
-  #     - ../apps/astro-app:/apps/astro-app
-  #     - astro-node_modules:/apps/astro-app/node_modules
-
   wywywebsite_sql-receptionist:
-    container_name: sql-receptionist
+    container_name: wywywebsite_sql-receptionist
     tty: true
     # image: gcc:latest
     working_dir: /apps/sql-receptionist
@@ -82,8 +64,10 @@ services:
   # @TODO secrets for db authentication
   wywywebsite_database:
     container_name: wywywebsite_postgres
-    image: postgres
-    working_dir: /apps/postgres
+    build:
+      context: ../
+      dockerfile: apps/postgres/Dockerfile
+      target: db
     restart: always
     env_file:
       - path: .env
@@ -91,30 +75,28 @@ services:
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_USER: ${DB_USERNAME}
+      PGDATA: /var/lib/postgresql/data
     ports:
       - ${POSTGRES_PORT}:${POSTGRES_PORT}
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "${DB_USERNAME}", "-p", "${POSTGRES_PORT}" ]
+      test:
+        ["CMD", "pg_isready", "-U", "${DB_USERNAME}", "-p", "${POSTGRES_PORT}"]
       interval: 5m
       timeout: 5s
       start_period: 3s
       retries: 10
     volumes:
-      # - postgres-db:/var/lib/postgresql
-      - ./../apps/postgres:/var/lib/postgresql
+      - ./../apps/postgres/pgdata:/var/lib/postgresql/data
+      - ./../apps/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./../apps/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
     shm_size: 128mb
-    command: -p ${POSTGRES_PORT}
-
-volumes:
-  astro-node_modules:
+    command: postgres -D /var/lib/postgresql/data -p ${POSTGRES_PORT} -c config_file=/etc/postgresql/postgresql.conf
 
 networks:
   wywywebsite_cloudflared:
     name: wywywebsite_cloudflared
 
 secrets:
-  wywywebsite-astro-cloudflare:
-    file: ./../secrets/astro-cloudflare-token.txt
   wywywebsite-cloudflared-cloudflare:
     file: ./../secrets/cloudflared-cloudflare-token.txt
   admin:
