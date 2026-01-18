@@ -160,20 +160,24 @@ export function TimerForm({
 
     // store values in cache
     // @TODO don't hardcode start_time & end_time
-    let csrftoken = getCSRFToken();
-    if (csrftoken)
-      fetch(`${dbURL}/cache/${databaseName}/${tableInfo.tableName}`, {
-        method: "POST",
-        body: JSON.stringify(output),
-        mode: "cors",
-        credentials: "include",
-        headers: {
-          "Content-type": "application/json; charset=UTF-8",
-          "X-CSRFToken": csrftoken,
-        },
+    getCSRFToken(dbURL)
+      .then((csrftoken: string) => {
+        fetch(`${dbURL}/cache/${databaseName}/${tableInfo.tableName}`, {
+          method: "POST",
+          body: JSON.stringify(output),
+          mode: "cors",
+          credentials: "include",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+            "X-CSRFToken": csrftoken,
+          },
+        });
+      })
+      .catch((reason: string) => {
+        toast(
+          `Something went wrong when trying to store the start or end time: ${reason}`,
+        );
       });
-    else
-      toast("Something went wrong when trying to store the start or end time.");
   }
 
   function start() {

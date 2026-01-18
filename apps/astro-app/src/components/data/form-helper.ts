@@ -32,7 +32,7 @@ export function getDefaultValues(schema: DataColumn[]): Record<string, any> {
  */
 export function formatValues(
   values: Record<string, any>,
-  schema: Array<DataColumn>
+  schema: Array<DataColumn>,
 ): Record<string, any> {
   let formattedValues: Record<string, any> = {};
 
@@ -70,7 +70,7 @@ export function formatValues(
 export function populateZodSchema(
   itemInfo: DataColumn[],
   schema: Record<string, ZodTypeAny>,
-  defaultValues: Record<string, any>
+  defaultValues: Record<string, any>,
 ) {
   for (let columnInfo of itemInfo) {
     // immediately ignore anything not needed on the form.
@@ -91,43 +91,42 @@ export function populateZodSchema(
 
 /**
  * Attempt to submit a form externally.
+ * @param dbURL The database or cache URL.
  * @param targetURL The URL of the endpoint to submit to.
  * @param values The values to submit, which will be serialized with JSON.stringify.
  */
 export function submitForm(
+  dbURL: string,
   targetURL: string,
-  values: Record<string, any>
+  values: Record<string, any>,
 ): void {
   console.log(`POSTING to: ${targetURL}`);
   console.log(values);
 
-  let csrftoken: string | undefined = getCSRFToken();
-
-  if (!csrftoken) {
-    toast(
-      "Something went wrong while trying to submit the form. We could not find your browser's CSRF Token."
-    );
-    return;
-  }
-
-  fetch(targetURL, {
-    method: "POST",
-    body: JSON.stringify(values),
-    mode: "cors",
-    credentials: "include",
-    headers: {
-      "Content-type": "application/json; charset=UTF-8",
-      "X-CSRFToken": csrftoken,
-    },
-  }).then((response) => {
-    response.text().then((text: string) => {
-      if (response.ok) {
-        toast(`Successfully submitted form!`);
-      } else {
-        toast(`Error while submitting form: ${text}`);
-      }
+  getCSRFToken(dbURL)
+    .then((csrftoken: string) => {
+      fetch(targetURL, {
+        method: "POST",
+        body: JSON.stringify(values),
+        mode: "cors",
+        credentials: "include",
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+          "X-CSRFToken": csrftoken,
+        },
+      }).then((response) => {
+        response.text().then((text: string) => {
+          if (response.ok) {
+            toast(`Successfully submitted form!`);
+          } else {
+            toast(`Error while submitting form: ${text}`);
+          }
+        });
+      });
+    })
+    .catch((reason: string) => {
+      toast(`Something went wrong while trying to submit the form: ${reason}`);
     });
-  });
 }
 
 /**
@@ -140,7 +139,7 @@ export function submitForm(
 export function createFormSchemaAndHandlers(
   databaseName: string,
   tableInfo: TableInfo,
-  dbURL: string
+  dbURL: string,
 ) {
   // direct column related
   let dataSchema: Record<string, ZodTypeAny> = {};
@@ -216,19 +215,20 @@ export function createFormSchemaAndHandlers(
           formattedValues.descriptors[descriptor_schema.name] =
             values.descriptors[descriptor_schema.name].map(
               (value: { [x: string]: any }) =>
-                formatValues(value, descriptor_schema.schema)
+                formatValues(value, descriptor_schema.schema),
             );
     }
 
     // POST to cache
     submitForm(
+      dbURL,
       `${dbURL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}`,
-      formattedValues
+      formattedValues,
     );
   }
 
   function onSubmitInvalid(
-    errors: FieldErrors<z.infer<typeof formSchema>>
+    errors: FieldErrors<z.infer<typeof formSchema>>,
   ): void {
     // Create toast(s) to let to user know what went wrong.
     // @TODO fix type errors

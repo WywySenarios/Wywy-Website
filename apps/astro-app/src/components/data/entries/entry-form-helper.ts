@@ -15,7 +15,7 @@ export function createGenericTableFormSchemaAndHandlers(
   databaseName: string,
   parentTableName: string,
   schema: TableInfo | DescriptorInfo,
-  cacheURL: string
+  cacheURL: string,
 ) {
   const isTableInfo = "tableName" in schema;
 
@@ -46,7 +46,7 @@ export function createGenericTableFormSchemaAndHandlers(
   function onSubmit(values: z.infer<typeof formSchema>) {
     let formattedValues: Record<string, any> = formatValues(
       values,
-      schema.schema
+      schema.schema,
     );
 
     // @TODO tags
@@ -74,26 +74,28 @@ export function createGenericTableFormSchemaAndHandlers(
           formattedValues.descriptors[descriptor_schema.name] =
             values.descriptors[descriptor_schema.name].map(
               (value: { [x: string]: any }) =>
-                formatValues(value, descriptor_schema.schema)
+                formatValues(value, descriptor_schema.schema),
             );
     }
 
     // POST to cache
     if (isTableInfo) {
       submitForm(
+        cacheURL,
         `${cacheURL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(parentTableName)}`,
-        formattedValues
+        formattedValues,
       );
     } else {
       submitForm(
+        cacheURL,
         `${cacheURL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(parentTableName)}/descriptors/${toSnakeCase(schema.name)}`,
-        formattedValues
+        formattedValues,
       );
     }
   }
 
   function onSubmitInvalid(
-    errors: FieldErrors<z.infer<typeof formSchema>>
+    errors: FieldErrors<z.infer<typeof formSchema>>,
   ): void {
     // Create toast(s) to let to user know what went wrong.
     // @TODO fix type errors
@@ -121,7 +123,7 @@ export function createTaggingTableFormSchemaAndHandlers(
   databaseName: string,
   parentTableName: string,
   type: "tags" | "tag_names" | "tag_aliases" | "tag_groups",
-  cacheURL: string
+  cacheURL: string,
 ) {
   let zodSchema: AnyZodObject;
   let defaultValues: Record<string, any>;
@@ -201,13 +203,14 @@ export function createTaggingTableFormSchemaAndHandlers(
     }
 
     submitForm(
+      cacheURL,
       `${cacheURL}/tags/${toSnakeCase(databaseName)}/${toSnakeCase(parentTableName)}/${type}`,
-      formattedValues
+      formattedValues,
     );
   }
 
   function onSubmitInvalid(
-    errors: FieldErrors<z.infer<typeof formSchema>>
+    errors: FieldErrors<z.infer<typeof formSchema>>,
   ): void {
     // Create toast(s) to let to user know what went wrong.
     // @TODO fix type errors
