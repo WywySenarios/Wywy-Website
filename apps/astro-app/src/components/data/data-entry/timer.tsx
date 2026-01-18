@@ -26,7 +26,7 @@ function TimerFormForm({
 
   function submission(
     values: z.infer<typeof formSchema>,
-    event?: React.BaseSyntheticEvent
+    event?: React.BaseSyntheticEvent,
   ): void {
     const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
     const action = submitter?.getAttribute("value");
@@ -103,7 +103,7 @@ export function TimerForm({
         ) {
           let value: string = body["Start Time"].substring(
             1,
-            body["Start Time"].length - 1
+            body["Start Time"].length - 1,
           );
           let newDate: Date = new Date(Date.parse(value));
           if (!isNaN(newDate.getTime())) setStartTime(newDate);
@@ -116,7 +116,7 @@ export function TimerForm({
         ) {
           let value: string = body["End Time"].substring(
             1,
-            body["End Time"].length - 1
+            body["End Time"].length - 1,
           );
           let newDate: Date = new Date(Date.parse(value));
           if (!isNaN(newDate.getTime())) setEndTime(newDate);
