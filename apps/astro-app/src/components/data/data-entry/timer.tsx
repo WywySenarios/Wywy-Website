@@ -93,36 +93,49 @@ export function TimerForm({
       mode: "cors",
       credentials: "include",
       headers: {},
-    }).then((res: Response) => {
-      res.json().then((body: object) => {
-        if (
-          "Start Time" in body &&
-          body["Start Time"] !== undefined &&
-          typeof body["Start Time"] === "string" &&
-          body["Start Time"].length > 2
-        ) {
-          let value: string = body["Start Time"].substring(
-            1,
-            body["Start Time"].length - 1,
-          );
-          let newDate: Date = new Date(Date.parse(value));
-          if (!isNaN(newDate.getTime())) setStartTime(newDate);
-        }
-        if (
-          "End Time" in body &&
-          body["End Time"] !== undefined &&
-          typeof body["End Time"] === "string" &&
-          body["End Time"].length > 2
-        ) {
-          let value: string = body["End Time"].substring(
-            1,
-            body["End Time"].length - 1,
-          );
-          let newDate: Date = new Date(Date.parse(value));
-          if (!isNaN(newDate.getTime())) setEndTime(newDate);
-        }
+    })
+      .then((res: Response) => {
+        res
+          .json()
+          .then((body: object) => {
+            if (
+              "Start Time" in body &&
+              body["Start Time"] !== undefined &&
+              typeof body["Start Time"] === "string" &&
+              body["Start Time"].length > 2
+            ) {
+              let value: string = body["Start Time"].substring(
+                1,
+                body["Start Time"].length - 1,
+              );
+              let newDate: Date = new Date(Date.parse(value));
+              if (!isNaN(newDate.getTime())) setStartTime(newDate);
+            }
+            if (
+              "End Time" in body &&
+              body["End Time"] !== undefined &&
+              typeof body["End Time"] === "string" &&
+              body["End Time"].length > 2
+            ) {
+              let value: string = body["End Time"].substring(
+                1,
+                body["End Time"].length - 1,
+              );
+              let newDate: Date = new Date(Date.parse(value));
+              if (!isNaN(newDate.getTime())) setEndTime(newDate);
+            }
+          })
+          .catch((reason: any) => {
+            toast(
+              `Something went wrong when trying to read the server's stored time: ${reason}`,
+            );
+          });
+      })
+      .catch((reason: any) => {
+        toast(
+          `Something went wrong when trying to contact the server: ${reason}`,
+        );
       });
-    });
   }, []);
 
   // automatically update the cache when the user changes either the start or the end time.
