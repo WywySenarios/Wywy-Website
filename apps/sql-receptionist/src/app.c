@@ -295,7 +295,6 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
 
     if (strcmp(target_column, "id") == 0) {
       // skip id column (postgres autoincrement should handle it)
-      free(target_column);
 
       // @TODO make sure postgres doesn't tweak out over incorrect next keys
       switch (regex_check("^[0-9]+$", 0, REG_EXTENDED, 0, value_string)) {
@@ -389,8 +388,8 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
   strncpy(values, "", 1);
 
   json_object_foreach(entry, key, value) {
-    // if (strcmp(key, "id") == 0)
-    // continue;
+    if (strcmp(key, "id") == 0)
+      continue;
 
     char *value_string = json_to_string(value);
     char *snake_case_key = malloc(strlen(key) + 1);
