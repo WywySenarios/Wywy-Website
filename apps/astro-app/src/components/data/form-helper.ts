@@ -39,7 +39,7 @@ export function formatValues(
   for (let column_schema of schema) {
     // check the comments first
     if (column_schema.comments) {
-      formattedValues[`${column_schema}_comments`] =
+      formattedValues[`${column_schema.name}_comments`] =
         values[`${column_schema.name}_comments`] ?? "''";
     }
 
