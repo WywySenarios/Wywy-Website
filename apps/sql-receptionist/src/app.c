@@ -250,19 +250,22 @@ void generic_select_query_and_respond(char *database_name, char *query,
 }
 
 /**
- * Goes through the entry and checks for validity. Appends a related query to
- * enter the entry.
+ * Goes through the entry and checks for validity. Creates a query to store the
+ * entry.
  * @param entry The entry to check and construct a query around.
  * @param schema The schema to check the entry against.
  * @param schema_count The size of the schema array.
- * @param query The string to append the new query into.
+ * @param query The pointer that will eventually point to the newly created
+ * query.
  * @param table_name The target table's name.
- * @returns 0 if the query is invalid, 1 if the query is valid, -1 if the
- * checking failed.
+ * @param primary_column_name The name of the primary column.
+ * @returns 0 if the query is invalid, 1 if the query is valid, -1 on unexpected
+ * failure.
  */
 int construct_validate_query(json_t *entry, struct data_column *schema,
-                             unsigned int schema_count, char *query,
-                             char *table_name) {
+                             unsigned int schema_count, char **query,
+                             char *table_name,
+                             const char *primary_column_name) {
   const char *key;
   const json_t *value;
 
@@ -409,15 +412,14 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
   column_names[strlen(column_names) - 1] = '\0';
   values[strlen(values) - 1] = '\0';
 
-  int incoming_query_len = strlen("INSERT INTO  () VALUES();") +
-                           strlen(table_name) + (column_names_len) +
-                           (values_len) + 1;
-  char *incoming_query = malloc(incoming_query_len);
-  snprintf(incoming_query, incoming_query_len,
-           "INSERT INTO %s (%s) VALUES(%s);", table_name, column_names, values);
-
-  strncat(query, incoming_query, BUFFER_SIZE - strlen(query));
-  free(incoming_query);
+  size_t query_len = strlen("INSERT INTO  () VALUES() RETURNING ;") +
+                     strlen(table_name) + (column_names_len) + (values_len) +
+                     strlen(primary_column_name) + 1;
+  *query = malloc(query_len);
+  if (!*query)
+    return -1;
+  snprintf(*query, query_len, "INSERT INTO %s (%s) VALUES(%s) RETURNING %s;",
+           table_name, column_names, values, primary_column_name);
   return 1;
 }
 
@@ -946,7 +948,7 @@ void *handle_client(void *arg) {
         goto schema_mismatch_end;
       }
 
-      char *query = malloc(BUFFER_SIZE + 1);
+      char *query = NULL;
 
       char *target_type = url_segments[2];
       if (!target_type) {
@@ -957,6 +959,7 @@ void *handle_client(void *arg) {
 
       struct data_column *schema = NULL;
       int schema_count = -1;
+      const char *primary_column_name = "id";
       if (strcmp(target_type, "data") == 0) {
         // no additional checks needed
         schema = table->schema;
@@ -1009,6 +1012,8 @@ void *handle_client(void *arg) {
         schema = tag_aliases_schema;
         schema_count = tag_aliases_schema_count;
 
+        primary_column_name = "alias";
+
         // update target table name
         table_name = replace_table_name(table_name, "_tag_aliases");
       } else if (strcmp(target_type, "tag_groups") == 0) {
@@ -1030,8 +1035,8 @@ void *handle_client(void *arg) {
         goto schema_mismatch_end;
       }
 
-      switch (construct_validate_query(entry, schema, schema_count, query,
-                                       table_name)) {
+      switch (construct_validate_query(entry, schema, schema_count, &query,
+                                       table_name, primary_column_name)) {
       case 0:
         build_response(400, response, response_len,
                        "The given entry does not "
@@ -1056,8 +1061,7 @@ void *handle_client(void *arg) {
                               "%s: %s", PQresStatus(sql_query_status),
                               PQerrorMessage(conn));
       } else {
-        build_response(200, response, response_len,
-                       "Entry successfully added.");
+        build_response(200, response, response_len, PQgetvalue(res, 0, 0));
       }
 
     schema_mismatch_end:
