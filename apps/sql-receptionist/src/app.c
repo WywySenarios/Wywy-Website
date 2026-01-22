@@ -676,35 +676,9 @@ void *handle_client(void *arg) {
 
       /*
        * Special endpoints:
-       * get_next_id
        * tag_names & tag_aliases are restricted to SELECT * FROM ...;
        */
-      if (strcmp(url_segments[2], "get_next_id") == 0) {
-        size_t query_len =
-            strlen("SELECT MAX(id) AS highest_id\nFROM ;") + strlen(table_name);
-        query = malloc(query_len + 1);
-
-        snprintf(query, query_len, "SELECT MAX(id) AS highest_id\nFROM%s;",
-                 table_name);
-
-        ExecStatusType sql_query_status =
-            sql_query(database_name, query, &res, &conn, global_config);
-        if (sql_query_status == PGRES_TUPLES_OK ||
-            sql_query_status == PGRES_COMMAND_OK) {
-          char *highest_id_str = PQgetvalue(res, 0, 0);
-          if (highest_id_str && strlen(highest_id_str) > 0) {
-            build_response(200, response, response_len, highest_id_str);
-          } else {
-            build_response(200, response, response_len, "1");
-          }
-        } else {
-          build_response_printf(500, response, response_len,
-                                strlen(PQresStatus(sql_query_status)) + 2 +
-                                    strlen(PQerrorMessage(conn)) + 1,
-                                "%s: %s", PQresStatus(sql_query_status),
-                                PQerrorMessage(conn));
-        }
-      } else if (strcmp(url_segments[2], "tag_names") == 0) {
+      if (strcmp(url_segments[2], "tag_names") == 0) {
         // check if tagging is enabled
         if (!table->tagging) {
           build_response_printf(400, response, response_len,
