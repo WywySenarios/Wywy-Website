@@ -6,6 +6,7 @@ import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { toast } from "sonner";
 import {
   Table,
+  TableBody,
   TableCell,
   TableFooter,
   TableHead,
@@ -26,7 +27,7 @@ import { Plus } from "lucide-react";
 function getData<T extends TableData>(
   URL: string,
   setLoading: Dispatch<SetStateAction<boolean>>,
-  setData: Dispatch<SetStateAction<T>>
+  setData: Dispatch<SetStateAction<T>>,
 ): void {
   fetch(URL, {
     method: "GET",
@@ -55,8 +56,8 @@ function getData<T extends TableData>(
 
           // check if the number of entries is consistent.
           let numEntries = output.data[0].length;
-          for (const column in output.data) {
-            if (column.length != numEntries) {
+          for (const row of output.data) {
+            if (row.length != numEntries) {
               valid = false;
               break;
             }
@@ -204,30 +205,18 @@ interface TableData {
 
 interface TagsData extends TableData {
   columns: Array<"id" | "entry_id" | "tag_id">;
-  data: [
-    Array<string | number>,
-    Array<string | number>,
-    Array<string | number>,
-  ];
 }
 
 interface TagNamesData extends TableData {
   columns: Array<"tag_name" | "id">;
-  data: [Array<string | number>, Array<string | number>];
 }
 
 interface TagAliasesData extends TableData {
   columns: Array<"alias" | "tag_id">;
-  data: [Array<string | number>, Array<string | number>];
 }
 
 interface TagGroupsData extends TableData {
   columns: Array<"id" | "tag_id" | "group_name">;
-  data: [
-    Array<string | number>,
-    Array<string | number>,
-    Array<string | number>,
-  ];
 }
 
 function TaggingTable({
@@ -248,7 +237,7 @@ function TaggingTable({
       databaseName,
       tableName,
       type,
-      cacheURL
+      cacheURL,
     );
 
   return (
@@ -266,19 +255,19 @@ function TaggingTable({
             ))}
           </TableRow>
         </TableHeader>
-        {data.data[0].map((value: string | number, entryIndex: number) => {
-          return (
+        <TableBody>
+          {data.data.map((row: Array<string | number>, entryIndex: number) => (
             <TableRow key={`entry-table-row-${entryIndex}`}>
-              {data.columns.map((value, columnIndex: number) => (
+              {row.map((value: string | number, columnIndex: number) => (
                 <TableCell
                   key={`entry-table-cell-${columnIndex}-${entryIndex}`}
                 >
-                  {data.data[entryIndex][columnIndex]}
+                  {value}
                 </TableCell>
               ))}
             </TableRow>
-          );
-        })}
+          ))}
+        </TableBody>
         <TableFooter>
           <TableRow>
             {data.columns.map((columnName: string) => (
@@ -312,20 +301,16 @@ function TagsTable({
 }: TaggingEntryTableProps): JSX.Element {
   const [data, setData] = useState<TagsData>({
     columns: ["id", "entry_id", "tag_id"],
-    data: [[], [], []],
+    data: [],
   });
   const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    console.log(data);
-  }, [data]);
 
   // load in data from
   useEffect(() => {
     getData(
       `${databaseURL}/${databaseName}/${tableName}/tags`,
       setLoading,
-      setData
+      setData,
     );
   }, []);
 
@@ -333,7 +318,7 @@ function TagsTable({
     return <p>Loading...</p>;
   }
 
-  if (data.data.length != 3) {
+  if (data.columns.length != 3) {
     return <p>Something went wrong!</p>;
   }
 
@@ -363,20 +348,16 @@ function TagNamesTable({
 }: TaggingEntryTableProps): JSX.Element {
   const [data, setData] = useState<TagNamesData>({
     columns: ["id", "tag_name"],
-    data: [[], []],
+    data: [],
   });
   const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    console.log(data);
-  }, [data]);
 
   // load in data from
   useEffect(() => {
     getData(
       `${databaseURL}/${databaseName}/${tableName}/tag_names`,
       setLoading,
-      setData
+      setData,
     );
   }, []);
 
@@ -384,7 +365,7 @@ function TagNamesTable({
     return <p>Loading...</p>;
   }
 
-  if (data.data.length != 2) {
+  if (data.columns.length != 2) {
     return <p>Something went wrong!</p>;
   }
 
@@ -414,20 +395,16 @@ function TagAliasesTable({
 }: TaggingEntryTableProps): JSX.Element {
   const [data, setData] = useState<TagAliasesData>({
     columns: ["alias", "tag_id"],
-    data: [[], []],
+    data: [],
   });
   const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    console.log(data);
-  }, [data]);
 
   // load in data from
   useEffect(() => {
     getData(
       `${databaseURL}/${databaseName}/${tableName}/tag_aliases`,
       setLoading,
-      setData
+      setData,
     );
   }, []);
 
@@ -435,7 +412,7 @@ function TagAliasesTable({
     return <p>Loading...</p>;
   }
 
-  if (data.data.length != 2) {
+  if (data.columns.length != 2) {
     return <p>Something went wrong!</p>;
   }
 
@@ -465,20 +442,16 @@ function TagGroupsTable({
 }: TaggingEntryTableProps): JSX.Element {
   const [data, setData] = useState<TagGroupsData>({
     columns: ["id", "tag_id", "group_name"],
-    data: [[], [], []],
+    data: [],
   });
   const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    console.log(data);
-  }, [data]);
 
   // load in data from
   useEffect(() => {
     getData(
       `${databaseURL}/${databaseName}/${tableName}/tag_groups`,
       setLoading,
-      setData
+      setData,
     );
   }, []);
 
@@ -486,7 +459,7 @@ function TagGroupsTable({
     return <p>Loading...</p>;
   }
 
-  if (data.data.length != 3) {
+  if (data.columns.length != 3) {
     return <p>Something went wrong!</p>;
   }
 
