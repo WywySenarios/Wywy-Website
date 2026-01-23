@@ -41,7 +41,7 @@ export function getZodType(columnInfo: DataColumn): ZodTypeAny {
       return z.string();
     case "bool":
     case "boolean":
-      return z.boolean();
+      return z.coerce.boolean();
     // THIS IS BY NO MEANS ROBUST
     case "time":
       return z
