@@ -41,7 +41,7 @@ export function getZodType(columnInfo: DataColumn): ZodTypeAny {
       return z.string();
     case "bool":
     case "boolean":
-      z.boolean();
+      return z.boolean();
     // THIS IS BY NO MEANS ROBUST
     case "time":
       return z
@@ -60,7 +60,7 @@ export function getZodType(columnInfo: DataColumn): ZodTypeAny {
         .string()
         .regex(
           /^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$/,
-          { message: "Invalid ISO timestamp format" }
+          { message: "Invalid ISO timestamp format" },
         );
     case "enum":
       return z.enum(columnInfo.values);
@@ -91,7 +91,7 @@ export const zodDatatypes: Record<zodPrimaryDatatypes, ZodTypeAny> = {
     .string()
     .regex(
       /^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$/,
-      { message: "Invalid ISO timestamp format" }
+      { message: "Invalid ISO timestamp format" },
     ),
   // @TODO refractor everything so that enum is strictly typed
   enum: z.string(),
@@ -100,14 +100,14 @@ export const zodDatatypes: Record<zodPrimaryDatatypes, ZodTypeAny> = {
 export function getFallbackValue(datatype: "int" | "integer"): number;
 export function getFallbackValue(datatype: "float" | "number"): number;
 export function getFallbackValue(
-  datatype: "string" | "str" | "text" | "enum"
+  datatype: "string" | "str" | "text" | "enum",
 ): string;
 export function getFallbackValue(datatype: "bool" | "boolean"): boolean;
 export function getFallbackValue(
-  datatype: "date" | "time" | "timestamp"
+  datatype: "date" | "time" | "timestamp",
 ): string;
 export function getFallbackValue(
-  datatype: zodPrimaryDatatypes
+  datatype: zodPrimaryDatatypes,
 ): number | string | boolean | Date | null | undefined {
   switch (datatype) {
     case "int":
