@@ -84,8 +84,10 @@ export function populateZodSchema(
 
     // update schema if there should be comments for this column
     // @TODO add length restriction
-    schema[`${columnInfo.name}_comments`] = z.string().optional();
-    defaultValues[`${columnInfo.name}_comments`] = "";
+    if (columnInfo.comments) {
+      schema[`${columnInfo.name}_comments`] = z.string().optional();
+      defaultValues[`${columnInfo.name}_comments`] = "";
+    }
   }
 }
 
