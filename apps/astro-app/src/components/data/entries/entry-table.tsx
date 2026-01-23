@@ -46,34 +46,22 @@ function getData<T extends TableData>(
       .then((body: Record<string, any>) => {
         let valid = true;
         let output: T = body as T;
-        // special catch: no data
-        if (output.data.length != 0) {
-          // set the body as an invalid value if there's an issue
-          // check if the columns might relate to the data
-          valid = valid && output.columns.length != output.data.length;
-          // check if there's any data
-          valid = valid && output.columns.length != 0;
-
-          // check if the number of entries is consistent.
-          let numEntries = output.data[0].length;
-          for (const row of output.data) {
-            if (row.length != numEntries) {
-              valid = false;
-              break;
-            }
-          }
-
-          if (valid) {
-            setData(output);
-          } else {
-            setData({
-              data: [],
-              columns: [],
-            } as TableData as T);
-          }
-        }
 
         setLoading(false);
+        // fallback value (erroneous, so the component will realize something is wrong)
+        setData({
+          data: [],
+          columns: [],
+        } as TableData as T);
+
+        // validate data
+        // validate the amount of columns inside every row of data
+        let numEntries = output.columns.length;
+        for (const row of output.data) {
+          if (row.length != numEntries) return;
+        }
+
+        setData(output);
       })
       .catch((reason) => {
         toast(`Something went wrong while loading data: ${reason}`);
