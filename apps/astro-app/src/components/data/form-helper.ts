@@ -44,7 +44,7 @@ export function formatValues(
     }
 
     // check if the user really wanted to submit that or not
-    if (!values[column_schema.name]) {
+    if (values[column_schema.name] == null) {
       continue;
     }
 
