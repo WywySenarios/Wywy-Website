@@ -239,7 +239,7 @@ function InputElement({
         body = (
           <Switch
             {...field}
-            checked={field.value}
+            defaultChecked={field.defaultChecked}
             onCheckedChange={field.onChange}
           />
         );
