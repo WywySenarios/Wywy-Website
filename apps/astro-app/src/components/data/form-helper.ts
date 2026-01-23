@@ -212,12 +212,11 @@ export function createFormSchemaAndHandlers(
 
       // format every descriptor type.
       for (const descriptor_schema of tableInfo.descriptors)
-        if (values.descriptors[descriptor_schema.name])
-          formattedValues.descriptors[descriptor_schema.name] =
-            values.descriptors[descriptor_schema.name].map(
-              (value: { [x: string]: any }) =>
-                formatValues(value, descriptor_schema.schema),
-            );
+        formattedValues.descriptors[descriptor_schema.name] =
+          values.descriptors[descriptor_schema.name].map(
+            (value: { [x: string]: any }) =>
+              formatValues(value, descriptor_schema.schema),
+          );
     }
 
     // POST to cache
