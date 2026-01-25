@@ -7,8 +7,12 @@
  * @todo create separate ORM file
  */
 
+#ifndef HEADER_CONFIG
+#define HEADER_CONFIG
 #include "config.h"
+#endif
 #include "postgres.h"
+#include "postgres/insert.h"
 #include "server/responses.h"
 #include "utils/format_string.h"
 #include "utils/http.h"
@@ -27,6 +31,7 @@
 #include <regex.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,65 +65,6 @@ void handle_sigint(int signal_num) {
 
 char *admin_creds;
 
-struct dict_item {
-  char *key;
-  void *value;
-} typedef dict_item;
-
-struct dict {
-  dict_item *pairs;
-  size_t size;
-} typedef dict;
-
-// @todo log search?
-/**
- * Attempts to (linear) search through a hashmap-like object (array of key-value
- * pairs) for a pair that has a certain key.
- * @return The item that was found or NULL if no item was found.
- */
-dict_item *linear_search(dict dict, const char *key) {
-  for (unsigned i = 0; i < dict.size; i++) {
-    if (strcmp(dict.pairs[i].key, key) == 0) {
-      return &dict.pairs[i];
-    }
-  }
-
-  return NULL;
-}
-
-typedef int (*json_datatype_check_function)(const json_t *json);
-static char *json_to_string(const json_t *value) {
-  char *output;
-  if (!value) {
-    return NULL;
-  }
-
-  switch (json_typeof(value)) {
-  case JSON_STRING:
-    output = malloc(strlen(json_string_value(value)) + 1);
-    strcpy(output, json_string_value(value));
-    return output;
-  case JSON_INTEGER:
-    output = malloc(32 + 1);
-    snprintf(output, 32 + 1, "%lld", (long long)json_integer_value(value));
-    return output;
-  case JSON_REAL:
-    output = malloc(64 + 1);
-    snprintf(output, 64 + 1, "%.17g", json_real_value(value));
-    return output;
-  case JSON_TRUE:
-    output = malloc(5);
-    snprintf(output, 5, "true");
-    return output;
-  case JSON_FALSE:
-    output = malloc(6);
-    snprintf(output, 6, "false");
-    return output;
-  default:
-    return NULL;
-  }
-}
-
 // nice global variables!
 static struct config *global_config = NULL;
 
@@ -142,16 +88,6 @@ static struct data_column tag_groups_schema[] = {
 };
 static int tag_groups_schema_count = 2;
 
-char *schema_datatypes_keys[] = {"int",     "integer", "float", "number",
-                                 "string",  "str",     "text",  "bool",
-                                 "boolean", "date",    "time",  "timestamp"};
-json_datatype_check_function schema_datatypes_values[] = {
-    check_integer, check_integer,  check_real,     check_real,
-    check_string,  check_string,   check_string,   check_bool,
-    check_bool,    check_datelike, check_timelike, check_timestamplike,
-};
-static dict schema_datatypes;
-
 /**
  * Attempts to query the database and builds a response based on the query.
  * Expects the query to be a SELECT query. @TODO optimize by finding the columns
@@ -174,14 +110,15 @@ void generic_select_query_and_respond(char *database_name, char *query,
     // convert the query information into JSON
     char *output = malloc(BUFFER_SIZE);       // @todo be more specific
     char *column_names = malloc(BUFFER_SIZE); // @todo be more specific
-    column_names[0] = '\0';
-    char *output_arrs = malloc(BUFFER_SIZE); // @todo be more specific
-    output_arrs[0] = '\0';
+    char *output_arrs = malloc(BUFFER_SIZE);  // @todo be more specific
     // catch malloc failure
     if (!output || !column_names || !output_arrs) {
       build_response(500, response, response_len,
                      "Something went wrong when fetching the query results.");
     }
+
+    column_names[0] = '\0';
+    output_arrs[0] = '\0';
 
     // add in the column names
     for (int col = 0; col < PQnfields(*res); col++) {
@@ -247,180 +184,6 @@ void generic_select_query_and_respond(char *database_name, char *query,
                           "%s: %s", PQresStatus(sql_query_status),
                           PQerrorMessage(*conn));
   }
-}
-
-/**
- * Goes through the entry and checks for validity. Creates a query to store the
- * entry.
- * @param entry The entry to check and construct a query around.
- * @param schema The schema to check the entry against.
- * @param schema_count The size of the schema array.
- * @param query The pointer that will eventually point to the newly created
- * query.
- * @param table_name The target table's name.
- * @param primary_column_name The name of the primary column.
- * @returns 0 if the query is invalid, 1 if the query is valid, -1 on unexpected
- * failure.
- */
-int construct_validate_query(json_t *entry, struct data_column *schema,
-                             unsigned int schema_count, char **query,
-                             char *table_name,
-                             const char *primary_column_name) {
-  const char *key;
-  const json_t *value;
-
-  int values_len = 0;
-  int column_names_len = 0;
-  int separator_len = 0;
-
-  json_object_foreach(entry, key, value) {
-    bool valid = false;
-    char *value_string = json_to_string(value);
-    char *target_column = NULL;
-
-    // check for the case in which the JSON key relates to comments instead
-    // of regular columns
-    int is_comments_column = regex_check("_comments$", 1, REG_EXTENDED, 0, key);
-
-    switch (is_comments_column) {
-    case 0:
-      target_column = malloc(strlen(key) + 1);
-      strcpy(target_column, key);
-      break;
-    case 1:
-      target_column = malloc(strlen(key) - strlen("_comments") + 1);
-      strncpy(target_column, key, strlen(key) - strlen("_comments"));
-      target_column[strlen(key) - strlen("_comments")] = '\0';
-      break;
-    default:
-      return -1;
-    }
-
-    if (strcmp(target_column, "id") == 0) {
-      // skip id column (postgres autoincrement should handle it)
-
-      // @TODO make sure postgres doesn't tweak out over incorrect next keys
-      switch (regex_check("^[0-9]+$", 0, REG_EXTENDED, 0, value_string)) {
-      case 0:
-        valid = false;
-        break;
-      case 1:
-        valid = true;
-        break;
-      default:
-        // @todo cleaner looking way of exiting
-        free(target_column);
-        return -1;
-        break;
-      }
-    } else if (strcmp(target_column, "primary_tag") == 0) {
-      // it's hard to validate FOREIGN KEY so we'll let Postgres take care of
-      // this.
-      switch (regex_check("^[0-9]+$", 0, REG_EXTENDED, 0, value_string)) {
-      case 0:
-        valid = false;
-        break;
-      case 1:
-        valid = true;
-        break;
-      default:
-        // @todo cleaner looking way of exiting
-        free(target_column);
-        return -1;
-        break;
-      }
-    } else
-      for (int i = 0; i < schema_count; i++) {
-        // find which entry in the schema matches
-
-        if (str_cci_cmp(target_column, schema[i].name) == 0) {
-          // check if the input is a comment and the column does not have
-          // comments.
-          if (is_comments_column) {
-            if (schema[i].comments == false) {
-              break;
-            }
-
-            // comments MUST have text
-            if (check_string(value) == 0) {
-              break;
-            }
-          } else {
-            dict_item *item =
-                linear_search(schema_datatypes, schema[i].datatype);
-            // check if the input's datatype mismatches
-            if (!item) {
-              break;
-            }
-            json_datatype_check_function *related_datatype_checker =
-                item->value;
-            if ((*related_datatype_checker)(value) == 0) {
-              break;
-            }
-          }
-
-          valid = true;
-          break;
-        }
-      }
-
-    // also remember to catch when the key is not inside the table's schema
-    if (!valid) {
-      free(target_column);
-      free(value_string);
-      return 0;
-    } else {
-      // @todo optimize
-      values_len += strlen(value_string) + 1;
-      column_names_len +=
-          strlen(key) + 1; // no need to use to_snake_case: it won't
-                           // change the length of the string.
-    }
-    free(target_column);
-    free(value_string);
-  }
-  values_len--;
-  column_names_len--;
-
-  // get ready and put in all the correct values
-  char *column_names = malloc(column_names_len + 1);
-  char *values = malloc(values_len + 1);
-
-  // make them empty strings
-  strncpy(column_names, "", 1);
-  strncpy(values, "", 1);
-
-  json_object_foreach(entry, key, value) {
-    if (strcmp(key, "id") == 0)
-      continue;
-
-    char *value_string = json_to_string(value);
-    char *snake_case_key = malloc(strlen(key) + 1);
-    strncpy(snake_case_key, key, strlen(key) + 1);
-    to_snake_case(snake_case_key);
-
-    strncat(column_names, snake_case_key, strlen(key) + 1);
-    strncat(column_names, ",", 1 + 1);
-    strncat(values, value_string, strlen(value_string) + 1);
-    strncat(values, ",", 1 + 1);
-
-    free(snake_case_key);
-    free(value_string);
-  }
-
-  // remove trailing commas
-  column_names[strlen(column_names) - 1] = '\0';
-  values[strlen(values) - 1] = '\0';
-
-  size_t query_len = strlen("INSERT INTO  () VALUES() RETURNING ;") +
-                     strlen(table_name) + (column_names_len) + (values_len) +
-                     strlen(primary_column_name) + 1;
-  *query = malloc(query_len);
-  if (!*query)
-    return -1;
-  snprintf(*query, query_len, "INSERT INTO %s (%s) VALUES(%s) RETURNING %s;",
-           table_name, column_names, values, primary_column_name);
-  return 1;
 }
 
 char *replace_table_name(char *table_name, const char *suffix) {
@@ -1144,20 +907,6 @@ int main(int argc, char const *argv[]) {
                global_config->dbs[i].tables[j].write ? "true" : "false");
       }
     }
-  }
-
-  schema_datatypes.size =
-      sizeof(schema_datatypes_keys) / sizeof(schema_datatypes_keys[0]);
-  schema_datatypes.pairs =
-      malloc(sizeof(schema_datatypes_keys) / sizeof(schema_datatypes_keys[0]) *
-             sizeof(dict_item));
-  // populate the dictionary
-  for (int i = 0;
-       i < sizeof(schema_datatypes_keys) / sizeof(schema_datatypes_keys[0]);
-       i++) {
-    schema_datatypes.pairs[i].key = schema_datatypes_keys[i];
-    // funny pointer business with functions
-    schema_datatypes.pairs[i].value = &schema_datatypes_values[i];
   }
 
   // Set up the server
