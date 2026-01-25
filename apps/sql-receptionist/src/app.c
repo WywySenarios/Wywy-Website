@@ -606,10 +606,11 @@ void *handle_client(void *arg) {
         default:
           build_response_printf(
               400, response, response_len,
-              strlen("Something went wrong when checing querystring key "
+              strlen("Something went wrong when checking querystring key "
                      "\"\".") +
                   strlen(key),
-              "Something went wrong when checing querystring key \"%s\".", key);
+              "Something went wrong when checking querystring key \"%s\".",
+              key);
           free(key);
           free(value);
           goto end;
