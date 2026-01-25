@@ -953,17 +953,12 @@ void *handle_client(void *arg) {
 
         // look for the respective descriptor
         for (int i = 0; i < table->descriptors_count; i++) {
-          if (strcmp(table->descriptors[i].name, descriptor_name) == 0)
+          if (str_cci_cmp(table->descriptors[i].name, descriptor_name) == 0) {
             schema = table->descriptors[i].schema;
-          schema_count = table->descriptors[i].schema_count;
-          break;
+            schema_count = table->descriptors[i].schema_count;
+            break;
+          }
         }
-
-        // @TODO update target table name
-        size_t suffix_len =
-            strlen(descriptor_name) + strlen("_descriptors") + 1;
-        char *suffix = malloc(suffix_len);
-        snprintf(suffix, suffix_len, "%s_descriptors", descriptor_name);
 
         if (!schema || schema_count == -1) {
           build_response(400, response, response_len,
