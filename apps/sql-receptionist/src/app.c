@@ -826,7 +826,6 @@ end:
     send(client_fd, *response, *response_len, 0);
   close(client_fd);
 
-  free(arg); // free client_fd
   free(buffer);
   free(*response);
   free(response);
@@ -946,24 +945,22 @@ int main(int argc, char const *argv[]) {
 
   while (!done) {
     // client info
-    int *client_fd = malloc(sizeof(int));
+    int client_fd = accept(server_fd, (struct sockaddr *)&address, &addrlen);
 
     // accept client connection?
-    if ((*client_fd =
-             accept(server_fd, (struct sockaddr *)&address, &addrlen)) < 0) {
+    if (client_fd < 0) {
       perror("accept");
       continue;
     }
 
     // create a new thread to handle client request
     pthread_t thread_id;
-    if (pthread_create(&thread_id, NULL, handle_client, (void *)client_fd) !=
-        0) {
-      perror("thread create");
-      close(*client_fd);
-      // @todo send a nice error msg
-    } else {
+    if (pthread_create(&thread_id, NULL, handle_client, &client_fd) == 0) {
       pthread_detach(thread_id);
+    } else {
+      // @todo send a nice error msg
+      perror("thread create");
+      close(client_fd);
     }
   }
 
