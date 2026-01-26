@@ -9,13 +9,15 @@ import { getCSRFToken } from "@/utils/auth";
 
 // child component to circumvent hook rules
 function TimerFormForm({
-  start,
+  setStartTime,
+  setEndTime,
   cancelButton,
   databaseName,
   tableInfo,
   dbURL,
 }: {
-  start: Function;
+  setStartTime: React.Dispatch<React.SetStateAction<Date | undefined>>;
+  setEndTime: React.Dispatch<React.SetStateAction<Date | undefined>>;
   cancelButton: JSX.Element;
   databaseName: string;
   tableInfo: TableInfo;
@@ -33,7 +35,8 @@ function TimerFormForm({
 
     onSubmit(values);
 
-    if (action === "split") start();
+    setEndTime(undefined);
+    if (action === "split") setStartTime(new Date(Date.now()));
   }
 
   return (
@@ -218,7 +221,8 @@ export function TimerForm({
     <div>
       {endTime ? (
         <TimerFormForm
-          start={start}
+          setStartTime={setStartTime}
+          setEndTime={setEndTime}
           cancelButton={
             <Button disabled={startTime === undefined} onClick={cancelSplit}>
               Cancel
