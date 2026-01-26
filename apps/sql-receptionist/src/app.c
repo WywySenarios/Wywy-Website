@@ -236,7 +236,7 @@ void *handle_client(void *arg) {
   // printf("%s\n", buffer);
 
   if (bytes_received <= 0) {
-    build_response_default(400, response, response_len);
+    build_response(400, response, response_len, "No request data received.");
     goto end;
   }
 
@@ -480,13 +480,15 @@ void *handle_client(void *arg) {
                                          response, response_len);
         goto end;
       } else {
-        build_response(400, response, response_len, "Bad URL");
+        build_response(400, response, response_len, "Bad URL.");
       }
       goto end;
     regular_table: // @todo catch tags & tag_groups
       // REQUIRES querystring to run
       if (querystring == NULL) {
-        build_response_default(400, response, response_len);
+        build_response(400, response, response_len,
+                       "The querystring cannot be empty. It needs to specify "
+                       "SELECT options.");
         goto end;
       }
 
@@ -495,7 +497,7 @@ void *handle_client(void *arg) {
       querystring_regex =
           create_regex_iterator("[&]?([^=]+)=([^&]+)", 2, REG_EXTENDED);
       if (!querystring_regex) {
-        build_response(400, response, response_len,
+        build_response(500, response, response_len,
                        "Something went wrong while parsing the querystring.");
         goto end;
       }
@@ -642,7 +644,9 @@ void *handle_client(void *arg) {
         generic_select_query_and_respond(database_name, query, &res, &conn,
                                          response, response_len);
       } else {
-        build_response_default(400, response, response_len);
+        build_response(400, response, response_len,
+                       "SELECT queries need a valid target (SELECT) and a "
+                       "valid ordering (ORDER BY)");
       }
 
       // free(select);
@@ -655,7 +659,12 @@ void *handle_client(void *arg) {
       }
     } else {
       // user does not have read access to the respective table
-      build_response_default(403, response, response_len);
+      build_response_printf(403, response, response_len,
+                            strlen("Read is not enabled on table .") +
+                                strlen(table->table_name),
+                            "Read is not enabled on "
+                            "table %s.",
+                            table->table_name);
     }
   } else if (strcmp(method, "POST") == 0) {
     // check if the database & table can be written to freely
@@ -667,7 +676,8 @@ void *handle_client(void *arg) {
       regmatch_t body_matches[1 + 1];
 
       if (regexec(&body_regex, buffer, 1 + 1, body_matches, 0) == REG_NOMATCH) {
-        build_response_default(400, response, response_len);
+        build_response(400, response, response_len,
+                       "Cannot POST an empty body.");
         goto bad_body_end;
       }
 
@@ -812,11 +822,13 @@ void *handle_client(void *arg) {
       // json_decref(entry);
     } else {
       // user does not have write access to the respective table
-      build_response_default(403, response, response_len);
+      build_response_printf(
+          403, response, response_len,
+          strlen("Write is not enabled on table .") + strlen(table->table_name),
+          "Write is not enabled on table %s.", table->table_name);
     }
   } else {
-    // tell the client I don't understand what's going on
-    build_response_default(400, response, response_len);
+    build_response(400, response, response_len, "Unsupported HTTP method.");
   }
 
 bad_url_end:
