@@ -95,6 +95,13 @@ export function TimerForm({
       headers: {},
     })
       .then((res: Response) => {
+        if (res.status == 403) {
+          toast(
+            "Something went wrong while fetching the start/end time: Invalid credentials.",
+          );
+          return;
+        }
+
         res
           .json()
           .then((body: object) => {

@@ -36,38 +36,43 @@ function getData<T extends TableData>(
     headers: {
       "Content-type": "application/json; charset=UTF-8",
     },
-  }).then((response: Response) => {
-    response
-      .json()
-      .catch((reason) => {
-        toast(`Something went wrong while loading data: ${reason}`);
-        setLoading(false);
-      })
-      .then((body: Record<string, any>) => {
-        let valid = true;
-        let output: T = body as T;
+  })
+    .then((response: Response) => {
+      response
+        .json()
+        .catch((reason) => {
+          toast(`Something went wrong while loading data: ${reason}`);
+          setLoading(false);
+        })
+        .then((body: Record<string, any>) => {
+          let valid = true;
+          let output: T = body as T;
 
-        setLoading(false);
-        // fallback value (erroneous, so the component will realize something is wrong)
-        setData({
-          data: [],
-          columns: [],
-        } as TableData as T);
+          setLoading(false);
+          // fallback value (erroneous, so the component will realize something is wrong)
+          setData({
+            data: [],
+            columns: [],
+          } as TableData as T);
 
-        // validate data
-        // validate the amount of columns inside every row of data
-        let numEntries = output.columns.length;
-        for (const row of output.data) {
-          if (row.length != numEntries) return;
-        }
+          // validate data
+          // validate the amount of columns inside every row of data
+          let numEntries = output.columns.length;
+          for (const row of output.data) {
+            if (row.length != numEntries) return;
+          }
 
-        setData(output);
-      })
-      .catch((reason) => {
-        toast(`Something went wrong while loading data: ${reason}`);
-        setLoading(false);
-      });
-  });
+          setData(output);
+        })
+        .catch((reason) => {
+          toast(`Something went wrong while loading data: ${reason}`);
+          setLoading(false);
+        });
+    })
+    .catch((reason: any) => {
+      toast(`Something went wrong while contacting the cache: ${reason}`);
+      setLoading(false);
+    });
 }
 
 /**
