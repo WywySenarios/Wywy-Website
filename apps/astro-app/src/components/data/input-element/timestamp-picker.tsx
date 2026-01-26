@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { ChevronDownIcon } from "lucide-react"
+import { useState, useEffect } from "react";
+import { ChevronDownIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
 
-import { parseTime } from "@/utils"
+import { parseTime } from "@/utils";
 
 function convertToTimestampString(date: Date): string {
   let output = date.toISOString();
@@ -21,9 +21,15 @@ function convertToTimestampString(date: Date): string {
   return output;
 }
 
-export function Calendar24({ onChange, defaultValue }: { onChange: (val: any) => void, defaultValue?: string }) {
-  const [open, setOpen] = useState<boolean>(false)
-  const [date, setDate] = useState<Date | undefined>(undefined)
+export function Calendar24({
+  onChange,
+  defaultValue,
+}: {
+  onChange: (val: any) => void;
+  defaultValue?: string;
+}) {
+  const [open, setOpen] = useState<boolean>(false);
+  const [date, setDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     let output = new Date();
@@ -39,15 +45,12 @@ export function Calendar24({ onChange, defaultValue }: { onChange: (val: any) =>
     }
 
     setDate(output);
-  }, [])
+  }, []);
 
   const onCalendarChange = (val: Date | undefined) => {
-    console.log(onChange);
     if (!val || !onChange) {
       return;
     }
-    console.log(onChange);
-    console.log("datechange")
 
     // copy date
     let output;
@@ -67,9 +70,7 @@ export function Calendar24({ onChange, defaultValue }: { onChange: (val: any) =>
   };
 
   const onTimeChange = (val: string) => {
-    console.log(val);
     if (!val || !onChange) return;
-    console.log("Timechange")
     // copy date
     let output;
     if (date) {
@@ -86,8 +87,6 @@ export function Calendar24({ onChange, defaultValue }: { onChange: (val: any) =>
       output.setMinutes(copy.getMinutes());
       output.setSeconds(copy.getSeconds());
     }
-
-    console.log(convertToTimestampString(output));
 
     setDate(output);
     onChange(convertToTimestampString(output));
@@ -131,7 +130,7 @@ export function Calendar24({ onChange, defaultValue }: { onChange: (val: any) =>
           type="time"
           id="time-picker"
           step="1"
-          defaultValue={defaultValue}
+          defaultValue={defaultValue?.split("T").at(-1)}
           onChange={(val: React.ChangeEvent<HTMLInputElement>) => {
             onTimeChange(val.target.value);
           }}
@@ -139,5 +138,5 @@ export function Calendar24({ onChange, defaultValue }: { onChange: (val: any) =>
         />
       </div>
     </div>
-  )
+  );
 }
