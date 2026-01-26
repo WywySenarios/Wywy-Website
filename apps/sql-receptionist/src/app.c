@@ -115,6 +115,10 @@ void generic_select_query_and_respond(char *database_name, char *query,
     if (!output || !column_names || !output_arrs) {
       build_response(500, response, response_len,
                      "Something went wrong when fetching the query results.");
+      free(output);
+      free(column_names);
+      free(output_arrs);
+      return;
     }
 
     column_names[0] = '\0';
