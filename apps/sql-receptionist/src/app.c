@@ -832,7 +832,7 @@ void *handle_client(void *arg) {
       regfree(&body_regex);
       // free json object??? how ???
       // FIX LATER: causes memory & multithreading issues??
-      // json_decref(entry);
+      json_decref(entry);
     } else {
       // user does not have write access to the respective table
       build_response_printf(
