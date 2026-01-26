@@ -212,6 +212,7 @@ void *handle_client(void *arg) {
   char *url_segments[MAX_URL_SECTIONS];
   for (int i = 0; i < MAX_URL_SECTIONS; i++)
     url_segments[i] = NULL;
+  regmatch_t *matches = NULL;
   char *method = NULL;
   struct regex_iterator *url_regex = NULL;
   char *database_name = NULL;
@@ -239,30 +240,30 @@ void *handle_client(void *arg) {
     goto end;
   }
 
-  regex_t regex;
-  regcomp(&regex, "^([A-Z]+) /([^ ]*) HTTP/[12]\\.[0-9]",
-          REG_EXTENDED); // @warning HTTP/1 not matching?
+  // @warning HTTP/1 not matching?
+  matches = query_regex("^([A-Z]+) /([^ ]*) HTTP/[12]\\.[0-9]", 3, REG_EXTENDED,
+                        0, buffer);
 
-  regmatch_t matches[3];
-
-  // Does the request have a URL?
-  if (regexec(&regex, buffer, 3, matches, 0) == REG_NOMATCH) {
-    build_response_default(400, response, response_len);
+  // catch malloc failure, etc.
+  if (!matches) {
+    build_response(500, response, response_len,
+                   "Something unexpected happened.");
     goto end;
   }
 
-  // extract database name and table name from request
-  // @todo validate the request
-  if (matches[1].rm_so == -1 || matches[2].rm_so == -1) {
-    build_response_default(400, response, response_len);
+  if (!regmatch_has_match(matches, 1) || !regmatch_has_match(matches, 2)) {
+    build_response(400, response, response_len, "Bad HTTP request.");
     goto end;
   }
 
   // Extract the method
-  int method_len = matches[1].rm_eo - matches[1].rm_so;
-  method = malloc(method_len + 1);
-  strncpy(method, buffer + matches[1].rm_so, method_len);
-  method[method_len] = '\0';
+  method = regmatch_get_match(matches, 1, buffer);
+
+  if (!method) {
+    build_response(500, response, response_len,
+                   "Something unexpected happened.");
+    goto end;
+  }
 
   // immediately check for OPTIONS requests
   if (strcmp(method, "OPTIONS") == 0) {
@@ -835,7 +836,7 @@ end:
   free(*response);
   free(response);
   free(response_len);
-  regfree(&regex);
+  free(matches);
   free(method);
   for (int i = 0; i < MAX_URL_SECTIONS; i++) {
     free(url_segments[i]);
