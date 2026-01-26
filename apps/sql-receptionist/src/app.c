@@ -744,18 +744,29 @@ void *handle_client(void *arg) {
                          "Descriptor schema not found.");
           goto schema_mismatch_end;
         }
+
+        // update target table name
+        int old_table_name_len = strlen(table_name);
+        url_segments[1] = table_name =
+            realloc(table_name, old_table_name_len + strlen(schema->name) +
+                                    strlen("__descriptors") + 1);
+        snprintf(table_name + old_table_name_len,
+                 strlen(schema->name) + strlen("__descriptors") + 1,
+                 "_%s_descriptors", schema->name);
+        to_lower_snake_case(table_name);
       } else if (strcmp(target_type, "tags") == 0) {
         schema = tags_schema;
         schema_count = tags_schema_count;
 
         // update target table name
-        table_name = replace_table_name(table_name, "_tags");
+        url_segments[1] = table_name = replace_table_name(table_name, "_tags");
       } else if (strcmp(target_type, "tag_names") == 0) {
         schema = tag_names_schema;
         schema_count = tag_names_schema_count;
 
         // update target table name
-        table_name = replace_table_name(table_name, "_tag_names");
+        url_segments[1] = table_name =
+            replace_table_name(table_name, "_tag_names");
       } else if (strcmp(target_type, "tag_aliases") == 0) {
         schema = tag_aliases_schema;
         schema_count = tag_aliases_schema_count;
@@ -763,13 +774,15 @@ void *handle_client(void *arg) {
         primary_column_name = "alias";
 
         // update target table name
-        table_name = replace_table_name(table_name, "_tag_aliases");
+        url_segments[1] = table_name =
+            replace_table_name(table_name, "_tag_aliases");
       } else if (strcmp(target_type, "tag_groups") == 0) {
         schema = tag_groups_schema;
         schema_count = tag_groups_schema_count;
 
         // update target table name
-        table_name = replace_table_name(table_name, "_tag_groups");
+        url_segments[1] = table_name =
+            replace_table_name(table_name, "_tag_groups");
       } else {
         build_response(400, response, response_len,
                        "Invalid target table type.");
