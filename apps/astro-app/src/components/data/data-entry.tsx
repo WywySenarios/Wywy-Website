@@ -73,7 +73,7 @@ function Tag({
 
   function controllerNamer(
     strings: TemplateStringsArray,
-    name: string
+    name: string,
   ): string {
     return `tags[${index}]`;
   }
@@ -132,30 +132,30 @@ export function Tags({
   const [nextTag, setNextTag] = useState<string>("");
 
   useEffect(() => {
-    fetch(`${dbURL}/tags/${databaseName}/${tableInfo.tableName}`).then(
-      (res: Response) => {
-        if (res.ok)
-          res
-            .json()
-            .then((data) => {
-              setTags(
-                data["tags"].map((item: TagNameRaw) => {
-                  return {
-                    id: String(item.id),
-                    tag_name: item.tag_name,
-                  };
-                })
-              );
-              setLoading(false);
-            })
-            .catch(() => {
-              toast(
-                "Failed to get the tag names. Please reload the page to try again."
-              );
-              setLoading(false);
-            });
-      }
-    );
+    fetch(`${dbURL}/tags/${databaseName}/${tableInfo.tableName}`, {
+      credentials: "include",
+    }).then((res: Response) => {
+      if (res.ok)
+        res
+          .json()
+          .then((data) => {
+            setTags(
+              data["tags"].map((item: TagNameRaw) => {
+                return {
+                  id: String(item.id),
+                  tag_name: item.tag_name,
+                };
+              }),
+            );
+            setLoading(false);
+          })
+          .catch(() => {
+            toast(
+              "Failed to get the tag names. Please reload the page to try again.",
+            );
+            setLoading(false);
+          });
+    });
   }, []);
   useEffect(() => {
     // @TODO better default value
