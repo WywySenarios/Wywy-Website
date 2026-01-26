@@ -748,11 +748,11 @@ void *handle_client(void *arg) {
         // update target table name
         int old_table_name_len = strlen(table_name);
         url_segments[1] = table_name =
-            realloc(table_name, old_table_name_len + strlen(schema->name) +
+            realloc(table_name, old_table_name_len + strlen(descriptor_name) +
                                     strlen("__descriptors") + 1);
         snprintf(table_name + old_table_name_len,
-                 strlen(schema->name) + strlen("__descriptors") + 1,
-                 "_%s_descriptors", schema->name);
+                 strlen(descriptor_name) + strlen("__descriptors") + 1,
+                 "_%s_descriptors", descriptor_name);
         to_lower_snake_case(table_name);
       } else if (strcmp(target_type, "tags") == 0) {
         schema = tags_schema;
