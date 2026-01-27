@@ -34,8 +34,6 @@ services:
     env_file:
       - path: .env
         required: true
-    environment:
-      - DATABASE_HOST=wywywebsite_database
     depends_on:
       wywywebsite_database:
         condition: service_healthy

@@ -68,8 +68,6 @@ services:
     env_file:
       - path: .env
         required: true
-    environment:
-      - DATABASE_HOST=wywywebsite_database
     develop:
       watch:
         - action: sync+restart
