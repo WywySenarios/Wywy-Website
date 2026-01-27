@@ -6,23 +6,40 @@ import { Columns, Descriptors, Tags } from "@/components/data/data-entry";
 import type z from "zod";
 import { toast } from "sonner";
 import { getCSRFToken } from "@/utils/auth";
+import { toSnakeCase } from "@/utils";
 
 // child component to circumvent hook rules
 function TimerFormForm({
+  startTime,
   setStartTime,
+  endTime,
   setEndTime,
   cancelButton,
   databaseName,
   tableInfo,
   dbURL,
 }: {
+  startTime: Date;
   setStartTime: React.Dispatch<React.SetStateAction<Date | undefined>>;
+  endTime: Date;
   setEndTime: React.Dispatch<React.SetStateAction<Date | undefined>>;
   cancelButton: JSX.Element;
   databaseName: string;
   tableInfo: TableInfo;
   dbURL: string;
 }) {
+  // sub in the start & end times as default values, as if they were in the schema originally
+  for (let columnInfo of tableInfo.schema) {
+    switch (toSnakeCase(columnInfo.name)) {
+      case "start_time":
+        columnInfo.defaultValue = startTime.toISOString();
+        break;
+      case "end_time":
+        columnInfo.defaultValue = endTime.toISOString();
+        break;
+    }
+  }
+
   const { form, formSchema, onSubmit, onSubmitInvalid } =
     createFormSchemaAndHandlers(databaseName, tableInfo, dbURL);
 
@@ -219,9 +236,11 @@ export function TimerForm({
 
   return (
     <div>
-      {endTime ? (
+      {startTime && endTime ? (
         <TimerFormForm
+          startTime={startTime}
           setStartTime={setStartTime}
+          endTime={endTime}
           setEndTime={setEndTime}
           cancelButton={
             <Button disabled={startTime === undefined} onClick={cancelSplit}>
