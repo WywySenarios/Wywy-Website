@@ -37,10 +37,6 @@ services:
     env_file:
       - path: .env
         required: true
-    environment:
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_USERNAME=${DB_USERNAME}
-      - POSTGRES_PORT=${POSTGRES_PORT}
     develop:
       watch:
         - action: sync+restart
@@ -65,20 +61,20 @@ services:
     tty: true
     working_dir: /apps/create_tables
     build:
-      context: ../
+      context: ../apps/create_tables
       dockerfile: apps/create_tables/Dockerfile
+      args:
+        CONFIG_PATH: ./../../config.yml
     env_file:
       - path: .env
         required: true
     environment:
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_USERNAME=${DB_USERNAME}
-      - POSTGRES_PORT=${POSTGRES_PORT}
+      - DATABASE_HOST=wywywebsite_database
     develop:
       watch:
         - action: sync+restart
           path: ./../config.yml
-          target: /config.yml
+          target: /apps/create_tables/config.yml
           initial_sync: true
         - action: sync+restart
           path: ./../apps/create_tables
@@ -98,16 +94,24 @@ services:
       target: db
     restart: always
     env_file:
-      - .env
+      - path: .env
+        required: true
     environment:
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_USER: ${DATABASE_USERNAME}
       PGDATA: /var/lib/postgresql/data
     ports:
-      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+      - ${DATABASE_PORT}:${DATABASE_PORT}
     healthcheck:
       test:
-        ["CMD", "pg_isready", "-U", "${DB_USERNAME}", "-p", "${POSTGRES_PORT}"]
+        [
+          "CMD",
+          "pg_isready",
+          "-U",
+          "${DATABASE_USERNAME}",
+          "-p",
+          "${DATABASE_PORT}",
+        ]
       interval: 5m
       timeout: 5s
       start_period: 3s
@@ -118,7 +122,7 @@ services:
       - ./../apps/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
       # - ./../apps/postgres/backup.sh:/backup.sh
     shm_size: 128mb
-    command: postgres -D /var/lib/postgresql/data -p ${POSTGRES_PORT} -c config_file=/etc/postgresql/postgresql.conf
+    command: postgres -D /var/lib/postgresql/data -p ${DATABASE_PORT} -c config_file=/etc/postgresql/postgresql.conf
 
 volumes:
   # postgres-db:
