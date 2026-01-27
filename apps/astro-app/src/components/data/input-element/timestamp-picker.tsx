@@ -1,97 +1,38 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { ChevronDownIcon } from "lucide-react"
+import { useState, useEffect } from "react";
+import { ChevronDownIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
 
-import { parseTime } from "@/utils"
+import {
+  fragmentTimestamp,
+  recombineLocaleTimestamp,
+  toLocaleISOString,
+} from "@/utils";
 
-function convertToTimestampString(date: Date): string {
-  let output = date.toISOString();
-  output = output.substring(0, output.length - 1); // get rid of the trailing Z.
-  return output;
-}
+export function Calendar24({
+  value,
+  onChange,
+  defaultValue,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  defaultValue?: string;
+}) {
+  const [open, setOpen] = useState<boolean>(false);
 
-export function Calendar24({ onChange, defaultValue }: { onChange: (val: any) => void, defaultValue?: string }) {
-  const [open, setOpen] = useState<boolean>(false)
-  const [date, setDate] = useState<Date | undefined>(undefined)
-
-  useEffect(() => {
-    let output = new Date();
-
-    output.setMilliseconds(0);
-    if (defaultValue) {
-      let time = parseTime(defaultValue);
-      if (time) {
-        output.setHours(time.getHours());
-        output.setMinutes(time.getMinutes());
-        output.setSeconds(time.getSeconds());
-      }
-    }
-
-    setDate(output);
-  }, [])
-
-  const onCalendarChange = (val: Date | undefined) => {
-    console.log(onChange);
-    if (!val || !onChange) {
-      return;
-    }
-    console.log(onChange);
-    console.log("datechange")
-
-    // copy date
-    let output;
-    if (date) {
-      output = new Date(date);
-    } else {
-      output = new Date();
-    }
-
-    // move over year, month, and day
-    output.setFullYear(val.getFullYear());
-    output.setMonth(val.getMonth());
-    output.setDate(val.getDate());
-
-    setDate(output);
-    onChange(convertToTimestampString(output));
-  };
-
-  const onTimeChange = (val: string) => {
-    console.log(val);
-    if (!val || !onChange) return;
-    console.log("Timechange")
-    // copy date
-    let output;
-    if (date) {
-      output = new Date(date);
-    } else {
-      output = new Date();
-    }
-
-    // extract the hours, minutes, and seconds from the string
-    let copy = parseTime(val); // @todo check if val can always be expected to be provided in HH:mm:ss format
-    if (copy) {
-      // move over the hours, minutes, and seconds if possible
-      output.setHours(copy.getHours());
-      output.setMinutes(copy.getMinutes());
-      output.setSeconds(copy.getSeconds());
-    }
-
-    console.log(convertToTimestampString(output));
-
-    setDate(output);
-    onChange(convertToTimestampString(output));
-  };
+  const date: Date = new Date(value);
+  // these fragments are in the user's locale.
+  const dateFragments = fragmentTimestamp(toLocaleISOString(date));
 
   return (
     <div className="flex flex-row w-full items-center gap-4">
@@ -115,8 +56,14 @@ export function Calendar24({ onChange, defaultValue }: { onChange: (val: any) =>
               mode="single"
               selected={date}
               captionLayout="dropdown"
-              onSelect={(date: Date | undefined) => {
-                onCalendarChange(date);
+              onSelect={(newDate: Date | undefined) => {
+                if (newDate)
+                  onChange(
+                    recombineLocaleTimestamp([
+                      fragmentTimestamp(newDate.toISOString())[0],
+                      dateFragments[1],
+                    ]).toISOString(),
+                  );
                 setOpen(false);
               }}
             />
@@ -132,12 +79,18 @@ export function Calendar24({ onChange, defaultValue }: { onChange: (val: any) =>
           id="time-picker"
           step="1"
           defaultValue={defaultValue}
+          value={dateFragments[1]}
           onChange={(val: React.ChangeEvent<HTMLInputElement>) => {
-            onTimeChange(val.target.value);
+            onChange(
+              recombineLocaleTimestamp([
+                dateFragments[0],
+                val.target.value,
+              ]).toISOString(),
+            );
           }}
           className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
         />
       </div>
     </div>
-  )
+  );
 }

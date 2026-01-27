@@ -95,7 +95,8 @@ void build_response(int status_code, char **response, size_t *response_len,
  * @param status_code The status code of the response.
  * @param response response text output pointer.
  * @param response_len response text length output pointer.
- * @param text_size expected body size.
+ * @param text_size expected body size. Does not include the null terminator
+ * (i.e. will malloc text_size + 1)
  * @param pattern body string pattern.
  * @param ... body string content (args for vsnprintf).
  */
@@ -105,7 +106,7 @@ void build_response_printf(int status_code, char **response,
   va_list arg;
   char *body = malloc(text_size + 1);
   va_start(arg, pattern);
-  vsnprintf(body, text_size, pattern, arg);
+  vsnprintf(body, text_size + 1, pattern, arg);
   va_end(arg);
 
   build_response(status_code, response, response_len, body);

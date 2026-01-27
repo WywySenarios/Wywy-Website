@@ -44,7 +44,7 @@ export function formatValues(
     }
 
     // check if the user really wanted to submit that or not
-    if (!values[column_schema.name]) {
+    if (values[column_schema.name] == null) {
       continue;
     }
 
@@ -84,8 +84,9 @@ export function populateZodSchema(
 
     // update schema if there should be comments for this column
     // @TODO add length restriction
-    schema[`${columnInfo.name}_comments`] = z.string().optional();
-    defaultValues[`${columnInfo.name}_comments`] = "";
+    if (columnInfo.comments) {
+      schema[`${columnInfo.name}_comments`] = z.string().optional();
+    }
   }
 }
 
@@ -211,12 +212,11 @@ export function createFormSchemaAndHandlers(
 
       // format every descriptor type.
       for (const descriptor_schema of tableInfo.descriptors)
-        if (values.descriptors[descriptor_schema.name])
-          formattedValues.descriptors[descriptor_schema.name] =
-            values.descriptors[descriptor_schema.name].map(
-              (value: { [x: string]: any }) =>
-                formatValues(value, descriptor_schema.schema),
-            );
+        formattedValues.descriptors[descriptor_schema.name] =
+          values.descriptors[descriptor_schema.name].map(
+            (value: { [x: string]: any }) =>
+              formatValues(value, descriptor_schema.schema),
+          );
     }
 
     // POST to cache
@@ -234,20 +234,7 @@ export function createFormSchemaAndHandlers(
     // @TODO fix type errors
 
     console.log("onSubmitInvalid called.");
-
-    //@ts-ignore
-    for (const sectionName in errors) {
-      //@ts-ignore
-      for (const fieldName in errors[sectionName]) {
-        //@ts-ignore
-        const error = errors[sectionName][fieldName];
-
-        if (error?.message) {
-          toast(`${sectionName}: ${error.message}`);
-          console.log(`${sectionName}: ${error.message}`);
-        }
-      }
-    }
+    console.log(errors);
   }
 
   return {

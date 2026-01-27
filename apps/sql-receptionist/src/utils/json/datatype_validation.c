@@ -1,3 +1,4 @@
+#include "config.h"
 #include <jansson.h>
 #include <regex.h>
 #include <string.h>
@@ -110,6 +111,42 @@ int check_timestamplike(const json_t *json) {
     } else {
       return 0;
     }
+  } else {
+    return 0;
+  }
+}
+
+/**
+ * Checks whether or not the given json item conforms to the supplied column
+ * schema.
+ * @todo make this more efficient
+ * @param json The value to validate
+ * @param schema The column schema.
+ * @returns 0 if not valid, 1 if valid.
+ */
+int check_column(const json_t *json, struct data_column *schema) {
+  const char *datatype = schema->datatype;
+
+  if (strcmp(datatype, "int") == 0 || strcmp(datatype, "integer") == 0) {
+    return check_integer(json);
+  } else if (strcmp(datatype, "float") == 0 ||
+             strcmp(datatype, "number") == 0) {
+    return check_real(json);
+  } else if (strcmp(datatype, "string") == 0 || strcmp(datatype, "str") == 0 ||
+             strcmp(datatype, "text") == 0) {
+    return check_string(json);
+  } else if (strcmp(datatype, "bool") == 0 ||
+             strcmp(datatype, "boolean") == 0) {
+    return check_bool(json);
+  } else if (strcmp(datatype, "date") == 0) {
+    return check_datelike(json);
+  } else if (strcmp(datatype, "time") == 0) {
+    return check_timelike(json);
+  } else if (strcmp(datatype, "timestamp") == 0) {
+    return check_timestamplike(json);
+  } else if (strcmp(datatype, "enum") == 0) {
+    // @todo
+    return 0;
   } else {
     return 0;
   }

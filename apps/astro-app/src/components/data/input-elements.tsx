@@ -60,7 +60,7 @@ export function ConstantFormElement({
   type StringArray = string[];
 
   function checkForLabels(
-    column: DataColumn
+    column: DataColumn,
   ): (EnumColumn & SelectRestrictions) | undefined {
     if (column.datatype == "enum" && column.entrytype == "search-select")
       // && column.defaultValue instanceof string
@@ -77,8 +77,8 @@ export function ConstantFormElement({
         <p>
           {checkForLabels(columnInfo)?.labels?.at(
             checkForLabels(columnInfo)?.values.findIndex(
-              (val: string) => field.value == val
-            ) ?? 0
+              (val: string) => field.value == val,
+            ) ?? 0,
           ) ?? field.value}
         </p>
       )}
@@ -199,7 +199,7 @@ function InputElement({
         break;
       default:
         console.warn(
-          `No input element found for column ${columnInfo.name} (entrytype: ${columnInfo.entrytype}). This is likely a bug.`
+          `No input element found for column ${columnInfo.name} (entrytype: ${columnInfo.entrytype}). This is likely a bug.`,
         );
         body = <></>;
         break;
@@ -239,7 +239,8 @@ function InputElement({
         body = (
           <Switch
             {...field}
-            // className="w-2/12"
+            defaultChecked={field.defaultChecked}
+            onCheckedChange={field.onChange}
           />
         );
         break;
@@ -251,7 +252,7 @@ function InputElement({
                 variant={"outline"}
                 className={cn(
                   "w-60 pl-3 text-left font-normal",
-                  !field.value && "text-muted-foreground"
+                  !field.value && "text-muted-foreground",
                 )}
               >
                 {field.value ? (
@@ -322,7 +323,7 @@ function InputElement({
         break;
       default:
         console.warn(
-          `No input element found for column ${columnInfo.name} (entrytype: ${columnInfo.entrytype}). This is likely a bug.`
+          `No input element found for column ${columnInfo.name} (entrytype: ${columnInfo.entrytype}). This is likely a bug.`,
         );
         body = <></>;
         break;

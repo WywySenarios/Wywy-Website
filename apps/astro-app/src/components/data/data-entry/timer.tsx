@@ -6,21 +6,40 @@ import { Columns, Descriptors, Tags } from "@/components/data/data-entry";
 import type z from "zod";
 import { toast } from "sonner";
 import { getCSRFToken } from "@/utils/auth";
+import { toSnakeCase } from "@/utils";
 
 // child component to circumvent hook rules
 function TimerFormForm({
-  start,
+  startTime,
+  setStartTime,
+  endTime,
+  setEndTime,
   cancelButton,
   databaseName,
   tableInfo,
   dbURL,
 }: {
-  start: Function;
+  startTime: Date;
+  setStartTime: React.Dispatch<React.SetStateAction<Date | undefined>>;
+  endTime: Date;
+  setEndTime: React.Dispatch<React.SetStateAction<Date | undefined>>;
   cancelButton: JSX.Element;
   databaseName: string;
   tableInfo: TableInfo;
   dbURL: string;
 }) {
+  // sub in the start & end times as default values, as if they were in the schema originally
+  for (let columnInfo of tableInfo.schema) {
+    switch (toSnakeCase(columnInfo.name)) {
+      case "start_time":
+        columnInfo.defaultValue = startTime.toISOString();
+        break;
+      case "end_time":
+        columnInfo.defaultValue = endTime.toISOString();
+        break;
+    }
+  }
+
   const { form, formSchema, onSubmit, onSubmitInvalid } =
     createFormSchemaAndHandlers(databaseName, tableInfo, dbURL);
 
@@ -33,7 +52,8 @@ function TimerFormForm({
 
     onSubmit(values);
 
-    if (action === "split") start();
+    setEndTime(undefined);
+    if (action === "split") setStartTime(new Date(Date.now()));
   }
 
   return (
@@ -95,6 +115,13 @@ export function TimerForm({
       headers: {},
     })
       .then((res: Response) => {
+        if (res.status == 403) {
+          toast(
+            "Something went wrong while fetching the start/end time: Invalid credentials.",
+          );
+          return;
+        }
+
         res
           .json()
           .then((body: object) => {
@@ -209,9 +236,12 @@ export function TimerForm({
 
   return (
     <div>
-      {endTime ? (
+      {startTime && endTime ? (
         <TimerFormForm
-          start={start}
+          startTime={startTime}
+          setStartTime={setStartTime}
+          endTime={endTime}
+          setEndTime={setEndTime}
           cancelButton={
             <Button disabled={startTime === undefined} onClick={cancelSplit}>
               Cancel
