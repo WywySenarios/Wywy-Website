@@ -876,16 +876,21 @@ end:
 
 int main(int argc, char const *argv[]) {
   // exit if environment variables are missing
-  if (!getenv("POSTGRES_PORT")) {
-    fprintf(stderr, "Could not find environment variable POSTGRES_PORT.");
+  if (!getenv("DATABASE_HOST")) {
+    fprintf(stderr, "Could not find environment variable DATABASE_HOST");
     exit(EXIT_FAILURE);
   }
-  if (!getenv("DB_USERNAME")) {
-    fprintf(stderr, "Could not find environment variable DB_USERNAME.");
+
+  if (!getenv("DATABASE_PORT")) {
+    fprintf(stderr, "Could not find environment variable DATABASE_PORT.");
     exit(EXIT_FAILURE);
   }
-  if (!getenv("DB_PASSWORD")) {
-    fprintf(stderr, "Could not find environment variable DB_PASSWORD.");
+  if (!getenv("DATABASE_USERNAME")) {
+    fprintf(stderr, "Could not find environment variable DATABASE_USERNAME.");
+    exit(EXIT_FAILURE);
+  }
+  if (!getenv("DATABASE_PASSWORD")) {
+    fprintf(stderr, "Could not find environment variable DATABASE_PASSWORD.");
     exit(EXIT_FAILURE);
   }
 
@@ -916,9 +921,9 @@ int main(int argc, char const *argv[]) {
   } else {
     printf("Successfully loaded config:\n");
     printf(" * Postgres Settings:\n");
-    printf("   - Host: %s\n", global_config->postgres.host);
-    printf("   - Port: %s\n", getenv("POSTGRES_PORT"));
-    printf("   - User: %s\n", getenv("DB_USERNAME"));
+    printf("   - Host: %s\n", getenv("DATABASE_HOST"));
+    printf("   - Port: %s\n", getenv("DATABASE_PORT"));
+    printf("   - User: %s\n", getenv("DATABASE_USERNAME"));
     printf("Recognized %u databases:\n", global_config->dbs_count);
     for (unsigned int i = 0; i < global_config->dbs_count; i++) {
       // transform all database names into lower snake case

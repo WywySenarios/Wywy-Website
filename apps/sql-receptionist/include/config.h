@@ -5,10 +5,6 @@ struct reference_urls {
   const char *db;
 };
 
-struct postgres_config {
-  const char *host; // @todo validation
-};
-
 struct data_column {
   const char *name;                  // @todo validation
   const char *datatype;              // @todo validation
@@ -42,7 +38,6 @@ struct db {
 
 struct config {
   struct reference_urls reference_urls;
-  struct postgres_config postgres;
   struct db *dbs;
   unsigned int dbs_count;
 };

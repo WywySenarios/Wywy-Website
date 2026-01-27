@@ -29,14 +29,15 @@ ExecStatusType sql_query(char *dbname, char *query, PGresult **res,
 
   if (*conn == NULL) {
     size_t conninfo_size = 1 + strlen("dbname= user= password= host= port=") +
-                           strlen(dbname) + strlen(getenv("DB_USERNAME")) +
-                           strlen(getenv("DB_PASSWORD")) +
-                           strlen(global_config->postgres.host) + 5;
+                           strlen(dbname) +
+                           strlen(getenv("DATABASE_USERNAME")) +
+                           strlen(getenv("DATABASE_PASSWORD")) +
+                           strlen(getenv(getenv("DATABASE_HOST"))) + 5;
     char *conninfo = malloc(conninfo_size);
     snprintf(conninfo, conninfo_size,
              "dbname=%s user=%s password=%s host=%s port=%s", dbname,
-             getenv("DB_USERNAME"), getenv("DB_PASSWORD"),
-             global_config->postgres.host, getenv("POSTGRES_PORT"));
+             getenv("DATABASE_USERNAME"), getenv("DATABASE_PASSWORD"),
+             getenv("DATABASE_HOST"), getenv("DATABASE_PORT"));
 
     *conn = PQconnectdb(conninfo);
     free(conninfo);
