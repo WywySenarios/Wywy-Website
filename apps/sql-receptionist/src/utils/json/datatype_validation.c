@@ -146,7 +146,7 @@ int check_column(const json_t *json, struct data_column *schema) {
     return check_timestamplike(json);
   } else if (strcmp(datatype, "enum") == 0) {
     // @todo
-    return 0;
+    return 1;
   } else {
     return 0;
   }

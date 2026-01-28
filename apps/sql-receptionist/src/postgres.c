@@ -32,7 +32,7 @@ ExecStatusType sql_query(char *dbname, char *query, PGresult **res,
                            strlen(dbname) +
                            strlen(getenv("DATABASE_USERNAME")) +
                            strlen(getenv("DATABASE_PASSWORD")) +
-                           strlen(getenv(getenv("DATABASE_HOST"))) + 5;
+                           strlen(getenv("DATABASE_HOST")) + 5 + 1;
     char *conninfo = malloc(conninfo_size);
     snprintf(conninfo, conninfo_size,
              "dbname=%s user=%s password=%s host=%s port=%s", dbname,
