@@ -120,8 +120,9 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
               break;
             }
           } else {
-            if (!check_column(value, schema))
+            if (!check_column(value, &schema[i])) {
               break;
+            }
           }
 
           valid = true;
