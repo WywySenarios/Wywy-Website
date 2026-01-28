@@ -53,10 +53,13 @@ export function formatValues(
       case "string":
       case "str":
       case "text":
+        formattedValues[column_schema.name] = `'${values[column_schema.name]}'`;
+        break;
       case "date":
       case "time":
       case "timestamp":
-        formattedValues[column_schema.name] = `'${values[column_schema.name]}'`;
+        formattedValues[column_schema.name] =
+          `'${values[column_schema.name]}'`.replace("Z", "");
         break;
       default:
         formattedValues[column_schema.name] = values[column_schema.name];
