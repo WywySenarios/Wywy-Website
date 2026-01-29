@@ -9,6 +9,9 @@ services:
     environment:
       CLOUDFLARE_API_TOKEN_FILE: /run/secrets/wywywebsite-astro-cloudflare
     entrypoint: /entrypoint.sh
+    env_file:
+      - path: .env.prod
+        required: true
     secrets:
       - wywywebsite-astro-cloudflare
     ports:

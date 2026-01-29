@@ -3,6 +3,7 @@
  * @TODO redirect if dataHarvesting is disabled
  */
 import type { DatabaseInfo, DescriptorInfo, TableInfo } from "@/env";
+import { DATABASE_URL, CACHE_URL } from "astro:env/client";
 import config from "@universal_root/config.yml";
 import Layout from "@/layouts/Layout.astro";
 
@@ -60,7 +61,7 @@ export function getStaticPaths() {
           },
         });
       });
-    })
+    }),
   );
 
   return output;
@@ -94,13 +95,13 @@ function invalidConfig(message?: string): Response {
 }
 
 const databaseInfo: DatabaseInfo | undefined = config.data.find(
-  (databaseInfo: DatabaseInfo) => databaseInfo.dbname == databaseName
+  (databaseInfo: DatabaseInfo) => databaseInfo.dbname == databaseName,
 );
 if (!databaseInfo) {
   return invalidConfig();
 }
 const tableInfo: TableInfo | undefined = databaseInfo.tables.find(
-  (tableInfo) => tableInfo.tableName == tableName
+  (tableInfo) => tableInfo.tableName == tableName,
 );
 if (!tableInfo) {
   return invalidConfig();
@@ -126,11 +127,11 @@ switch (slug) {
   default:
     schema = tableInfo.descriptors.find(
       (descriptorInfo: DescriptorInfo) =>
-        descriptorInfo.name == slug.slice("descriptors/".length)
+        descriptorInfo.name == slug.slice("descriptors/".length),
     );
     if (!schema) {
       return invalidConfig(
-        `Descriptor "${slug.slice("descriptors/".length)}" not found.`
+        `Descriptor "${slug.slice("descriptors/".length)}" not found.`,
       );
     }
     targetTableName = `${tableName}_${schema.name}_descriptors`;
@@ -148,8 +149,8 @@ switch (slug) {
     schema={schema}
     databaseName={databaseName}
     tableName={tableName}
-    databaseURL={config.referenceUrls.db}
-    cacheURL={config.referenceUrls.cache}
+    databaseURL={DATABASE_URL}
+    cacheURL={CACHE_URL}
     type={type}
     client:load
   />

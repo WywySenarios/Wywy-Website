@@ -1,8 +1,8 @@
 import type { Dataset, TableInfo } from "@/env";
+import { DATABASE_URL } from "astro:env/client";
 import type { JSX } from "astro/jsx-runtime";
 import { useEffect, useState } from "react";
 import { LineChartCard } from "@/components/data/chart/chart-card";
-import config from "@universal_root/config.yml";
 import { Button } from "@/components/ui/button";
 import {
   prettyParseString,
@@ -44,12 +44,12 @@ export default function DatasetControlPanel({
 
   function fetchDataset() {
     fetch(
-      `${config.referenceUrls.db}/${databaseName.toLowerCase()}/${tableSchema.tableName.toLowerCase()}?SELECT=*&ORDER_BY=ASC`,
+      `${DATABASE_URL}/${databaseName.toLowerCase()}/${tableSchema.tableName.toLowerCase()}?SELECT=*&ORDER_BY=ASC`,
       {
         method: "GET",
         mode: "cors",
         credentials: "include",
-      }
+      },
     )
       .then((res) => {
         if (res.ok) {
@@ -60,7 +60,7 @@ export default function DatasetControlPanel({
 
               // prettify column names
               const dataColumns = data.columns.map((col: string) =>
-                prettifySnakeCase(col)
+                prettifySnakeCase(col),
               );
 
               // parse every column
