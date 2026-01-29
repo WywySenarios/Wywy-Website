@@ -28,7 +28,7 @@ services:
     working_dir: /apps/create_tables
     build:
       context: ../apps/create_tables
-      dockerfile: apps/create_tables/Dockerfile
+      dockerfile: Dockerfile
       args:
         CONFIG_PATH: ./../../config.yml
     env_file:
