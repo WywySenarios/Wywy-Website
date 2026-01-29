@@ -15,6 +15,7 @@ services:
       - admin
     networks:
       - wywywebsite_cloudflared
+      - wywywebsite_database
     ports:
       - 2523:2523
     depends_on:
@@ -37,6 +38,8 @@ services:
     depends_on:
       wywywebsite_database:
         condition: service_healthy
+    networks:
+      - wywywebsite_database
     command: python3 create_tables.py
 
   wywywebsite_cloudflared:
@@ -72,6 +75,8 @@ services:
       PGDATA: /var/lib/postgresql/data
     ports:
       - ${DATABASE_PORT}:${DATABASE_PORT}
+    networks:
+      - wywywebsite_database
     healthcheck:
       test:
         [
@@ -96,6 +101,9 @@ services:
 networks:
   wywywebsite_cloudflared:
     name: wywywebsite_cloudflared
+  wywywebsite_database:
+    name: wywywebsite_database
+    driver: bridge
 
 secrets:
   wywywebsite-cloudflared-cloudflare:
