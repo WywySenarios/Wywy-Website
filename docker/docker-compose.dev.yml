@@ -17,6 +17,9 @@ services:
       - ../apps/astro-app:/apps/astro-app
       - /apps/astro-app/node_modules
       # - astro-node_modules:/apps/astro-app/node_modules
+    env_file:
+      - path: .env.dev
+        required: true
     develop:
       watch:
         - action: sync
@@ -36,6 +39,8 @@ services:
       # target: builder
     env_file:
       - path: .env
+        required: true
+      - path: .env.dev
         required: true
     develop:
       watch:
@@ -68,6 +73,8 @@ services:
     env_file:
       - path: .env
         required: true
+      - path: .env.dev
+        required: true
     develop:
       watch:
         - action: sync+restart
@@ -93,6 +100,8 @@ services:
     restart: always
     env_file:
       - path: .env
+        required: true
+      - path: .env.dev
         required: true
     environment:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}

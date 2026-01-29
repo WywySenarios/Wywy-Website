@@ -74,8 +74,8 @@ void build_response(int status_code, char **response, size_t *response_len,
                          "Access-Control-Allow-Credentials: true\r\n"
                          "Connection: close\r\n"
                          "\r\n") +
-                  strlen(status_code_name) +
-                  strlen(global_config->reference_urls.main) + strlen(body);
+                  strlen(status_code_name) + strlen(getenv("MAIN_URL")) +
+                  strlen(body);
   *response = malloc(*response_len + 1);
   snprintf(*response, *response_len + 1,
            "HTTP/1.1 %d %s\r\n"
@@ -85,8 +85,7 @@ void build_response(int status_code, char **response, size_t *response_len,
            "Access-Control-Allow-Credentials: true\r\n"
            "Connection: close\r\n"
            "\r\n%s",
-           status_code, status_code_name, global_config->reference_urls.main,
-           body);
+           status_code, status_code_name, getenv("MAIN_URL"), body);
 }
 
 /**

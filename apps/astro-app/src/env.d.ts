@@ -2,6 +2,18 @@
 
 import type { zodPrimaryDatatypes } from "./utils/data";
 
+// START - environment variables
+interface ImportMetaEnv {
+  readonly MAIN_URL: string;
+  readonly DATABASE_URL: string;
+  readonly CACHE_URL: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+// END - environment variables
+
 declare module "env" {
   const config: MainConfigSchema;
   export = config;

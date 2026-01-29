@@ -9,13 +9,6 @@
 
 #define CONFIG_PATH "/config.yml"
 
-static const cyaml_schema_field_t reference_urls_schema[] = {
-    CYAML_FIELD_STRING_PTR("main", CYAML_FLAG_POINTER, struct reference_urls,
-                           main, 0, CYAML_UNLIMITED),
-    CYAML_FIELD_STRING_PTR("db", CYAML_FLAG_POINTER, struct reference_urls, db,
-                           0, CYAML_UNLIMITED),
-    CYAML_FIELD_END};
-
 static const cyaml_schema_field_t data_column_fields_schema[] = {
     CYAML_FIELD_STRING_PTR("name", CYAML_FLAG_POINTER, struct data_column, name,
                            0, CYAML_UNLIMITED),
@@ -83,8 +76,6 @@ static const cyaml_schema_value_t db_schema = {
 // top level structure for the config
 
 static const cyaml_schema_field_t config_fields_schema[] = {
-    CYAML_FIELD_MAPPING("referenceUrls", CYAML_FLAG_DEFAULT, struct config,
-                        reference_urls, reference_urls_schema),
     CYAML_FIELD_SEQUENCE("data", CYAML_FLAG_POINTER, struct config, dbs,
                          &db_schema, 0, CYAML_UNLIMITED),
     CYAML_FIELD_IGNORE("python", CYAML_FLAG_OPTIONAL), CYAML_FIELD_END};

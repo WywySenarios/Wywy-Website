@@ -11,6 +11,8 @@ services:
     env_file:
       - path: .env
         required: true
+      - path: .env.prod
+        required: true
     secrets:
       - admin
     networks:
@@ -34,6 +36,8 @@ services:
         CONFIG_PATH: ./../../config.yml
     env_file:
       - path: .env
+        required: true
+      - path: .env.prod
         required: true
     depends_on:
       wywywebsite_database:
@@ -68,6 +72,8 @@ services:
     restart: always
     env_file:
       - path: .env
+        required: true
+      - path: .env.prod
         required: true
     environment:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}

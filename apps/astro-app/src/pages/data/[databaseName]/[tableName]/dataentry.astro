@@ -7,6 +7,7 @@
 import type { DatabaseInfo, TableInfo } from "@/env";
 import config from "@universal_root/config.yml";
 import Layout from "@/layouts/Layout.astro";
+import { CACHE_URL } from "astro:env/client";
 
 import DataEntryForm from "@/components/data/data-entry-form";
 import { Toaster } from "@/components/ui/sonner";
@@ -73,7 +74,7 @@ if (!tableInfo || !entrytype) {
   <DataEntryForm
     databaseName={databaseName}
     tableInfo={tableInfo}
-    dbURL={config.referenceUrls.cache}
+    dbURL={CACHE_URL}
     client:only="react"
   >
     <div slot="fallback">Loading...</div>
