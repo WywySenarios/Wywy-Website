@@ -355,8 +355,8 @@ void *handle_client(void *arg) {
                "Set-Cookie: password=%s; Max-Age=%s\r\n"
                "Connection: close\r\n"
                "\r\n",
-               getenv("AUTH_COOKIE_MAX_AGE"), getenv("AUTH_COOKIE_MAX_AGE"),
-               body, getenv("MAIN_URL"));
+               getenv("MAIN_URL"), getenv("AUTH_COOKIE_MAX_AGE"),
+               getenv("AUTH_COOKIE_MAX_AGE"), body);
       goto end;
     } else {
       build_response(403, response, response_len, "Invalid credentials.");
