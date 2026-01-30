@@ -343,7 +343,7 @@ void *handle_client(void *arg) {
                       strlen(getenv("MAIN_URL"));
       if (getenv("SQL_RECEPTIONIST_LOG_RESPONSES") &&
           strcmp(getenv("SQL_RECEPTIONIST_LOG_RESPONSES"), "TRUE") == 0)
-        printf("Constructing 200 OK response: %s\n\n", body);
+        printf("Constructing 200 OK response: ---[Authentication]---\n\n");
       *response = malloc(*response_len + 1);
       snprintf(*response, *response_len + 1,
                "HTTP/1.1 200 OK\r\n"
