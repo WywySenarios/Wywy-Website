@@ -304,7 +304,7 @@ void *handle_client(void *arg) {
   // @TODO check for CSRF
 
   // @TODO auth for non-admin users
-  if (strcmp(url_segments[0], "auth") == 0) {
+  if (url_segments[0] && strcmp(url_segments[0], "auth") == 0) {
     regex_t body_regex;
     regcomp(&body_regex, "\r\n\r\n(.+)", REG_EXTENDED);
 
