@@ -1,3 +1,4 @@
+import { CACHE_URL } from "astro:env/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import type { JSX } from "astro/jsx-runtime";
 import { useEffect, useState } from "react";
 import { useCookies, CookiesProvider } from "react-cookie";
+import { getCSRFToken } from "@/utils/auth";
+import { toast } from "sonner";
 
 /**
  * The returned element must be wrapped in a CookiesProvider element.
@@ -47,7 +50,6 @@ function LoginDialogContents(): JSX.Element {
   }
 
   function onResetLoginInfo() {
-    console.log("poof!");
     removeUsernameCookie("username", {
       path: "/",
       sameSite: "lax",
@@ -70,6 +72,34 @@ function LoginDialogContents(): JSX.Element {
       path: "/",
       sameSite: "lax",
     });
+
+    getCSRFToken(CACHE_URL)
+      .then((csrftoken: string) => {
+        fetch(`${CACHE_URL}/auth`, {
+          method: "POST",
+          body: JSON.stringify({
+            username: formData.get("username"),
+            password: formData.get("password"),
+          }),
+          mode: "cors",
+          credentials: "include",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+            "X-CSRFToken": csrftoken,
+          },
+        }).then((response) => {
+          response.text().then((text: string) => {
+            if (response.ok) {
+              toast(`Successfully authenticated!`);
+            } else {
+              toast(`Error while authenticating: ${text}`);
+            }
+          });
+        });
+      })
+      .catch((reason: string) => {
+        toast(`Something went wrong while trying to authenticate: ${reason}`);
+      });
   }
 
   return (
