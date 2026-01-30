@@ -273,6 +273,98 @@ void *handle_client(void *arg) {
 
   // @todo special/reserved URLs
 
+  // extract URL from request and decode URL
+  int url_len = matches[2].rm_eo - matches[2].rm_so;
+  char *encoded_url = malloc(url_len + 1);
+  strncpy(encoded_url, buffer + matches[2].rm_so,
+          url_len); // @todo directly decode buffer
+  encoded_url[url_len] = '\0';
+  char *url = url_decode(encoded_url);
+  free(encoded_url);
+
+  url_regex = create_regex_iterator("([^/^?]+)[/?]?", 1, REG_EXTENDED);
+
+  regex_iterator_load_target(url_regex, url);
+
+  // START - check URL
+
+  // look for as many url sections as possible
+  for (int i = 0; i < MAX_URL_SECTIONS; i++) {
+    if (regex_iterator_match(url_regex, 0) != 0)
+      break;
+    url_segments[i] = regex_iterator_get_match(url_regex, 1);
+    if (!url_segments[i]) {
+      build_response(500, response, response_len, "Memory allocation failed.");
+      perror("URL section malloc failure");
+      goto end;
+    }
+    regex_iterator_advance_cur(url_regex);
+  }
+  // check if the user wants to authenticate
+  // @TODO check for CSRF
+
+  // @TODO auth for non-admin users
+  if (strcmp(url_segments[0], "auth") == 0) {
+    regex_t body_regex;
+    regcomp(&body_regex, "\r\n\r\n(.+)", REG_EXTENDED);
+
+    regmatch_t body_matches[1 + 1];
+
+    if (regexec(&body_regex, buffer, 1 + 1, body_matches, 0) == REG_NOMATCH) {
+      regfree(&body_regex);
+      build_response(400, response, response_len, "Cannot POST an empty body.");
+      goto end;
+    }
+    regfree(&body_regex);
+
+    int body_len = body_matches[1].rm_eo - body_matches[1].rm_so;
+    char *body = malloc(body_len + 1);
+    if (!body) {
+      build_response(500, response, response_len,
+                     "Something unexpected happened while authenticating");
+      goto end;
+    }
+    strncpy(body, buffer + body_matches[1].rm_so, body_len);
+    body[body_len] = '\0';
+
+    if (strcmp(body, admin_creds) == 0) {
+      // @TODO do not hardcode
+      *response_len = strlen("HTTP/1.1 200 OK\r\n"
+                             "Content-Type: text/plain\r\n"
+                             "Access-Control-Allow-Origin: \r\n"
+                             "Access-Control-Allow-Headers: Content-Type\r\n"
+                             "Access-Control-Allow-Credentials: true\r\n"
+                             "Set-Cookie: username=admin; Max-Age=\r\n"
+                             "Set-Cookie: password=; Max-Age=\r\n"
+                             "Connection: close\r\n"
+                             "\r\n") +
+                      strlen(getenv("AUTH_COOKIE_MAX_AGE")) +
+                      strlen(getenv("AUTH_COOKIE_MAX_AGE")) + strlen(body) +
+                      strlen(getenv("MAIN_URL"));
+      if (getenv("SQL_RECEPTIONIST_LOG_RESPONSES") &&
+          strcmp(getenv("SQL_RECEPTIONIST_LOG_RESPONSES"), "TRUE") == 0)
+        printf("Constructing 200 OK response: %s\n\n", body);
+      *response = malloc(*response_len + 1);
+      snprintf(*response, *response_len + 1,
+               "HTTP/1.1 200 OK\r\n"
+               "Content-Type: text/plain\r\n"
+               "Access-Control-Allow-Origin: %s\r\n"
+               "Access-Control-Allow-Headers: Content-Type\r\n"
+               "Access-Control-Allow-Credentials: true\r\n"
+               "Set-Cookie: username=admin; Max-Age=%s\r\n"
+               "Set-Cookie: password=%s; Max-Age=%s\r\n"
+               "Connection: close\r\n"
+               "\r\n",
+               getenv("AUTH_COOKIE_MAX_AGE"), getenv("AUTH_COOKIE_MAX_AGE"),
+               body, getenv("MAIN_URL"));
+      goto end;
+    } else {
+      build_response(403, response, response_len, "Invalid credentials.");
+      goto end;
+    }
+  }
+  // @todo non-admin cookies
+
   // @todo tokens
   regex_t raw_cookie_regex;
   regcomp(&raw_cookie_regex, "Cookie: (.*)[\r\n]", REG_EXTENDED);
@@ -328,39 +420,13 @@ void *handle_client(void *arg) {
       cursor++;
   }
 
+  regfree(&cookie_regex);
   free(raw_cookies);
+
+  // require authentication for all other endpoints
   if (!(admin_username && admin_password)) {
     build_response(403, response, response_len, "Authentication failed.");
-    goto bad_auth_end;
-  }
-  // @todo non-admin cookies
-
-  // extract URL from request and decode URL
-  int url_len = matches[2].rm_eo - matches[2].rm_so;
-  char *encoded_url = malloc(url_len + 1);
-  strncpy(encoded_url, buffer + matches[2].rm_so,
-          url_len); // @todo directly decode buffer
-  encoded_url[url_len] = '\0';
-  char *url = url_decode(encoded_url);
-  free(encoded_url);
-
-  url_regex = create_regex_iterator("([^/^?]+)[/?]?", 1, REG_EXTENDED);
-
-  regex_iterator_load_target(url_regex, url);
-
-  // START - check URL
-
-  // look for as many url sections as possible
-  for (int i = 0; i < MAX_URL_SECTIONS; i++) {
-    if (regex_iterator_match(url_regex, 0) != 0)
-      break;
-    url_segments[i] = regex_iterator_get_match(url_regex, 1);
-    if (!url_segments[i]) {
-      build_response(500, response, response_len, "Memory allocation failed.");
-      perror("URL section malloc failure");
-      goto end;
-    }
-    regex_iterator_advance_cur(url_regex);
+    goto end;
   }
 
   // get database name
@@ -846,9 +912,6 @@ void *handle_client(void *arg) {
 
 bad_url_end:
   free(url);
-
-bad_auth_end:
-  regfree(&cookie_regex);
 
 end:
   // send HTTP response to client

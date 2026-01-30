@@ -67,15 +67,20 @@ void build_response(int status_code, char **response, size_t *response_len,
     printf("Constructing %d %s response: %s\n\n", status_code, status_code_name,
            body);
 
+  const char *connection = "Close";
+  if (status_code == 204) {
+    connection = "Keep-Alive";
+  }
+
   *response_len = strlen("HTTP/1.1 xxx \r\n"
                          "Content-Type: text/plain\r\n"
                          "Access-Control-Allow-Origin: \r\n"
                          "Access-Control-Allow-Headers: Content-Type\r\n"
                          "Access-Control-Allow-Credentials: true\r\n"
-                         "Connection: close\r\n"
+                         "Connection: \r\n"
                          "\r\n") +
                   strlen(status_code_name) + strlen(getenv("MAIN_URL")) +
-                  strlen(body);
+                  strlen(connection) + strlen(body);
   *response = malloc(*response_len + 1);
   snprintf(*response, *response_len + 1,
            "HTTP/1.1 %d %s\r\n"
@@ -83,9 +88,9 @@ void build_response(int status_code, char **response, size_t *response_len,
            "Access-Control-Allow-Origin: %s\r\n"
            "Access-Control-Allow-Headers: Content-Type\r\n"
            "Access-Control-Allow-Credentials: true\r\n"
-           "Connection: close\r\n"
+           "Connection: %s\r\n"
            "\r\n%s",
-           status_code, status_code_name, getenv("MAIN_URL"), body);
+           status_code, status_code_name, getenv("MAIN_URL"), connection, body);
 }
 
 /**

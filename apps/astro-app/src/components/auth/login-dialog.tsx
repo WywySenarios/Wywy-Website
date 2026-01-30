@@ -1,4 +1,4 @@
-import { CACHE_URL } from "astro:env/client";
+import { DATABASE_URL, CACHE_URL } from "astro:env/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -73,6 +73,27 @@ function LoginDialogContents(): JSX.Element {
       sameSite: "lax",
     });
 
+    console.log(formData.get("password"));
+    fetch(`${DATABASE_URL}/auth`, {
+      method: "POST",
+      body: formData.get("password"),
+      mode: "cors",
+      credentials: "include",
+      headers: {
+        "Content-type": "application/json; charset=UTF-8",
+      },
+    })
+      .then((response) => {
+        response.text().then((text: string) => {
+          if (response.ok)
+            toast(`Successfully authenticated to master database!`);
+          else toast(`Error while authenticating: ${text}`);
+        });
+      })
+      .catch((reason) => {
+        toast(`Something went wrong while trying to authenticate: ${reason}`);
+      });
+
     getCSRFToken(CACHE_URL)
       .then((csrftoken: string) => {
         fetch(`${CACHE_URL}/auth`, {
@@ -90,7 +111,7 @@ function LoginDialogContents(): JSX.Element {
         }).then((response) => {
           response.text().then((text: string) => {
             if (response.ok) {
-              toast(`Successfully authenticated!`);
+              toast(`Successfully authenticated to cache!`);
             } else {
               toast(`Error while authenticating: ${text}`);
             }
