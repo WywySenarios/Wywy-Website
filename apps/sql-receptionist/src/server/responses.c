@@ -77,7 +77,7 @@ void build_response(int status_code, char **response, size_t *response_len,
                          "Access-Control-Allow-Origin: \r\n"
                          "Access-Control-Allow-Headers: Content-Type\r\n"
                          "Access-Control-Allow-Credentials: true\r\n"
-                         "Connection: %s\r\n"
+                         "Connection: \r\n"
                          "\r\n") +
                   strlen(status_code_name) + strlen(getenv("MAIN_URL")) +
                   strlen(connection) + strlen(body);
