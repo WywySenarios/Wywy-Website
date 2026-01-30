@@ -209,11 +209,12 @@ void *handle_client(void *arg) {
   size_t *response_len = malloc(sizeof(size_t *));
 
   // variables that are generally useful:
+  char *method = NULL;
+  char *headers = NULL;
   char *url_segments[MAX_URL_SECTIONS];
   for (int i = 0; i < MAX_URL_SECTIONS; i++)
     url_segments[i] = NULL;
   regmatch_t *matches = NULL;
-  char *method = NULL;
   struct regex_iterator *url_regex = NULL;
   char *database_name = NULL;
   struct db *database = NULL;
@@ -241,8 +242,9 @@ void *handle_client(void *arg) {
   }
 
   // @warning HTTP/1 not matching?
-  matches = query_regex("^([A-Z]+) /([^ ]*) HTTP/[12]\\.[0-9]", 3, REG_EXTENDED,
-                        0, buffer);
+  // ^([A-Z]+) /([^ ]*) HTTP/[12]\\.[0-9]
+  matches = query_regex("^([A-Z]+) /([^ ]*) HTTP/[12]\\.[0-9].*(\r?\n\r?\n)", 3,
+                        REG_EXTENDED, 0, buffer);
 
   // catch malloc failure, etc.
   if (!matches) {
@@ -268,6 +270,40 @@ void *handle_client(void *arg) {
   // immediately check for OPTIONS requests
   if (strcmp(method, "OPTIONS") == 0) {
     build_response_default(204, response, response_len);
+    goto end;
+  }
+
+  // Extract the headers @TODO this needs to be several times more efficient
+  int headers_len = matches[3].rm_so;
+  headers = malloc(headers_len + 1);
+  if (!headers) {
+    build_response(500, response, response_len,
+                   "Something unexpected happened while extracting headers.");
+    goto end;
+  }
+
+  memcpy(headers, buffer, headers_len);
+  headers[headers_len] = '\0';
+
+  // Check for the correct origin
+  size_t main_origin_size = strlen("Origin: /?\n") + strlen(getenv("MAIN_URL"));
+  char *main_origin_check = malloc(main_origin_size);
+  snprintf(main_origin_check, main_origin_size, "Origin: %s/?\n",
+           getenv("MAIN_URL"));
+  int origin_check_res =
+      regex_check(main_origin_check, 0, REG_EXTENDED, 0, headers);
+
+  size_t cache_origin_size =
+      strlen("Origin: /?\n") + strlen(getenv("CACHE_URL"));
+  char *cache_origin_check = malloc(cache_origin_size);
+  snprintf(cache_origin_check, cache_origin_size, "Origin: %s/?\n",
+           getenv("CACHE_URL"));
+  int cache_check_res =
+      regex_check(cache_origin_check, 0, REG_EXTENDED, 0, headers);
+  free(cache_origin_check);
+  if (origin_check_res != 1 && cache_check_res != 1) {
+    build_response(400, response, response_len,
+                   "Bad origin. Compromised browser?");
     goto end;
   }
 
@@ -927,6 +963,7 @@ end:
   free(response_len);
   free(matches);
   free(method);
+  free(headers);
   for (int i = 0; i < MAX_URL_SECTIONS; i++) {
     free(url_segments[i]);
   }
