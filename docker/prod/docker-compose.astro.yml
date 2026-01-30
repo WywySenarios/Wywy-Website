@@ -10,7 +10,7 @@ services:
       CLOUDFLARE_API_TOKEN_FILE: /run/secrets/wywywebsite-astro-cloudflare
     entrypoint: /entrypoint.sh
     env_file:
-      - path: .env.prod
+      - path: ../.env.prod
         required: true
     secrets:
       - wywywebsite-astro-cloudflare
@@ -22,6 +22,7 @@ services:
 
 volumes:
   astro-node_modules:
+
 
 secrets:
   wywywebsite-astro-cloudflare:
