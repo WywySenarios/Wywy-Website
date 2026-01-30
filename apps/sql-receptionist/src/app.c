@@ -357,6 +357,7 @@ void *handle_client(void *arg) {
                "\r\n",
                getenv("MAIN_URL"), getenv("AUTH_COOKIE_MAX_AGE"), body,
                getenv("AUTH_COOKIE_MAX_AGE"));
+      free(body);
       goto end;
     } else {
       build_response(403, response, response_len, "Invalid credentials.");
