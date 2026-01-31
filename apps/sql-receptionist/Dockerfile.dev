@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     libyaml-dev \
     wget \
     bzip2 \
+    valgrind \
     gnupg \
     # @TODO verification with gnupg
     # QoL
