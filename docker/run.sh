@@ -6,6 +6,7 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
+rebuild=0
 endflags=""
 
 # Check for flags
@@ -13,6 +14,7 @@ while getopts "b" opt;
 do
     case "${opt}" in
     b)
+        rebuild=1
         endflags="${endflags} --build"
         ;;
     *)
@@ -27,12 +29,24 @@ shift $((OPTIND-1))
 
 case "$1" in
     prod)
+        if [ "$rebuild" -eq 1 ];
+        then
+            sudo chmod +rw "../apps/postgres/pgdata"
+            sudo chmod +rw "../apps/postgres/pgdata/**/*"
+        fi
+
         case "$2" in 
             astro) docker compose -f prod/docker-compose.astro.yml up${endflags}
         esac
         docker compose -f docker-compose.prod.yml up${endflags}
         ;;
     dev)
+        if [ "$rebuild" -eq 1 ];
+        then
+            sudo chmod +rw "../apps/postgres/pgdata"
+            sudo chmod +rw "../apps/postgres/pgdata/**/*"
+        fi
+        
         docker compose -f docker-compose.dev.yml up --watch${endflags}
         ;;
     *)
