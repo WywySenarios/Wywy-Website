@@ -43,10 +43,10 @@ case "$1" in
     dev)
         if [ "$rebuild" -eq 1 ];
         then
-            sudo chmod +rw "../apps/postgres/pgdata"
-            sudo chmod +rw "../apps/postgres/pgdata/**/*"
+            sudo chmod +rwx "../apps/postgres/pgdata"
+            sudo chmod +rwx "../apps/postgres/pgdata/**/*"
         fi
-        
+
         docker compose -f docker-compose.dev.yml up --watch${endflags}
         ;;
     *)
