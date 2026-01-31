@@ -1,4 +1,4 @@
-FROM python:3.14.0-slim-bookworm AS builder
+FROM gcc:15-trixie AS builder
 WORKDIR /apps/sql-receptionist
 
 ENV LD_LIBRARY_PATH=/usr/local/lib
@@ -7,8 +7,6 @@ COPY ./apps/sql-receptionist .
 COPY ./config.yml /
 
 RUN apt-get update && apt-get install -y \
-    cmake \
-    build-essential \
     libpq-dev \
     libyaml-dev \
     wget \
