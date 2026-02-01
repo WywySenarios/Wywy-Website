@@ -300,6 +300,7 @@ void *handle_client(void *arg) {
            getenv("CACHE_URL"));
   int cache_check_res =
       regex_check(cache_origin_check, 0, REG_EXTENDED, 0, headers);
+  free(main_origin_check);
   free(cache_origin_check);
   if (origin_check_res != 1 && cache_check_res != 1) {
     build_response(400, response, response_len,
