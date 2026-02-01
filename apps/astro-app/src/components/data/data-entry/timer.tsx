@@ -53,7 +53,7 @@ function TimerFormForm({
     onSubmit(values);
 
     setEndTime(undefined);
-    if (action === "split") setStartTime(new Date(Date.now()));
+    setStartTime(action === "split" ? new Date(Date.now()) : undefined);
   }
 
   return (
