@@ -211,6 +211,7 @@ void *handle_client(void *arg) {
   // variables that are generally useful:
   char *method = NULL;
   char *headers = NULL;
+  char *url = NULL;
   char *url_segments[MAX_URL_SECTIONS];
   for (int i = 0; i < MAX_URL_SECTIONS; i++)
     url_segments[i] = NULL;
@@ -316,7 +317,7 @@ void *handle_client(void *arg) {
   strncpy(encoded_url, buffer + matches[2].rm_so,
           url_len); // @todo directly decode buffer
   encoded_url[url_len] = '\0';
-  char *url = url_decode(encoded_url);
+  url = url_decode(encoded_url);
   free(encoded_url);
 
   url_regex = create_regex_iterator("([^/^?]+)[/?]?", 1, REG_EXTENDED);
@@ -948,9 +949,6 @@ void *handle_client(void *arg) {
     build_response(400, response, response_len, "Unsupported HTTP method.");
   }
 
-bad_url_end:
-  free(url);
-
 end:
   // send HTTP response to client
   // @TODO determine if NULL checks are necessary
@@ -964,6 +962,7 @@ end:
   free(response_len);
   free(matches);
   free(method);
+  free(url);
   free(headers);
   for (int i = 0; i < MAX_URL_SECTIONS; i++) {
     free(url_segments[i]);
