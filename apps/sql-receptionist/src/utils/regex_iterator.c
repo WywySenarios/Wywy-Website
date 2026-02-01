@@ -125,8 +125,10 @@ void free_regex_iterator(struct regex_iterator *iter) {
   if (!iter)
     return;
 
-  if (iter->preg)
+  if (iter->preg) {
     regfree(iter->preg);
+    free(iter->preg);
+  }
   free(iter->matches);
   free(iter);
 }
