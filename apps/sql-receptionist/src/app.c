@@ -806,8 +806,6 @@ void *handle_client(void *arg) {
         goto schema_mismatch_end;
       }
 
-      char *query = NULL;
-
       char *target_type = url_segments[2];
       if (!target_type) {
         build_response(400, response, response_len,
