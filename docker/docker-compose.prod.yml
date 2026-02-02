@@ -33,7 +33,7 @@ services:
       context: ../
       dockerfile: apps/create_tables/Dockerfile
       args:
-        CONFIG_PATH: ./../../config.yml
+        CONFIG_PATH: ${MAIN_CONFIG_PATH}
     env_file:
       - path: .env
         required: true
