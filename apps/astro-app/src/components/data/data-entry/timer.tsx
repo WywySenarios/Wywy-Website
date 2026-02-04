@@ -135,7 +135,7 @@ export function TimerForm({
                 1,
                 body["Start Time"].length - 1,
               );
-              let newDate: Date = new Date(Date.parse(value));
+              let newDate: Date = new Date(Date.parse(value + "Z"));
               if (!isNaN(newDate.getTime())) setStartTime(newDate);
             }
             if (
@@ -148,7 +148,7 @@ export function TimerForm({
                 1,
                 body["End Time"].length - 1,
               );
-              let newDate: Date = new Date(Date.parse(value));
+              let newDate: Date = new Date(Date.parse(value + "Z"));
               if (!isNaN(newDate.getTime())) setEndTime(newDate);
             }
           })
