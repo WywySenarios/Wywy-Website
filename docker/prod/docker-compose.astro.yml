@@ -12,9 +12,9 @@ services:
     env_file:
       - path: ${UNIVERSAL_CONFIG_DIR}/.env
         required: true
-      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env
+      - path: ${UNIVERSAL_CONFIG_DIR}/.env.prod
         required: true
-      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env.prod
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env
         required: true
     secrets:
       - wywywebsite-astro-cloudflare
@@ -27,6 +27,7 @@ services:
 
 volumes:
   astro-node_modules:
+
 
 secrets:
   wywywebsite-astro-cloudflare:
