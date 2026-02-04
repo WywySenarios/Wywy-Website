@@ -2,9 +2,6 @@ FROM node:lts AS runtime
 
 WORKDIR /apps/astro-app
 
-# copy global config
-COPY ./config.yml ./../../
-
 # copy the entrypoint
 COPY apps/astro-app/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
