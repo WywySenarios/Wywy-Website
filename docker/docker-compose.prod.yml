@@ -25,6 +25,8 @@ services:
     depends_on:
       wywywebsite_database:
         condition: service_healthy
+    volumes:
+      - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/sql-receptionist/config.yml
     command: ./app
 
   wywywebsite_create_tables:
@@ -48,6 +50,8 @@ services:
         condition: service_healthy
     networks:
       - wywywebsite_database
+    volumes:
+      - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/create_tables/config.yml
     command: python3 create_tables.py
 
   wywywebsite_cloudflared:

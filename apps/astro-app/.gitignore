@@ -3,6 +3,9 @@
 **/*credentials*.json
 **/*token.json
 
+# config artifact from docker volume
+config.yml
+
 # ignore website content
 
 ## don't copy data over because that's just weird

@@ -16,7 +16,7 @@ services:
     volumes:
       - ../apps/astro-app:/apps/astro-app
       - /apps/astro-app/node_modules
-      # - astro-node_modules:/apps/astro-app/node_modules
+      - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/astro-app/config.yml
     env_file:
       - path: ${UNIVERSAL_CONFIG_DIR}/.env
         required: true
@@ -28,7 +28,7 @@ services:
       watch:
         - action: sync
           path: ${UNIVERSAL_CONFIG_DIR}/config.yml
-          target: /config.yml
+          target: /apps/astro-app/config.yml
           initial_sync: true
     command: npm run dev -- --host
 
@@ -58,6 +58,8 @@ services:
           path: ${UNIVERSAL_CONFIG_DIR}/config.yml
           target: /config.yml
           initial_sync: true
+    volumes:
+      - ${UNIVERSAL_CONFIG_DIR}/config.yml:/config.yml
     secrets:
       - admin
     ports:
@@ -95,6 +97,8 @@ services:
           path: ./../apps/create_tables
           target: ./apps/create_tables
           initial_sync: true
+    volumes:
+      - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/create_tables/config.yml
     depends_on:
       wywywebsite_database:
         condition: service_healthy
