@@ -100,7 +100,7 @@ services:
       start_period: 3s
       retries: 10
     volumes:
-      - ./../apps/postgres/pgdata:/var/lib/postgresql/data
+      - ${DATA_DIR}/website/postgres:/var/lib/postgresql/data
       - ${UNIVERSAL_CONFIG_DIR}/website/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ${UNIVERSAL_CONFIG_DIR}/website/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
     shm_size: 128mb
