@@ -126,21 +126,13 @@ services:
     ports:
       - ${DATABASE_PORT}:${DATABASE_PORT}
     healthcheck:
-      test:
-        [
-          "CMD",
-          "pg_isready",
-          "-U",
-          "${DATABASE_USERNAME}",
-          "-p",
-          "${DATABASE_PORT}",
-        ]
+      test: [ "CMD", "pg_isready", "-U", "${DATABASE_USERNAME}", "-p", "${DATABASE_PORT}" ]
       interval: 5m
       timeout: 5s
       start_period: 3s
       retries: 10
     volumes:
-      - ./../apps/postgres/pgdata:/var/lib/postgresql/data
+      - ${DATA_DIR}/website/postgres:/var/lib/postgresql/data
       - ${UNIVERSAL_CONFIG_DIR}/website/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ${UNIVERSAL_CONFIG_DIR}/website/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
       # - ./../apps/postgres/backup.sh:/backup.sh
@@ -150,6 +142,7 @@ services:
 volumes:
   # postgres-db:
   astro-node_modules:
+
 
 secrets:
   admin:
