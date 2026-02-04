@@ -4,7 +4,6 @@ WORKDIR /apps/sql-receptionist
 ENV LD_LIBRARY_PATH=/usr/local/lib
 
 COPY ./apps/sql-receptionist .
-COPY ./config.yml /
 
 RUN apt-get update && apt-get install -y \
     libpq-dev \

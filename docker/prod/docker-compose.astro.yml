@@ -10,7 +10,11 @@ services:
       CLOUDFLARE_API_TOKEN_FILE: /run/secrets/wywywebsite-astro-cloudflare
     entrypoint: /entrypoint.sh
     env_file:
-      - path: ../.env.prod
+      - path: ${UNIVERSAL_CONFIG_DIR}/.env
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env.prod
         required: true
     secrets:
       - wywywebsite-astro-cloudflare
@@ -19,11 +23,11 @@ services:
     volumes:
       - ../../apps/astro-app:/apps/astro-app
       - astro-node_modules:/apps/astro-app/node_modules
+      - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/astro-app/config.yml
 
 volumes:
   astro-node_modules:
 
-
 secrets:
   wywywebsite-astro-cloudflare:
-    file: ./../../secrets/astro-cloudflare-token.txt
+    file: ${SECRETS_DIR}/website/astro-cloudflare-token.txt

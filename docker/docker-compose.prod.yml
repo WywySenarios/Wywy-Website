@@ -9,9 +9,11 @@ services:
       dockerfile: apps/sql-receptionist/Dockerfile
       # target: builder
     env_file:
-      - path: .env
+      - path: ${UNIVERSAL_CONFIG_DIR}/.env
         required: true
-      - path: .env.prod
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env.prod
         required: true
     secrets:
       - admin
@@ -23,6 +25,8 @@ services:
     depends_on:
       wywywebsite_database:
         condition: service_healthy
+    volumes:
+      - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/sql-receptionist/config.yml
     command: ./app
 
   wywywebsite_create_tables:
@@ -33,17 +37,21 @@ services:
       context: ../
       dockerfile: apps/create_tables/Dockerfile
       args:
-        CONFIG_PATH: ./../../config.yml
+        CONFIG_PATH: ${UNIVERSAL_CONFIG_DIR}/config.yml
     env_file:
-      - path: .env
+      - path: ${UNIVERSAL_CONFIG_DIR}/.env
         required: true
-      - path: .env.prod
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env.prod
         required: true
     depends_on:
       wywywebsite_database:
         condition: service_healthy
     networks:
       - wywywebsite_database
+    volumes:
+      - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/create_tables/config.yml
     command: python3 create_tables.py
 
   wywywebsite_cloudflared:
@@ -71,9 +79,11 @@ services:
       target: db
     restart: always
     env_file:
-      - path: .env
+      - path: ${UNIVERSAL_CONFIG_DIR}/.env
         required: true
-      - path: .env.prod
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env.prod
         required: true
     environment:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
@@ -99,8 +109,8 @@ services:
       retries: 10
     volumes:
       - ./../apps/postgres/pgdata:/var/lib/postgresql/data
-      - ./../apps/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
-      - ./../apps/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ${UNIVERSAL_CONFIG_DIR}/website/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ${UNIVERSAL_CONFIG_DIR}/website/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
     shm_size: 128mb
     command: postgres -D /var/lib/postgresql/data -p ${DATABASE_PORT} -c config_file=/etc/postgresql/postgresql.conf
 
@@ -113,6 +123,6 @@ networks:
 
 secrets:
   wywywebsite-cloudflared-cloudflare:
-    file: ./../secrets/cloudflared-cloudflare-token.txt
+    file: ${SECRETS_DIR}/website/cloudflared-cloudflare-token.txt
   admin:
-    file: ./../secrets/admin.txt
+    file: ${SECRETS_DIR}/admin.txt

@@ -16,15 +16,19 @@ services:
     volumes:
       - ../apps/astro-app:/apps/astro-app
       - /apps/astro-app/node_modules
-      # - astro-node_modules:/apps/astro-app/node_modules
+      - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/astro-app/config.yml
     env_file:
-      - path: .env.dev
+      - path: ${UNIVERSAL_CONFIG_DIR}/.env
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env.dev
         required: true
     develop:
       watch:
         - action: sync
-          path: ./../config.yml
-          target: /config.yml
+          path: ${UNIVERSAL_CONFIG_DIR}/config.yml
+          target: /apps/astro-app/config.yml
           initial_sync: true
     command: npm run dev -- --host
 
@@ -38,9 +42,11 @@ services:
       dockerfile: apps/sql-receptionist/Dockerfile.dev
       # target: builder
     env_file:
-      - path: .env
+      - path: ${UNIVERSAL_CONFIG_DIR}/.env
         required: true
-      - path: .env.dev
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env.dev
         required: true
     develop:
       watch:
@@ -49,9 +55,11 @@ services:
           target: ./apps/sql-receptionist
           initial_sync: true
         - action: sync+restart
-          path: ./../config.yml
+          path: ${UNIVERSAL_CONFIG_DIR}/config.yml
           target: /config.yml
           initial_sync: true
+    volumes:
+      - ${UNIVERSAL_CONFIG_DIR}/config.yml:/config.yml
     secrets:
       - admin
     ports:
@@ -71,22 +79,26 @@ services:
       context: ../
       dockerfile: apps/create_tables/Dockerfile
       args:
-        CONFIG_PATH: ./../../config.yml
+        CONFIG_PATH: ${UNIVERSAL_CONFIG_DIR}/config.yml
     env_file:
-      - path: .env
+      - path: ${UNIVERSAL_CONFIG_DIR}/.env
         required: true
-      - path: .env.dev
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env.dev
         required: true
     develop:
       watch:
         - action: sync+restart
-          path: ./../config.yml
+          path: ${UNIVERSAL_CONFIG_DIR}/config.yml
           target: /apps/create_tables/config.yml
           initial_sync: true
         - action: sync+restart
           path: ./../apps/create_tables
           target: ./apps/create_tables
           initial_sync: true
+    volumes:
+      - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/create_tables/config.yml
     depends_on:
       wywywebsite_database:
         condition: service_healthy
@@ -101,9 +113,11 @@ services:
       target: db
     restart: always
     env_file:
-      - path: .env
+      - path: ${UNIVERSAL_CONFIG_DIR}/.env
         required: true
-      - path: .env.dev
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env.dev
         required: true
     environment:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
@@ -127,8 +141,8 @@ services:
       retries: 10
     volumes:
       - ./../apps/postgres/pgdata:/var/lib/postgresql/data
-      - ./../apps/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
-      - ./../apps/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ${UNIVERSAL_CONFIG_DIR}/website/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ${UNIVERSAL_CONFIG_DIR}/website/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
       # - ./../apps/postgres/backup.sh:/backup.sh
     shm_size: 128mb
     command: postgres -D /var/lib/postgresql/data -p ${DATABASE_PORT} -c config_file=/etc/postgresql/postgresql.conf
@@ -139,4 +153,4 @@ volumes:
 
 secrets:
   admin:
-    file: ./../secrets/admin.txt
+    file: ${SECRETS_DIR}/admin.txt
