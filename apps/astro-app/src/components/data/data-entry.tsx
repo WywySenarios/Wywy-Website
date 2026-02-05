@@ -19,6 +19,7 @@ import { getDefaultValues } from "./form-helper";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { SearchSelect } from "./input-element/search-select";
+import { CACHE_URL } from "astro:env/client";
 
 export function Columns({
   fieldsToEnter,
@@ -116,12 +117,10 @@ export function Tags({
   form,
   databaseName,
   tableInfo,
-  dbURL,
 }: {
   form: any;
   databaseName: string;
   tableInfo: TableInfo;
-  dbURL: string;
 }): JSX.Element {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -132,7 +131,7 @@ export function Tags({
   const [nextTag, setNextTag] = useState<string>("");
 
   useEffect(() => {
-    fetch(`${dbURL}/tags/${databaseName}/${tableInfo.tableName}`, {
+    fetch(`${CACHE_URL}/tags/${databaseName}/${tableInfo.tableName}`, {
       credentials: "include",
     }).then((res: Response) => {
       if (res.ok)

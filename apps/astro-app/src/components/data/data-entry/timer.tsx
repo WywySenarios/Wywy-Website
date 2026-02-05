@@ -7,6 +7,7 @@ import type z from "zod";
 import { toast } from "sonner";
 import { getCSRFToken } from "@/utils/auth";
 import { toSnakeCase } from "@/utils";
+import { CACHE_URL } from "astro:env/client";
 
 // child component to circumvent hook rules
 function TimerFormForm({
@@ -17,7 +18,6 @@ function TimerFormForm({
   cancelButton,
   databaseName,
   tableInfo,
-  dbURL,
 }: {
   startTime: Date;
   setStartTime: React.Dispatch<React.SetStateAction<Date | undefined>>;
@@ -26,7 +26,6 @@ function TimerFormForm({
   cancelButton: JSX.Element;
   databaseName: string;
   tableInfo: TableInfo;
-  dbURL: string;
 }) {
   // sub in the start & end times as default values, as if they were in the schema originally
   for (let columnInfo of tableInfo.schema) {
@@ -41,7 +40,7 @@ function TimerFormForm({
   }
 
   const { form, formSchema, onSubmit, onSubmitInvalid } =
-    createFormSchemaAndHandlers(databaseName, tableInfo, dbURL);
+    createFormSchemaAndHandlers(databaseName, tableInfo, CACHE_URL);
 
   function submission(
     values: z.infer<typeof formSchema>,
@@ -71,12 +70,7 @@ function TimerFormForm({
       {/* Quick actions */}
       {/* Tags */}
       {tableInfo.tagging && (
-        <Tags
-          databaseName={databaseName}
-          tableInfo={tableInfo}
-          form={form}
-          dbURL={dbURL}
-        />
+        <Tags databaseName={databaseName} tableInfo={tableInfo} form={form} />
       )}
       {/* Descriptors */}
       {tableInfo.descriptors && (
@@ -97,18 +91,16 @@ function TimerFormForm({
 export function TimerForm({
   databaseName,
   tableInfo,
-  dbURL,
 }: {
   databaseName: string;
   tableInfo: TableInfo;
-  dbURL: string;
 }) {
   const [startTime, setStartTime] = useState<Date | undefined>(undefined);
   const [endTime, setEndTime] = useState<Date | undefined>(undefined);
 
   // initally try to GET the start time
   useEffect(() => {
-    fetch(`${dbURL}/cache/${databaseName}/${tableInfo.tableName}`, {
+    fetch(`${CACHE_URL}/cache/${databaseName}/${tableInfo.tableName}`, {
       method: "GET",
       mode: "cors",
       credentials: "include",
@@ -187,9 +179,9 @@ export function TimerForm({
 
     // store values in cache
     // @TODO don't hardcode start_time & end_time
-    getCSRFToken(dbURL)
+    getCSRFToken(CACHE_URL)
       .then((csrftoken: string) => {
-        fetch(`${dbURL}/cache/${databaseName}/${tableInfo.tableName}`, {
+        fetch(`${CACHE_URL}/cache/${databaseName}/${tableInfo.tableName}`, {
           method: "POST",
           body: JSON.stringify(output),
           mode: "cors",
@@ -249,7 +241,6 @@ export function TimerForm({
           }
           databaseName={databaseName}
           tableInfo={tableInfo}
-          dbURL={dbURL}
         />
       ) : (
         <div className="flex flex-col items-center">

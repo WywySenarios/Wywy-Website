@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import type { TableInfo } from "@/env";
 import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
 import { Columns } from "@/components/data/data-entry";
+import { CACHE_URL } from "astro:env/client";
 
 /**
  * Basic form component.
@@ -15,16 +16,14 @@ import { Columns } from "@/components/data/data-entry";
 export function FormForm({
   databaseName,
   tableInfo,
-  dbURL,
 }: {
   databaseName: string;
   tableInfo: TableInfo;
-  dbURL: string;
 }) {
   const { form, onSubmit, onSubmitInvalid } = createFormSchemaAndHandlers(
     databaseName,
     tableInfo,
-    dbURL
+    CACHE_URL,
   );
 
   return (

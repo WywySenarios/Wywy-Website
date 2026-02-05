@@ -14,28 +14,14 @@ import { TimerForm } from "@/components/data/data-entry/timer";
 export default function DataEntryForm({
   databaseName,
   tableInfo,
-  dbURL,
 }: {
   databaseName: string;
   tableInfo: TableInfo;
-  dbURL: string;
 }): JSX.Element {
   switch (tableInfo.entrytype) {
     case "form":
-      return (
-        <FormForm
-          databaseName={databaseName}
-          tableInfo={tableInfo}
-          dbURL={dbURL}
-        />
-      );
+      return <FormForm databaseName={databaseName} tableInfo={tableInfo} />;
     case "timer":
-      return (
-        <TimerForm
-          databaseName={databaseName}
-          tableInfo={tableInfo}
-          dbURL={dbURL}
-        />
-      );
+      return <TimerForm databaseName={databaseName} tableInfo={tableInfo} />;
   }
 }
