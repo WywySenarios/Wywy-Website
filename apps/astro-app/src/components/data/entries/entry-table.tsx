@@ -38,12 +38,25 @@ function getData<T extends TableData>(
     },
   })
     .then((response: Response) => {
+      if (!response.ok) {
+        response
+          .text()
+          .then((body: string) => {
+            toast(
+              `Something went wrong while fetching data: ${response.statusText}: ${body}`,
+            );
+          })
+          .catch((reason) => {
+            toast(
+              `Something went wrong while fetching data: ${response.statusText}: ${reason}`,
+            );
+          });
+
+        return;
+      }
+
       response
         .json()
-        .catch((reason) => {
-          toast(`Something went wrong while loading data: ${reason}`);
-          setLoading(false);
-        })
         .then((body: Record<string, any>) => {
           let valid = true;
           let output: T = body as T;
@@ -65,7 +78,7 @@ function getData<T extends TableData>(
           setData(output);
         })
         .catch((reason) => {
-          toast(`Something went wrong while loading data: ${reason}`);
+          toast(`Something went wrong while parsing data: ${reason}`);
           setLoading(false);
         });
     })
