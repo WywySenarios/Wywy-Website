@@ -128,55 +128,32 @@ function EntryTable({
       return <p>Something went wrong while picking the Origin to read from.</p>;
   }
   let table: JSX.Element = null;
+  // params applicable to every type of entry table
+  const genericEntryTableParams: EntryTableProps = {
+    databaseName: databaseName,
+    tableName: tableName,
+    endpoint: endpoint,
+  };
 
   switch (type) {
     case undefined:
       if (schema == undefined) return <NoTable />;
 
       table = (
-        <GenericEntryTable
-          schema={schema}
-          databaseName={databaseName}
-          tableName={tableName}
-          endpoint={endpoint}
-        />
+        <GenericEntryTable schema={schema} {...genericEntryTableParams} />
       );
       break;
     case "tags":
-      table = (
-        <TagsTable
-          databaseName={databaseName}
-          tableName={tableName}
-          endpoint={endpoint}
-        />
-      );
+      table = <TagsTable {...genericEntryTableParams} />;
       break;
     case "tag_names":
-      table = (
-        <TagNamesTable
-          databaseName={databaseName}
-          tableName={tableName}
-          endpoint={endpoint}
-        />
-      );
+      table = <TagNamesTable {...genericEntryTableParams} />;
       break;
     case "tag_aliases":
-      table = (
-        <TagAliasesTable
-          databaseName={databaseName}
-          tableName={tableName}
-          endpoint={endpoint}
-        />
-      );
+      table = <TagAliasesTable {...genericEntryTableParams} />;
       break;
     case "tag_groups":
-      table = (
-        <TagGroupsTable
-          databaseName={databaseName}
-          tableName={tableName}
-          endpoint={endpoint}
-        />
-      );
+      table = <TagGroupsTable {...genericEntryTableParams} />;
       break;
   }
 
@@ -195,6 +172,21 @@ function NoTable(): JSX.Element {
   <p>Something went wrong.</p>;
 }
 
+interface EntryTableProps {
+  databaseName: string;
+  tableName: string;
+  endpoint: string;
+}
+
+interface TableData {
+  columns: Array<string>;
+  data: Array<Array<string | number>>;
+}
+
+interface GenericEntryTableProps extends EntryTableProps {
+  schema: TableInfo | DescriptorInfo;
+}
+
 /**
  * A generic entry editor table.
  * @param schema The table schema.
@@ -208,25 +200,11 @@ function GenericEntryTable({
   databaseName,
   tableName,
   endpoint,
-}: {
-  schema: TableInfo | DescriptorInfo;
-  databaseName: string;
-  tableName: string;
-  endpoint: string;
-}): JSX.Element {
+}: GenericEntryTableProps): JSX.Element {
   return <></>;
 }
 
-interface TaggingEntryTableProps {
-  databaseName: string;
-  tableName: string;
-  endpoint: string;
-}
-
-interface TableData {
-  columns: Array<string>;
-  data: Array<Array<string | number>>;
-}
+interface TaggingEntryTableProps extends EntryTableProps {}
 
 interface TagsData extends TableData {
   columns: Array<"id" | "entry_id" | "tag_id">;
@@ -244,6 +222,14 @@ interface TagGroupsData extends TableData {
   columns: Array<"id" | "tag_id" | "group_name">;
 }
 
+/**
+ * Render a table full of data and a form at the bottom to insert new entries in.
+ * @param data The data to render.
+ * @param databaseName The name of the respective database.
+ * @param tableName The name of the respective table.
+ * @param type The type of TaggingTable to render.
+ * @returns
+ */
 function TaggingTable({
   data,
   databaseName,
