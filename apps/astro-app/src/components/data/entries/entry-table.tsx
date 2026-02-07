@@ -16,7 +16,7 @@ import {
 import { createTaggingTableFormSchemaAndHandlers } from "./entry-form-helper";
 import { TaggingTableEntry } from "./entry";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { CACHE_URL, DATABASE_URL } from "astro:env/client";
 import { OriginPicker } from "@/components/data/origin-picker";
 
@@ -116,6 +116,7 @@ function EntryTable({
   type?: undefined | "tags" | "tag_names" | "tag_aliases" | "tag_groups";
 }): JSX.Element {
   const [origin, setOrigin] = useState<string>(DATABASE_URL);
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   let endpoint;
   switch (origin) {
     case DATABASE_URL:
@@ -133,6 +134,7 @@ function EntryTable({
     databaseName: databaseName,
     tableName: tableName,
     endpoint: endpoint,
+    refreshTrigger: refreshTrigger,
   };
 
   switch (type) {
@@ -159,7 +161,16 @@ function EntryTable({
 
   return (
     <div>
-      <OriginPicker origin={origin} setOrigin={setOrigin} />
+      <div className="flex flex-row justify-center space-x-0.5">
+        <OriginPicker origin={origin} setOrigin={setOrigin} />
+        <Button
+          onClick={() => {
+            setRefreshTrigger(refreshTrigger + 1);
+          }}
+        >
+          <RefreshCw />
+        </Button>
+      </div>
       {table}
     </div>
   );
@@ -176,6 +187,7 @@ interface EntryTableProps {
   databaseName: string;
   tableName: string;
   endpoint: string;
+  refreshTrigger: number;
 }
 
 interface TableData {
@@ -193,6 +205,7 @@ interface GenericEntryTableProps extends EntryTableProps {
  * @param databaseName The name of the database that contains the target table.
  * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
+ * @param refreshTrigger A controlled field to trigger a refresh through useEffect.
  * @returns
  */
 function GenericEntryTable({
@@ -200,6 +213,7 @@ function GenericEntryTable({
   databaseName,
   tableName,
   endpoint,
+  refreshTrigger,
 }: GenericEntryTableProps): JSX.Element {
   return <></>;
 }
@@ -299,12 +313,14 @@ function TaggingTable({
  * @param databaseName The name of the database that contains the target table.
  * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
+ * @param refreshTrigger A controlled field to trigger a refresh through useEffect.
  * @returns
  */
 function TagsTable({
   databaseName,
   tableName,
   endpoint,
+  refreshTrigger,
 }: TaggingEntryTableProps): JSX.Element {
   const [data, setData] = useState<TagsData>({
     columns: ["id", "entry_id", "tag_id"],
@@ -319,7 +335,7 @@ function TagsTable({
       setLoading,
       setData,
     );
-  }, [endpoint]);
+  }, [endpoint, refreshTrigger]);
 
   if (loading) {
     return <p>Loading...</p>;
@@ -343,12 +359,14 @@ function TagsTable({
  * @param databaseName The name of the database that contains the target table.
  * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
+ * @param refreshTrigger A controlled field to trigger a refresh through useEffect.
  * @returns
  */
 function TagNamesTable({
   databaseName,
   tableName,
   endpoint,
+  refreshTrigger,
 }: TaggingEntryTableProps): JSX.Element {
   const [data, setData] = useState<TagNamesData>({
     columns: ["id", "tag_name"],
@@ -363,7 +381,7 @@ function TagNamesTable({
       setLoading,
       setData,
     );
-  }, [endpoint]);
+  }, [endpoint, refreshTrigger]);
 
   if (loading) {
     return <p>Loading...</p>;
@@ -387,12 +405,14 @@ function TagNamesTable({
  * @param databaseName The name of the database that contains the target table.
  * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
+ * @param refreshTrigger A controlled field to trigger a refresh through useEffect.
  * @returns
  */
 function TagAliasesTable({
   databaseName,
   tableName,
   endpoint,
+  refreshTrigger,
 }: TaggingEntryTableProps): JSX.Element {
   const [data, setData] = useState<TagAliasesData>({
     columns: ["alias", "tag_id"],
@@ -407,7 +427,7 @@ function TagAliasesTable({
       setLoading,
       setData,
     );
-  }, [endpoint]);
+  }, [endpoint, refreshTrigger]);
 
   if (loading) {
     return <p>Loading...</p>;
@@ -431,12 +451,14 @@ function TagAliasesTable({
  * @param databaseName The name of the database that contains the target table.
  * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
+ * @param refreshTrigger A controlled field to trigger a refresh through useEffect.
  * @returns
  */
 function TagGroupsTable({
   databaseName,
   tableName,
   endpoint,
+  refreshTrigger,
 }: TaggingEntryTableProps): JSX.Element {
   const [data, setData] = useState<TagGroupsData>({
     columns: ["id", "tag_id", "group_name"],
@@ -451,7 +473,7 @@ function TagGroupsTable({
       setLoading,
       setData,
     );
-  }, [endpoint]);
+  }, [endpoint, refreshTrigger]);
 
   if (loading) {
     return <p>Loading...</p>;
