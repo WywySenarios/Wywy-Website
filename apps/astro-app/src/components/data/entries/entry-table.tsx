@@ -17,6 +17,8 @@ import { createTaggingTableFormSchemaAndHandlers } from "./entry-form-helper";
 import { TaggingTableEntry } from "./entry";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { CACHE_URL, DATABASE_URL } from "astro:env/client";
+import { OriginPicker } from "@/components/data/origin-picker";
 
 /**
  * Fetches the data from the endpoint and assumes the data to be of the specified type.
@@ -113,56 +115,77 @@ function EntryTable({
   cacheURL: string;
   type?: undefined | "tags" | "tag_names" | "tag_aliases" | "tag_groups";
 }): JSX.Element {
+  const [origin, setOrigin] = useState<string>(DATABASE_URL);
+  let endpoint;
+  switch (origin) {
+    case DATABASE_URL:
+      endpoint = `${DATABASE_URL}`;
+      break;
+    case CACHE_URL:
+      endpoint = `${CACHE_URL}/main`;
+      break;
+    default:
+      return <p>Something went wrong while picking the Origin to read from.</p>;
+  }
+  let table: JSX.Element = null;
+
   switch (type) {
     case undefined:
       if (schema == undefined) return <NoTable />;
 
-      return (
+      table = (
         <GenericEntryTable
           schema={schema}
           databaseName={databaseName}
           tableName={tableName}
-          databaseURL={databaseURL}
-          cacheURL={cacheURL}
+          endpoint={endpoint}
         />
       );
+      break;
     case "tags":
-      return (
+      table = (
         <TagsTable
           databaseName={databaseName}
           tableName={tableName}
-          databaseURL={databaseURL}
-          cacheURL={cacheURL}
+          endpoint={endpoint}
         />
       );
+      break;
     case "tag_names":
-      return (
+      table = (
         <TagNamesTable
           databaseName={databaseName}
           tableName={tableName}
-          databaseURL={databaseURL}
-          cacheURL={cacheURL}
+          endpoint={endpoint}
         />
       );
+      break;
     case "tag_aliases":
-      return (
+      table = (
         <TagAliasesTable
           databaseName={databaseName}
           tableName={tableName}
-          databaseURL={databaseURL}
-          cacheURL={cacheURL}
+          endpoint={endpoint}
         />
       );
+      break;
     case "tag_groups":
-      return (
+      table = (
         <TagGroupsTable
           databaseName={databaseName}
           tableName={tableName}
-          databaseURL={databaseURL}
-          cacheURL={cacheURL}
+          endpoint={endpoint}
         />
       );
+      break;
   }
+
+  return (
+    <div>
+      <OriginPicker origin={origin} setOrigin={setOrigin} />
+      {table}
+    </div>
+  );
 }
 
 /**
@@ -177,22 +200,19 @@ function NoTable(): JSX.Element {
  * @param schema The table schema.
  * @param databaseName The name of the database that contains the target table.
  * @param tableName The name of the parent table (or the target table if there is no parent).
- * @param databaseURL The URL of the master database.
- * @param cacheURL The URL of the cache database.
+ * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
  * @returns
  */
 function GenericEntryTable({
   schema,
   databaseName,
   tableName,
-  databaseURL,
-  cacheURL,
+  endpoint,
 }: {
   schema: TableInfo | DescriptorInfo;
   databaseName: string;
   tableName: string;
-  databaseURL: string;
-  cacheURL: string;
+  endpoint: string;
 }): JSX.Element {
   return <></>;
 }
@@ -200,8 +220,7 @@ function GenericEntryTable({
 interface TaggingEntryTableProps {
   databaseName: string;
   tableName: string;
-  databaseURL: string;
-  cacheURL: string;
+  endpoint: string;
 }
 
 interface TableData {
@@ -230,20 +249,18 @@ function TaggingTable({
   databaseName,
   tableName,
   type,
-  cacheURL,
 }: {
   data: TableData;
   databaseName: string;
   tableName: string;
   type: "tags" | "tag_names" | "tag_aliases" | "tag_groups";
-  cacheURL: string;
 }) {
   const { controller, onSubmit, onSubmitInvalid } =
     createTaggingTableFormSchemaAndHandlers(
       databaseName,
       tableName,
       type,
-      cacheURL,
+      CACHE_URL,
     );
 
   return (
@@ -295,15 +312,13 @@ function TaggingTable({
  * A tags editor table. May add or remove tags links from tags to generic entries.
  * @param databaseName The name of the database that contains the target table.
  * @param tableName The name of the parent table (or the target table if there is no parent).
- * @param databaseURL The URL of the master database.
- * @param cacheURL The URL of the cache database.
+ * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
  * @returns
  */
 function TagsTable({
   databaseName,
   tableName,
-  databaseURL,
-  cacheURL,
+  endpoint,
 }: TaggingEntryTableProps): JSX.Element {
   const [data, setData] = useState<TagsData>({
     columns: ["id", "entry_id", "tag_id"],
@@ -314,11 +329,11 @@ function TagsTable({
   // load in data from
   useEffect(() => {
     getData(
-      `${databaseURL}/${databaseName}/${tableName}/tags`,
+      `${endpoint}/${databaseName}/${tableName}/tags`,
       setLoading,
       setData,
     );
-  }, []);
+  }, [endpoint]);
 
   if (loading) {
     return <p>Loading...</p>;
@@ -334,7 +349,6 @@ function TagsTable({
       databaseName={databaseName}
       tableName={tableName}
       type="tags"
-      cacheURL={cacheURL}
     />
   );
 }
@@ -342,15 +356,13 @@ function TagsTable({
  * A tag name editor table. May create new tags but cannot remove old tags.
  * @param databaseName The name of the database that contains the target table.
  * @param tableName The name of the parent table (or the target table if there is no parent).
- * @param databaseURL The URL of the master database.
- * @param cacheURL The URL of the cache database.
+ * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
  * @returns
  */
 function TagNamesTable({
   databaseName,
   tableName,
-  databaseURL,
-  cacheURL,
+  endpoint,
 }: TaggingEntryTableProps): JSX.Element {
   const [data, setData] = useState<TagNamesData>({
     columns: ["id", "tag_name"],
@@ -361,11 +373,11 @@ function TagNamesTable({
   // load in data from
   useEffect(() => {
     getData(
-      `${databaseURL}/${databaseName}/${tableName}/tag_names`,
+      `${endpoint}/${databaseName}/${tableName}/tag_names`,
       setLoading,
       setData,
     );
-  }, []);
+  }, [endpoint]);
 
   if (loading) {
     return <p>Loading...</p>;
@@ -381,7 +393,6 @@ function TagNamesTable({
       databaseName={databaseName}
       tableName={tableName}
       type="tag_names"
-      cacheURL={cacheURL}
     />
   );
 }
@@ -389,15 +400,13 @@ function TagNamesTable({
  * A tags aliases table. May create or remove tag aliases. The user is not prevented from removing all aliases from a given tag, nor are they barred from removing the respective tag's direct name.
  * @param databaseName The name of the database that contains the target table.
  * @param tableName The name of the parent table (or the target table if there is no parent).
- * @param databaseURL The URL of the master database.
- * @param cacheURL The URL of the cache database.
+ * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
  * @returns
  */
 function TagAliasesTable({
   databaseName,
   tableName,
-  databaseURL,
-  cacheURL,
+  endpoint,
 }: TaggingEntryTableProps): JSX.Element {
   const [data, setData] = useState<TagAliasesData>({
     columns: ["alias", "tag_id"],
@@ -408,11 +417,11 @@ function TagAliasesTable({
   // load in data from
   useEffect(() => {
     getData(
-      `${databaseURL}/${databaseName}/${tableName}/tag_aliases`,
+      `${endpoint}/${databaseName}/${tableName}/tag_aliases`,
       setLoading,
       setData,
     );
-  }, []);
+  }, [endpoint]);
 
   if (loading) {
     return <p>Loading...</p>;
@@ -428,7 +437,6 @@ function TagAliasesTable({
       databaseName={databaseName}
       tableName={tableName}
       type="tag_aliases"
-      cacheURL={cacheURL}
     />
   );
 }
@@ -436,15 +444,13 @@ function TagAliasesTable({
  * A tag group editor table. May create or remove links from tags to tag groups.
  * @param databaseName The name of the database that contains the target table.
  * @param tableName The name of the parent table (or the target table if there is no parent).
- * @param databaseURL The URL of the master database.
- * @param cacheURL The URL of the cache database.
+ * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
  * @returns
  */
 function TagGroupsTable({
   databaseName,
   tableName,
-  databaseURL,
-  cacheURL,
+  endpoint,
 }: TaggingEntryTableProps): JSX.Element {
   const [data, setData] = useState<TagGroupsData>({
     columns: ["id", "tag_id", "group_name"],
@@ -455,11 +461,11 @@ function TagGroupsTable({
   // load in data from
   useEffect(() => {
     getData(
-      `${databaseURL}/${databaseName}/${tableName}/tag_groups`,
+      `${endpoint}/${databaseName}/${tableName}/tag_groups`,
       setLoading,
       setData,
     );
-  }, []);
+  }, [endpoint]);
 
   if (loading) {
     return <p>Loading...</p>;
@@ -475,7 +481,6 @@ function TagGroupsTable({
       databaseName={databaseName}
       tableName={tableName}
       type="tag_groups"
-      cacheURL={cacheURL}
     />
   );
 }
