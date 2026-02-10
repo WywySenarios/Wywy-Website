@@ -196,16 +196,21 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
   // abuse the fact that to_snake_case completely ignores commas
   to_lower_snake_case(column_names);
 
-  size_t query_size = strlen("INSERT INTO  () VALUES() RETURNING ;") +
-                      strlen(table_name) + (column_names_size - 1) +
-                      (values_size - 1) + strlen(primary_column_name) + 1;
+  size_t query_size =
+      strlen("INSERT INTO  () VALUES() ON CONFLICT () DO UPDATE SET  = "
+             "EXCLUDED. RETURNING ;") +
+      strlen(table_name) + (column_names_size - 1) + (values_size - 1) +
+      4 * strlen(primary_column_name) + 1;
   *query = malloc(query_size);
   if (!*query) {
     status = -1;
     goto construct_validate_query_end;
   }
-  snprintf(*query, query_size, "INSERT INTO %s (%s) VALUES(%s) RETURNING %s;",
-           table_name, column_names, values, primary_column_name);
+  snprintf(*query, query_size,
+           "INSERT INTO %s (%s) VALUES(%s) ON CONFLICT (%s) DO UPDATE SET %s = "
+           "EXCLUDED.%s RETURNING %s;",
+           table_name, column_names, values, primary_column_name,
+           primary_column_name, primary_column_name, primary_column_name);
 
 construct_validate_query_end:
   free(column_name);
