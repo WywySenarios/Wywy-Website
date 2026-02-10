@@ -960,7 +960,8 @@ end:
   close(client_fd);
 
   free(buffer);
-  free(*response);
+  if (response)
+    free(*response);
   free(response);
   free(response_len);
   free(matches);
