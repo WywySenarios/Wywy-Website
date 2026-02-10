@@ -201,7 +201,7 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
       strlen("INSERT INTO  () VALUES() ON CONFLICT () DO UPDATE SET  = "
              "EXCLUDED. RETURNING ;") +
       strlen(table_name) + (column_names_size - 1) + (values_size - 1) +
-      3 * strlen(primary_column_name) + strlen(duplicate_column_name) + 1;
+      strlen(primary_column_name) + 3 * strlen(duplicate_column_name) + 1;
   *query = malloc(query_size);
   if (!*query) {
     status = -1;
@@ -211,7 +211,7 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
            "INSERT INTO %s (%s) VALUES(%s) ON CONFLICT (%s) DO UPDATE SET %s = "
            "EXCLUDED.%s RETURNING %s;",
            table_name, column_names, values, duplicate_column_name,
-           primary_column_name, primary_column_name, primary_column_name);
+           duplicate_column_name, duplicate_column_name, primary_column_name);
 
 construct_validate_query_end:
   free(column_name);
