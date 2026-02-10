@@ -19,13 +19,14 @@
  * query.
  * @param table_name The target table's name.
  * @param primary_column_name The name of the primary column.
+ * @param duplicate_column_name The name of the column that might be duplicated.
  * @returns 0 if the query is invalid, 1 if the query is valid, -1 on unexpected
  * failure.
  */
 int construct_validate_query(json_t *entry, struct data_column *schema,
                              unsigned int schema_count, char **query,
-                             char *table_name,
-                             const char *primary_column_name) {
+                             char *table_name, const char *primary_column_name,
+                             const char *duplicate_column_name) {
   const char *key = NULL;
   const json_t *value = NULL;
   char *value_string = NULL;
@@ -200,7 +201,7 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
       strlen("INSERT INTO  () VALUES() ON CONFLICT () DO UPDATE SET  = "
              "EXCLUDED. RETURNING ;") +
       strlen(table_name) + (column_names_size - 1) + (values_size - 1) +
-      4 * strlen(primary_column_name) + 1;
+      3 * strlen(primary_column_name) + strlen(duplicate_column_name) + 1;
   *query = malloc(query_size);
   if (!*query) {
     status = -1;
@@ -209,7 +210,7 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
   snprintf(*query, query_size,
            "INSERT INTO %s (%s) VALUES(%s) ON CONFLICT (%s) DO UPDATE SET %s = "
            "EXCLUDED.%s RETURNING %s;",
-           table_name, column_names, values, primary_column_name,
+           table_name, column_names, values, duplicate_column_name,
            primary_column_name, primary_column_name, primary_column_name);
 
 construct_validate_query_end:

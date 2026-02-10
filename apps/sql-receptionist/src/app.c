@@ -816,6 +816,7 @@ void *handle_client(void *arg) {
       struct data_column *schema = NULL;
       int schema_count = -1;
       const char *primary_column_name = "id";
+      const char *duplicate_column_name = "id";
       if (strcmp(target_type, "data") == 0) {
         // no additional checks needed
         schema = table->schema;
@@ -867,6 +868,8 @@ void *handle_client(void *arg) {
         schema = tag_names_schema;
         schema_count = tag_names_schema_count;
 
+        duplicate_column_name = "tag_name";
+
         // update target table name
         url_segments[1] = table_name =
             replace_table_name(table_name, "_tag_names");
@@ -875,6 +878,7 @@ void *handle_client(void *arg) {
         schema_count = tag_aliases_schema_count;
 
         primary_column_name = "alias";
+        duplicate_column_name = "alias";
 
         // update target table name
         url_segments[1] = table_name =
@@ -900,7 +904,8 @@ void *handle_client(void *arg) {
       }
 
       switch (construct_validate_query(entry, schema, schema_count, &query,
-                                       table_name, primary_column_name)) {
+                                       table_name, primary_column_name,
+                                       duplicate_column_name)) {
       case 0:
         build_response(400, response, response_len,
                        "The given entry does not "
