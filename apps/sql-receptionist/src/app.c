@@ -54,13 +54,13 @@ int done;
 void handle_sigterm(int signal_num) {
   printf("Received SIGTERM. Exiting now...\n");
   done = 1;
-  exit(1);
+  exit(0);
 }
 
 void handle_sigint(int signal_num) {
   printf("Received SIGINT. Exiting now...\n");
   done = 1;
-  exit(1);
+  exit(0);
 }
 
 char *admin_creds;
