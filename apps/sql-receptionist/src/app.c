@@ -243,6 +243,9 @@ void *handle_client(void *arg) {
   }
 
   buffer[bytes_received] = '\0';
+  char *body = strstr(buffer, "\r\n\r\n");
+  if (body)
+    body += 4;
 
   // @warning HTTP/1 not matching?
   // ^([A-Z]+) /([^ ]*) HTTP/[12]\\.[0-9]
@@ -346,29 +349,11 @@ void *handle_client(void *arg) {
 
   // @TODO auth for non-admin users
   if (url_segments[0] && strcmp(url_segments[0], "auth") == 0) {
-    regex_t body_regex;
-    regcomp(&body_regex, "\r\n\r\n(.+)", REG_EXTENDED);
-
-    regmatch_t body_matches[1 + 1];
-
-    if (regexec(&body_regex, buffer, 1 + 1, body_matches, 0) == REG_NOMATCH) {
-      regfree(&body_regex);
-      build_response(400, &response, &response_len,
-                     "Cannot POST an empty body.");
-      goto end;
-    }
-    regfree(&body_regex);
-
-    int body_len = body_matches[1].rm_eo - body_matches[1].rm_so;
-    char *body = malloc(body_len + 1);
     if (!body) {
-      build_response(500, &response, &response_len,
-                     "Something unexpected happened while authenticating");
+      build_response(400, &response, &response_len,
+                     "Failed to parse body. (Invalid/empty?)");
       goto end;
     }
-    strncpy(body, buffer + body_matches[1].rm_so, body_len);
-    body[body_len] = '\0';
-
     if (strcmp(body, admin_creds) == 0) {
       // @TODO do not hardcode
       response_len = strlen("HTTP/1.1 200 OK\r\n"
@@ -399,7 +384,6 @@ void *handle_client(void *arg) {
                "\r\n",
                getenv("MAIN_URL"), getenv("AUTH_COOKIE_MAX_AGE"), body,
                getenv("AUTH_COOKIE_MAX_AGE"));
-      free(body);
       goto end;
     } else {
       build_response(403, &response, &response_len, "Invalid credentials.");
@@ -779,21 +763,11 @@ void *handle_client(void *arg) {
     // check if the database & table can be written to freely
     if (table->write) {
       // verify the schema
-      regex_t body_regex;
-      regcomp(&body_regex, "\r\n\r\n(.+)", REG_EXTENDED);
-
-      regmatch_t body_matches[1 + 1];
-
-      if (regexec(&body_regex, buffer, 1 + 1, body_matches, 0) == REG_NOMATCH) {
+      if (!body) {
         build_response(400, &response, &response_len,
-                       "Cannot POST an empty body.");
-        goto bad_body_end;
+                       "Failed to parse body. (Invalid/empty?)");
+        goto end;
       }
-
-      int body_len = body_matches[1].rm_eo - body_matches[1].rm_so;
-      char *body = malloc(body_len + 1);
-      strncpy(body, buffer + body_matches[1].rm_so, body_len);
-      body[body_len] = '\0';
 
       if (getenv("SQL_RECEPTIONIST_LOG_INPUT") &&
           strcmp(getenv("SQL_RECEPTIONIST_LOG_INPUT"), "TRUE") == 0)
@@ -939,9 +913,7 @@ void *handle_client(void *arg) {
 
     schema_mismatch_end:
     post_bad_input_end:
-      free(body);
     bad_body_end:
-      regfree(&body_regex);
       // free json object??? how ???
       // FIX LATER: causes memory & multithreading issues??
       json_decref(entry);
