@@ -113,15 +113,29 @@ int construct_validate_query(json_t *entry, struct data_column *schema,
           // comments.
           if (is_comments_column) {
             if (schema[i].comments == false) {
+              if (getenv("SQL_RECEPTIONIST_LOG_SCHEMA_FAILURES") &&
+                  strcmp(getenv("SQL_RECEPTIONIST_LOG_SCHEMA_FAILURES"),
+                         "TRUE") == 0)
+                printf("Column %s does not have commenting enabled.\n",
+                       schema[i].name);
               break;
             }
 
             // comments MUST have text
             if (check_string(value) == 0) {
+              if (getenv("SQL_RECEPTIONIST_LOG_SCHEMA_FAILURES") &&
+                  strcmp(getenv("SQL_RECEPTIONIST_LOG_SCHEMA_FAILURES"),
+                         "TRUE") == 0)
+                printf("The comment for column %s was empty.\n",
+                       schema[i].name);
               break;
             }
           } else {
             if (!check_column(value, &schema[i])) {
+              if (getenv("SQL_RECEPTIONIST_LOG_SCHEMA_FAILURES") &&
+                  strcmp(getenv("SQL_RECEPTIONIST_LOG_SCHEMA_FAILURES"),
+                         "TRUE") == 0)
+                printf("Invalid datatype for column %s.\n", schema[i].name);
               break;
             }
           }
