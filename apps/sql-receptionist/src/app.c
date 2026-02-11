@@ -233,7 +233,7 @@ void *handle_client(void *arg) {
   }
 
   // receive request data from client and store into buffer
-  ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
+  ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
 
   // printf("%s\n", buffer);
 
@@ -241,6 +241,8 @@ void *handle_client(void *arg) {
     build_response(400, &response, &response_len, "No request data received.");
     goto end;
   }
+
+  buffer[bytes_received] = '\0';
 
   // @warning HTTP/1 not matching?
   // ^([A-Z]+) /([^ ]*) HTTP/[12]\\.[0-9]
