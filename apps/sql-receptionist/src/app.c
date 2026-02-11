@@ -998,6 +998,10 @@ int main(int argc, char const *argv[]) {
     fprintf(stderr, "Could not find environment variable DATABASE_PASSWORD.");
     exit(EXIT_FAILURE);
   }
+  if (!getenv("MAIN_URL")) {
+    fprintf(stderr, "Could not find environment variable MAIN_URL");
+    exit(EXIT_FAILURE);
+  }
 
   // attempt to read admin password
   admin_creds = malloc(MAX_PASSWORD_LENGTH + 1);
