@@ -82,6 +82,10 @@ void build_response(int status_code, char **response, size_t *response_len,
                   strlen(status_code_name) + strlen(getenv("MAIN_URL")) +
                   strlen(connection) + strlen(body);
   *response = malloc(*response_len + 1);
+  if (!*response) {
+    perror("Malloc failure on *response.");
+    return;
+  }
   snprintf(*response, *response_len + 1,
            "HTTP/1.1 %d %s\r\n"
            "Content-Type: text/plain\r\n"
