@@ -26,7 +26,7 @@ services:
       wywywebsite_database:
         condition: service_healthy
     volumes:
-      - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/sql-receptionist/config.yml
+      - ${UNIVERSAL_CONFIG_DIR}/config.yml:/config.yml
     command: ./app
 
   wywywebsite_create_tables:
@@ -94,7 +94,15 @@ services:
     networks:
       - wywywebsite_database
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "${DATABASE_USERNAME}", "-p", "${DATABASE_PORT}" ]
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-U",
+          "${DATABASE_USERNAME}",
+          "-p",
+          "${DATABASE_PORT}",
+        ]
       interval: 5m
       timeout: 5s
       start_period: 3s
