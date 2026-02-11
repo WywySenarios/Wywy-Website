@@ -16,9 +16,10 @@ import {
 import { createTaggingTableFormSchemaAndHandlers } from "./entry-form-helper";
 import { TaggingTableEntry } from "./entry";
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw } from "lucide-react";
+import { CloudDownload, Plus, RefreshCw } from "lucide-react";
 import { CACHE_URL, DATABASE_URL } from "astro:env/client";
 import { OriginPicker } from "@/components/data/origin-picker";
+import { getCSRFToken } from "@/utils/auth";
 
 /**
  * Fetches the data from the endpoint and assumes the data to be of the specified type.
@@ -111,6 +112,9 @@ function EntryTable({
 }): JSX.Element {
   const [origin, setOrigin] = useState<string>(DATABASE_URL);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
+  const [pullTrigger, setPullTrigger] = useState<number>(0);
+  let disablePullTrigger = true;
+
   let endpoint;
   switch (origin) {
     case DATABASE_URL:
@@ -131,6 +135,78 @@ function EntryTable({
     refreshTrigger: refreshTrigger,
   };
 
+  useEffect(() => {
+    // this only applies for the cache
+    if (origin != CACHE_URL) return;
+
+    // do not call when initially loading the webpage
+    if (pullTrigger == 0) return;
+
+    // only request refreshes on tags, tag_names, and tag_alaises tables.
+    switch (type) {
+      case "tags":
+        break;
+      case "tag_names":
+        break;
+      case "tag_aliases":
+        break;
+      default:
+        toast(
+          "You may only refresh these tables: tags, tag_names, tag_aliases.",
+        );
+        return;
+    }
+
+    // tell the cache to fetch data from the master database.
+    const csrfTokenPromise: Promise<string> = getCSRFToken(CACHE_URL);
+    csrfTokenPromise
+      .catch((reason: any) => {
+        toast(`Failed to request cache data update: ${reason}`);
+      })
+      .then((csrftoken: string | void) => {
+        if (!csrftoken) {
+          toast(`Failed to request cache data update: Invalid CSRF token.`);
+          return;
+        }
+        fetch(`${CACHE_URL}/refresh/${databaseName}/${tableName}/${type}`, {
+          method: "POST",
+          mode: "cors",
+          credentials: "include",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+            "X-CSRFToken": csrftoken,
+          },
+        })
+          .catch((reason: any) => {
+            toast(`Failed to request cache data update: ${reason}`);
+          })
+          .then((response: Response | void) => {
+            if (!response) {
+              toast(`Failed to request cache data update: No response.`);
+              return;
+            } else if (!response.ok) {
+              response
+                .text()
+                .catch((reason: any) => {
+                  toast(`Failed to request cache data update: ${reason}`);
+                })
+                .then((text: string | void) => {
+                  if (!text) {
+                    toast(
+                      `Failed to request cache data update. No reason provided.`,
+                    );
+                  }
+
+                  toast(`Failed to request cache data update: ${text}`);
+                });
+              return;
+            }
+
+            toast(`Successfully requested cache update.`);
+          });
+      });
+  }, [pullTrigger]);
+
   switch (type) {
     case undefined:
       if (schema == undefined) return <NoTable />;
@@ -144,9 +220,11 @@ function EntryTable({
       break;
     case "tag_names":
       table = <TagNamesTable {...genericEntryTableParams} />;
+      disablePullTrigger = false;
       break;
     case "tag_aliases":
       table = <TagAliasesTable {...genericEntryTableParams} />;
+      disablePullTrigger = false;
       break;
     case "tag_groups":
       table = <TagGroupsTable {...genericEntryTableParams} />;
@@ -156,6 +234,14 @@ function EntryTable({
   return (
     <div>
       <div className="flex flex-row justify-center space-x-0.5">
+        <Button
+          onClick={() => {
+            setPullTrigger(pullTrigger + 1);
+          }}
+          disabled={disablePullTrigger}
+        >
+          <CloudDownload />
+        </Button>
         <OriginPicker origin={origin} setOrigin={setOrigin} />
         <Button
           onClick={() => {
