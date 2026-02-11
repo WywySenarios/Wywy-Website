@@ -3,7 +3,6 @@
  * @TODO redirect if dataHarvesting is disabled
  */
 import type { DatabaseInfo, DescriptorInfo, TableInfo } from "@/env";
-import { DATABASE_URL, CACHE_URL } from "astro:env/client";
 import config from "@universal_root/config.yml";
 import Layout from "@/layouts/Layout.astro";
 
@@ -149,8 +148,6 @@ switch (slug) {
     schema={schema}
     databaseName={databaseName}
     tableName={tableName}
-    databaseURL={DATABASE_URL}
-    cacheURL={CACHE_URL}
     type={type}
     client:load
   />

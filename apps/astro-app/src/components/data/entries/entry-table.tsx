@@ -95,8 +95,6 @@ function getData<T extends TableData>(
  * @param schema The schema of the table.
  * @param databaseName The name of the target database
  * @param tableName The name of the parent table, or the target table if the table has no parent.
- * @param databaseURL The URL of the master database.
- * @param cacheURL The URL of the cache database.
  * @param type The type of table to render. Is either undefined (generic) or a tagging table type.
  * @returns an EntryTable component.
  */
@@ -104,15 +102,11 @@ function EntryTable({
   schema,
   databaseName,
   tableName,
-  databaseURL,
-  cacheURL,
   type,
 }: {
   schema?: TableInfo | DescriptorInfo | undefined;
   databaseName: string;
   tableName: string;
-  databaseURL: string;
-  cacheURL: string;
   type?: undefined | "tags" | "tag_names" | "tag_aliases" | "tag_groups";
 }): JSX.Element {
   const [origin, setOrigin] = useState<string>(DATABASE_URL);
