@@ -54,13 +54,13 @@ int done;
 void handle_sigterm(int signal_num) {
   printf("Received SIGTERM. Exiting now...\n");
   done = 1;
-  exit(1);
+  exit(0);
 }
 
 void handle_sigint(int signal_num) {
   printf("Received SIGINT. Exiting now...\n");
   done = 1;
-  exit(1);
+  exit(0);
 }
 
 char *admin_creds;
@@ -205,8 +205,8 @@ void *handle_client(void *arg) {
   // variables that are always used:
   int client_fd = *((int *)arg);
   char *buffer = malloc(BUFFER_SIZE * sizeof(char));
-  char **response = malloc(sizeof(char *));
-  size_t *response_len = malloc(sizeof(size_t *));
+  char *response = NULL;
+  size_t response_len = 0;
 
   // variables that are generally useful:
   char *method = NULL;
@@ -228,19 +228,24 @@ void *handle_client(void *arg) {
   char *query = NULL;
 
   // check for failed memory allocation
-  if (!buffer || !response || !response_len) {
+  if (!buffer) {
     goto end;
   }
 
   // receive request data from client and store into buffer
-  ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
+  ssize_t bytes_received = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
 
   // printf("%s\n", buffer);
 
   if (bytes_received <= 0) {
-    build_response(400, response, response_len, "No request data received.");
+    build_response(400, &response, &response_len, "No request data received.");
     goto end;
   }
+
+  buffer[bytes_received] = '\0';
+  char *body = strstr(buffer, "\r\n\r\n");
+  if (body)
+    body += 4;
 
   // @warning HTTP/1 not matching?
   // ^([A-Z]+) /([^ ]*) HTTP/[12]\\.[0-9]
@@ -249,13 +254,13 @@ void *handle_client(void *arg) {
 
   // catch malloc failure, etc.
   if (!matches) {
-    build_response(500, response, response_len,
+    build_response(500, &response, &response_len,
                    "Something unexpected happened.");
     goto end;
   }
 
   if (!regmatch_has_match(matches, 1) || !regmatch_has_match(matches, 2)) {
-    build_response(400, response, response_len, "Bad HTTP request.");
+    build_response(400, &response, &response_len, "Bad HTTP request.");
     goto end;
   }
 
@@ -263,14 +268,14 @@ void *handle_client(void *arg) {
   method = regmatch_get_match(matches, 1, buffer);
 
   if (!method) {
-    build_response(500, response, response_len,
+    build_response(500, &response, &response_len,
                    "Something unexpected happened.");
     goto end;
   }
 
   // immediately check for OPTIONS requests
   if (strcmp(method, "OPTIONS") == 0) {
-    build_response_default(204, response, response_len);
+    build_response_default(204, &response, &response_len);
     goto end;
   }
 
@@ -278,7 +283,7 @@ void *handle_client(void *arg) {
   int headers_len = matches[3].rm_so;
   headers = malloc(headers_len + 1);
   if (!headers) {
-    build_response(500, response, response_len,
+    build_response(500, &response, &response_len,
                    "Something unexpected happened while extracting headers.");
     goto end;
   }
@@ -304,7 +309,7 @@ void *handle_client(void *arg) {
   free(main_origin_check);
   free(cache_origin_check);
   if (origin_check_res != 1 && cache_check_res != 1) {
-    build_response(400, response, response_len,
+    build_response(400, &response, &response_len,
                    "Bad origin. Compromised browser?");
     goto end;
   }
@@ -332,7 +337,8 @@ void *handle_client(void *arg) {
       break;
     url_segments[i] = regex_iterator_get_match(url_regex, 1);
     if (!url_segments[i]) {
-      build_response(500, response, response_len, "Memory allocation failed.");
+      build_response(500, &response, &response_len,
+                     "Memory allocation failed.");
       perror("URL section malloc failure");
       goto end;
     }
@@ -343,47 +349,30 @@ void *handle_client(void *arg) {
 
   // @TODO auth for non-admin users
   if (url_segments[0] && strcmp(url_segments[0], "auth") == 0) {
-    regex_t body_regex;
-    regcomp(&body_regex, "\r\n\r\n(.+)", REG_EXTENDED);
-
-    regmatch_t body_matches[1 + 1];
-
-    if (regexec(&body_regex, buffer, 1 + 1, body_matches, 0) == REG_NOMATCH) {
-      regfree(&body_regex);
-      build_response(400, response, response_len, "Cannot POST an empty body.");
-      goto end;
-    }
-    regfree(&body_regex);
-
-    int body_len = body_matches[1].rm_eo - body_matches[1].rm_so;
-    char *body = malloc(body_len + 1);
     if (!body) {
-      build_response(500, response, response_len,
-                     "Something unexpected happened while authenticating");
+      build_response(400, &response, &response_len,
+                     "Failed to parse body. (Invalid/empty?)");
       goto end;
     }
-    strncpy(body, buffer + body_matches[1].rm_so, body_len);
-    body[body_len] = '\0';
-
     if (strcmp(body, admin_creds) == 0) {
       // @TODO do not hardcode
-      *response_len = strlen("HTTP/1.1 200 OK\r\n"
-                             "Content-Type: text/plain\r\n"
-                             "Access-Control-Allow-Origin: \r\n"
-                             "Access-Control-Allow-Headers: Content-Type\r\n"
-                             "Access-Control-Allow-Credentials: true\r\n"
-                             "Set-Cookie: username=admin; Max-Age=\r\n"
-                             "Set-Cookie: password=; Max-Age=\r\n"
-                             "Connection: close\r\n"
-                             "\r\n") +
-                      strlen(getenv("AUTH_COOKIE_MAX_AGE")) +
-                      strlen(getenv("AUTH_COOKIE_MAX_AGE")) + strlen(body) +
-                      strlen(getenv("MAIN_URL"));
+      response_len = strlen("HTTP/1.1 200 OK\r\n"
+                            "Content-Type: text/plain\r\n"
+                            "Access-Control-Allow-Origin: \r\n"
+                            "Access-Control-Allow-Headers: Content-Type\r\n"
+                            "Access-Control-Allow-Credentials: true\r\n"
+                            "Set-Cookie: username=admin; Max-Age=\r\n"
+                            "Set-Cookie: password=; Max-Age=\r\n"
+                            "Connection: close\r\n"
+                            "\r\n") +
+                     strlen(getenv("AUTH_COOKIE_MAX_AGE")) +
+                     strlen(getenv("AUTH_COOKIE_MAX_AGE")) + strlen(body) +
+                     strlen(getenv("MAIN_URL"));
       if (getenv("SQL_RECEPTIONIST_LOG_RESPONSES") &&
           strcmp(getenv("SQL_RECEPTIONIST_LOG_RESPONSES"), "TRUE") == 0)
         printf("Constructing 200 OK response: ---[Authentication]---\n\n");
-      *response = malloc(*response_len + 1);
-      snprintf(*response, *response_len + 1,
+      response = malloc(response_len + 1);
+      snprintf(response, response_len + 1,
                "HTTP/1.1 200 OK\r\n"
                "Content-Type: text/plain\r\n"
                "Access-Control-Allow-Origin: %s\r\n"
@@ -395,10 +384,9 @@ void *handle_client(void *arg) {
                "\r\n",
                getenv("MAIN_URL"), getenv("AUTH_COOKIE_MAX_AGE"), body,
                getenv("AUTH_COOKIE_MAX_AGE"));
-      free(body);
       goto end;
     } else {
-      build_response(403, response, response_len, "Invalid credentials.");
+      build_response(403, &response, &response_len, "Invalid credentials.");
       goto end;
     }
   }
@@ -413,7 +401,7 @@ void *handle_client(void *arg) {
   if (regexec(&raw_cookie_regex, buffer, 1 + 1, raw_cookie_matches, 0) ==
       REG_NOMATCH) {
     regfree(&raw_cookie_regex);
-    build_response(403, response, response_len,
+    build_response(403, &response, &response_len,
                    "Authentication failed. No username or password provided.");
     goto end;
   }
@@ -464,7 +452,7 @@ void *handle_client(void *arg) {
 
   // require authentication for all other endpoints
   if (!(admin_username && admin_password)) {
-    build_response(403, response, response_len, "Authentication failed.");
+    build_response(403, &response, &response_len, "Authentication failed.");
     goto end;
   }
 
@@ -473,7 +461,7 @@ void *handle_client(void *arg) {
 
   // ensure that there is a target database
   if (!database_name) {
-    build_response(400, response, response_len,
+    build_response(400, &response, &response_len,
                    "Database name was not supplied.");
     goto end;
   }
@@ -489,7 +477,7 @@ void *handle_client(void *arg) {
 
   // ensure that there is a target database
   if (!database) {
-    build_response(400, response, response_len, "Database not found.");
+    build_response(400, &response, &response_len, "Database not found.");
     goto end;
   }
 
@@ -497,7 +485,7 @@ void *handle_client(void *arg) {
 
   // ensure that there is a target table
   if (!table_name) {
-    build_response(400, response, response_len, "Table name not supplied.");
+    build_response(400, &response, &response_len, "Table name not supplied.");
     goto end;
   }
 
@@ -511,7 +499,7 @@ void *handle_client(void *arg) {
 
   // ensure that there is a target table
   if (!table) {
-    build_response(400, response, response_len, "Table not found.");
+    build_response(400, &response, &response_len, "Table not found.");
     goto end;
   }
   // END - check URL
@@ -554,7 +542,7 @@ void *handle_client(void *arg) {
       if (strcmp(url_segments[2], "tag_names") == 0) {
         // check if tagging is enabled
         if (!table->tagging) {
-          build_response_printf(400, response, response_len,
+          build_response_printf(400, &response, &response_len,
                                 strlen("Tagging is not enabled on table \"\""),
                                 "Tagging is not enabled on table \"%s\"",
                                 table_name);
@@ -566,11 +554,11 @@ void *handle_client(void *arg) {
         query = malloc(query_len + 1);
         snprintf(query, query_len, "SELECT * FROM %s_tag_names;", table_name);
         generic_select_query_and_respond(database_name, query, &res, &conn,
-                                         response, response_len);
+                                         &response, &response_len);
       } else if (strcmp(url_segments[2], "tag_aliases") == 0) {
         // check if tagging is enabled
         if (!table->tagging) {
-          build_response_printf(400, response, response_len,
+          build_response_printf(400, &response, &response_len,
                                 strlen("Tagging is not enabled on table \"\""),
                                 "Tagging is not enabled on table \"%s\"",
                                 table_name);
@@ -582,16 +570,16 @@ void *handle_client(void *arg) {
         query = malloc(query_len + 1);
         snprintf(query, query_len, "SELECT * FROM %s_tag_aliases;", table_name);
         generic_select_query_and_respond(database_name, query, &res, &conn,
-                                         response, response_len);
+                                         &response, &response_len);
         goto end;
       } else {
-        build_response(400, response, response_len, "Bad URL.");
+        build_response(400, &response, &response_len, "Bad URL.");
       }
       goto end;
     regular_table: // @todo catch tags & tag_groups
       // REQUIRES querystring to run
       if (querystring == NULL) {
-        build_response(400, response, response_len,
+        build_response(400, &response, &response_len,
                        "The querystring cannot be empty. It needs to specify "
                        "SELECT options.");
         goto end;
@@ -602,7 +590,7 @@ void *handle_client(void *arg) {
       querystring_regex =
           create_regex_iterator("[&]?([^=]+)=([^&]+)", 2, REG_EXTENDED);
       if (!querystring_regex) {
-        build_response(500, response, response_len,
+        build_response(500, &response, &response_len,
                        "Something went wrong while parsing the querystring.");
         goto end;
       }
@@ -689,7 +677,7 @@ void *handle_client(void *arg) {
             }
           }
         } else {
-          build_response_printf(400, response, response_len,
+          build_response_printf(400, &response, &response_len,
                                 strlen("Invalid querystring key: \"\".") +
                                     strlen(key),
                                 "Invalid querystring key: \"%s\".", key);
@@ -701,7 +689,7 @@ void *handle_client(void *arg) {
         // } else if (strcmp(item_name, "INDEX_BY")) {
         switch (valid) {
         case 0:
-          build_response_printf(400, response, response_len,
+          build_response_printf(400, &response, &response_len,
                                 strlen("Key value pair \"\", \"\" is "
                                        "invalid.") +
                                     strlen(key) + strlen(value),
@@ -717,7 +705,7 @@ void *handle_client(void *arg) {
           break;
         default:
           build_response_printf(
-              400, response, response_len,
+              400, &response, &response_len,
               strlen("Something went wrong when checking querystring key "
                      "\"\".") +
                   strlen(key),
@@ -747,9 +735,9 @@ void *handle_client(void *arg) {
 
         // attempt to query the database
         generic_select_query_and_respond(database_name, query, &res, &conn,
-                                         response, response_len);
+                                         &response, &response_len);
       } else {
-        build_response(400, response, response_len,
+        build_response(400, &response, &response_len,
                        "SELECT queries need a valid target (SELECT) and a "
                        "valid ordering (ORDER BY)");
       }
@@ -764,7 +752,7 @@ void *handle_client(void *arg) {
       }
     } else {
       // user does not have read access to the respective table
-      build_response_printf(403, response, response_len,
+      build_response_printf(403, &response, &response_len,
                             strlen("Read is not enabled on table .") +
                                 strlen(table->table_name),
                             "Read is not enabled on "
@@ -775,21 +763,11 @@ void *handle_client(void *arg) {
     // check if the database & table can be written to freely
     if (table->write) {
       // verify the schema
-      regex_t body_regex;
-      regcomp(&body_regex, "\r\n\r\n(.+)", REG_EXTENDED);
-
-      regmatch_t body_matches[1 + 1];
-
-      if (regexec(&body_regex, buffer, 1 + 1, body_matches, 0) == REG_NOMATCH) {
-        build_response(400, response, response_len,
-                       "Cannot POST an empty body.");
-        goto bad_body_end;
+      if (!body) {
+        build_response(400, &response, &response_len,
+                       "Failed to parse body. (Invalid/empty?)");
+        goto end;
       }
-
-      int body_len = body_matches[1].rm_eo - body_matches[1].rm_so;
-      char *body = malloc(body_len + 1);
-      strncpy(body, buffer + body_matches[1].rm_so, body_len);
-      body[body_len] = '\0';
 
       if (getenv("SQL_RECEPTIONIST_LOG_INPUT") &&
           strcmp(getenv("SQL_RECEPTIONIST_LOG_INPUT"), "TRUE") == 0)
@@ -801,14 +779,14 @@ void *handle_client(void *arg) {
 
       if (!entry) {
         // @TODO respond with line number, etc.
-        build_response_printf(400, response, response_len,
+        build_response_printf(400, &response, &response_len,
                               strlen(entry_error.text), "%s", entry_error.text);
         goto schema_mismatch_end;
       }
 
       char *target_type = url_segments[2];
       if (!target_type) {
-        build_response(400, response, response_len,
+        build_response(400, &response, &response_len,
                        "No target table type supplied.");
         goto schema_mismatch_end;
       }
@@ -823,7 +801,7 @@ void *handle_client(void *arg) {
         schema_count = table->schema_count;
       } else if (strcmp(target_type, "descriptors") == 0) {
         if (!table->descriptors) {
-          build_response_printf(400, response, response_len,
+          build_response_printf(400, &response, &response_len,
                                 strlen("Table does not have descriptors.") +
                                     strlen(table_name),
                                 "Table %s does not "
@@ -844,7 +822,7 @@ void *handle_client(void *arg) {
         }
 
         if (!schema || schema_count == -1) {
-          build_response(400, response, response_len,
+          build_response(400, &response, &response_len,
                          "Descriptor schema not found.");
           goto schema_mismatch_end;
         }
@@ -891,14 +869,14 @@ void *handle_client(void *arg) {
         url_segments[1] = table_name =
             replace_table_name(table_name, "_tag_groups");
       } else {
-        build_response(400, response, response_len,
+        build_response(400, &response, &response_len,
                        "Invalid target table type.");
         goto schema_mismatch_end;
       }
 
       if (!schema || schema_count == -1) {
         build_response(
-            500, response, response_len,
+            500, &response, &response_len,
             "Bad target table schema. Contact website maintainer for a fix.");
         goto schema_mismatch_end;
       }
@@ -907,7 +885,7 @@ void *handle_client(void *arg) {
                                        table_name, primary_column_name,
                                        duplicate_column_name)) {
       case 0:
-        build_response(400, response, response_len,
+        build_response(400, &response, &response_len,
                        "The given entry does not "
                        "conform to the schema.");
         goto schema_mismatch_end;
@@ -915,7 +893,7 @@ void *handle_client(void *arg) {
         break;
       default:
         build_response(
-            500, response, response_len,
+            500, &response, &response_len,
             "Something went wrong while checking your entry with the schema.");
         goto schema_mismatch_end;
       }
@@ -924,46 +902,41 @@ void *handle_client(void *arg) {
           sql_query(database_name, query, &res, &conn, global_config);
       if (sql_query_status != PGRES_COMMAND_OK &&
           sql_query_status != PGRES_TUPLES_OK) {
-        build_response_printf(500, response, response_len,
+        build_response_printf(500, &response, &response_len,
                               strlen(PQresStatus(sql_query_status)) + 2 +
                                   strlen(PQerrorMessage(conn)) + 1,
                               "%s: %s", PQresStatus(sql_query_status),
                               PQerrorMessage(conn));
       } else {
-        build_response(200, response, response_len, PQgetvalue(res, 0, 0));
+        build_response(200, &response, &response_len, PQgetvalue(res, 0, 0));
       }
 
     schema_mismatch_end:
     post_bad_input_end:
-      free(body);
     bad_body_end:
-      regfree(&body_regex);
       // free json object??? how ???
       // FIX LATER: causes memory & multithreading issues??
       json_decref(entry);
     } else {
       // user does not have write access to the respective table
       build_response_printf(
-          403, response, response_len,
+          403, &response, &response_len,
           strlen("Write is not enabled on table .") + strlen(table->table_name),
           "Write is not enabled on table %s.", table->table_name);
     }
   } else {
-    build_response(400, response, response_len, "Unsupported HTTP method.");
+    build_response(400, &response, &response_len, "Unsupported HTTP method.");
   }
 
 end:
   // send HTTP response to client
   // @TODO determine if NULL checks are necessary
   if (response && *response && response_len)
-    send(client_fd, *response, *response_len, 0);
+    send(client_fd, *&response, *&response_len, 0);
   close(client_fd);
 
   free(buffer);
-  if (response)
-    free(*response);
   free(response);
-  free(response_len);
   free(matches);
   free(method);
   free(url);
@@ -998,6 +971,10 @@ int main(int argc, char const *argv[]) {
     fprintf(stderr, "Could not find environment variable DATABASE_PASSWORD.");
     exit(EXIT_FAILURE);
   }
+  if (!getenv("MAIN_URL")) {
+    fprintf(stderr, "Could not find environment variable MAIN_URL");
+    exit(EXIT_FAILURE);
+  }
 
   // attempt to read admin password
   admin_creds = malloc(MAX_PASSWORD_LENGTH + 1);
@@ -1019,7 +996,6 @@ int main(int argc, char const *argv[]) {
 
   // populate global variables
   load_config(&global_config);
-  init(global_config);
   if (global_config == NULL) {
     fprintf(stderr, "Failed to load configuration.\n");
     return EXIT_FAILURE;
