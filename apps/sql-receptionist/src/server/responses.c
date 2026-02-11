@@ -9,20 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static const struct config *global_config = NULL;
-
-/**
- * Loads in a config. This config will be used to provide the correct headers
- * for CORS.
- * @param cfg The config to load in.
- */
-void init(const struct config *cfg) {
-  global_config = cfg;
-
-  // @TODO check validity
-}
-
 /**
  * Returns the name associated with the given status code.
  * @return the name associated with the given status code.
@@ -56,10 +42,6 @@ const char *get_status_code_name(int status_code) {
  */
 void build_response(int status_code, char **response, size_t *response_len,
                     char *body) {
-  if (!global_config) {
-    perror("Cannot build response because the config is NULL.");
-    exit(EXIT_FAILURE);
-  }
   const char *status_code_name = get_status_code_name(status_code);
 
   if (getenv("SQL_RECEPTIONIST_LOG_RESPONSES") &&

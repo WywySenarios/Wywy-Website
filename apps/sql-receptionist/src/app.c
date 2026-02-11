@@ -1022,7 +1022,6 @@ int main(int argc, char const *argv[]) {
 
   // populate global variables
   load_config(&global_config);
-  init(global_config);
   if (global_config == NULL) {
     fprintf(stderr, "Failed to load configuration.\n");
     return EXIT_FAILURE;
