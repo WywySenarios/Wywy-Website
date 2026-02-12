@@ -1,5 +1,3 @@
-startup.bat
-
 **/__pycache__/
 
 ## ignore python virtual environment & packages
@@ -7,14 +5,3 @@ startup.bat
 
 ## ignore VS code folder :P
 .vscode
-
-# postgres
-apps/postgres/18/docker/*
-!apps/postgres/18/docker/postgresql.conf
-
-
-# C build artifacts
-*.out
-
-# secrets
-secrets/*
