@@ -8,7 +8,9 @@ TBD.
 - python3
 - docker
 
-# Docker
+# Installation
+
+## Docker
 
 1. Install Docker.
 
@@ -55,6 +57,13 @@ cd docker
 ```
 ./run.sh prod
 ```
+
+## Backup
+
+SSH keys are required for backing up information.
+
+- Backup server's public SSH key.
+- A public & private key to use for authentication.
 
 # Scoping
 

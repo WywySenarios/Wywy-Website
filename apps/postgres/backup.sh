@@ -1,18 +1,23 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-# Check if an argument is provided
-if [ -z "$1" ]; then
-  echo "Error: No argument provided."
-  echo "Usage: $0"
+# Check for arguments
+if [[ -z "$1" ]]; then
+  echo "Error: WAL_PATH not provided." >&2
   exit 1
+elif [[ -z "$2" ]]; then
+  echo "Error: WAL_FILE not provided." >&2
 fi
 
-echo "Preparing to backup..."
+WAL_PATH="$1"
+WAL_FILE="$2"
 
-lftp -d -u "$BACKUP_SERVER_USER,$BACKUP_SERVER_PASSWORD" ftp://$BACKUP_SERVER_HOST -e "put \"$1\"; exit"
+# cp "$WAL_PATH" /var/lib/Wywy-Website/website/postgres_WALs
 
-echo "Backup presumably succeeded!"
+scp -i "/tmp/Wywy-Website/id_ed25519" \
+  -o BatchMode=yes \
+  -o StrictHostKeyChecking=accept-new \
+  "$WAL_PATH" \
+  "$BACKUP_USER@$BACKUP_HOST:/var/lib/Wywy-Website/backup/postgres_WALs/$WAL_FILE"
 
-# set ftp:passive-mode on
-# set ssl:verify-certificate no
+echo "Backup succeeded: $WAL_FILE"

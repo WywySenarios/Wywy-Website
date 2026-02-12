@@ -69,7 +69,7 @@ services:
         condition: service_healthy
     # compile and run the application.
     # Do not close the container on error.
-    command: bash -c "make clean && make && exec ./app ; (echo 'The SQL Receptionist is now sleeping...' && sleep 3600)"
+    command: bash -c "make clean && make && exec ./app || echo The SQL Receptionist is now sleeping... && sleep 3600"
 
   wywywebsite_create_tables:
     container_name: wywywebsite_create_tables
@@ -126,7 +126,15 @@ services:
     ports:
       - ${DATABASE_PORT}:${DATABASE_PORT}
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "${DATABASE_USERNAME}", "-p", "${DATABASE_PORT}" ]
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-U",
+          "${DATABASE_USERNAME}",
+          "-p",
+          "${DATABASE_PORT}",
+        ]
       interval: 5m
       timeout: 5s
       start_period: 3s
@@ -135,15 +143,24 @@ services:
       - ${DATA_DIR}/website/postgres:/var/lib/postgresql/data
       - ${UNIVERSAL_CONFIG_DIR}/website/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ${UNIVERSAL_CONFIG_DIR}/website/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
-      # - ./../apps/postgres/backup.sh:/backup.sh
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     shm_size: 128mb
-    command: postgres -D /var/lib/postgresql/data -p ${DATABASE_PORT} -c config_file=/etc/postgresql/postgresql.conf
+    secrets:
+      - ssh_private_key
+      - ssh_backup_public_key
+    command: ./entrypoint.sh
 
 volumes:
   # postgres-db:
   astro-node_modules:
 
-
 secrets:
   admin:
     file: ${SECRETS_DIR}/admin.txt
+  ssh_private_key:
+    file: ${SECRETS_DIR}/id_ed25519
+  ssh_public_key:
+    file: ${SECRETS_DIR}/id_ed25519.pub
+  ssh_backup_public_key:
+    file: ${SECRETS_DIR}/backup/id_ed25519.pub
