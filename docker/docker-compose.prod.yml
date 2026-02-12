@@ -111,8 +111,13 @@ services:
       - ${DATA_DIR}/website/postgres:/var/lib/postgresql/data
       - ${UNIVERSAL_CONFIG_DIR}/website/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ${UNIVERSAL_CONFIG_DIR}/website/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     shm_size: 128mb
-    command: postgres -D /var/lib/postgresql/data -p ${DATABASE_PORT} -c config_file=/etc/postgresql/postgresql.conf
+    secrets:
+      - ssh_private_key
+      - ssh_backup_public_key
+    command: ./entrypoint.sh
 
 networks:
   wywywebsite_cloudflared:
@@ -126,3 +131,9 @@ secrets:
     file: ${SECRETS_DIR}/website/cloudflared-cloudflare-token.txt
   admin:
     file: ${SECRETS_DIR}/admin.txt
+  ssh_private_key:
+    file: ${SECRETS_DIR}/id_ed25519
+  ssh_public_key:
+    file: ${SECRETS_DIR}/id_ed25519.pub
+  ssh_backup_public_key:
+    file: ${SECRETS_DIR}/backup/id_ed25519.pub

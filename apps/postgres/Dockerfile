@@ -9,16 +9,15 @@
 # RUN apt-get install curl -y
 
 FROM postgres:18 AS db
+WORKDIR apps/postgres
 
 USER root
 
-RUN apt-get update
-RUN apt-get install lftp -y
+RUN apt-get update && \
+    apt-get install -y openssh-client && \
+    rm -rf /var/lib/apt/lists/*
 
-COPY --chown=postgres:postgres apps/postgres/backup.sh .
-# COPY --chown=postgres:postgres /usr/bin/lftp /usr/bin/lftp
-# COPY --from=build /usr/bin/curl /usr/bin/curl
-
-RUN chmod +x backup.sh
+COPY --chown=postgres:postgres apps/postgres/backup.sh /backup.sh
+COPY apps/postgres/entrypoint.sh .
 
 # USER postgres
