@@ -26,10 +26,4 @@ services:
         required: true
       - path: ${UNIVERSAL_CONFIG_DIR}/website/.env.dev
         required: true
-    develop:
-      watch:
-        - action: sync
-          path: ${UNIVERSAL_CONFIG_DIR}/config.yml
-          target: /apps/astro-app/config.yml
-          initial_sync: true
     command: npm run dev -- --host
