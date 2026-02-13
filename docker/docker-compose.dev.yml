@@ -20,6 +20,8 @@ services:
     env_file:
       - path: ${UNIVERSAL_CONFIG_DIR}/.env
         required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/.env.dev
+        required: true
       - path: ${UNIVERSAL_CONFIG_DIR}/website/.env
         required: true
       - path: ${UNIVERSAL_CONFIG_DIR}/website/.env.dev
