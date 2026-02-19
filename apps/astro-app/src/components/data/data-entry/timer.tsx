@@ -61,10 +61,8 @@ function TimerFormForm({
       className="flex flex-col gap-4"
     >
       {cancelButton}
-      {/* Submit & restart button */}
-      <Button type="submit" value="split">
-        Submit & Restart
-      </Button>
+      {/* Submit button */}
+      <Button type="submit">Submit</Button>
       {/* Columns */}
       <Columns fieldsToEnter={tableInfo.schema} form={form} />
       {/* Quick actions */}
@@ -76,8 +74,10 @@ function TimerFormForm({
       {tableInfo.descriptors && (
         <Descriptors tableInfo={tableInfo} form={form} />
       )}
-      {/* Submit button */}
-      <Button type="submit">Submit</Button>
+      {/* Submit & restart button */}
+      <Button type="submit" value="split">
+        Submit & Restart
+      </Button>
     </form>
   );
 }
