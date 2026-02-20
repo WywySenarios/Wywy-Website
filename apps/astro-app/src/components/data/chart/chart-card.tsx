@@ -35,7 +35,7 @@ import {
 } from "echarts";
 import type { Dataset, Datatype, TableInfo } from "@/types/data";
 import { Label } from "@/components/ui/label";
-import { toSnakeCase } from "@root/src/utils";
+import { toSnakeCase } from "@root/src/utils/parse";
 
 const prettySeriesTypes = ["Line"];
 

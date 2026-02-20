@@ -1,6 +1,6 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
-import { parseTime } from "@/utils";
+import { parseTime } from "@root/src/utils/parse";
 import { getFallbackValue } from "@root/src/utils/data";
 
 function toTimeString(date: Date): string {

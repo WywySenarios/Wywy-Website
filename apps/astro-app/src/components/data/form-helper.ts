@@ -3,7 +3,7 @@
  */
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DataColumn, TableInfo } from "@/types/data";
-import { toSnakeCase } from "@/utils";
+import { toSnakeCase } from "@root/src/utils/parse";
 import { getFallbackValue, getZodType } from "@/utils/data";
 import { useForm, type FieldErrors, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
