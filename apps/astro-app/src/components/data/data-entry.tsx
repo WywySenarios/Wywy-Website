@@ -3,7 +3,7 @@ import {
   ConstantFormElement,
   FormElement,
 } from "@/components/data/input-elements";
-import type { DataColumn, DescriptorInfo, TableInfo } from "@/env";
+import type { DataColumn, DescriptorInfo, TableInfo } from "@/types/data";
 import {
   Card,
   CardContent,

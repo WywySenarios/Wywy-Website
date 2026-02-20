@@ -1,4 +1,4 @@
-import type { TableInfo } from "@/env";
+import type { TableInfo } from "@/types/data";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState, type JSX } from "react";
 import { createFormSchemaAndHandlers } from "@/components/data/form-helper";

@@ -1,4 +1,4 @@
-import type { DescriptorInfo, TableInfo } from "@/env";
+import type { DescriptorInfo, TableInfo } from "@/types/data";
 import { toast } from "sonner";
 import { z, type AnyZodObject, type ZodTypeAny } from "zod";
 import {

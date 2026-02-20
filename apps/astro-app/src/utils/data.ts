@@ -1,5 +1,5 @@
 import { z, ZodNumber, type ZodTypeAny } from "zod";
-import type { DataColumn, TableInfo } from "@/env";
+import type { DataColumn, TableInfo } from "@/types/data";
 
 // map strings to Zod datatypes
 export type zodPrimaryDatatypes =

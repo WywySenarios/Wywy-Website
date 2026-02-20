@@ -1,6 +1,6 @@
 "use client";
 
-import type { DescriptorInfo, TableInfo } from "@/env";
+import type { DescriptorInfo, TableInfo } from "@/types/data";
 import type { JSX } from "astro/jsx-runtime";
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { toast } from "sonner";

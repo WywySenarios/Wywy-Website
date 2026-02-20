@@ -33,7 +33,7 @@ import {
   type LineSeriesOption,
   type SeriesOption,
 } from "echarts";
-import type { Dataset, TableInfo } from "@/env";
+import type { Dataset, TableInfo } from "@/types/data";
 import { Label } from "@/components/ui/label";
 import { toSnakeCase } from "@root/src/utils";
 import type { zodPrimaryDatatypes } from "@root/src/utils/data";
@@ -98,7 +98,7 @@ function ChartSettings({
   const [open, setOpen] = useState(false);
   const [newOptions, setNewOptions] = useState<ChartSettingsOption>(options);
   const [x, setX] = useState<string>(
-    options.series.at(0)?.encode.x || columns[0] || ""
+    options.series.at(0)?.encode.x || columns[0] || "",
   );
   const [seriesTypes, setSeriesTypes] = useState<Record<string, string>>({});
 
@@ -113,7 +113,7 @@ function ChartSettings({
   useEffect(() => {
     if (columns)
       setSeriesTypes(
-        Object.fromEntries(columns.map((col) => [col, prettySeriesTypes[0]]))
+        Object.fromEntries(columns.map((col) => [col, prettySeriesTypes[0]])),
       );
   }, [columns]);
 
@@ -150,7 +150,7 @@ function ChartSettings({
               let output = {
                 ...newOptions,
                 series: newOptions.series.filter(
-                  (series) => series.encode.y !== value
+                  (series) => series.encode.y !== value,
                 ),
               };
               if (!output.xAxis) {
@@ -159,7 +159,7 @@ function ChartSettings({
               output.xAxis.type =
                 axisTypes[
                   tableSchema.schema.find(
-                    (item) => toSnakeCase(item.name) == toSnakeCase(value)
+                    (item) => toSnakeCase(item.name) == toSnakeCase(value),
                   )?.datatype || "string"
                 ];
               output.series.forEach((series) => (series.encode.x = value));
@@ -207,7 +207,7 @@ function ChartSettings({
                     setNewOptions({
                       ...newOptions,
                       series: newOptions.series.filter(
-                        (series) => series.encode.y !== col
+                        (series) => series.encode.y !== col,
                       ),
                     });
                   }
