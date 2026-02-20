@@ -28,7 +28,7 @@ export function NumberBox({ value, onChange, ...props }: InputProps) {
         onChange(output);
         setValid(true);
       }}
-      aria-invalid={valid}
+      aria-invalid={!valid}
       {...props}
     />
   );
