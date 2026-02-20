@@ -25,5 +25,5 @@ export function MyGeodeticCoordinate() {
     );
   }, []);
 
-  <GeodeticCoordinateInputElement value={coord} onChange={setCoord} />;
+  return <GeodeticCoordinateInputElement value={coord} onChange={setCoord} />;
 }
