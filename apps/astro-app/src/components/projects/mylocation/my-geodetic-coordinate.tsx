@@ -37,7 +37,7 @@ export function MyGeodeticCoordinate() {
             Your latitude and longitude have an uncertainty of {coord.accuracy}{" "}
             meters.
           </p>
-          {coord.altitude != null ? (
+          {coord.altitude && coord.altitudeAccuracy ? (
             <p>Your altitude is {coord.altitude} meters above sea level.</p>
           ) : null}
           {coord.altitudeAccuracy ? (
