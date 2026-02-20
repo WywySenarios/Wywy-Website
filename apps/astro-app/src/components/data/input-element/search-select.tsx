@@ -52,7 +52,9 @@ export function SearchSelect({
       <PopoverContent className="w-[200px] p-0">
         <Command
           filter={(value: string, search: string) => {
-            if (value.includes(search)) return 1;
+            const target = search.toLowerCase();
+
+            if (value.toLowerCase().includes(target)) return 1;
             return 0;
           }}
         >
@@ -63,9 +65,9 @@ export function SearchSelect({
               {data.map((item) => (
                 <CommandItem
                   key={item.value}
-                  value={item.value}
-                  onSelect={(newValue) => {
-                    onChange(newValue);
+                  value={item.label}
+                  onSelect={(newValue: string) => {
+                    onChange(item.value);
                     setOpen(false);
                   }}
                 >
