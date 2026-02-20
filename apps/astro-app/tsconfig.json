@@ -7,7 +7,6 @@
       "@root/*": ["./*"], // root for this Astro app
       "@/*": ["./src/*"], // src for this Astro app
       "@utils/*": ["./src/utils/*"], // utilities
-      "@types/*": ["./src/types/*"], // types
       "@pages/*": ["./pages/*"],
       "@public/*": ["./public/*"],
       "@data/*": ["./data/*"]

@@ -1,5 +1,5 @@
 import { parse, format as formatDate, formatISO, isValid } from "date-fns";
-import type { Datatype } from "@types/data";
+import type { Datatype } from "@/types/data";
 
 /**
  * Attempts to parse a string.
