@@ -79,7 +79,6 @@ export function GeodeticCoordinateInputElement({
           <Card>
             <CardHeader>Latitude and longitude accuracy</CardHeader>
             <CardContent>
-              <CardDescription>{value.accuracy}</CardDescription>
               <NumberBox
                 value={value.accuracy}
                 onChange={(accuracy: number) => {
@@ -100,7 +99,6 @@ export function GeodeticCoordinateInputElement({
           <Card>
             <CardHeader>Altitude</CardHeader>
             <CardContent>
-              <CardDescription>{value.altitude}</CardDescription>
               <NumberBox
                 value={value.altitude}
                 onChange={(altitude: number) => {
@@ -121,7 +119,6 @@ export function GeodeticCoordinateInputElement({
           <Card>
             <CardHeader>Altitude Accuracy</CardHeader>
             <CardContent>
-              <CardDescription>{value.altitudeAccuracy}</CardDescription>
               <NumberBox
                 value={value.altitudeAccuracy}
                 onChange={(altitudeAccuracy: number) => {
@@ -165,7 +162,6 @@ export function GeodeticCoordinateInputElement({
           <Card>
             <CardHeader>Speed</CardHeader>
             <CardContent>
-              <CardDescription>{value.speed}</CardDescription>
               <NumberBox
                 value={value.speed}
                 onChange={(speed: number) => {
