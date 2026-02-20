@@ -19,6 +19,22 @@ export interface TableInfo {
   descriptors: Array<DescriptorInfo>;
 }
 
+// internally (Wywy-Website-Master-Database) recognized datatypes.
+export type Datatype =
+  | "int"
+  | "integer"
+  | "float"
+  | "number"
+  | "string"
+  | "str"
+  | "text"
+  | "bool"
+  | "boolean"
+  | "date"
+  | "time"
+  | "timestamp"
+  | "enum";
+
 // look at the restrictions for different entry types
 // @TODO find out if it's possible to restrict  the value of defaultValue before runtime
 type NoRestrictions = {
@@ -107,8 +123,8 @@ type EnumColumn = {
 
 export type DataColumn = {
   name: string;
-  parser?: zodPrimaryDatatypes;
-  datatype: zodPrimaryDatatypes;
+  parser?: Datatype;
+  datatype: Datatype;
   // Definitely optional:
   //@TODO add regex restrictions
   // restrictions?: Array<[number, number]>

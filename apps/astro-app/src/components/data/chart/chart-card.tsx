@@ -33,10 +33,9 @@ import {
   type LineSeriesOption,
   type SeriesOption,
 } from "echarts";
-import type { Dataset, TableInfo } from "@/types/data";
+import type { Dataset, Datatype, TableInfo } from "@/types/data";
 import { Label } from "@/components/ui/label";
 import { toSnakeCase } from "@root/src/utils";
-import type { zodPrimaryDatatypes } from "@root/src/utils/data";
 
 const prettySeriesTypes = ["Line"];
 
@@ -46,10 +45,7 @@ const unprettySeriesTypes: Record<PrettySeriesType, "line"> = {
   Line: "line",
 };
 
-const axisTypes: Record<
-  zodPrimaryDatatypes,
-  "category" | "value" | "time" | "log"
-> = {
+const axisTypes: Record<Datatype, "category" | "value" | "time" | "log"> = {
   integer: "value",
   int: "value",
   float: "value",

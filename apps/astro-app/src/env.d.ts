@@ -1,6 +1,5 @@
 /// <reference path="../.astro/types.d.ts" />
 
-import type { zodPrimaryDatatypes } from "./utils/data";
 import type { DatabaseInfo } from "./types/data";
 
 // START - environment variables

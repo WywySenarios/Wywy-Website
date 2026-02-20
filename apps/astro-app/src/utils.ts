@@ -1,6 +1,5 @@
 import { parse, format as formatDate, formatISO, isValid } from "date-fns";
-import { type zodPrimaryDatatypes } from "./utils/data";
-
+import type { Datatype } from "@types/data";
 const prettyParseFunctions = {
   string: prettyParseString,
   str: prettyParseString,
@@ -121,7 +120,7 @@ function prettyParseTimestamp(
 /**
  * Attempts to turn any type of input into something pretty that the user can look at and easily understand.
  * @param value The value that needs to be parsed.
- * @param datatype @type {zodPrimaryDatatypes} The expected datatype of the value.
+ * @param datatype @type {Datatype} The expected datatype of the value.
  * @returns @type {undefined} when the input is invalid, @type {string | number | boolean} or whatever that was put in.
  */
 function prettyParseAny(
@@ -139,7 +138,7 @@ function prettyParseAny(
 // function prettyParseAny(value: Date, datatype: "date" | "time" | "timestamp"): Date
 function prettyParseAny(
   value: string | number | boolean | undefined,
-  datatype: zodPrimaryDatatypes,
+  datatype: Datatype,
 ): undefined | number | string | boolean {
   if (value == undefined) {
     return value;
@@ -176,7 +175,7 @@ function prettyParseAny(
 /**
  * Attempts to turn any type of input into a format recognized by the sql-receptionist.
  * @param value The value that needs to be parsed.
- * @param datatype @type {zodPrimaryDatatypes} The expected datatype of the value.
+ * @param datatype @type {Datatype} The expected datatype of the value.
  * @returns @type {undefined} if the input is invalid, @type {string | number | boolean} otherwise.
  */
 function parseAny(
@@ -194,7 +193,7 @@ function parseAny(
 ): string | undefined;
 function parseAny(
   value: string | number | undefined | boolean | Date,
-  datatype: zodPrimaryDatatypes,
+  datatype: Datatype,
 ): undefined | string | number | boolean {
   if (value == undefined) {
     return value;

@@ -1,21 +1,5 @@
 import { z, ZodNumber, type ZodTypeAny } from "zod";
-import type { DataColumn, TableInfo } from "@/types/data";
-
-// map strings to Zod datatypes
-export type zodPrimaryDatatypes =
-  | "int"
-  | "integer"
-  | "float"
-  | "number"
-  | "string"
-  | "str"
-  | "text"
-  | "bool"
-  | "boolean"
-  | "date"
-  | "time"
-  | "timestamp"
-  | "enum";
+import type { DataColumn, Datatype, TableInfo } from "@/types/data";
 
 /**
  * Produces a ZodType with restrictions as defined by the given column schema.
@@ -67,7 +51,7 @@ export function getZodType(columnInfo: DataColumn): ZodTypeAny {
   }
 }
 
-export const zodDatatypes: Record<zodPrimaryDatatypes, ZodTypeAny> = {
+export const zodDatatypes: Record<Datatype, ZodTypeAny> = {
   integer: z.number().int(),
   int: z.number().int(),
   float: z.number(),
@@ -107,7 +91,7 @@ export function getFallbackValue(
   datatype: "date" | "time" | "timestamp",
 ): string;
 export function getFallbackValue(
-  datatype: zodPrimaryDatatypes,
+  datatype: Datatype,
 ): number | string | boolean | Date | null | undefined {
   switch (datatype) {
     case "int":
