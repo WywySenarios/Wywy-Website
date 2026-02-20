@@ -35,6 +35,16 @@ export type Datatype =
   | "timestamp"
   | "enum";
 
+export interface GeodeticCoordinates {
+  latitude: number;
+  longitude: number;
+  altitude: number | null = null;
+  accuracy: number | null = null;
+  altitudeAccuracy: number | null = null;
+  heading: number | null = null;
+  speed: number | null = null;
+}
+
 // look at the restrictions for different entry types
 // @TODO find out if it's possible to restrict  the value of defaultValue before runtime
 type NoRestrictions = {
