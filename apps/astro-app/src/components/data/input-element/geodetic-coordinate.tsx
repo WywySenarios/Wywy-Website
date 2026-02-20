@@ -107,16 +107,18 @@ export function GeodeticCoordinateInputElement({
         value.altitudeAccuracy ? (
           <Card>
             <CardHeader>Altitude Accuracy</CardHeader>
-            <NumberBox
-              value={value.altitudeAccuracy}
-              onChange={(altitudeAccuracy: number) => {
-                let newValue: GeodeticCoordinate = new GeodeticCoordinate(
-                  value,
-                );
-                newValue.altitudeAccuracy = altitudeAccuracy;
-                onChange(newValue);
-              }}
-            />
+            <CardContent>
+              <NumberBox
+                value={value.altitudeAccuracy}
+                onChange={(altitudeAccuracy: number) => {
+                  let newValue: GeodeticCoordinate = new GeodeticCoordinate(
+                    value,
+                  );
+                  newValue.altitudeAccuracy = altitudeAccuracy;
+                  onChange(newValue);
+                }}
+              />
+            </CardContent>
           </Card>
         ) : null
       }
