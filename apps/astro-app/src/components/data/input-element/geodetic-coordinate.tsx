@@ -4,7 +4,12 @@ import { NumberBox } from "./number-box";
 import { Button } from "@/components/ui/button";
 import { LocateFixed } from "lucide-react";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from "@/components/ui/card";
 
 // everything defaults to true
 export interface GeodeticCoordinateFields {
@@ -39,6 +44,7 @@ export function GeodeticCoordinateInputElement({
       <Card>
         <CardHeader>Latitude</CardHeader>
         <CardContent>
+          <CardDescription>{value.latitude}</CardDescription>
           <Slider
             value={[value.latitude]}
             onValueChange={(latitude: number[]) => {
@@ -54,6 +60,7 @@ export function GeodeticCoordinateInputElement({
       <Card>
         <CardHeader>Longitude</CardHeader>
         <CardContent>
+          <CardDescription>{value.longitude}</CardDescription>
           <Slider
             value={[value.longitude]}
             onValueChange={(longitude: number[]) => {
@@ -72,6 +79,7 @@ export function GeodeticCoordinateInputElement({
           <Card>
             <CardHeader>Latitude and longitude accuracy</CardHeader>
             <CardContent>
+              <CardDescription>{value.accuracy}</CardDescription>
               <NumberBox
                 value={value.accuracy}
                 onChange={(accuracy: number) => {
@@ -92,6 +100,7 @@ export function GeodeticCoordinateInputElement({
           <Card>
             <CardHeader>Altitude</CardHeader>
             <CardContent>
+              <CardDescription>{value.altitude}</CardDescription>
               <NumberBox
                 value={value.altitude}
                 onChange={(altitude: number) => {
@@ -112,6 +121,7 @@ export function GeodeticCoordinateInputElement({
           <Card>
             <CardHeader>Altitude Accuracy</CardHeader>
             <CardContent>
+              <CardDescription>{value.altitudeAccuracy}</CardDescription>
               <NumberBox
                 value={value.altitudeAccuracy}
                 onChange={(altitudeAccuracy: number) => {
@@ -132,6 +142,7 @@ export function GeodeticCoordinateInputElement({
           <Card>
             <CardHeader>Heading</CardHeader>
             <CardContent>
+              <CardDescription>{value.heading}</CardDescription>
               <Slider
                 value={[value.heading]}
                 onValueChange={(heading: number[]) => {
@@ -154,6 +165,7 @@ export function GeodeticCoordinateInputElement({
           <Card>
             <CardHeader>Speed</CardHeader>
             <CardContent>
+              <CardDescription>{value.speed}</CardDescription>
               <NumberBox
                 value={value.speed}
                 onChange={(speed: number) => {
