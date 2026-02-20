@@ -13,6 +13,11 @@ export function NumberBox({ value, onChange, ...props }: InputProps) {
   return (
     <Input
       onChange={(e: ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.value) {
+          setValid(true);
+          return;
+        }
+
         let output: number = parseInt(e.target.value);
         if (isNaN(output)) {
           setValid(false);
