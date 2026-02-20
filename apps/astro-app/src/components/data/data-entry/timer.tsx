@@ -1,4 +1,4 @@
-import type { TableInfo } from "@/env";
+import type { TableInfo } from "@/types/data";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState, type JSX } from "react";
 import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
@@ -6,7 +6,7 @@ import { Columns, Descriptors, Tags } from "@/components/data/data-entry";
 import type z from "zod";
 import { toast } from "sonner";
 import { getCSRFToken } from "@/utils/auth";
-import { toSnakeCase } from "@/utils";
+import { toSnakeCase } from "@root/src/utils/parse";
 import { CACHE_URL } from "astro:env/client";
 
 // child component to circumvent hook rules

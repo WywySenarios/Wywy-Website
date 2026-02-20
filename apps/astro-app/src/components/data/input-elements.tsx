@@ -37,7 +37,7 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import type { DataColumn, EnumColumn, SelectRestrictions } from "@/env";
+import type { DataColumn, EnumColumn, SelectRestrictions } from "@/types/data";
 import {
   SearchSelect,
   type SearchSelectData,

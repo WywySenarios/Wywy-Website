@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 
-import type { TableInfo } from "@/env";
+import type { TableInfo } from "@/types/data";
 import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
 import { Columns } from "@/components/data/data-entry";
 import { CACHE_URL } from "astro:env/client";

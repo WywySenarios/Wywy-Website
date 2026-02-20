@@ -1,4 +1,4 @@
-import type { DescriptorInfo, TableInfo } from "@/env";
+import type { DescriptorInfo, TableInfo } from "@/types/data";
 import { toast } from "sonner";
 import { z, type AnyZodObject, type ZodTypeAny } from "zod";
 import {
@@ -9,7 +9,7 @@ import {
 import { useForm, type FieldErrors, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isTaggingEnabled } from "@/utils/data";
-import { toSnakeCase } from "@/utils";
+import { toSnakeCase } from "@root/src/utils/parse";
 
 export function createGenericTableFormSchemaAndHandlers(
   databaseName: string,

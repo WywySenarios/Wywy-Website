@@ -1,19 +1,20 @@
 {
-    "extends": "astro/tsconfigs/strict",
-    "compilerOptions": {
-      "baseUrl": ".",
-      "paths": {
-        "@universal_root/*": ["./../../*"], // root for all the WywyWebsite apps.
-        "@root/*": ["./*"], // root for this Astro app
-        "@/*": ["./src/*"], // src for this Astro app
-        "@pages/*": ["./pages/*"],
-        "@public/*": ["./public/*"],
-        "@data/*": ["./data/*"]
-      },
-      "jsx": "react-jsx",
-      "jsxImportSource": "react",
-      "verbatimModuleSyntax": true,
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@universal_root/*": ["./../../*"], // root for all the WywyWebsite apps.
+      "@root/*": ["./*"], // root for this Astro app
+      "@/*": ["./src/*"], // src for this Astro app
+      "@utils/*": ["./src/utils/*"], // utilities
+      "@pages/*": ["./pages/*"],
+      "@public/*": ["./public/*"],
+      "@data/*": ["./data/*"]
     },
-    "include": ["src", "src/**/*.d.ts", ".astro/types.d.ts"],
-    "exclude": ["dist"],
-  }
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src/**/*", ".astro/types.d.ts"],
+  "exclude": ["dist"]
+}

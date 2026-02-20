@@ -1,4 +1,4 @@
-import type { Dataset, TableInfo } from "@/env";
+import type { Dataset, TableInfo } from "@/types/data";
 import { DATABASE_URL } from "astro:env/client";
 import type { JSX } from "astro/jsx-runtime";
 import { useEffect, useState } from "react";

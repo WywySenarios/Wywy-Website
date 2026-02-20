@@ -1,6 +1,6 @@
 "use client";
 
-import type { TableInfo } from "@/env";
+import type { TableInfo } from "@/types/data";
 import type { JSX } from "astro/jsx-runtime";
 import { FormForm } from "@/components/data/data-entry/form";
 import { TimerForm } from "@/components/data/data-entry/timer";

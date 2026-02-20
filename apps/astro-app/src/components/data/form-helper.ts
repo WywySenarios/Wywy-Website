@@ -2,8 +2,8 @@
  * Helpers for form creation. Does anything that may universally apply to all forms of data entry.
  */
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { DataColumn, TableInfo } from "@/env";
-import { toSnakeCase } from "@/utils";
+import type { DataColumn, TableInfo } from "@/types/data";
+import { toSnakeCase } from "@root/src/utils/parse";
 import { getFallbackValue, getZodType } from "@/utils/data";
 import { useForm, type FieldErrors, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";

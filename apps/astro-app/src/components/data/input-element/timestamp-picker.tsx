@@ -17,7 +17,7 @@ import {
   fragmentTimestamp,
   recombineLocaleTimestamp,
   toLocaleISOString,
-} from "@/utils";
+} from "@root/src/utils/parse";
 
 export function Calendar24({
   value,
