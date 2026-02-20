@@ -64,7 +64,7 @@ export function GeodeticCoordinateInputElement({
       </Card>
       {
         /* Latitude & longitude accuracy */
-        value.accuracy != null ? (
+        value.accuracy ? (
           <Card>
             <CardHeader>Latitude and longitude accuracy</CardHeader>
             <CardContent>
@@ -84,7 +84,7 @@ export function GeodeticCoordinateInputElement({
       }
       {
         /* Altitude */
-        value.altitude != null ? (
+        value.altitude || value.altitude == 0 ? (
           <Card>
             <CardHeader>Altitude</CardHeader>
             <CardContent>
@@ -104,7 +104,7 @@ export function GeodeticCoordinateInputElement({
       }
       {
         /* Altitude accuracy */
-        value.altitudeAccuracy != null ? (
+        value.altitudeAccuracy ? (
           <Card>
             <CardHeader>Altitude Accuracy</CardHeader>
             <NumberBox
@@ -122,7 +122,7 @@ export function GeodeticCoordinateInputElement({
       }
       {
         /* Heading */
-        value.heading != null ? (
+        value.heading || value.heading == 0 ? (
           <Card>
             <CardHeader>Heading</CardHeader>
             <CardContent>
@@ -142,7 +142,7 @@ export function GeodeticCoordinateInputElement({
       }
       {
         /* Speed */
-        value.speed != null ? (
+        value.speed || value.speed == 0 ? (
           <Card>
             <CardHeader>Speed</CardHeader>
             <CardContent>
