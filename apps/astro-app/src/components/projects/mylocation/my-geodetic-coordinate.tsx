@@ -27,7 +27,6 @@ export function MyGeodeticCoordinate() {
 
   return (
     <div>
-      <GeodeticCoordinateInputElement value={coord} onChange={setCoord} />
       <Card>
         <CardHeader>Your Location</CardHeader>
         <CardContent>
@@ -54,6 +53,7 @@ export function MyGeodeticCoordinate() {
           ) : null}
         </CardContent>
       </Card>
+      <GeodeticCoordinateInputElement value={coord} onChange={setCoord} />
     </div>
   );
 }
