@@ -13,7 +13,7 @@ import {
   prettyParseDate,
   prettyParseTimestamp,
   prettifySnakeCase,
-} from "@/utils";
+} from "@/utils/parse";
 
 type DatasetControlPanelProps = {
   databaseName: string;
