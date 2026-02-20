@@ -46,6 +46,8 @@ export function GeodeticCoordinateInputElement({
               newValue.latitude = latitude[0];
               onChange(newValue);
             }}
+            min={-90}
+            max={90}
           />
         </CardContent>
       </Card>
@@ -59,6 +61,8 @@ export function GeodeticCoordinateInputElement({
               newValue.longitude = longitude[0];
               onChange(newValue);
             }}
+            min={-180}
+            max={180}
           />
         </CardContent>
       </Card>
@@ -88,13 +92,13 @@ export function GeodeticCoordinateInputElement({
           <Card>
             <CardHeader>Altitude</CardHeader>
             <CardContent>
-              <Slider
-                value={[value.altitude]}
-                onValueChange={(altitude: number[]) => {
+              <NumberBox
+                value={value.altitude}
+                onChange={(altitude: number) => {
                   let newValue: GeodeticCoordinate = new GeodeticCoordinate(
                     value,
                   );
-                  newValue.altitude = altitude[0];
+                  newValue.altitude = altitude;
                   onChange(newValue);
                 }}
               />
@@ -137,6 +141,8 @@ export function GeodeticCoordinateInputElement({
                   newValue.heading = heading[0];
                   onChange(newValue);
                 }}
+                min={0}
+                max={360}
               />
             </CardContent>
           </Card>
