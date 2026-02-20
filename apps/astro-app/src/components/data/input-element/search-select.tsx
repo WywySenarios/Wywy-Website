@@ -17,6 +17,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+export type SearchSelectItem = Record<"value" | "label", string>;
 export type SearchSelectData = Record<"value" | "label", string>[];
 
 export function SearchSelect({
@@ -31,10 +32,16 @@ export function SearchSelect({
   onChange: (value: string) => void;
 }) {
   const [open, setOpen] = React.useState(false);
+  const [label, setLabel] = React.useState<string>(() => {
+    if (!value) return "Select...";
 
-  const currentItem = data.find(
-    (item) => item.value === (value ? value : defaultValue),
-  );
+    const currentItem: SearchSelectItem | undefined = data.find(
+      (item) => item.value == value,
+    );
+    if (currentItem) return currentItem.label;
+    else
+      throw TypeError("SearchSelectData does not contain the initial value.");
+  });
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -45,7 +52,7 @@ export function SearchSelect({
           aria-expanded={open}
           className="w-[200px] justify-between"
         >
-          {currentItem ? currentItem.label : "Select..."}
+          {label}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -68,6 +75,7 @@ export function SearchSelect({
                   value={item.label}
                   onSelect={(newValue: string) => {
                     onChange(item.value);
+                    setLabel(item.label);
                     setOpen(false);
                   }}
                 >
