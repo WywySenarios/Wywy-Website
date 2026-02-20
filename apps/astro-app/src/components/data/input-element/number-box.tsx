@@ -12,6 +12,7 @@ export function NumberBox({ value, onChange, ...props }: InputProps) {
   const [valid, setValid] = useState<boolean>(true);
   return (
     <Input
+      value={value}
       onChange={(e: ChangeEvent<HTMLInputElement>) => {
         if (!e.target.value) {
           setValid(true);
