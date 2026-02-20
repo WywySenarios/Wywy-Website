@@ -1,19 +1,5 @@
 import { parse, format as formatDate, formatISO, isValid } from "date-fns";
 import type { Datatype } from "@types/data";
-const prettyParseFunctions = {
-  string: prettyParseString,
-  str: prettyParseString,
-  text: prettyParseString,
-  int: prettyParseInt,
-  integer: prettyParseInt,
-  float: prettyParseFloat,
-  number: prettyParseFloat,
-  bool: prettyParseBoolean,
-  boolean: prettyParseBoolean,
-  date: prettyParseDate,
-  time: prettyParseTime,
-  timestamp: prettyParseTimestamp,
-};
 
 /**
  * Attempts to parse a string.
@@ -386,7 +372,6 @@ function prettifySnakeCase(str: string): string {
 }
 
 export {
-  prettyParseFunctions,
   prettyParseString,
   prettyParseInt,
   prettyParseFloat,
