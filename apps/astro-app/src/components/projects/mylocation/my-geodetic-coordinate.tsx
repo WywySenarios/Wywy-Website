@@ -14,7 +14,6 @@ export function MyGeodeticCoordinate() {
         setCoord(new GeodeticCoordinate(position.coords));
       },
       (error: GeolocationPositionError) => {
-        console.log(error.message);
         toast(error.message);
       },
       {
