@@ -41,7 +41,7 @@ export function GeodeticCoordinateInputElement({
         <CardContent>
           <Slider
             value={[value.latitude]}
-            onValueCommit={(latitude: number[]) => {
+            onValueChange={(latitude: number[]) => {
               let newValue: GeodeticCoordinate = new GeodeticCoordinate(value);
               newValue.latitude = latitude[0];
               onChange(newValue);
@@ -54,7 +54,7 @@ export function GeodeticCoordinateInputElement({
         <CardContent>
           <Slider
             value={[value.longitude]}
-            onValueCommit={(longitude: number[]) => {
+            onValueChange={(longitude: number[]) => {
               let newValue: GeodeticCoordinate = new GeodeticCoordinate(value);
               newValue.longitude = longitude[0];
               onChange(newValue);
@@ -90,7 +90,7 @@ export function GeodeticCoordinateInputElement({
             <CardContent>
               <Slider
                 value={[value.altitude]}
-                onValueCommit={(altitude: number[]) => {
+                onValueChange={(altitude: number[]) => {
                   let newValue: GeodeticCoordinate = new GeodeticCoordinate(
                     value,
                   );
@@ -128,7 +128,7 @@ export function GeodeticCoordinateInputElement({
             <CardContent>
               <Slider
                 value={[value.heading]}
-                onValueCommit={(heading: number[]) => {
+                onValueChange={(heading: number[]) => {
                   let newValue: GeodeticCoordinate = new GeodeticCoordinate(
                     value,
                   );
