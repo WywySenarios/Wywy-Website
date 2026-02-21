@@ -6,67 +6,67 @@ import Card from "@/components/Card.astro";
 ---
 
 <Layout css_color_palette="dark_mode">
-	<!-- Preconnect to steam. Thanks to Google Lighthouse for pointing this out! NOTE: The value of crossorigin was NOT explicitly set. -->
-	<div slot="head">
-		<link
-			rel="preconnect"
-			crossorigin
-			href="https://cdn.akamai.steamstatic.com"
-		/>
-		<link
-			rel="preconnect"
-			crossorigin
-			href="https://avatars.akamai.steamstatic.com"
-		/>
-	</div>
+  <!-- Preconnect to steam. Thanks to Google Lighthouse for pointing this out! NOTE: The value of crossorigin was NOT explicitly set. -->
+  <div slot="head">
+    <link
+      rel="preconnect"
+      crossorigin
+      href="https://cdn.akamai.steamstatic.com"
+    />
+    <link
+      rel="preconnect"
+      crossorigin
+      href="https://avatars.akamai.steamstatic.com"
+    />
+  </div>
 
-	<main>
-		<ul role="list" class="link-card-grid">
-			<Card
+  <main>
+    <ul role="list" class="link-card-grid">
+      <!-- <Card
 				href="awards"
 				title="⭐ Awards & Accomplishments!"
 				body="These are my awards, recognitions, and accomplishments!"
-			/>
-			<Card
-				href="projects"
-				title="🚀 Projects"
-				body="These are my very very cool projects!!!"
-			/>
-			<!-- and resumes are to be graphed over time :P -->
-			<Card
+			/> -->
+      <Card
+        href="projects"
+        title="🚀 Projects"
+        body="These are my very very cool projects!!!"
+      />
+      <!-- and resumes are to be graphed over time :P -->
+      <!-- <Card
 				href="resumes"
 				title="📝 Resumes"
 				body="Read my resume, and how it evolved over time."
-			/>
-			<Card href="Senarios" title="🎨 Senarios" body="Wywy's home ❤️" />
-			<Card
+			/> -->
+      <!-- <Card href="Senarios" title="🎨 Senarios" body="Wywy's home ❤️" /> -->
+      <!-- <Card
 				href="personal"
 				title="📝 Personal Blog & Journal"
 				body="Here's my personal documentation, starting from 2022!"
-			/>
-			<!-- <Card
+			/> -->
+      <!-- <Card
 				href="blog"
 				title="📝 Blog"
 				body="Check out my Blog! There's lots of stuff, from video game tactics to math tips & tricks!"
 			/> -->
-			<Card
-				href="https://github.com/WywySenarios/Wywy-Website"
-				title="Upcoming Content... 🚧"
-				body="This block of STUFF!!! has not been implemented yet! :( Very sad indeed."
-			/>
+      <Card
+        href="https://github.com/WywySenarios/Wywy-Website"
+        title="Upcoming Content... 🚧"
+        body="This block of STUFF!!! has not been implemented yet! :( Very sad indeed."
+      />
 
-			<!-- iFrame source code at: https://github.com/gamer2810/steam-miniprofile/tree/master/.github -->
-			<Card href="https://steamcommunity.com/id/lfwywy/" title="Steam">
-				<iframe
-					title="Eric's Steam Card"
-					src="https://gamer2810.github.io/steam-miniprofile/?accountId=76561199253373811"
-					style="border:0px #ffffff none;"
-					name="myiFrame"
-					scrolling="no"
-					height="200px"
-					max-width="400px"
-					allowfullscreen></iframe>
-			</Card>
-		</ul>
-	</main>
+      <!-- iFrame source code at: https://github.com/gamer2810/steam-miniprofile/tree/master/.github -->
+      <Card href="https://steamcommunity.com/id/lfwywy/" title="Steam">
+        <iframe
+          title="Eric's Steam Card"
+          src="https://gamer2810.github.io/steam-miniprofile/?accountId=76561199253373811"
+          style="border:0px #ffffff none;"
+          name="myiFrame"
+          scrolling="no"
+          height="200px"
+          max-width="400px"
+          allowfullscreen></iframe>
+      </Card>
+    </ul>
+  </main>
 </Layout>

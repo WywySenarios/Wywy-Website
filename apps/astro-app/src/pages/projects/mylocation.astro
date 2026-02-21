@@ -1,0 +1,12 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { Toaster } from "@/components/ui/sonner";
+import { MyGeodeticCoordinate } from "@/components/projects/mylocation/my-geodetic-coordinate";
+---
+
+<Layout css_color_palette="light_mode">
+  <h2>Where Am I?</h2>
+  <p>Using the Javascript Geolocation API.</p>
+  <MyGeodeticCoordinate client:load />
+  <Toaster client:idle />
+</Layout>
