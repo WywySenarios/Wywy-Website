@@ -32,10 +32,12 @@ export function GeodeticPointMinimalInputElement({
   fields?: GeodeticCoordinateFields;
 }) {
   return (
-    <div>
-      <p>{`(${value.latitude}, ${value.longitude}${value.altitude ? `, ${value.altitude}${value.altitudeAccuracy ? ` ± ${value.altitudeAccuracy}` : ""}` : ""})${value.accuracy ? ` ± ${value.accuracy}` : ""}`}</p>
-      {value.heading ? <p>Heading: {value.heading}</p> : null}
-      {value.speed != null ? <p>Speed: {value.speed}</p> : null}
+    <div>{value ?
+      (<div>
+        <p>{`(${value.latitude}, ${value.longitude}${value.altitude ? `, ${value.altitude}${value.altitudeAccuracy ? ` ± ${value.altitudeAccuracy}` : ""}` : ""})${value.accuracy ? ` ± ${value.accuracy}` : ""}`}</p>
+        {value.heading ? <p>Heading: {value.heading}</p> : null}
+        {value.speed != null ? <p>Speed: {value.speed}</p> : null}
+      </div>) : <p>No data.</p>}
       {/* Set to current location button */}
       <Button
         className="w-full"
