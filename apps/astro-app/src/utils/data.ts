@@ -62,6 +62,9 @@ export function getFallbackValue(
 ): string;
 export function getFallbackValue(
   datatype: Datatype,
+): number | string | boolean | Date | null | undefined;
+export function getFallbackValue(
+  datatype: Datatype,
 ): number | string | boolean | Date | null | undefined {
   switch (datatype) {
     case "int":
