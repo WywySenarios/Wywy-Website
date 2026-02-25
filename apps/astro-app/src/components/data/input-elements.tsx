@@ -43,6 +43,7 @@ import {
   type SearchSelectData,
 } from "./input-element/search-select";
 import { Controller } from "react-hook-form";
+import { GeodeticPointMinimalInputElement } from "./input-element/geodetic-point-minimal";
 
 export interface FormElementProps {
   form: any;
@@ -117,7 +118,7 @@ export function SingleFormElement({
   );
 }
 
-export function SearchSelectField() {}
+export function SearchSelectField() { }
 
 export function FormElement({
   form,
@@ -321,6 +322,8 @@ function InputElement({
           />
         );
         break;
+      case "geodetic point minimal":
+        <GeodeticPointMinimalInputElement {...field} />
       default:
         console.warn(
           `No input element found for column ${columnInfo.name} (entrytype: ${columnInfo.entrytype}). This is likely a bug.`,
