@@ -1,5 +1,23 @@
 import type { GeodeticCoordinates } from "@/types/data";
 
+export function GetCurrentGeodeticCoordinatePromise(
+  navigator: Navigator,
+  options: PositionOptions = {},
+): Promise<GeodeticCoordinate> {
+  return new Promise((resolve, reject) => {
+    if (!("geolocation" in navigator))
+      reject(new Error("Geolocation not supported."));
+
+    navigator.geolocation.getCurrentPosition(
+      (position: GeolocationPosition) => {
+        resolve(new GeodeticCoordinate(position.coords));
+      },
+      reject,
+      options,
+    );
+  });
+}
+
 /**
  * A geodetic coordinate.
  */
