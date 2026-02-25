@@ -323,7 +323,8 @@ function InputElement({
         );
         break;
       case "geodetic point minimal":
-        <GeodeticPointMinimalInputElement {...field} />
+        body = <GeodeticPointMinimalInputElement {...field} />
+        break;
       default:
         console.warn(
           `No input element found for column ${columnInfo.name} (entrytype: ${columnInfo.entrytype}). This is likely a bug.`,
