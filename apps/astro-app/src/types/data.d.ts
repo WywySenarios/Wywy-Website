@@ -142,6 +142,7 @@ export type DataColumn = {
   comments?: boolean;
   description?: string;
   unique?: boolean;
+  record_on?: "start" | "split";
 } & (
   | IntegerColumn
   | FloatColumn
