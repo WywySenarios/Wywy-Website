@@ -12,48 +12,154 @@ import type { JSONValue } from "./http";
  * @returns The ZodType, with restrictions already baked in.
  */
 export function getZodType(columnInfo: DataColumn): ZodTypeAny {
+  let output: ZodTypeAny;
+
   switch (columnInfo.datatype) {
     case "int":
     case "integer":
-      let output: ZodNumber = z.number();
+      output = z.number().int();
       if ("min" in columnInfo && columnInfo.min !== undefined)
-        output = output.max(columnInfo.min);
+        output = (output as ZodNumber).max(columnInfo.min);
       if ("max" in columnInfo && columnInfo.max !== undefined)
-        output = output.max(columnInfo.max);
-      return z.number().int();
+        output = (output as ZodNumber).max(columnInfo.max);
+      break;
     case "float":
     case "number":
-      return z.number();
+      output = z.number();
+      break;
     case "str":
     case "string":
     case "text":
-      return z.string();
+      output = z.string();
+      break;
     case "bool":
     case "boolean":
-      return z.coerce.boolean();
+      output = z.coerce.boolean();
+      break;
     // THIS IS BY NO MEANS ROBUST
     case "time":
-      return z
+      output = z
         .string()
         .regex(/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?Z?$/, {
           message: "Invalid ISO time format",
         });
+      break;
     // THIS IS BY NO MEANS ROBUST
     case "date":
-      return z.string().regex(/^[0-9]{1,4}-[0-9]{2}-[0-9]{2}$/, {
+      output = z.string().regex(/^[0-9]{1,4}-[0-9]{2}-[0-9]{2}$/, {
         message: "Invalid Date format",
       });
+      break;
     // THIS IS BY NO MEANS ROBUST
     case "timestamp":
-      return z
+      output = z
         .string()
         .regex(
           /^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$/,
           { message: "Invalid ISO timestamp format" },
         );
+      break;
     case "enum":
-      return z.enum(columnInfo.values);
+      output = z.enum(columnInfo.values);
+      break;
+    case "geodetic point":
+      output = z.custom<GeodeticCoordinate>(
+        (val) => {
+          if (typeof val !== "object" || val === null) return false;
+
+          const v = val as GeodeticCoordinate;
+
+          if (typeof v.latitude !== "number" || !Number.isFinite(v.latitude))
+            return false;
+          if (typeof v.longitude !== "number" || !Number.isFinite(v.longitude))
+            return false;
+
+          if (v.latitude < -90 || v.latitude > 90) return false;
+
+          if (v.longitude < -180 || v.longitude > 180) return false;
+
+          // Optional numeric fields (must be number or null if present)
+          const optionalNumberOrNull = (n: unknown) =>
+            n === null ||
+            n === undefined ||
+            (typeof n === "number" && Number.isFinite(n));
+
+          if (!optionalNumberOrNull(v.altitude)) return false;
+          if (!optionalNumberOrNull(v.accuracy)) return false;
+          if (!optionalNumberOrNull(v.altitudeAccuracy)) return false;
+          if (!optionalNumberOrNull(v.heading)) return false;
+          if (!optionalNumberOrNull(v.speed)) return false;
+
+          return true;
+        },
+        {
+          message: "Invalid geodetic point",
+        },
+      );
+      break;
   }
+
+  // traits that might apply to any column
+  // optional
+  output = output.optional();
+
+  return output;
+}
+
+export function handleRecordOn(
+  initialData: Record<string, any>,
+  tableInfo: TableInfo,
+  event_name: "start" | "split",
+  printError: (msg: string) => unknown = (msg: string) => {},
+  mode: "insert" | "purge" = "insert",
+): Promise<Record<string, any>> {
+  return new Promise((resolve, reject) => {
+    let finalData = initialData;
+    let fetchTasks: Promise<any>[] = [];
+
+    // update values that need to be recorded on start
+    for (let columnSchema of tableInfo.schema) {
+      if (columnSchema.record_on === event_name) {
+        switch (mode) {
+          case "purge":
+            delete finalData[columnSchema.name];
+            break;
+          case "insert":
+            switch (columnSchema.datatype) {
+              case "timestamp":
+                finalData[columnSchema.name] = new Date(Date.now());
+                break;
+              case "geodetic point":
+                const currentTask = GetCurrentGeodeticCoordinatePromise(
+                  navigator,
+                  {
+                    enableHighAccuracy: true,
+                    timeout: 1000,
+                  },
+                )
+                  .then((value: GeodeticCoordinate) => {
+                    finalData[columnSchema.name] = value;
+                  })
+                  .catch((reason?: GeolocationPositionError) => {
+                    if (reason)
+                      printError(`Failed to fetch location: ${reason.message}`);
+                  });
+                fetchTasks.push(currentTask);
+                break;
+              default:
+                throw `Column "${columnSchema.name}"'s datatype does not support record_on.`;
+            }
+            break;
+        }
+      }
+    }
+
+    let fetchTasksCompleted = Promise.allSettled(fetchTasks);
+    fetchTasksCompleted.catch(() => {});
+    fetchTasksCompleted.finally(() => {
+      resolve(finalData);
+    });
+  });
 }
 
 export function getFallbackValue(datatype: "int" | "integer"): number;
