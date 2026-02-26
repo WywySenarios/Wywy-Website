@@ -96,8 +96,6 @@ export function TimerForm({
               }
             }
 
-            console.log(output);
-
             setData(output);
             setIsCaching(false);
             setCacheError(false);
@@ -143,10 +141,6 @@ export function TimerForm({
       false,
       tableInfo,
     );
-
-    console.log("Caching...");
-    console.log(data);
-    console.log(output);
 
     // store values in cache
     // @TODO don't hardcode start_time & end_time
