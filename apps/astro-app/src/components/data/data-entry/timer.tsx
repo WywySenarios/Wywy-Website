@@ -1,85 +1,23 @@
 import type { TableInfo } from "@/types/data";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState, type JSX } from "react";
+import { useEffect, useState } from "react";
 import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
 import { Columns, Descriptors, Tags } from "@/components/data/data-entry";
 import type z from "zod";
 import { toast } from "sonner";
-import { getCSRFToken } from "@/utils/auth";
-import { toSnakeCase } from "@root/src/utils/parse";
+import { getCSRFToken } from "@utils/auth";
+import {
+  handleRecordOn,
+  parseDatabaseValue,
+  serializeFormOutput,
+  type formOutput,
+} from "@utils/data";
+import type { JSONValue } from "@utils/http";
 import { CACHE_URL } from "astro:env/client";
+import { RefreshCcw, Upload } from "lucide-react";
 
-// child component to circumvent hook rules
-function TimerFormForm({
-  startTime,
-  setStartTime,
-  endTime,
-  setEndTime,
-  cancelButton,
-  databaseName,
-  tableInfo,
-}: {
-  startTime: Date;
-  setStartTime: React.Dispatch<React.SetStateAction<Date | undefined>>;
-  endTime: Date;
-  setEndTime: React.Dispatch<React.SetStateAction<Date | undefined>>;
-  cancelButton: JSX.Element;
-  databaseName: string;
-  tableInfo: TableInfo;
-}) {
-  // sub in the start & end times as default values, as if they were in the schema originally
-  for (let columnInfo of tableInfo.schema) {
-    switch (toSnakeCase(columnInfo.name)) {
-      case "start_time":
-        columnInfo.defaultValue = startTime.toISOString();
-        break;
-      case "end_time":
-        columnInfo.defaultValue = endTime.toISOString();
-        break;
-    }
-  }
-
-  const { form, formSchema, onSubmit, onSubmitInvalid } =
-    createFormSchemaAndHandlers(databaseName, tableInfo, CACHE_URL);
-
-  function submission(
-    values: z.infer<typeof formSchema>,
-    event?: React.BaseSyntheticEvent,
-  ): void {
-    const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
-    const action = submitter?.getAttribute("value");
-
-    onSubmit(values);
-
-    setEndTime(undefined);
-    setStartTime(action === "split" ? new Date(Date.now()) : undefined);
-  }
-
-  return (
-    <form
-      onSubmit={form.handleSubmit(submission, onSubmitInvalid)}
-      className="flex flex-col gap-4"
-    >
-      {cancelButton}
-      {/* Submit button */}
-      <Button type="submit">Submit</Button>
-      {/* Columns */}
-      <Columns fieldsToEnter={tableInfo.schema} form={form} />
-      {/* Quick actions */}
-      {/* Tags */}
-      {tableInfo.tagging && (
-        <Tags databaseName={databaseName} tableInfo={tableInfo} form={form} />
-      )}
-      {/* Descriptors */}
-      {tableInfo.descriptors && (
-        <Descriptors tableInfo={tableInfo} form={form} />
-      )}
-      {/* Submit & restart button */}
-      <Button type="submit" value="split">
-        Submit & Restart
-      </Button>
-    </form>
-  );
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /**
@@ -96,10 +34,18 @@ export function TimerForm({
   tableInfo: TableInfo;
 }) {
   const [startTime, setStartTime] = useState<Date | undefined>(undefined);
-  const [endTime, setEndTime] = useState<Date | undefined>(undefined);
+  const [isSplit, setIsSplit] = useState<boolean>(false);
+  const [isCaching, setIsCaching] = useState<boolean>(false);
+  const [cacheError, setCacheError] = useState<boolean>(false);
+  const [data, setData] = useState<Record<string, any>>({});
 
-  // initally try to GET the start time
-  useEffect(() => {
+  const isStart: boolean = Object.keys(data).length > 0;
+
+  function fetchCache() {
+    // only allow one concurrent fetch
+    if (isCaching) return;
+    setIsCaching(true);
+
     fetch(`${CACHE_URL}/cache/${databaseName}/${tableInfo.tableName}`, {
       method: "GET",
       mode: "cors",
@@ -111,71 +57,90 @@ export function TimerForm({
           toast(
             "Something went wrong while fetching the start/end time: Invalid credentials.",
           );
+          setIsCaching(false);
+          setCacheError(true);
           return;
         }
 
         res
           .json()
-          .then((body: object) => {
-            if (
-              "Start Time" in body &&
-              body["Start Time"] !== undefined &&
-              typeof body["Start Time"] === "string" &&
-              body["Start Time"].length > 2
-            ) {
-              let value: string = body["Start Time"].substring(
-                1,
-                body["Start Time"].length - 1,
-              );
-              let newDate: Date = new Date(Date.parse(value + "Z"));
-              if (!isNaN(newDate.getTime())) setStartTime(newDate);
+          .then((body: Record<string, JSONValue>) => {
+            let output: Record<string, any> = {};
+            for (let columnSchema of tableInfo.schema) {
+              if (columnSchema.name in body) {
+                // transform dates to UTC
+                switch (columnSchema.datatype) {
+                  case "time":
+                  case "date":
+                  case "timestamp":
+                    if (typeof body[columnSchema.name] != "string") {
+                      toast(
+                        "Expected datatype string for time-related column.",
+                      );
+                      setCacheError(true);
+                      return;
+                    }
+                    body[columnSchema.name] =
+                      (body[columnSchema.name] as string).slice(1, -1) + "Z";
+                    break;
+                }
+
+                if (columnSchema.record_on === "split") setIsSplit(true);
+
+                output[columnSchema.name] = parseDatabaseValue(
+                  body[columnSchema.name],
+                  columnSchema.datatype,
+                );
+              }
             }
-            if (
-              "End Time" in body &&
-              body["End Time"] !== undefined &&
-              typeof body["End Time"] === "string" &&
-              body["End Time"].length > 2
-            ) {
-              let value: string = body["End Time"].substring(
-                1,
-                body["End Time"].length - 1,
-              );
-              let newDate: Date = new Date(Date.parse(value + "Z"));
-              if (!isNaN(newDate.getTime())) setEndTime(newDate);
-            }
+
+            console.log(output);
+
+            setData(output);
+            setIsCaching(false);
+            setCacheError(false);
           })
           .catch((reason: any) => {
             toast(
               `Something went wrong when trying to read the server's stored time: ${reason}`,
             );
+            setIsCaching(false);
+            setCacheError(true);
           });
       })
       .catch((reason: any) => {
         toast(
           `Something went wrong when trying to contact the server: ${reason}`,
         );
+        setIsCaching(false);
+        setCacheError(true);
       });
-  }, []);
+  }
+
+  // initally try to GET the start time
+  useEffect(fetchCache, []);
 
   // automatically update the cache when the user changes either the start or the end time.
-  useEffect(cache, [startTime, endTime]);
+  useEffect(() => {
+    // @TODO generalize
+    setStartTime(data["Start Time"]);
+
+    if (isCaching) cache();
+  }, [data]);
 
   /**
    * Stores the startTime and endTime into the cache.
    */
   function cache() {
-    interface outputType {
-      "Start Time"?: string;
-      "End Time"?: string;
-    }
-    let output: outputType = {};
-    // stringify the two dates if possible
-    if (startTime) {
-      output["Start Time"] = `'${startTime.toISOString().slice(0, -1)}'`;
-    }
-    if (endTime) {
-      output["End Time"] = `'${endTime.toISOString().slice(0, -1)}'`;
-    }
+    let output: formOutput = serializeFormOutput(
+      { data: data },
+      false,
+      tableInfo,
+    );
+
+    console.log("Caching...");
+    console.log(data);
+    console.log(output);
 
     // store values in cache
     // @TODO don't hardcode start_time & end_time
@@ -183,7 +148,7 @@ export function TimerForm({
       .then((csrftoken: string) => {
         fetch(`${CACHE_URL}/cache/${databaseName}/${tableInfo.tableName}`, {
           method: "POST",
-          body: JSON.stringify(output),
+          body: JSON.stringify(output.data),
           mode: "cors",
           credentials: "include",
           headers: {
@@ -196,60 +161,147 @@ export function TimerForm({
         toast(
           `Something went wrong when trying to store the start or end time: ${reason}`,
         );
+        setCacheError(true);
+      })
+      .finally(() => {
+        setIsCaching(false);
       });
   }
 
   function start() {
-    if (startTime !== undefined) return;
-    setStartTime(new Date(Date.now()));
+    // only allow one concurrent cache operation (avoid race condition)
+    if (isCaching) return;
+    setIsCaching(true);
+
+    handleRecordOn({}, tableInfo, "start", toast)
+      .then((newData: Record<string, any>) => {
+        setData(newData);
+      })
+      .catch((reason?: any) => {
+        if (reason) toast(`Failed to start: ${reason}`);
+        setCacheError(true);
+      });
   }
 
   /**
    * Splits the time & records the start & end time in the cache.
    */
   function split() {
-    setEndTime(new Date(Date.now()));
+    // only allow one concurrent cache operation (avoid race condition)
+    if (isCaching) return;
+    setIsCaching(true);
+
+    handleRecordOn(data, tableInfo, "split", toast)
+      .then((newData: Record<string, any>) => {
+        setData(newData);
+        setIsSplit(true);
+      })
+      .catch((reason?: any) => {
+        if (reason) toast(`Failed to split: ${reason}`);
+        setCacheError(true);
+      });
   }
 
   /**
    * Undos and removes the end time from the cache but keeps the start time.
    */
   function cancelSplit() {
-    setEndTime(undefined);
+    handleRecordOn(data, tableInfo, "split", toast, "purge")
+      .then((newData: Record<string, any>) => {
+        setData(newData);
+        setIsSplit(false);
+      })
+      .catch((reason?: any) => {
+        if (reason) toast(`Failed to cancel split: ${reason}`);
+        setCacheError(true);
+      });
   }
 
   /**
    * Completely empty the cache (both start and end times)
    */
   function cancel() {
-    setStartTime(undefined);
-    setEndTime(undefined);
+    if (isCaching) return;
+    setIsCaching(true);
+
+    setIsSplit(false);
+
+    setData({});
   }
+
+  const { form, formSchema, onSubmit, onSubmitInvalid } =
+    createFormSchemaAndHandlers(databaseName, tableInfo, CACHE_URL);
+
+  function submission(
+    values: z.infer<typeof formSchema>,
+    event?: React.BaseSyntheticEvent,
+  ): void {
+    const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
+    const action = submitter?.getAttribute("value");
+
+    onSubmit(values);
+
+    switch (action) {
+      case "split":
+        start();
+      default:
+        cancel();
+    }
+  }
+
+  if (cacheError)
+    return (
+      <div className="flex flex-col items-center">
+        <p>Something went wrong while caching.</p>
+        <div className="flex flex-row">
+          <Button onClick={fetchCache}>
+            <RefreshCcw></RefreshCcw>
+          </Button>
+          <Button onClick={cache}>
+            <Upload />
+          </Button>
+        </div>
+      </div>
+    );
 
   return (
     <div>
-      {startTime && endTime ? (
-        <TimerFormForm
-          startTime={startTime}
-          setStartTime={setStartTime}
-          endTime={endTime}
-          setEndTime={setEndTime}
-          cancelButton={
-            <Button disabled={startTime === undefined} onClick={cancelSplit}>
-              Cancel
-            </Button>
-          }
-          databaseName={databaseName}
-          tableInfo={tableInfo}
-        />
+      {isSplit ? (
+        <form
+          onSubmit={form.handleSubmit(submission, onSubmitInvalid)}
+          className="flex flex-col gap-4"
+        >
+          <Button onClick={cancelSplit}>Cancel</Button>
+          {/* Submit button */}
+          <Button type="submit">Submit</Button>
+          {/* Columns */}
+          <Columns fieldsToEnter={tableInfo.schema} form={form} />
+          {/* Quick actions */}
+          {/* Tags */}
+          {tableInfo.tagging && (
+            <Tags
+              databaseName={databaseName}
+              tableInfo={tableInfo}
+              form={form}
+            />
+          )}
+          {/* Descriptors */}
+          {tableInfo.descriptors && (
+            <Descriptors tableInfo={tableInfo} form={form} />
+          )}
+          {/* Submit & restart button */}
+          <Button type="submit" value="split">
+            Submit & Restart
+          </Button>
+        </form>
       ) : (
         <div className="flex flex-col items-center">
-          <p>{startTime ? startTime?.toLocaleString() : "No start time."}</p>
+          <p>{isStart ? startTime?.toLocaleString() : "No start time."}</p>
           <div className="flex flex-row justify-center">
-            <Button onClick={startTime ? split : start}>
-              {startTime ? "Split" : "Start"}
+            <Button onClick={isStart ? split : start}>
+              {isStart ? "Split" : "Start"}
             </Button>
-            <Button disabled={startTime === undefined} onClick={cancel}>
+            <Button disabled={!isStart} onClick={cancel}>
               Cancel
             </Button>
           </div>
