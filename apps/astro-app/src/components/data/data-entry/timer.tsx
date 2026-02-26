@@ -40,6 +40,8 @@ export function TimerForm({
   const [data, setData] = useState<Record<string, any>>({});
 
   const isStart: boolean = Object.keys(data).length > 0;
+  const { form, formSchema, onSubmit, onSubmitInvalid } =
+    createFormSchemaAndHandlers(databaseName, tableInfo, CACHE_URL);
 
   function fetchCache() {
     // only allow one concurrent fetch
@@ -125,6 +127,10 @@ export function TimerForm({
     // @TODO generalize
     setStartTime(data["Start Time"]);
 
+    // update form values
+    // update value in form
+    form.setValue(`data`, data);
+
     if (isCaching) cache();
   }, [data]);
 
@@ -173,7 +179,7 @@ export function TimerForm({
     if (isCaching) return;
     setIsCaching(true);
 
-    handleRecordOn({}, tableInfo, "start", toast)
+    handleRecordOn({}, tableInfo, "start", form, toast)
       .then((newData: Record<string, any>) => {
         setData(newData);
       })
@@ -191,7 +197,7 @@ export function TimerForm({
     if (isCaching) return;
     setIsCaching(true);
 
-    handleRecordOn(data, tableInfo, "split", toast)
+    handleRecordOn(data, tableInfo, "split", form, toast)
       .then((newData: Record<string, any>) => {
         setData(newData);
         setIsSplit(true);
@@ -206,7 +212,7 @@ export function TimerForm({
    * Undos and removes the end time from the cache but keeps the start time.
    */
   function cancelSplit() {
-    handleRecordOn(data, tableInfo, "split", toast, "purge")
+    handleRecordOn(data, tableInfo, "split", form, toast, "purge")
       .then((newData: Record<string, any>) => {
         setData(newData);
         setIsSplit(false);
@@ -228,9 +234,6 @@ export function TimerForm({
 
     setData({});
   }
-
-  const { form, formSchema, onSubmit, onSubmitInvalid } =
-    createFormSchemaAndHandlers(databaseName, tableInfo, CACHE_URL);
 
   function submission(
     values: z.infer<typeof formSchema>,

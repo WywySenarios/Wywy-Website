@@ -5,6 +5,7 @@ import {
   GetCurrentGeodeticCoordinatePromise,
 } from "./datatypes/geodetic";
 import type { JSONValue } from "./http";
+import type { UseFormReturn } from "react-hook-form";
 
 /**
  * Produces a ZodType with restrictions as defined by the given column schema.
@@ -106,10 +107,23 @@ export function getZodType(columnInfo: DataColumn): ZodTypeAny {
   return output;
 }
 
+type form = UseFormReturn<{
+  descriptors: {
+    [x: string]: {
+      [x: string]: any;
+    }[];
+  };
+  data: {
+    [x: string]: any;
+  };
+  tags?: unknown;
+}>;
+
 export function handleRecordOn(
   initialData: Record<string, any>,
   tableInfo: TableInfo,
   event_name: "start" | "split",
+  form: form,
   printError: (msg: string) => unknown = (msg: string) => {},
   mode: "insert" | "purge" = "insert",
 ): Promise<Record<string, any>> {
@@ -128,6 +142,10 @@ export function handleRecordOn(
             switch (columnSchema.datatype) {
               case "timestamp":
                 finalData[columnSchema.name] = new Date(Date.now());
+                form.setValue(
+                  `data.${columnSchema.name}`,
+                  finalData[columnSchema.name],
+                );
                 break;
               case "geodetic point":
                 const currentTask = GetCurrentGeodeticCoordinatePromise(
@@ -141,8 +159,15 @@ export function handleRecordOn(
                     finalData[columnSchema.name] = value;
                   })
                   .catch((reason?: GeolocationPositionError) => {
+                    finalData[columnSchema.name] = undefined;
                     if (reason)
                       printError(`Failed to fetch location: ${reason.message}`);
+                  })
+                  .finally(() => {
+                    form.setValue(
+                      `data.${columnSchema.name}`,
+                      finalData[columnSchema.name],
+                    );
                   });
                 fetchTasks.push(currentTask);
                 break;
