@@ -15,6 +15,7 @@ import {
 import type { JSONValue } from "@utils/http";
 import { CACHE_URL } from "astro:env/client";
 import { RefreshCcw, Upload } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -173,6 +174,8 @@ export function TimerForm({
     if (isCaching) return;
     setIsCaching(true);
 
+    setIsSplit(false);
+
     handleRecordOn({}, tableInfo, "start", form, toast)
       .then((newData: Record<string, any>) => {
         setData(newData);
@@ -206,6 +209,9 @@ export function TimerForm({
    * Undos and removes the end time from the cache but keeps the start time.
    */
   function cancelSplit() {
+    if (isCaching) return;
+    setIsCaching(true);
+
     handleRecordOn(data, tableInfo, "split", form, toast, "purge")
       .then((newData: Record<string, any>) => {
         setData(newData);
@@ -263,7 +269,7 @@ export function TimerForm({
 
   return (
     <div>
-      {isSplit ? (
+      {isSplit && !isCaching ? (
         <form
           onSubmit={form.handleSubmit(submission, onSubmitInvalid)}
           className="flex flex-col gap-4"
@@ -295,10 +301,18 @@ export function TimerForm({
         <div className="flex flex-col items-center">
           <p>{isStart ? startTime?.toLocaleString() : "No start time."}</p>
           <div className="flex flex-row justify-center">
-            <Button onClick={isStart ? split : start}>
-              {isStart ? "Split" : "Start"}
+            <Button
+              className="min-w-[16ch]"
+              disabled={isCaching}
+              onClick={isStart ? split : start}
+            >
+              {mainButtonBody}
             </Button>
-            <Button disabled={!isStart} onClick={cancel}>
+            <Button
+              className="min-w-[12ch]"
+              disabled={!isStart || isCaching}
+              onClick={cancel}
+            >
               Cancel
             </Button>
           </div>
