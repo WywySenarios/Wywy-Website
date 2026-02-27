@@ -123,7 +123,7 @@ export function handleRecordOn(
   mode: "insert" | "purge" = "insert",
 ): Promise<Record<string, any>> {
   return new Promise((resolve, reject) => {
-    let finalData = initialData;
+    let finalData = { ...initialData };
     let fetchTasks: Promise<any>[] = [];
 
     // update values that need to be recorded on start
