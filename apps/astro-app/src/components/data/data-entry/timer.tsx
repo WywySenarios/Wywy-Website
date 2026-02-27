@@ -266,13 +266,13 @@ export function TimerForm({
       </div>
     );
 
-  if (isSplit && !isCaching) {
+  if (isSplit) {
     return (
       <form
         onSubmit={form.handleSubmit(submission, onSubmitInvalid)}
         className="flex flex-col gap-4"
       >
-        <Button type="button" onClick={cancelSplit}>
+        <Button type="button" disabled={isCaching} onClick={cancelSplit}>
           {isCaching ? (
             <div className="flex flex-row justify-center items-center gap-2">
               <Spinner data-icon="inline-start" />
