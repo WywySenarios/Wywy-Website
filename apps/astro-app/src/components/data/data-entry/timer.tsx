@@ -267,6 +267,18 @@ export function TimerForm({
       </div>
     );
 
+  let mainButtonBody;
+  if (isCaching) {
+    mainButtonBody = (
+      <div className="flex gap-2 items-center">
+        <Spinner className="h-[1ch] w-[1ch]" data-icon="inline-start" />
+        <p className="justify-center">Caching...</p>
+      </div>
+    );
+  } else {
+    mainButtonBody = isStart ? "Split" : "Start";
+  }
+
   return (
     <div>
       {isSplit && !isCaching ? (
