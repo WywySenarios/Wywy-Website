@@ -317,24 +317,24 @@ export function TimerForm({
   }
 
   return (
-        <div className="flex flex-col items-center">
-          <p>{isStart ? startTime?.toLocaleString() : "No start time."}</p>
-          <div className="flex flex-row justify-center">
-            <Button
-              className="min-w-[16ch]"
-              disabled={isCaching}
-              onClick={isStart ? split : start}
-            >
-              {mainButtonBody}
-            </Button>
-            <Button
-              className="min-w-[12ch]"
-              disabled={!isStart || isCaching}
-              onClick={cancel}
-            >
-              Cancel
-            </Button>
-          </div>
+    <div className="flex flex-col items-center">
+      <p>{isStart ? startTime?.toLocaleString() : "No start time."}</p>
+      <div className="flex flex-row justify-center">
+        <Button
+          className="min-w-[16ch]"
+          disabled={isCaching}
+          onClick={isStart ? split : start}
+        >
+          {mainButtonBody}
+        </Button>
+        <Button
+          className="min-w-[12ch]"
+          disabled={!isStart || isCaching}
+          onClick={cancel}
+        >
+          Cancel
+        </Button>
+      </div>
     </div>
   );
 }
