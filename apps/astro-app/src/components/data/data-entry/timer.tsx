@@ -267,21 +267,8 @@ export function TimerForm({
       </div>
     );
 
-  let mainButtonBody;
-  if (isCaching) {
-    mainButtonBody = (
-      <div className="flex gap-2 items-center">
-        <Spinner className="h-[1ch] w-[1ch]" data-icon="inline-start" />
-        <p className="justify-center">Caching...</p>
-      </div>
-    );
-  } else {
-    mainButtonBody = isStart ? "Split" : "Start";
-  }
-
+  if (isSplit && !isCaching) {
   return (
-    <div>
-      {isSplit && !isCaching ? (
         <form
           onSubmit={form.handleSubmit(submission, onSubmitInvalid)}
           className="flex flex-col gap-4"
@@ -303,11 +290,7 @@ export function TimerForm({
           {/* Quick actions */}
           {/* Tags */}
           {tableInfo.tagging && (
-            <Tags
-              databaseName={databaseName}
-              tableInfo={tableInfo}
-              form={form}
-            />
+          <Tags databaseName={databaseName} tableInfo={tableInfo} form={form} />
           )}
           {/* Descriptors */}
           {tableInfo.descriptors && (
@@ -318,7 +301,22 @@ export function TimerForm({
             Submit & Restart
           </Button>
         </form>
-      ) : (
+    );
+  }
+
+  let mainButtonBody;
+  if (isCaching) {
+    mainButtonBody = (
+      <div className="flex gap-2 items-center">
+        <Spinner className="h-[1ch] w-[1ch]" data-icon="inline-start" />
+        <p className="justify-center">Caching...</p>
+      </div>
+    );
+  } else {
+    mainButtonBody = isStart ? "Split" : "Start";
+  }
+
+  return (
         <div className="flex flex-col items-center">
           <p>{isStart ? startTime?.toLocaleString() : "No start time."}</p>
           <div className="flex flex-row justify-center">
@@ -337,8 +335,6 @@ export function TimerForm({
               Cancel
             </Button>
           </div>
-        </div>
-      )}
     </div>
   );
 }
