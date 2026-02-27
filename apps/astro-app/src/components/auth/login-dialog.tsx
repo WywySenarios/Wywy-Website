@@ -126,11 +126,15 @@ function LoginDialogContents(): JSX.Element {
   return (
     <div>
       {usernameCookie.username && passwordCookie.password ? (
-        <Button onClick={onResetLoginInfo}>Log Out</Button>
+        <Button onClick={onResetLoginInfo} type="button">
+          Log Out
+        </Button>
       ) : (
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="outline">Login</Button>
+            <Button variant="outline" type="button">
+              Login
+            </Button>
           </DialogTrigger>
 
           <DialogContent className="sm:max-w-[425px]">
@@ -153,7 +157,9 @@ function LoginDialogContents(): JSX.Element {
               </div>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button variant="outline">Cancel</Button>
+                  <Button type="button" variant="outline">
+                    Cancel
+                  </Button>
                 </DialogClose>
                 <Button type="submit">Login</Button>
               </DialogFooter>

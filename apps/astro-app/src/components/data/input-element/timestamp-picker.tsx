@@ -43,6 +43,7 @@ export function Calendar24({
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
+              type="button"
               variant="outline"
               id="date-picker"
               className="w-32 justify-between font-normal"

@@ -118,7 +118,7 @@ export function SingleFormElement({
   );
 }
 
-export function SearchSelectField() { }
+export function SearchSelectField() {}
 
 export function FormElement({
   form,
@@ -250,6 +250,7 @@ function InputElement({
           <Popover>
             <PopoverTrigger asChild>
               <Button
+                type="button"
                 variant={"outline"}
                 className={cn(
                   "w-60 pl-3 text-left font-normal",
@@ -323,7 +324,7 @@ function InputElement({
         );
         break;
       case "geodetic point minimal":
-        body = <GeodeticPointMinimalInputElement {...field} />
+        body = <GeodeticPointMinimalInputElement {...field} />;
         break;
       default:
         console.warn(

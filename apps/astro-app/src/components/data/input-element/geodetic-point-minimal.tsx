@@ -1,4 +1,3 @@
-
 import { GeodeticCoordinate } from "@utils/datatypes/geodetic";
 import { Button } from "@/components/ui/button";
 import { LocateFixed } from "lucide-react";
@@ -32,14 +31,19 @@ export function GeodeticPointMinimalInputElement({
   fields?: GeodeticCoordinateFields;
 }) {
   return (
-    <div>{value ?
-      (<div>
-        <p>{`(${value.latitude}, ${value.longitude}${value.altitude ? `, ${value.altitude}${value.altitudeAccuracy ? ` ± ${value.altitudeAccuracy}` : ""}` : ""})${value.accuracy ? ` ± ${value.accuracy}` : ""}`}</p>
-        {value.heading ? <p>Heading: {value.heading}</p> : null}
-        {value.speed != null ? <p>Speed: {value.speed}</p> : null}
-      </div>) : <p>No data.</p>}
+    <div>
+      {value ? (
+        <div>
+          <p>{`(${value.latitude}, ${value.longitude}${value.altitude ? `, ${value.altitude}${value.altitudeAccuracy ? ` ± ${value.altitudeAccuracy}` : ""}` : ""})${value.accuracy ? ` ± ${value.accuracy}` : ""}`}</p>
+          {value.heading ? <p>Heading: {value.heading}</p> : null}
+          {value.speed != null ? <p>Speed: {value.speed}</p> : null}
+        </div>
+      ) : (
+        <p>No data.</p>
+      )}
       {/* Set to current location button */}
       <Button
+        type="button"
         className="w-full"
         onClick={(event) => {
           navigator.geolocation.getCurrentPosition(
