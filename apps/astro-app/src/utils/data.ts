@@ -137,10 +137,6 @@ export function handleRecordOn(
             switch (columnSchema.datatype) {
               case "timestamp":
                 finalData[columnSchema.name] = new Date(Date.now());
-                form.setValue(
-                  `data.${columnSchema.name}`,
-                  finalData[columnSchema.name],
-                );
                 break;
               case "geodetic point":
                 const currentTask = GetCurrentGeodeticCoordinatePromise(
@@ -157,12 +153,6 @@ export function handleRecordOn(
                     finalData[columnSchema.name] = undefined;
                     if (reason)
                       printError(`Failed to fetch location: ${reason.message}`);
-                  })
-                  .finally(() => {
-                    form.setValue(
-                      `data.${columnSchema.name}`,
-                      finalData[columnSchema.name],
-                    );
                   });
                 fetchTasks.push(currentTask);
                 break;
