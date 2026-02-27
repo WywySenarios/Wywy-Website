@@ -274,7 +274,16 @@ export function TimerForm({
           onSubmit={form.handleSubmit(submission, onSubmitInvalid)}
           className="flex flex-col gap-4"
         >
-          <Button onClick={cancelSplit}>Cancel</Button>
+          <Button type="button" onClick={cancelSplit}>
+            {isCaching ? (
+              <div className="flex flex-row justify-center items-center gap-2">
+                <Spinner data-icon="inline-start" />
+                Cancel
+              </div>
+            ) : (
+              "Cancel"
+            )}
+          </Button>
           {/* Submit button */}
           <Button type="submit">Submit</Button>
           {/* Columns */}
