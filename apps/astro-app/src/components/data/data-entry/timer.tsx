@@ -127,7 +127,6 @@ export function TimerForm({
     setStartTime(data["Start Time"]);
 
     // update form values
-    // update value in form
     form.setValue(`data`, data);
 
     if (isCaching) cache();
