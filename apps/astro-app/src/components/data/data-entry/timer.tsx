@@ -267,39 +267,39 @@ export function TimerForm({
     );
 
   if (isSplit && !isCaching) {
-  return (
-        <form
-          onSubmit={form.handleSubmit(submission, onSubmitInvalid)}
-          className="flex flex-col gap-4"
-        >
-          <Button type="button" onClick={cancelSplit}>
-            {isCaching ? (
-              <div className="flex flex-row justify-center items-center gap-2">
-                <Spinner data-icon="inline-start" />
-                Cancel
-              </div>
-            ) : (
-              "Cancel"
-            )}
-          </Button>
-          {/* Submit button */}
-          <Button type="submit">Submit</Button>
-          {/* Columns */}
-          <Columns fieldsToEnter={tableInfo.schema} form={form} />
-          {/* Quick actions */}
-          {/* Tags */}
-          {tableInfo.tagging && (
+    return (
+      <form
+        onSubmit={form.handleSubmit(submission, onSubmitInvalid)}
+        className="flex flex-col gap-4"
+      >
+        <Button type="button" onClick={cancelSplit}>
+          {isCaching ? (
+            <div className="flex flex-row justify-center items-center gap-2">
+              <Spinner data-icon="inline-start" />
+              Cancel
+            </div>
+          ) : (
+            "Cancel"
+          )}
+        </Button>
+        {/* Submit button */}
+        <Button type="submit">Submit</Button>
+        {/* Columns */}
+        <Columns fieldsToEnter={tableInfo.schema} form={form} />
+        {/* Quick actions */}
+        {/* Tags */}
+        {tableInfo.tagging && (
           <Tags databaseName={databaseName} tableInfo={tableInfo} form={form} />
-          )}
-          {/* Descriptors */}
-          {tableInfo.descriptors && (
-            <Descriptors tableInfo={tableInfo} form={form} />
-          )}
-          {/* Submit & restart button */}
-          <Button type="submit" value="split">
-            Submit & Restart
-          </Button>
-        </form>
+        )}
+        {/* Descriptors */}
+        {tableInfo.descriptors && (
+          <Descriptors tableInfo={tableInfo} form={form} />
+        )}
+        {/* Submit & restart button */}
+        <Button type="submit" value="split">
+          Submit & Restart
+        </Button>
+      </form>
     );
   }
 
