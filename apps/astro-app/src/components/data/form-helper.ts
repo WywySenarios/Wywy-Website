@@ -58,8 +58,14 @@ export function formatValues(
       case "date":
       case "time":
       case "timestamp":
-        formattedValues[column_schema.name] =
-          `'${values[column_schema.name]}'`.replace("Z", "");
+        if (typeof values[column_schema.name] == "object") {
+          // @TODO
+          formattedValues[column_schema.name] =
+            `'${values[column_schema.name].toISOString().split(".")[0]}'`;
+        } else {
+          formattedValues[column_schema.name] =
+            `'${values[column_schema.name]}'`.replace("Z", "");
+        }
         break;
       default:
         formattedValues[column_schema.name] = values[column_schema.name];
