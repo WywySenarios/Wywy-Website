@@ -16,6 +16,7 @@ import type { JSONValue } from "@utils/http";
 import { CACHE_URL } from "astro:env/client";
 import { RefreshCcw, Upload } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
+import { GeodeticCoordinate } from "@root/src/utils/datatypes/geodetic";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -83,17 +84,57 @@ export function TimerForm({
                       setCacheError(true);
                       return;
                     }
-                    body[columnSchema.name] =
-                      (body[columnSchema.name] as string).slice(1, -1) + "Z";
+                    output[columnSchema.name] = parseDatabaseValue(
+                      (body[columnSchema.name] as string).slice(1, -1) + "Z",
+                      columnSchema.datatype,
+                    );
+                    break;
+                  case "geodetic point":
+                    if (typeof body[columnSchema.name] != "string") {
+                      toast(
+                        "Expected datatype string for geodetic point column.",
+                      );
+                      setCacheError(true);
+                      return;
+                    }
+                    let latlong_accuracy: number | null = null;
+                    let altitude_accuracy: number | null = null;
+
+                    if (
+                      `${columnSchema.name}_latlong_accuracy` in body &&
+                      typeof body[`${columnSchema.name}_latlong_accuracy`] ==
+                        "number"
+                    ) {
+                      latlong_accuracy = body[
+                        `${columnSchema.name}_latlong_accuracy`
+                      ] as number;
+                    }
+
+                    if (
+                      `${columnSchema.name}_altitude_accuracy` in body &&
+                      typeof body[`${columnSchema.name}_altitude_accuracy`] ==
+                        "number"
+                    ) {
+                      latlong_accuracy = body[
+                        `${columnSchema.name}_altitude_accuracy`
+                      ] as number;
+                    }
+
+                    output[columnSchema.name] = new GeodeticCoordinate(
+                      body[columnSchema.name] as string,
+                      latlong_accuracy,
+                      altitude_accuracy,
+                    );
+                    break;
+                  default:
+                    output[columnSchema.name] = parseDatabaseValue(
+                      body[columnSchema.name],
+                      columnSchema.datatype,
+                    );
                     break;
                 }
 
                 if (columnSchema.record_on === "split") setIsSplit(true);
-
-                output[columnSchema.name] = parseDatabaseValue(
-                  body[columnSchema.name],
-                  columnSchema.datatype,
-                );
               }
             }
 
@@ -128,6 +169,8 @@ export function TimerForm({
 
     // update form values
     form.setValue(`data`, data);
+
+    console.log(data);
 
     if (isCaching) cache();
   }, [data]);
