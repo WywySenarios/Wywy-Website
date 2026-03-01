@@ -44,19 +44,52 @@ export class GeodeticCoordinate {
    * @param geodeticCoordinate The GeodeticCoordinate to duplicate.
    */
   constructor(geodeticCoordinate: GeodeticCoordinate);
+  /**
+   * Initializes a GeodeticCoordinate given PostGIS point WKT and optionally accuracies.
+   * @param wkt A PostGIS point WKT to copy.
+   * @param latlongAccuracy Optional accuracy.
+   * @param altitudeAccuracy Optional altitude accuracy.
+   */
+  constructor(
+    wkt: string,
+    latlongAccuracy: number | null,
+    altitudeAccuracy: number | null,
+  );
 
-  constructor(primaryItem?: GeodeticCoordinate | GeodeticCoordinates) {
-    if (primaryItem != undefined) {
-      this.latitude = primaryItem.latitude;
-      this.longitude = primaryItem.longitude;
-      this.altitude = primaryItem.altitude;
-      this.accuracy = primaryItem.accuracy;
-      this.altitudeAccuracy = primaryItem.altitudeAccuracy;
-      this.heading = primaryItem.heading;
-      this.speed = primaryItem.speed;
-    } else {
-      this.latitude = NaN;
-      this.longitude = NaN;
+  constructor(
+    primaryItem?: GeodeticCoordinate | GeodeticCoordinates | string,
+    latlongAccuracy: number | null = null,
+    altitudeAccuracy: number | null = null,
+  ) {
+    switch (typeof primaryItem) {
+      case "string":
+        const matches = primaryItem.match(
+          /^POINT(?: Z)? \(\s*([-+]?\d*\.?\d+)\s+([-+]?\d*\.?\d+)(?:\s+([-+]?\d*\.?\d+))?\s*\)$/,
+        );
+
+        if (!matches) throw "Invalid GeodeticCoordinate WKT.";
+
+        this.longitude = parseFloat(matches[1]);
+        this.latitude = parseFloat(matches[2]);
+        this.altitude =
+          matches[3] !== undefined ? parseFloat(matches[3]) : null;
+
+        if (latlongAccuracy !== null) this.accuracy = latlongAccuracy;
+        if (altitudeAccuracy !== null) this.altitudeAccuracy = altitudeAccuracy;
+
+        break;
+      case "object":
+        this.latitude = primaryItem.latitude;
+        this.longitude = primaryItem.longitude;
+        this.altitude = primaryItem.altitude;
+        this.accuracy = primaryItem.accuracy;
+        this.altitudeAccuracy = primaryItem.altitudeAccuracy;
+        this.heading = primaryItem.heading;
+        this.speed = primaryItem.speed;
+        break;
+      default:
+        throw "Invalid GeodeticCoordinate.";
+        break;
     }
   }
 
