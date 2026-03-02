@@ -168,7 +168,7 @@ export function TimerForm({
     setStartTime(data["Start Time"]);
 
     // update form values
-    form.setValue(`data`, data);
+    form.reset({ data: data });
 
     console.log(data);
 
