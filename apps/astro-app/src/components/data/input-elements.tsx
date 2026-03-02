@@ -43,6 +43,7 @@ import {
   type SearchSelectData,
 } from "./input-element/search-select";
 import { Controller } from "react-hook-form";
+import { GeodeticPointMinimalInputElement } from "./input-element/geodetic-point-minimal";
 
 export interface FormElementProps {
   form: any;
@@ -249,6 +250,7 @@ function InputElement({
           <Popover>
             <PopoverTrigger asChild>
               <Button
+                type="button"
                 variant={"outline"}
                 className={cn(
                   "w-60 pl-3 text-left font-normal",
@@ -320,6 +322,9 @@ function InputElement({
             {...field}
           />
         );
+        break;
+      case "geodetic point minimal":
+        body = <GeodeticPointMinimalInputElement {...field} />;
         break;
       default:
         console.warn(

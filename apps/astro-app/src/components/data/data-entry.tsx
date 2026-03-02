@@ -98,6 +98,7 @@ function Tag({
             onClick={() => {
               remove(index);
             }}
+            type="button"
           >
             <Trash />
           </Button>

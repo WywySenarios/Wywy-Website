@@ -33,16 +33,17 @@ export type Datatype =
   | "date"
   | "time"
   | "timestamp"
-  | "enum";
+  | "enum"
+  | "geodetic point";
 
 export interface GeodeticCoordinates {
   latitude: number;
   longitude: number;
-  altitude: number | null = null;
-  accuracy: number | null = null;
-  altitudeAccuracy: number | null = null;
-  heading: number | null = null;
-  speed: number | null = null;
+  altitude: number | null;
+  accuracy: number | null;
+  altitudeAccuracy: number | null;
+  heading: number | null;
+  speed: number | null;
 }
 
 // look at the restrictions for different entry types
@@ -131,6 +132,12 @@ type EnumColumn = {
   defaultValue: string; // @TODO ensure defaultValue is within values
 } & SelectRestrictions;
 
+type GeodeticPointColumn = {
+  datatype: "geodetic point";
+  defaultValue: string;
+  entrytype: "geodetic point" | "geodetic point minimal";
+};
+
 export type DataColumn = {
   name: string;
   parser?: Datatype;
@@ -142,6 +149,7 @@ export type DataColumn = {
   comments?: boolean;
   description?: string;
   unique?: boolean;
+  record_on?: "start" | "split";
 } & (
   | IntegerColumn
   | FloatColumn
@@ -151,6 +159,7 @@ export type DataColumn = {
   | TimeColumn
   | TimestampColumn
   | EnumColumn
+  | GeodeticPointColumn
 );
 
 export type Dataset = Array<Array<any>>;

@@ -178,6 +178,7 @@ export function GeodeticCoordinateInputElement({
       }
       {/* Set to current location button */}
       <Button
+        type="button"
         className="w-full"
         onClick={(event) => {
           navigator.geolocation.getCurrentPosition(
