@@ -7,6 +7,6 @@ import { MyGeodeticCoordinate } from "@/components/projects/mylocation/my-geodet
 <Layout css_color_palette="light_mode">
   <h2>Where Am I?</h2>
   <p>Using the Javascript Geolocation API.</p>
-  <MyGeodeticCoordinate client:load />
+  <MyGeodeticCoordinate client:only="react" />
   <Toaster client:idle />
 </Layout>
