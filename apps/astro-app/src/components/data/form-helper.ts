@@ -160,7 +160,7 @@ export function createFormSchemaAndHandlers(
   // descriptors
   let descriptorSchema: Record<string, ZodArray<AnyZodObject>> = {};
   let descriptorDefaultValues: Record<string, Array<Object>> = {};
-  if (tableInfo.tagging) {
+  if (tableInfo.descriptors) {
     for (let descriptor of tableInfo.descriptors) {
       let thisSchema: Record<string, ZodTypeAny> = {};
       let thisDefaultValues: Record<string, any> = {};

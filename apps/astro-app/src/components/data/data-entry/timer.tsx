@@ -168,9 +168,16 @@ export function TimerForm({
     setStartTime(data["Start Time"]);
 
     // update form values
-    form.reset({ data: data });
 
-    console.log(data);
+    // @TODO restore all default values
+    let descriptorDefaultValues: Record<string, Array<Object>> = {};
+    if (tableInfo.descriptors) {
+      for (let descriptor of tableInfo.descriptors) {
+        descriptorDefaultValues[descriptor.name] = [];
+      }
+    }
+
+    form.reset({ data: data, descriptors: descriptorDefaultValues });
 
     if (isCaching) cache();
   }, [data]);
