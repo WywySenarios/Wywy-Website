@@ -37,15 +37,15 @@ export function formatValues(
   let formattedValues: Record<string, any> = {};
 
   for (let column_schema of schema) {
+    // check if the user really wanted to submit that or not
+    if (values[column_schema.name] == null) {
+      continue;
+    }
+
     // check the comments first
     if (column_schema.comments) {
       formattedValues[`${column_schema.name}_comments`] =
         values[`${column_schema.name}_comments`] ?? "''";
-    }
-
-    // check if the user really wanted to submit that or not
-    if (values[column_schema.name] == null) {
-      continue;
     }
 
     // single-quote strings, dates, times, and timestamps

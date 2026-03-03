@@ -239,13 +239,7 @@ function Descriptor({
           />
         );
       })}
-      <Button
-        onClick={() => {
-          remove(index);
-        }}
-        className="w-full"
-        type="button"
-      >
+      <Button onClick={() => remove(index)} className="w-full" type="button">
         <Trash />
       </Button>
     </div>
@@ -268,7 +262,7 @@ function DescriptorTab({
 }): JSX.Element {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: `descriptor.${descriptorInfo.name}`,
+    name: `descriptors.${descriptorInfo.name}`,
   });
 
   return (
@@ -315,6 +309,8 @@ export function Descriptors({
   form: any;
 }): JSX.Element {
   if (tableInfo.descriptors.length == 0) return null;
+
+  console.log(form.getValues());
 
   return (
     <Card className="flex flex-col justify-center">
