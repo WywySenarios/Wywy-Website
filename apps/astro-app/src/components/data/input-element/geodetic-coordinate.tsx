@@ -38,6 +38,8 @@ export function GeodeticCoordinateInputElement({
   onChange: (val: GeodeticCoordinate) => void;
   fields?: GeodeticCoordinateFields;
 }) {
+  if (!value) return null;
+
   return (
     <div>
       {/* latitude & longitude */}
