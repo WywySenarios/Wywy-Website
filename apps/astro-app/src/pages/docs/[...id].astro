@@ -1,0 +1,39 @@
+---
+export const prerender = true;
+import { getCollection } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import { render } from "astro:content";
+
+export async function getStaticPaths() {
+	const documentationCollection = await getCollection("docs");
+
+    return documentationCollection.map((page) => ({
+        params: {
+            id: page.id
+        },
+        props: {
+            page
+        }
+    }))
+}
+
+const { page } = Astro.props;
+
+const { Content } = await render(page);
+
+// @TODO add metadata
+---
+
+<Layout title={page["data"]["title"]} css_color_palette="light_mode">
+	<main>
+		<h1>{page["data"]["title"]}</h1>
+		<Content />
+	</main>
+
+	<style>
+		main {
+			width: unset;
+			max-width: unset;
+		}
+	</style>
+</Layout>

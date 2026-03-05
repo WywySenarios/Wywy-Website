@@ -1,6 +1,25 @@
 import { z, defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 
+// START - by default "mandatory" collections
+/**
+ * Documentation for WywyWebsite
+ */
+const docs = defineCollection({
+  loader: glob({ pattern: "**/*.mdx", base: "./src/content/docs" }),
+  schema: z.object({
+    title: z.string().nonempty().optional(), // The title of the doc article. This will be the page title.
+    slug: z.string().nonempty().optional(), // The last URL segment (i.e. .../[slug])
+    published: z.coerce.date().optional(), // The date when this entry was first written/published.
+    lastmod: z.coerce.date().optional(),
+    description: z.string().default("No description available.").optional(), // SEO meta description
+    keywords: z.array(z.string().nonempty()).optional(), // frontmatter keywords
+    tags: z.array(z.string().nonempty()).optional(), // frontmatter tags
+    // @TODO add aliases
+  }),
+});
+// END - by default "mandatory collections"
+
 const awards = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/data/awards" }),
   schema: z.object({
@@ -125,6 +144,7 @@ const datasets = defineCollection({
 });
 
 export const collections = {
+  docs,
   awards,
   projects,
   directives,
