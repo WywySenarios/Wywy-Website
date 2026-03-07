@@ -6,9 +6,17 @@ export interface DatabaseInfo {
   dashboard?: Array<DashboardComponentBaseSchema>;
 }
 
+export interface MetricSchema {
+  name: string;
+  function?: string;
+  data: Array<string>;
+  args?: Array<string>;
+}
+
 export interface DescriptorInfo {
   name: string;
   schema: Array<DataColumn>;
+  metrics: Array<MetricSchema>;
 }
 
 export interface TableInfo {
@@ -19,6 +27,7 @@ export interface TableInfo {
   comments: boolean;
   tagging: boolean;
   schema: Array<DataColumn>;
+  metrics: Array<MetricSchema>;
   descriptors: Array<DescriptorInfo>;
 }
 
