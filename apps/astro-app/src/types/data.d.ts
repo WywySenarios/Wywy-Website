@@ -1,6 +1,9 @@
+import { DashboardComponentBaseSchema } from "dashboard";
+
 export interface DatabaseInfo {
   dbname: string;
   tables: Array<TableInfo>;
+  dashboard?: Array<DashboardComponentBaseSchema>;
 }
 
 export interface DescriptorInfo {
