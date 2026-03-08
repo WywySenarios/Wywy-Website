@@ -175,3 +175,9 @@ export type DataColumn = {
 );
 
 export type EChartsDataset = Array<Array<any>>;
+
+// Output shape of a GET (SELECT) request to the sql-receptionist or cache.
+export interface Dataset {
+  columns: Array<string>;
+  data: Array<Array<Unknown>>;
+}
