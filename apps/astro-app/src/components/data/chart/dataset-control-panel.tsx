@@ -1,4 +1,4 @@
-import type { Dataset, TableInfo } from "@/types/data";
+import type { EChartsDataset, TableInfo } from "@/types/data";
 import { DATABASE_URL } from "astro:env/client";
 import type { JSX } from "astro/jsx-runtime";
 import { useEffect, useState } from "react";
@@ -39,7 +39,7 @@ export default function DatasetControlPanel({
   databaseName,
   tableSchema,
 }: DatasetControlPanelProps): JSX.Element {
-  const [dataset, setDataset] = useState<Dataset>([]);
+  const [dataset, setDataset] = useState<EChartsDataset>([]);
   const [columns, setColumns] = useState<Array<any>>([]);
 
   function fetchDataset() {

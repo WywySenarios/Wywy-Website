@@ -174,4 +174,4 @@ export type DataColumn = {
   | GeodeticPointColumn
 );
 
-export type Dataset = Array<Array<any>>;
+export type EChartsDataset = Array<Array<any>>;
