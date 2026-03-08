@@ -3,29 +3,41 @@ import config from "@root/config.yml";
 import type { DatabaseInfo } from "@/types/data";
 import Layout from "@/layouts/Layout.astro";
 import LoginDialog from "@/components/auth/login-dialog";
+import { Dashboard as WywyDashboard } from "@/components/data/dashboard";
+import type { MainConfigSchema } from "@/env";
+import { Toaster } from "@/components/ui/sonner";
 
 export const prerender = true;
 export function getStaticPaths() {
-  return Object.values(config.data as DatabaseInfo[]).map((dbinfo: DatabaseInfo) =>
-    
-      ({
-        params: {
-          databaseName: dbinfo.dbname,
-        },
-        props: {
-
-        }
-      })
+  return Object.values(config.data as DatabaseInfo[]).map(
+    (dbinfo: DatabaseInfo) => ({
+      params: {
+        databaseName: dbinfo.dbname,
+      },
+      props: {},
+    }),
   );
 } // SSG because why not!
 
-const { databaseName} = Astro.params;
+const { databaseName } = Astro.params;
+
+const databaseInfo = (config as MainConfigSchema)["data"].find(
+  (item) => item.dbname === databaseName,
+);
 ---
+
 <Layout
-    title={`${databaseName} Dashboard`}
-    css_color_palette="light_mode"
-    useAstroDefaultCSS={false}
+  title={`${databaseName} Dashboard`}
+  css_color_palette="light_mode"
+  useAstroDefaultCSS={false}
 >
-    <LoginDialog client:load slot="top-bar-button2" />
-    
+  <LoginDialog client:load slot="top-bar-button2" />
+  {
+    databaseInfo ? (
+      <WywyDashboard databaseInfo={databaseInfo} client:load />
+    ) : (
+      <div>Invalid config? Contact website administrator for a fix.</div>
+    )
+  }
+  <Toaster client:load />
 </Layout>
