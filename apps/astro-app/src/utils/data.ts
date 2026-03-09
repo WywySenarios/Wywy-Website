@@ -102,6 +102,27 @@ export function getZodType(columnInfo: DataColumn): ZodTypeAny {
   return output;
 }
 
+/**
+ * Constructs a zod schema for a dataset from a columns schema.
+ * @param datasetSchema The schema of the dataset to pull.
+ * @returns The zod schema forthe dataset to pull.
+ */
+export function getZodDatasetType(datasetSchema: Array<DataColumn>) {
+  const numColumns = datasetSchema.length;
+
+  const rowSchema: Array<ZodTypeAny> = [];
+
+  for (let columnSchema of datasetSchema)
+    rowSchema.push(getZodType(columnSchema));
+
+  return z
+    .object({
+      columns: z.array(z.string().nonempty()).length(numColumns),
+      data: z.array(z.tuple(rowSchema as [ZodTypeAny, ...ZodTypeAny[]])),
+    })
+    .strict();
+}
+
 type form = UseFormReturn<{
   descriptors: {
     [x: string]: {
