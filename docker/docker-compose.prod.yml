@@ -1,6 +1,7 @@
+name: website
+
 services:
-  wywywebsite_astro-app:
-    container_name: wywywebsite_astro
+  astro-app:
     working_dir: /apps/astro-app
     build:
       context: ../
