@@ -1,5 +1,6 @@
 import { DashboardComponentBaseSchema } from "dashboard";
 
+// START - Schema
 export interface DatabaseInfo {
   dbname: string;
   tables: Array<TableInfo>;
@@ -173,7 +174,9 @@ export type DataColumn = {
   | EnumColumn
   | GeodeticPointColumn
 );
+// END - Schema
 
+// START - Datasets
 export type EChartsDataset = Array<Array<any>>;
 
 // Output shape of a GET (SELECT) request to the sql-receptionist or cache.
@@ -181,3 +184,8 @@ export interface Dataset {
   columns: Array<string>;
   data: Array<Array<Unknown>>;
 }
+
+export type FullDataset = Record<string, Dataset>;
+
+export type VectorDataset = Record<string, Array<any>>;
+// END - Datasets

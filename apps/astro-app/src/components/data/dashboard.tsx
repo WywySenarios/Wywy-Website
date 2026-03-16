@@ -1,16 +1,25 @@
-import type { DatabaseInfo } from "@/types/data";
+import type { DatabaseInfo, Dataset, VectorDataset } from "@/types/data";
 import type { DashboardComponentBaseSchema } from "@root/src/types/dashboard";
 import { getZodDatasetType } from "@root/src/utils/data";
 import { toSnakeCase } from "@utils/parse";
 import { DATABASE_URL } from "astro:env/client";
 import React, { useEffect, useMemo, useState, type JSX } from "react";
 import { toast } from "sonner";
+import { parser } from "mathjs";
+import { findFunction } from "@/utils/data-transformations/find-function";
 
+/**
+ * Attempts to fetch a dataset. The URL to GET from is "[endpoint]/[target]?querystring"
+ * @param endpoint
+ * @param target
+ * @param querystring
+ * @returns A promise that will resolve when the dataset is fetched and re-shaped into a vector dataset.
+ */
 function fetchDataset(
   endpoint: string,
   target: string,
   querystring: string,
-): Promise<Record<string, any>> {
+): Promise<VectorDataset> {
   return new Promise((resolve, reject) => {
     fetch(`${endpoint}/${target}?${querystring}`, {
       method: "GET",
@@ -25,8 +34,17 @@ function fetchDataset(
 
         response
           .json()
-          .then((body: any) => {
-            resolve(body);
+          .then((body: Dataset) => {
+            // @TODO validate the dataset
+
+            // vectorize the data
+            let output: VectorDataset = {};
+            body.columns.map((columnName, i) => {
+              output[columnName] = body.data.map((row) => {
+                return row[i];
+              });
+            });
+            resolve(output);
           })
           .catch((reason: any) => {
             reject(reason);
@@ -54,9 +72,7 @@ export function Dashboard({
   const [loadingDataState, setLoadingDataState] = useState<boolean>(false);
   const [errorState, setErrorState] = useState<boolean>(false);
   const [refreshState, setRefreshState] = useState<number>(0);
-  const [rawData, setRawData] = useState<
-    Record<string, Record<"" | "", Array<any>>>
-  >({});
+  const [rawData, setRawData] = useState<Record<string, VectorDataset>>({});
   // metric data in vector form
   const [metrics, setMetrics] = useState<Record<string, Array<any>>>({});
 
@@ -95,7 +111,7 @@ export function Dashboard({
           `${databaseName}/${toSnakeCase(tableInfo.tableName)}`,
           "SELECT=*&ORDER_BY=ASC",
         )
-          .then((value: Record<string, any>) => {
+          .then((value: VectorDataset) => {
             rawData[`${toSnakeCase(tableInfo.tableName)}`] = value;
 
             let newRawData = {
@@ -123,25 +139,48 @@ export function Dashboard({
   useEffect(() => {
     if (loadingDataState) return;
     if (errorState) return;
-
-    // attempt to validate schema
-    let newErrorState = false; // innocent until proven guilty
-    let safeData: Record<string, unknown> = {};
-    for (const key in rawData) {
-      const currentResult = dataSchema[key].safeParse(rawData[key]);
-      if (currentResult.success) {
-        safeData[key] = currentResult.data;
-      } else {
-        newErrorState = true;
-        toast(
-          "Failed to fetch data: The server responded with invalid, incomplete, or anomalous data.",
-        );
-        console.error(currentResult.error);
-        setErrorState(true);
-      }
-    }
+    if (!rawData) return; // useEffect calls once on page load. This ignores that initial call.
 
     // compute metrics
+    let newMetrics: VectorDataset = {};
+    // recompute global variables (i.e. runtime constants)
+    const globalVars: Record<string, any> = {
+      now: new Date(),
+    };
+    for (let tableInfo of databaseInfo.tables) {
+      const equationParser = parser();
+      // prepare global variables
+      for (const varName in globalVars) {
+        equationParser.set(varName, globalVars[varName]);
+      }
+
+      // load data
+      // @TODO prevent name collision
+      const tableData: VectorDataset =
+        rawData[toSnakeCase(tableInfo.tableName)];
+      for (const vectorName in tableData) {
+        equationParser.set(vectorName, tableData[vectorName]);
+      }
+
+      for (let metricSchema of tableInfo.metrics) {
+        // evaluate metric
+        metricSchema.data;
+        if (!metricSchema.function) {
+          // skip metric transformation if the function is the identity function
+          if (metricSchema.data.length == 1)
+            newMetrics[toSnakeCase(metricSchema.name)] =
+              tableData[toSnakeCase(metricSchema.name)];
+          else
+            throw TypeError(
+              "The identity transformation for metrics may only have one vector input.",
+            );
+          continue;
+        }
+        equationParser.set("f", findFunction(metricSchema.function));
+
+        newMetrics[toSnakeCase(metricSchema.name)] = equationParser.get("");
+      }
+    }
     setMetrics({});
   }, [loadingDataState]);
 
