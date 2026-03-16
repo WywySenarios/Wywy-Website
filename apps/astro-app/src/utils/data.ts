@@ -108,16 +108,21 @@ export function getZodType(columnInfo: DataColumn): ZodTypeAny {
  * @returns The zod schema forthe dataset to pull.
  */
 export function getZodDatasetType(datasetSchema: Array<DataColumn>) {
-  const numColumns = datasetSchema.length;
-
   const rowSchema: Array<ZodTypeAny> = [];
 
-  for (let columnSchema of datasetSchema)
+  // ID column
+  rowSchema.push(z.number().int());
+
+  for (let columnSchema of datasetSchema) {
     rowSchema.push(getZodType(columnSchema));
+    if (columnSchema.comments) {
+      rowSchema.push(z.string().optional());
+    }
+  }
 
   return z
     .object({
-      columns: z.array(z.string().nonempty()).length(numColumns),
+      columns: z.array(z.string().nonempty()).length(rowSchema.length),
       data: z.array(z.tuple(rowSchema as [ZodTypeAny, ...ZodTypeAny[]])),
     })
     .strict();
