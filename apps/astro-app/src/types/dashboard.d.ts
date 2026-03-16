@@ -1,4 +1,4 @@
-export interface DashboardComponentBaseSchema {
+export type DashboardComponentBaseSchema = {
   name: string;
   type: string;
   metrics: Array<string>;
@@ -6,4 +6,28 @@ export interface DashboardComponentBaseSchema {
   "function args"?: Array<string>;
   selector?: string;
   "selector args"?: Array<string>;
-}
+};
+
+export type GaugeChartSchema = {
+  type: "Gauge Chart";
+  min: number;
+  max: number;
+} & DashboardComponentBaseSchema;
+
+export type WaterfallChartSchema = {
+  type: "Waterfall Chart";
+} & DashboardComponentBaseSchema;
+
+export type TreeMapSchema = {
+  type: "Tree Map";
+} & DashboardComponentBaseSchema;
+
+export type DashboardComponentSchema = {
+  name: string;
+  type: string;
+  metrics: Array<string>;
+  function?: string;
+  "function args"?: Array<string>;
+  selector?: string;
+  "selector args"?: Array<string>;
+} & (GaugeChartSchema | WaterfallChartSchema | TreeMapSchema);
