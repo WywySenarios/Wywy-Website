@@ -3,8 +3,40 @@ import type { DashboardComponentBaseSchema } from "@root/src/types/dashboard";
 import { getZodDatasetType } from "@root/src/utils/data";
 import { toSnakeCase } from "@utils/parse";
 import { DATABASE_URL } from "astro:env/client";
-import { useEffect, useMemo, useState, type JSX } from "react";
+import React, { useEffect, useMemo, useState, type JSX } from "react";
 import { toast } from "sonner";
+
+function fetchDataset(
+  endpoint: string,
+  target: string,
+  querystring: string,
+): Promise<Record<string, any>> {
+  return new Promise((resolve, reject) => {
+    fetch(`${endpoint}/${target}?${querystring}`, {
+      method: "GET",
+      mode: "cors",
+      credentials: "include",
+    })
+      .then((response: Response) => {
+        if (!response.ok) {
+          reject("Response not OK.");
+          return;
+        }
+
+        response
+          .json()
+          .then((body: any) => {
+            resolve(body);
+          })
+          .catch((reason: any) => {
+            reject(reason);
+          });
+      })
+      .catch((reason: any) => {
+        reject(reason);
+      });
+  });
+}
 
 /**
  * Renders a dashboard based on the given database schema. Assumes there is a valid toaster to use.
@@ -58,62 +90,28 @@ export function Dashboard({
     // fetch data from every table
     for (let tableInfo of databaseInfo.tables)
       fetchPromises.push(
-        fetch(
-          `${DATABASE_URL}/${databaseName}/${toSnakeCase(tableInfo.tableName)}?SELECT=*&ORDER_BY=ASC`,
-          {
-            method: "GET",
-            mode: "cors",
-            credentials: "include",
-          },
+        fetchDataset(
+          DATABASE_URL,
+          `${databaseName}/${toSnakeCase(tableInfo.tableName)}`,
+          "SELECT=*&ORDER_BY=ASC",
         )
-          .then((response: Response) => {
-            if (!response.ok) {
-              toast(
-                `Failed to fetch data from table ${databaseName}/${toSnakeCase(tableInfo.tableName)}: Response is not OK: ${response.status} ${response.statusText}`,
-              );
-              return;
-            }
+          .then((value: Record<string, any>) => {
+            rawData[`${toSnakeCase(tableInfo.tableName)}`] = value;
 
-            response
-              .json()
-              .then((body: any) => {
-                let newRawData = {
-                  ...rawData,
-                };
+            let newRawData = {
+              ...rawData,
+            };
 
-                newRawData[`${toSnakeCase(tableInfo.tableName)}`] = body;
-                setRawData(newRawData);
-              })
-              .catch((reason: any) => {
-                toast(
-                  `Failed to fetch data from table ${databaseName}/${toSnakeCase(tableInfo.tableName)}: ${reason}`,
-                );
-              });
+            setRawData(newRawData);
           })
           .catch((reason: any) => {
             toast(
-              `Failed to fetch data from table ${databaseName}/${toSnakeCase(tableInfo.tableName)}: ${reason}`,
+              `Failed to fetch data from table ${tableInfo.tableName}: ${reason}`,
             );
           }),
       );
     let fetchPromise = Promise.allSettled(fetchPromises);
-    fetchPromise.then(() => {
-      // attempt to validate schema
-      // maybe this will guarentee failure because of hook call timing?
-      const result = dataSchema.safeParse(rawData);
-      setErrorState(result.success);
-
-      if (!result.success) {
-        toast(
-          "Failed to fetch data: The server responded with invalid, incomplete, or anomalous data.",
-        );
-        console.error(result.error);
-      }
-
-      // compute metrics
-      console.log(result);
-      setMetrics({});
-    });
+    fetchPromise.then(() => {});
     fetchPromise.catch(() => {
       setErrorState(true);
     });
@@ -121,6 +119,31 @@ export function Dashboard({
       setLoadingDataState(false);
     });
   }, [refreshState, databaseInfo]);
+
+  useEffect(() => {
+    if (loadingDataState) return;
+    if (errorState) return;
+
+    // attempt to validate schema
+    let newErrorState = false; // innocent until proven guilty
+    let safeData: Record<string, unknown> = {};
+    for (const key in rawData) {
+      const currentResult = dataSchema[key].safeParse(rawData[key]);
+      if (currentResult.success) {
+        safeData[key] = currentResult.data;
+      } else {
+        newErrorState = true;
+        toast(
+          "Failed to fetch data: The server responded with invalid, incomplete, or anomalous data.",
+        );
+        console.error(currentResult.error);
+        setErrorState(true);
+      }
+    }
+
+    // compute metrics
+    setMetrics({});
+  }, [loadingDataState]);
 
   return <div></div>;
 }
