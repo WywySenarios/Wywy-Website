@@ -114,7 +114,39 @@ export function getZodDatasetType(datasetSchema: Array<DataColumn>) {
   rowSchema.push(z.number().int());
 
   for (let columnSchema of datasetSchema) {
-    rowSchema.push(getZodType(columnSchema));
+    switch (columnSchema.datatype) {
+      case "geodetic point": // geodetic point
+        rowSchema.push(
+          z
+            .string()
+            .nullable()
+            .refine((arg: string | null) => {
+              if (arg === null) return true;
+              const matches = arg.match(
+                /^POINT ?\((-?[0-9]+(\.[0-9]+)?) (-?[0-9]+(\.[0-9]+)?)\)$/,
+              );
+
+              if (!matches) return false;
+
+              let longitude = parseFloat(matches[1]);
+              let latitude = parseFloat(matches[2]);
+              if (longitude < -180 || longitude > 180) return false;
+              if (latitude < -90 || latitude > 90) return false;
+            }),
+        );
+        // latlong accuracy
+        rowSchema.push(z.number().positive().nullable());
+        // altitude
+        rowSchema.push(z.number().nullable());
+        // altitude accuracy
+        rowSchema.push(z.number().positive().nullable());
+
+        break;
+      default:
+        rowSchema.push(getZodType(columnSchema));
+        break;
+    }
+
     if (columnSchema.comments) {
       rowSchema.push(z.string().optional());
     }
