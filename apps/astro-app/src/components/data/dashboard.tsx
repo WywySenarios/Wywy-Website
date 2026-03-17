@@ -11,7 +11,6 @@ import { DATABASE_URL } from "astro:env/client";
 import React, { useEffect, useMemo, useState, type JSX } from "react";
 import { toast } from "sonner";
 import { parser } from "mathjs";
-import { findFunction } from "@/utils/data-transformations/find-function";
 
 /**
  * Attempts to fetch a dataset. The URL to GET from is "[endpoint]/[target]?querystring"
@@ -175,7 +174,6 @@ export function Dashboard({
 
       for (let metricSchema of tableInfo.metrics) {
         // evaluate metric
-        metricSchema.data;
         if (!metricSchema.function) {
           // skip metric transformation if the function is the identity function
           if (metricSchema.data.length == 1)
@@ -187,9 +185,10 @@ export function Dashboard({
             );
           continue;
         }
-        equationParser.set("f", findFunction(metricSchema.function));
 
-        newMetrics[toSnakeCase(metricSchema.name)] = equationParser.get("");
+        newMetrics[toSnakeCase(metricSchema.name)] = equationParser.evaluate(
+          `${metricSchema.function}(${metricSchema.data.join(",")})`,
+        );
       }
     }
     setMetrics(newMetrics);
