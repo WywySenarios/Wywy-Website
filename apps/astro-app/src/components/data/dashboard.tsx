@@ -129,12 +129,6 @@ export function Dashboard({
         )
           .then((value: VectorDataset) => {
             rawData[`${toSnakeCase(tableInfo.tableName)}`] = value;
-
-            let newRawData = {
-              ...rawData,
-            };
-
-            setRawData(newRawData);
           })
           .catch((reason: any) => {
             toast(
@@ -148,6 +142,7 @@ export function Dashboard({
       setErrorState(true);
     });
     fetchPromise.finally(() => {
+      setRawData({ ...rawData });
       setLoadingDataState(false);
     });
   }, [refreshState, databaseInfo]);
@@ -197,8 +192,8 @@ export function Dashboard({
         newMetrics[toSnakeCase(metricSchema.name)] = equationParser.get("");
       }
     }
-    setMetrics({});
-  }, [loadingDataState]);
+    setMetrics(newMetrics);
+  }, [loadingDataState, rawData]);
 
   return <div></div>;
 }
