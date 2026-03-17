@@ -1,4 +1,9 @@
-import type { DatabaseInfo, Dataset, VectorDataset } from "@/types/data";
+import type {
+  DatabaseInfo,
+  DataColumn,
+  Dataset,
+  VectorDataset,
+} from "@/types/data";
 import type { DashboardComponentBaseSchema } from "@root/src/types/dashboard";
 import { getZodDatasetType } from "@root/src/utils/data";
 import { toSnakeCase } from "@utils/parse";
@@ -13,12 +18,14 @@ import { findFunction } from "@/utils/data-transformations/find-function";
  * @param endpoint
  * @param target
  * @param querystring
+ * @param columnsSchema The columnsSchema to validate the vector dataset.
  * @returns A promise that will resolve when the dataset is fetched and re-shaped into a vector dataset.
  */
 function fetchDataset(
   endpoint: string,
   target: string,
   querystring: string,
+  columnsSchema: Array<DataColumn>,
 ): Promise<VectorDataset> {
   return new Promise((resolve, reject) => {
     fetch(`${endpoint}/${target}?${querystring}`, {
@@ -35,7 +42,15 @@ function fetchDataset(
         response
           .json()
           .then((body: Dataset) => {
-            // @TODO validate the dataset
+            const rawDataSchema = getZodDatasetType(columnsSchema);
+            const result = rawDataSchema.safeParse(body);
+            if (!result.success) reject(result.error);
+
+            if (!result.data)
+              reject(
+                "Undefined data? Contact website administrator or dev for a fix.",
+              );
+            const data = result.data;
 
             // vectorize the data
             let output: VectorDataset = {};
@@ -110,6 +125,7 @@ export function Dashboard({
           DATABASE_URL,
           `${databaseName}/${toSnakeCase(tableInfo.tableName)}`,
           "SELECT=*&ORDER_BY=ASC",
+          tableInfo.schema,
         )
           .then((value: VectorDataset) => {
             rawData[`${toSnakeCase(tableInfo.tableName)}`] = value;
