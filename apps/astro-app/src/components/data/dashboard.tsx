@@ -139,7 +139,7 @@ export function Dashboard({
   useEffect(() => {
     if (loadingDataState) return;
     if (errorState) return;
-    if (!rawData) return; // useEffect calls once on page load. This ignores that initial call.
+    if (Object.keys(rawData).length == 0) return; // useEffect calls once on page load. This ignores that initial call.
 
     // compute metrics
     let newMetrics: VectorDataset = {};
