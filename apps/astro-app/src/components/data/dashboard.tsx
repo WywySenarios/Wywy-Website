@@ -4,13 +4,13 @@ import type {
   Dataset,
   VectorDataset,
 } from "@/types/data";
-import type { DashboardComponentBaseSchema } from "@root/src/types/dashboard";
-import { getZodDatasetType } from "@root/src/utils/data";
+import type { DashboardComponentBaseSchema } from "@/types/dashboard";
+import { getZodDatasetType } from "@/utils/data";
 import { toSnakeCase } from "@utils/parse";
 import { DATABASE_URL } from "astro:env/client";
 import React, { useEffect, useMemo, useState, type JSX } from "react";
 import { toast } from "sonner";
-import { parser } from "mathjs";
+import { MATH } from "@/utils/math";
 
 /**
  * Attempts to fetch a dataset. The URL to GET from is "[endpoint]/[target]?querystring"
@@ -160,7 +160,7 @@ export function Dashboard({
       now: new Date(),
     };
     for (let tableInfo of databaseInfo.tables) {
-      const equationParser = parser();
+      const equationParser = MATH.parser();
       // prepare global variables
       for (const varName in globalVars) {
         equationParser.set(varName, globalVars[varName]);
@@ -189,7 +189,8 @@ export function Dashboard({
         }
 
         newMetrics[toSnakeCase(metricSchema.name)] = equationParser.evaluate(
-          `${metricSchema.function}(${metricSchema.data.join(",")})`,
+          // thank goodness snake case conversion doesn't target commas!
+          `${metricSchema.function}(${toSnakeCase(metricSchema.data.join(","))})`,
         );
       }
     }
