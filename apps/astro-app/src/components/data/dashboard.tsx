@@ -49,16 +49,18 @@ function fetchDataset(
               reject(
                 "Undefined data? Contact website administrator or dev for a fix.",
               );
-            const data = result.data;
+            else {
+              const data = result.data;
 
-            // vectorize the data
-            let output: VectorDataset = {};
-            body.columns.map((columnName, i) => {
-              output[columnName] = body.data.map((row) => {
-                return row[i];
+              // vectorize the data
+              let output: VectorDataset = {};
+              data.columns.map((columnName, i) => {
+                output[columnName] = data.data.map((row) => {
+                  return row[i];
+                });
               });
-            });
-            resolve(output);
+              resolve(output);
+            }
           })
           .catch((reason: any) => {
             reject(reason);
