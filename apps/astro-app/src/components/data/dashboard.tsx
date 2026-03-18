@@ -197,7 +197,29 @@ export function Dashboard({
     setMetrics(newMetrics);
   }, [loadingDataState, rawData]);
 
-  return <div></div>;
+  if (!databaseInfo.dashboard) {
+    return <div>No dashboard available.</div>;
+  }
+
+  return (
+    <div>
+      {databaseInfo.dashboard.map(
+        (dashboardComponentSchema: DashboardComponentBaseSchema) => (
+          <DashboardComponent
+            dashboardComponentSchema={dashboardComponentSchema}
+            loadingState={loadingDataState}
+            errorState={errorState}
+            datasetMatrix={dashboardComponentSchema.metrics.map(
+              (metricName: string) => metrics[toSnakeCase(metricName)],
+            )}
+            refreshState={refreshState}
+            setDatasetRefreshState={setRefreshState}
+            key={dashboardComponentSchema.name}
+          />
+        ),
+      )}
+    </div>
+  );
 }
 
 function DashboardComponent({
