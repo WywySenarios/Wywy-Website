@@ -9,6 +9,7 @@ export interface DatabaseInfo {
 
 export interface MetricSchema {
   name: string;
+  datatype?: Datatype;
   function?: string;
   data: Array<string>;
   args?: Array<string>;
