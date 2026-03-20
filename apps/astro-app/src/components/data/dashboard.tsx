@@ -137,10 +137,9 @@ export function Dashboard({
             );
           }),
       );
-    let fetchPromise = Promise.allSettled(fetchPromises);
-    fetchPromise.then(() => {});
-    fetchPromise.catch(() => {
-      setErrorState(true);
+    let fetchPromise = Promise.all(fetchPromises);
+    fetchPromise.then((results) => {
+      setErrorState(results.some((result) => result.status === "rejected"));
     });
     fetchPromise.finally(() => {
       setRawData({ ...rawData });
