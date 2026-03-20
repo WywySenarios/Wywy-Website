@@ -34,6 +34,9 @@ function fetchDataset(
     })
       .then((response: Response) => {
         if (!response.ok) {
+          toast(
+            `Failed to fetch data from table ${target}: Server responded with status ${response.status} ${response.statusText}, not OK.`,
+          );
           reject("Response not OK.");
           return;
         }
@@ -43,13 +46,24 @@ function fetchDataset(
           .then((body: Dataset) => {
             const rawDataSchema = getZodDatasetType(columnsSchema);
             const result = rawDataSchema.safeParse(body);
-            if (!result.success) reject(result.error);
+            if (!result.success) {
+              toast(
+                `Failed to fetch data from table ${target}: ${result.error}`, // @TODO prettify
+              );
+              reject(result.error);
+              return;
+            }
 
-            if (!result.data)
+            if (!result.data) {
+              // if Zod's behaviour is unexpected,
+              toast(
+                `Failed to fetch data from table ${target}: undefined data. Please report this error to the dev.`,
+              );
               reject(
                 "Undefined data? Contact website administrator or dev for a fix.",
               );
-            else {
+              return;
+            } else {
               const data = result.data;
 
               // vectorize the data
@@ -127,17 +141,11 @@ export function Dashboard({
           `${databaseName}/${toSnakeCase(tableInfo.tableName)}`,
           "SELECT=*&ORDER_BY=ASC",
           tableInfo.schema,
-        )
-          .then((value: VectorDataset) => {
-            rawData[`${toSnakeCase(tableInfo.tableName)}`] = value;
-          })
-          .catch((reason: any) => {
-            toast(
-              `Failed to fetch data from table ${tableInfo.tableName}: ${reason}`,
-            );
-          }),
+        ).then((value: VectorDataset) => {
+          rawData[`${toSnakeCase(tableInfo.tableName)}`] = value;
+        }),
       );
-    let fetchPromise = Promise.all(fetchPromises);
+    let fetchPromise = Promise.allSettled(fetchPromises);
     fetchPromise.then((results) => {
       setErrorState(results.some((result) => result.status === "rejected"));
     });
