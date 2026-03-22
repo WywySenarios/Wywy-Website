@@ -191,7 +191,7 @@ export function Dashboard({
           // skip metric transformation if the function is the identity function
           if (metricSchema.data.length == 1)
             newMetrics[toSnakeCase(metricSchema.name)] =
-              tableData[toSnakeCase(metricSchema.name)];
+              tableData[toSnakeCase(metricSchema.data[0])];
           else
             throw TypeError(
               "The identity transformation for metrics may only have one vector input.",
