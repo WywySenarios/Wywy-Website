@@ -14,7 +14,7 @@ export function step_within_selector(
       throw TypeError(`Vector length mismatch. Expected length ${numRows}`);
   }
 
-  const output: Array<Array<unknown>> = [];
+  const output: Array<Array<unknown>> = datasetMatrix.map(() => []).slice(1);
 
   for (let i = 0; i < numRows; i++) {
     const independentValue = Number(independentColumn[i]);
@@ -23,9 +23,9 @@ export function step_within_selector(
         `Expected number or bigint independent values but received ${typeof independentColumn[i]}`,
       );
     if (lowerBound <= independentValue && independentValue <= upperBound) {
-      output.push(
-        datasetMatrix.map((column: Array<unknown>) => column[i]).slice(1),
-      );
+      for (let j = 0; j < output.length; j++) {
+        output[j].push(datasetMatrix[j + 1][i]);
+      }
     }
   }
 
