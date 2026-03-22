@@ -67,8 +67,6 @@ export function GaugeChart({ name, value, min, max }: GaugeChartProps) {
     [name, value],
   );
 
-  console.log(value);
-
   if (min > max) {
     return GenericChartError();
   }
