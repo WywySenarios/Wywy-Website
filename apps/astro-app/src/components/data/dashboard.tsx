@@ -260,11 +260,15 @@ function DashboardComponent({
   // compute selection
   const selectedData = useMemo(() => {
     if (datasetMatrix === null) return null;
+    if (loadingState) return null;
+    if (errorState) return null;
   }, [selector, datasetMatrix]);
 
   // compute data transformation
   const data = useMemo(() => {
     if (selectedData === null) return null;
+    if (loadingState) return null;
+    if (errorState) return null;
   }, [dataTransformation, selectedData]);
 
   // if the parent component has an error or an equation failed to compile,
