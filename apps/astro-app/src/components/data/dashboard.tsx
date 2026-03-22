@@ -25,6 +25,7 @@ function fetchDataset(
   target: string,
   querystring: string,
   columnsSchema: Array<DataColumn>,
+  tagging: boolean = false,
 ): Promise<VectorDataset> {
   return new Promise((resolve, reject) => {
     fetch(`${endpoint}/${target}?${querystring}`, {
@@ -44,7 +45,7 @@ function fetchDataset(
         response
           .json()
           .then((body: Dataset) => {
-            const rawDataSchema = getZodDatasetType(columnsSchema);
+            const rawDataSchema = getZodDatasetType(columnsSchema, tagging);
             const result = rawDataSchema.safeParse(body);
             if (!result.success) {
               toast(
@@ -141,6 +142,7 @@ export function Dashboard({
           `${databaseName}/${toSnakeCase(tableInfo.tableName)}`,
           "SELECT=*&ORDER_BY=ASC",
           tableInfo.schema,
+          tableInfo.tagging ? true : false,
         ).then((value: VectorDataset) => {
           rawData[`${toSnakeCase(tableInfo.tableName)}`] = value;
         }),

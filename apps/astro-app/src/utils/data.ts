@@ -105,13 +105,20 @@ export function getZodType(columnInfo: DataColumn): ZodTypeAny {
 /**
  * Constructs a zod schema for a dataset from a columns schema.
  * @param datasetSchema The schema of the dataset to pull.
+ * @param tagging Whether or not the given item table has a related tagging table (i.e. needs primary_tag column)
  * @returns The zod schema forthe dataset to pull.
  */
-export function getZodDatasetType(datasetSchema: Array<DataColumn>) {
+export function getZodDatasetType(
+  datasetSchema: Array<DataColumn>,
+  tagging: boolean = false,
+) {
   const rowSchema: Array<ZodTypeAny> = [];
 
   // ID column
   rowSchema.push(z.number().int());
+
+  // primary_tag column
+  if (tagging) rowSchema.push(z.string().nonempty());
 
   for (let columnSchema of datasetSchema) {
     switch (columnSchema.datatype) {
