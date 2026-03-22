@@ -78,10 +78,12 @@ function fetchDataset(
             }
           })
           .catch((reason: any) => {
+            toast(`JSON de-serialization failed: ${reason}`);
             reject(reason);
           });
       })
       .catch((reason: any) => {
+        toast(`Fetch failed: ${reason}`);
         reject(reason);
       });
   });
