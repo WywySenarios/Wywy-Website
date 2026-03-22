@@ -272,11 +272,11 @@ function DashboardComponent({
   }, [dataTransformation, selectedData]);
 
   // if the parent component has an error or an equation failed to compile,
-  if (errorState || !selector || !dataTransformation) return <div>Error.</div>;
+  if (errorState) return <div>Error.</div>;
 
   if (loadingState) return <div>Loading...</div>;
 
-  if (!data) {
+  if (!data || !selector || !dataTransformation) {
     // no data state
     return <div>No data.</div>;
   }
