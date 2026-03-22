@@ -207,7 +207,7 @@ export function Dashboard({
 
         newMetrics[toSnakeCase(metricSchema.name)] = equationParser.evaluate(
           // thank goodness snake case conversion doesn't target commas!
-          `${metricSchema.function}(${toSnakeCase(metricSchema.data.join(","))})`,
+          `${toSnakeCase(metricSchema.function)}(${toSnakeCase(metricSchema.data.join(","))})`,
         );
       }
     }
@@ -289,7 +289,7 @@ function DashboardComponent({
     equationParser.set("datasetMatrix", datasetMatrix);
 
     return equationParser.evaluate(
-      `${dashboardComponentSchema.selector}(${[...(dashboardComponentSchema["selector args"] ?? []), "datasetMatrix"].join(",")})`,
+      `${toSnakeCase(dashboardComponentSchema.selector)}(${[...(dashboardComponentSchema["selector args"] ?? []), "datasetMatrix"].join(",")})`,
     );
   }, [datasetMatrix]);
 
