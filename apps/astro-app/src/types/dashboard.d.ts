@@ -1,3 +1,5 @@
+import type { Datatype } from "./data";
+
 export type DashboardComponentBaseSchema = {
   name: string;
   type: string;
@@ -16,6 +18,9 @@ export type GaugeChartSchema = {
 
 export type WaterfallChartSchema = {
   type: "Waterfall Chart";
+  offset?: string;
+  datatype?: "value" | "category" | "time" | "log";
+  invertAxes?: boolean;
 } & DashboardComponentBaseSchema;
 
 export type TreeMapSchema = {

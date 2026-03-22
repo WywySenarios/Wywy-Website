@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import { type EChartsOption } from "echarts";
-import type { FullDataset } from "./data";
+import type { Datatype } from "./data";
 
 export type ChartProps = {
   name: string;
@@ -27,10 +27,11 @@ export type WaterfallChartProps = {
   startValues: Array<number>; // the starting points of the values (i.e. bar offsets)
   endValues: Array<number>; // the ending points of the values
   labels: Array<string>;
+  offset: string;
 
   // options
-  invertedAxes?: boolean; // defaults to false
-  displayTotal?: boolean; // defaults to false
+  datatype?: "value" | "category" | "time" | "log"; // infer datatype from startValues
+  invertAxes?: boolean; // defaults to false
 } & EChartProps;
 
 export type TreeMapProps = {
