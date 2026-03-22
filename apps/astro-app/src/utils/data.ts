@@ -102,6 +102,71 @@ export function getZodType(columnInfo: DataColumn): ZodTypeAny {
   return output;
 }
 
+/**
+ * Constructs a zod schema for a dataset from a columns schema.
+ * @param datasetSchema The schema of the dataset to pull.
+ * @param tagging Whether or not the given item table has a related tagging table (i.e. needs primary_tag column)
+ * @returns The zod schema forthe dataset to pull.
+ */
+export function getZodDatasetType(
+  datasetSchema: Array<DataColumn>,
+  tagging: boolean = false,
+) {
+  const rowSchema: Array<ZodTypeAny> = [];
+
+  // ID column
+  rowSchema.push(z.number().int());
+
+  // primary_tag column
+  if (tagging) rowSchema.push(z.string().nonempty());
+
+  for (let columnSchema of datasetSchema) {
+    switch (columnSchema.datatype) {
+      case "geodetic point": // geodetic point
+        rowSchema.push(
+          z
+            .string()
+            .nullable()
+            .refine((arg: string | null) => {
+              if (arg === null) return true;
+              const matches = arg.match(
+                /^POINT ?\((-?[0-9]+(\.[0-9]+)?) (-?[0-9]+(\.[0-9]+)?)\)$/,
+              );
+
+              if (!matches) return false;
+
+              let longitude = parseFloat(matches[1]);
+              let latitude = parseFloat(matches[2]);
+              if (longitude < -180 || longitude > 180) return false;
+              if (latitude < -90 || latitude > 90) return false;
+            }),
+        );
+        // latlong accuracy
+        rowSchema.push(z.number().positive().nullable());
+        // altitude
+        rowSchema.push(z.number().nullable());
+        // altitude accuracy
+        rowSchema.push(z.number().positive().nullable());
+
+        break;
+      default:
+        rowSchema.push(getZodType(columnSchema));
+        break;
+    }
+
+    if (columnSchema.comments) {
+      rowSchema.push(z.string().optional());
+    }
+  }
+
+  return z
+    .object({
+      columns: z.array(z.string().nonempty()).length(rowSchema.length),
+      data: z.array(z.tuple(rowSchema as [ZodTypeAny, ...ZodTypeAny[]])),
+    })
+    .strict();
+}
+
 type form = UseFormReturn<{
   descriptors: {
     [x: string]: {

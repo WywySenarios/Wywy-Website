@@ -33,7 +33,7 @@ import {
   type LineSeriesOption,
   type SeriesOption,
 } from "echarts";
-import type { Dataset, Datatype, TableInfo } from "@/types/data";
+import type { EChartsDataset, Datatype, TableInfo } from "@/types/data";
 import { Label } from "@/components/ui/label";
 import { toSnakeCase } from "@root/src/utils/parse";
 
@@ -64,7 +64,7 @@ export type ChartCardProps = {
   databaseName: string;
   tableSchema: TableInfo;
   columns: Array<string>;
-  dataset: Dataset;
+  dataset: EChartsDataset;
 };
 
 type ChartSettingsOption = Omit<EChartsOption, "series"> & {

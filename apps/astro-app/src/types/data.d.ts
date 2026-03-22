@@ -1,11 +1,24 @@
+import { DashboardComponentBaseSchema } from "dashboard";
+
+// START - Schema
 export interface DatabaseInfo {
   dbname: string;
   tables: Array<TableInfo>;
+  dashboard?: Array<DashboardComponentBaseSchema>;
+}
+
+export interface MetricSchema {
+  name: string;
+  datatype?: Datatype;
+  function?: string;
+  data: Array<string>;
+  args?: Array<string>;
 }
 
 export interface DescriptorInfo {
   name: string;
   schema: Array<DataColumn>;
+  metrics: Array<MetricSchema>;
 }
 
 export interface TableInfo {
@@ -16,6 +29,7 @@ export interface TableInfo {
   comments: boolean;
   tagging: boolean;
   schema: Array<DataColumn>;
+  metrics: Array<MetricSchema>;
   descriptors: Array<DescriptorInfo>;
 }
 
@@ -161,5 +175,18 @@ export type DataColumn = {
   | EnumColumn
   | GeodeticPointColumn
 );
+// END - Schema
 
-export type Dataset = Array<Array<any>>;
+// START - Datasets
+export type EChartsDataset = Array<Array<any>>;
+
+// Output shape of a GET (SELECT) request to the sql-receptionist or cache.
+export interface Dataset {
+  columns: Array<string>;
+  data: Array<Array<Unknown>>;
+}
+
+export type FullDataset = Record<string, Dataset>;
+
+export type VectorDataset = Record<string, Array<any>>;
+// END - Datasets

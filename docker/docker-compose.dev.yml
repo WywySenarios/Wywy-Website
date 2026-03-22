@@ -1,6 +1,7 @@
+name: website
+
 services:
-  wywywebsite_astro-app:
-    container_name: wywywebsite_astro-dev-server
+  astro-app:
     restart: always
     working_dir: /apps/astro-app
     build:
@@ -17,6 +18,7 @@ services:
       - ../apps/astro-app:/apps/astro-app
       - /apps/astro-app/node_modules
       - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/astro-app/config.yml
+      - ${DOCS_DIR}:/apps/astro-app/src/content/docs
     env_file:
       - path: ${UNIVERSAL_CONFIG_DIR}/.env
         required: true

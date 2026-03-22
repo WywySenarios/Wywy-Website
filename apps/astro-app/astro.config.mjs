@@ -3,6 +3,7 @@ import { defineConfig, envField } from "astro/config";
 
 import cloudflare from "@astrojs/cloudflare";
 import tailwindcss from "@tailwindcss/vite";
+import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
 import yaml from "@rollup/plugin-yaml";
 
@@ -37,5 +38,5 @@ export default defineConfig({
     },
   },
 
-  integrations: [react()],
+  integrations: [mdx(), react()],
 });

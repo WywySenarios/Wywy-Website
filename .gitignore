@@ -2,6 +2,3 @@
 
 ## ignore python virtual environment & packages
 .venv
-
-## ignore VS code folder :P
-.vscode
