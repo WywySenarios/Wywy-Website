@@ -108,6 +108,15 @@ export function Dashboard({
   const [rawData, setRawData] = useState<Record<string, VectorDataset>>({});
   // metric data in vector form
   const [metrics, setMetrics] = useState<Record<string, Array<any>>>({});
+  const [metricsReady, setMetricsReady] = useState<boolean>(false);
+
+  // global variables for metric parsing, data selection, data transformations, etc.
+  const globalVars: Record<string, any> = useMemo(
+    () => ({
+      now: new Date(),
+    }),
+    [refreshState],
+  );
 
   const dataSchema = useMemo(() => {
     let output: Record<string, any> = {};
@@ -167,9 +176,6 @@ export function Dashboard({
     // compute metrics
     let newMetrics: VectorDataset = {};
     // recompute global variables (i.e. runtime constants)
-    const globalVars: Record<string, any> = {
-      now: new Date(),
-    };
     for (let tableInfo of databaseInfo.tables) {
       const equationParser = MATH.parser();
       // prepare global variables
@@ -206,7 +212,12 @@ export function Dashboard({
       }
     }
     setMetrics(newMetrics);
+    setMetricsReady(true);
   }, [loadingDataState, rawData]);
+
+  useEffect(() => {
+    if (loadingDataState) setMetricsReady(false);
+  }, [loadingDataState]);
 
   if (!databaseInfo.dashboard) {
     return <div>No dashboard available.</div>;
@@ -220,6 +231,8 @@ export function Dashboard({
             dashboardComponentSchema={dashboardComponentSchema}
             loadingState={loadingDataState}
             errorState={errorState}
+            metricsReady={metricsReady}
+            globalVars={globalVars}
             datasetMatrix={dashboardComponentSchema.metrics.map(
               (metricName: string) => metrics[toSnakeCase(metricName)],
             )}
@@ -237,6 +250,8 @@ function DashboardComponent({
   dashboardComponentSchema,
   loadingState,
   errorState,
+  metricsReady,
+  globalVars,
   datasetMatrix,
   refreshState,
   setDatasetRefreshState,
@@ -244,39 +259,51 @@ function DashboardComponent({
   dashboardComponentSchema: DashboardComponentBaseSchema;
   loadingState: boolean;
   errorState: boolean;
+  metricsReady: boolean;
+  globalVars: Record<string, any>;
   datasetMatrix: Array<Array<any>> | null;
   refreshState: number;
   setDatasetRefreshState: React.Dispatch<React.SetStateAction<number>>;
 }): JSX.Element {
-  // compile equations
-  const selector = useMemo(() => {
-    return null;
-  }, [dashboardComponentSchema, refreshState]);
-  const dataTransformation = useMemo(() => {
-    return null;
-  }, [dashboardComponentSchema, refreshState]);
+  // set up equation environment
+  const equationParser = useMemo(() => {
+    const output = MATH.parser();
+    for (const varName in globalVars) {
+      output.set(varName, globalVars[varName]);
+    }
+    return output;
+  }, [globalVars]);
 
   // @TODO optimize useMemo on selector & dataTransformation recompilation
   // compute selection
   const selectedData = useMemo(() => {
-    if (datasetMatrix === null) return null;
+    if (!datasetMatrix) return null;
     if (loadingState) return null;
     if (errorState) return null;
-  }, [selector, datasetMatrix]);
+    if (!metricsReady) return null;
+
+    if (!dashboardComponentSchema.selector) {
+      return datasetMatrix;
+    }
+
+    equationParser.set("datasetMatrix", datasetMatrix);
+
+    return equationParser.evaluate(
+      `${dashboardComponentSchema.selector}(${[...(dashboardComponentSchema["selector args"] ?? []), "datasetMatrix"].join(",")})`,
+    );
+  }, [datasetMatrix]);
 
   // compute data transformation
   const data = useMemo(() => {
-    if (selectedData === null) return null;
-    if (loadingState) return null;
-    if (errorState) return null;
-  }, [dataTransformation, selectedData]);
+    if (!selectedData) return null;
+  }, [selectedData]);
 
   // if the parent component has an error or an equation failed to compile,
   if (errorState) return <div>Error.</div>;
 
   if (loadingState) return <div>Loading...</div>;
 
-  if (!data || !selector || !dataTransformation) {
+  if (!data) {
     // no data state
     return <div>No data.</div>;
   }
