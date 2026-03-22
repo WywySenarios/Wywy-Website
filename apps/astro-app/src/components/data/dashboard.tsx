@@ -296,6 +296,19 @@ function DashboardComponent({
   // compute data transformation
   const data = useMemo(() => {
     if (!selectedData) return null;
+    if (loadingState) return null;
+    if (errorState) return null;
+    if (!metricsReady) return null;
+
+    if (!dashboardComponentSchema.function) {
+      return selectedData;
+    }
+
+    equationParser.set("datasetMatrix", selectedData);
+
+    return equationParser.evaluate(
+      `${toSnakeCase(dashboardComponentSchema.function)}(${[...(dashboardComponentSchema["function args"] ?? []), "datasetMatrix"].join(",")})`,
+    );
   }, [selectedData]);
 
   // if the parent component has an error or an equation failed to compile,
