@@ -96,7 +96,6 @@ export function EChart({
     // Update chart
     if (chartRef.current !== null) {
       const chart = getInstanceByDom(chartRef.current);
-      console.log(options);
       chart?.setOption(options, optionSettings);
     }
   }, [options, optionSettings, theme]); // Whenever theme changes we need to add options and setting due to it being deleted in cleanup function
