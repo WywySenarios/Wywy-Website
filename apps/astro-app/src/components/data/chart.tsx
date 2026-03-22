@@ -2,6 +2,7 @@ import type { GenericChartProps } from "@/types/chart";
 import { GaugeChart } from "./chart/gauge-chart";
 import { WaterfallChart } from "./chart/waterfall-chart";
 import { TreeMap } from "./chart/tree-map";
+import { coerceToNumber } from "@utils/math/datatype";
 
 export function GenericEmptyChart() {
   return null;
@@ -17,7 +18,7 @@ export function GenericChart({ data, options }: GenericChartProps) {
       return (
         <GaugeChart
           name={options.name}
-          value={data}
+          value={coerceToNumber(data, "Invalid input chart data: ")}
           min={options.min}
           max={options.max}
         />
