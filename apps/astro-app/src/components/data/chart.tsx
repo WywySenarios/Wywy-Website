@@ -39,7 +39,7 @@ export function GenericChart({ data, options }: GenericChartProps) {
         <WaterfallChart
           name={options.name}
           startValues={data[0]}
-          values={data[1]}
+          endValues={data[1]}
           labels={data[2]}
           {...options}
         />

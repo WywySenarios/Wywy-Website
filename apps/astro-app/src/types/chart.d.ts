@@ -25,7 +25,7 @@ export type GaugeChartProps = {
 export type WaterfallChartProps = {
   // data
   startValues: Array<number>; // the starting points of the values (i.e. bar offsets)
-  values: Array<number>;
+  endValues: Array<number>; // the ending points of the values
   labels: Array<string>;
 
   // options
