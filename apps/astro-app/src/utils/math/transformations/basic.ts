@@ -26,7 +26,5 @@ export function array_subtraction(
     return output;
   });
 
-  console.log(output);
-
   return output;
 }
