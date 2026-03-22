@@ -46,6 +46,27 @@ MATH.import(
   { wrap: true },
 );
 
+// selectors
+import { step_within_selector } from "./math/selectors/matrix/step_within";
+MATH.import(
+  {
+    step_within: typed("step_within", {
+      "number, number, Array": step_within_selector,
+    }),
+  },
+  { wrap: true },
+);
+
+import { closest_step_selector } from "./math/selectors/row/closest_step";
+MATH.import(
+  {
+    closest_step: typed("closest_step", {
+      "number, Array": closest_step_selector,
+    }),
+  },
+  { wrap: true },
+);
+
 export { MATH };
 
 // selectors
