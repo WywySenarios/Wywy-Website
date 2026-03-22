@@ -11,6 +11,7 @@ import { DATABASE_URL } from "astro:env/client";
 import React, { useEffect, useMemo, useState, type JSX } from "react";
 import { toast } from "sonner";
 import { MATH } from "@/utils/math";
+import { GenericChart } from "./chart";
 
 /**
  * Attempts to fetch a dataset. The URL to GET from is "[endpoint]/[target]?querystring"
@@ -321,5 +322,7 @@ function DashboardComponent({
     return <div>No data.</div>;
   }
 
-  return <div></div>;
+  return (
+    <GenericChart data={data} options={dashboardComponentSchema}></GenericChart>
+  );
 }
