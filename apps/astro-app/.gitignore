@@ -39,9 +39,6 @@ public/directives
 public/projects
 public/schedules
 
-## ignore the webpage icon :)
-public/favicon.svg
-
 ## ignore config
 config/config.yml
 
