@@ -113,7 +113,7 @@ export function Dashboard({
   // global variables for metric parsing, data selection, data transformations, etc.
   const globalVars: Record<string, any> = useMemo(
     () => ({
-      now: new Date(),
+      now: new Date().getTime(),
     }),
     [refreshState],
   );
