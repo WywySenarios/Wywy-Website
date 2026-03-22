@@ -3,6 +3,7 @@ import { GaugeChart } from "./chart/gauge-chart";
 import { WaterfallChart } from "./chart/waterfall-chart";
 import { TreeMap } from "./chart/tree-map";
 import { coerceToNumber } from "@utils/math/datatype";
+import { toSnakeCase } from "@utils/parse";
 
 export function GenericEmptyChart() {
   return null;
@@ -13,7 +14,8 @@ export function GenericChartError() {
 }
 
 export function GenericChart({ data, options }: GenericChartProps) {
-  switch (options.type) {
+  const chartType = toSnakeCase(options.type);
+  switch (chartType) {
     case "gauge_chart":
       return (
         <GaugeChart
@@ -42,5 +44,7 @@ export function GenericChart({ data, options }: GenericChartProps) {
           ancestries={data[2]}
         />
       );
+    default:
+      console.warn(`Could not find chart type "${chartType}"`);
   }
 }
