@@ -30,7 +30,7 @@ export type WaterfallChartProps = {
   offset: string;
 
   // options
-  datatype?: "value" | "category" | "time" | "log"; // infer datatype from startValues
+  datatype?: Datatype; // infer datatype from startValues
   invertAxes?: boolean; // defaults to false
 } & EChartProps;
 

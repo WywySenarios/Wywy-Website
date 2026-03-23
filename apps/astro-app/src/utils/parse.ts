@@ -274,6 +274,35 @@ function prettifyTimeString(time: string): string {
 }
 
 /**
+ * Transforms a given time into user-readable format (e.g. 1 minute 2 seconds). Only has resolution between seconds and days, inclusive.
+ * @param duration The duration to prettify
+ * @returns The prettified duration
+ */
+export function prettifyDuration(duration: number | Date): string {
+  let value = Number(duration) / 1000;
+  const parts: Array<string> = [];
+
+  // seconds
+  const seconds = value % 60;
+  value = Math.floor(value / 60);
+  // minutes
+  const minutes = value % 60;
+  value = Math.floor(value / 60);
+  // hours
+  const hours = value % 24;
+  value = Math.floor(value / 24);
+  // days
+  const days = value;
+
+  if (days) parts.push(`${days} days`);
+  if (hours) parts.push(`${hours} hours`);
+  if (minutes) parts.push(`${minutes} minutes`);
+  if (seconds) parts.push(`${seconds} seconds`);
+
+  return parts.join(" ");
+}
+
+/**
  * Attempts to parse a string representing a date into a Date object.
  * @param date @type {string} A string representing a date.
  * @returns @type {Date} when the parse is successful and @type {undefined} when it is not.

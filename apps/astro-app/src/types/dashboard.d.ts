@@ -19,7 +19,7 @@ export type GaugeChartSchema = {
 export type WaterfallChartSchema = {
   type: "Waterfall Chart";
   offset?: string;
-  datatype?: "value" | "category" | "time" | "log";
+  datatype?: Datatype;
   invertAxes?: boolean;
 } & DashboardComponentBaseSchema;
 

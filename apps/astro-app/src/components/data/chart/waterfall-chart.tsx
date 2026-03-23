@@ -2,10 +2,14 @@ import type { WaterfallChartProps } from "@/types/chart";
 import { EChart, GenericChartError, GenericEmptyChart } from "../chart";
 import { useMemo } from "react";
 import type {
+  DefaultLabelFormatterCallbackParams,
   EChartsOption,
+  LabelFormatterCallback,
   XAXisComponentOption,
   YAXisComponentOption,
 } from "echarts";
+import { format } from "echarts";
+import { prettifyDuration } from "@utils/parse";
 
 export function WaterfallChart({
   name,
@@ -16,37 +20,80 @@ export function WaterfallChart({
   datatype,
   invertAxes,
 }: WaterfallChartProps) {
-  const options: EChartsOption = useMemo(() => {
+  const durations = useMemo(() => {
     if (
       startValues.length != endValues.length ||
       startValues.length != labels.length
     )
       throw new TypeError(`Waterfall chart data vector mismatch.`);
-    let transformedValues: typeof startValues;
-    switch (offset) {
-      case "initial":
-        transformedValues = startValues.map(
-          (startValue: number) => startValue - startValues[0],
-        );
-        break;
-      default:
-        transformedValues = startValues;
-    }
 
-    const durations = startValues.map(
+    return startValues.map(
       (startValue, index) => endValues[index] - startValue,
     );
+  }, [startValues, endValues, labels]);
 
-    const independentAxis: XAXisComponentOption | YAXisComponentOption = {
+  const durationFormatter: LabelFormatterCallback = useMemo(() => {
+    switch (datatype) {
+      case "time":
+      case "timestamp":
+      case "date":
+        return function (params: DefaultLabelFormatterCallbackParams) {
+          const value = params.value;
+          switch (typeof value) {
+            case "object":
+            case "number":
+              return prettifyDuration(value as number | Date);
+            default:
+              return `Error: Expected Number or Date but received ${typeof value} instead.`;
+          }
+        };
+      default:
+        return function (params: DefaultLabelFormatterCallbackParams) {
+          return String(params.value);
+        };
+    }
+  }, [datatype]);
+
+  const dependentAxis: XAXisComponentOption | YAXisComponentOption =
+    useMemo(() => {
+      const dependentAxisLabel: Record<string, any> = {};
+
+      switch (datatype) {
+        case "time":
+        case "timestamp":
+        case "date":
+          // @TODO customizable formatter
+          dependentAxisLabel["formatter"] = (value: number) =>
+            format.formatTime("hh:mm", value);
+          break;
+        default:
+      }
+
+      // select offset
+      // dataMin doesn't work when the datatype is a date (i.e. the dates displayed will be in 1970 rather than the current time)
+      let min = startValues[0];
+      for (const value of startValues) {
+        if (value < min) min = value;
+      }
+
+      return {
+        type: "value",
+        min: min,
+        axisLabel: { ...dependentAxisLabel },
+      };
+    }, [datatype]);
+
+  const independentAxis: XAXisComponentOption | YAXisComponentOption = useMemo(
+    () => ({
       type: "category",
       splitLine: { show: false },
       data: labels,
-    };
-    const dependentAxis: XAXisComponentOption | YAXisComponentOption = {
-      type: datatype ? datatype : "value",
-    };
+    }),
+    [datatype],
+  );
 
-    return {
+  const options: EChartsOption = useMemo(
+    () => ({
       title: {
         text: name,
       },
@@ -57,7 +104,17 @@ export function WaterfallChart({
         },
         formatter: function (params: any) {
           var tar = params[1];
-          return tar.name + "<br/>" + tar.seriesName + " : " + tar.value;
+          let value;
+          switch (datatype) {
+            case "time":
+            case "timestamp":
+            case "date":
+              value = prettifyDuration(tar.value);
+              break;
+            default:
+              value = tar.value;
+          }
+          return tar.name + "<br/>" + tar.seriesName + " : " + value;
         },
       },
       grid: {
@@ -74,7 +131,7 @@ export function WaterfallChart({
         : dependentAxis) as YAXisComponentOption,
       series: [
         {
-          name: "Placeholder",
+          name: "Start Value",
           type: "bar",
           stack: "Total",
           itemStyle: {
@@ -87,7 +144,7 @@ export function WaterfallChart({
               color: "transparent",
             },
           },
-          data: transformedValues,
+          data: startValues,
         },
         {
           name: "Duration",
@@ -96,12 +153,15 @@ export function WaterfallChart({
           label: {
             show: true,
             position: "inside",
+            formatter: durationFormatter,
           },
+
           data: durations,
         },
       ],
-    };
-  }, [name, startValues, endValues, labels]);
+    }),
+    [name, startValues, endValues, labels],
+  );
 
   // no data state
   if (!startValues || !endValues || !labels) return GenericEmptyChart();
