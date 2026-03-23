@@ -152,7 +152,7 @@ export function Dashboard({
         fetchDataset(
           DATABASE_URL,
           `${databaseName}/${toSnakeCase(tableInfo.tableName)}`,
-          "SELECT=*&ORDER_BY=ASC",
+          "SELECT=*&ORDER_BY=DESC",
           tableInfo.schema,
           tableInfo.tagging ? true : false,
         ).then((value: VectorDataset) => {
