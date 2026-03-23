@@ -139,6 +139,8 @@ export function getZodDatasetType(
               let latitude = parseFloat(matches[2]);
               if (longitude < -180 || longitude > 180) return false;
               if (latitude < -90 || latitude > 90) return false;
+
+              return true;
             }),
         );
         // latlong accuracy
