@@ -20,17 +20,27 @@ export function WaterfallChart({
   datatype,
   invertAxes,
 }: WaterfallChartProps) {
-  const durations = useMemo(() => {
-    if (
-      startValues.length != endValues.length ||
-      startValues.length != labels.length
-    )
-      throw new TypeError(`Waterfall chart data vector mismatch.`);
+  const { sortedLabels, sortedStartValues, sortedEndValues, durations } =
+    useMemo(() => {
+      if (
+        startValues.length != endValues.length ||
+        startValues.length != labels.length
+      )
+        throw new TypeError(`Waterfall chart data vector mismatch.`);
 
-    return startValues.map(
-      (startValue, index) => endValues[index] - startValue,
-    );
-  }, [startValues, endValues, labels]);
+      let indices = [...startValues.keys()];
+      // reverse sort so that earlier items appear on the top
+      indices.sort((a, b) => startValues[b] - startValues[a]);
+
+      let sortedLabels = indices.map((i) => labels[i]);
+      let sortedStartValues = indices.map((i) => startValues[i]);
+      let sortedEndValues = indices.map((i) => endValues[i]);
+      let durations = sortedStartValues.map(
+        (startValue, index) => sortedEndValues[index] - startValue,
+      );
+
+      return { sortedLabels, sortedStartValues, sortedEndValues, durations };
+    }, [startValues, endValues, labels]);
 
   const durationFormatter: LabelFormatterCallback = useMemo(() => {
     switch (datatype) {
@@ -87,7 +97,7 @@ export function WaterfallChart({
     () => ({
       type: "category",
       splitLine: { show: false },
-      data: labels,
+      data: sortedLabels,
     }),
     [datatype],
   );
@@ -144,7 +154,7 @@ export function WaterfallChart({
               color: "transparent",
             },
           },
-          data: startValues,
+          data: sortedStartValues,
         },
         {
           name: "Duration",
@@ -160,11 +170,12 @@ export function WaterfallChart({
         },
       ],
     }),
-    [name, startValues, endValues, labels],
+    [name, sortedStartValues, durations, sortedLabels],
   );
 
   // no data state
-  if (!startValues || !endValues || !labels) return GenericEmptyChart();
+  if (!sortedStartValues || !durations || !sortedLabels)
+    return GenericEmptyChart();
 
   return <EChart options={options}></EChart>;
 }
