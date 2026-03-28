@@ -314,6 +314,53 @@ export function prettifyDuration(duration: number | Date): string {
   return parts.join(" ");
 }
 
+const PRETTIFY_DURATION_MAX_FIELDS_DISPLAYED = 2;
+/**
+ * Transforms a given time into user-readable format (e.g. 1min 2s). Only has resolution between seconds and days, inclusive. Cuts down the number of fields displayed to two.
+ * @param duration The duration to prettify
+ * @returns The prettified duration
+ */
+export function prettifyDurationShortened(duration: number | Date): string {
+  let value = Number(duration) / 1000;
+  let fieldsDisplayed = 0;
+  const parts: Array<string> = [];
+
+  // seconds
+  const seconds = value % 60;
+  value = Math.floor(value / 60);
+  // minutes
+  const minutes = value % 60;
+  value = Math.floor(value / 60);
+  // hours
+  const hours = value % 24;
+  value = Math.floor(value / 24);
+  // days
+  const days = value;
+
+  if (fieldsDisplayed < PRETTIFY_DURATION_MAX_FIELDS_DISPLAYED && days) {
+    parts.push(`${days}d`);
+
+    fieldsDisplayed++;
+  }
+  if (fieldsDisplayed < PRETTIFY_DURATION_MAX_FIELDS_DISPLAYED && hours) {
+    parts.push(`${hours}h`);
+
+    fieldsDisplayed++;
+  }
+  if (fieldsDisplayed < PRETTIFY_DURATION_MAX_FIELDS_DISPLAYED && minutes) {
+    parts.push(`${minutes}min`);
+
+    fieldsDisplayed++;
+  }
+  if (fieldsDisplayed < PRETTIFY_DURATION_MAX_FIELDS_DISPLAYED && seconds) {
+    parts.push(`${seconds}s`);
+
+    fieldsDisplayed++;
+  }
+
+  return parts.join(" ");
+}
+
 /**
  * Attempts to parse a string representing a date into a Date object.
  * @param date @type {string} A string representing a date.

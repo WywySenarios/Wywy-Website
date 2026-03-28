@@ -9,7 +9,7 @@ import type {
   YAXisComponentOption,
 } from "echarts";
 import { format } from "echarts";
-import { prettifyDuration } from "@utils/parse";
+import { prettifyDurationShortened as prettifyDuration } from "@utils/parse";
 
 export function WaterfallChart({
   name,
