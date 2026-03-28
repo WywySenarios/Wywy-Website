@@ -177,5 +177,5 @@ export function WaterfallChart({
   if (!sortedStartValues || !durations || !sortedLabels)
     return GenericEmptyChart();
 
-  return <EChart options={options}></EChart>;
+  return <EChart className="h-[80vh]" options={options} />;
 }
