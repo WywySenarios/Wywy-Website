@@ -282,6 +282,8 @@ export function prettifyDuration(duration: number | Date): string {
   let value = Number(duration) / 1000;
   const parts: Array<string> = [];
 
+  if (value == 0) return "0 seconds";
+
   // seconds
   const seconds = value % 60;
   value = Math.floor(value / 60);
@@ -324,6 +326,8 @@ export function prettifyDurationShortened(duration: number | Date): string {
   let value = Number(duration) / 1000;
   let fieldsDisplayed = 0;
   const parts: Array<string> = [];
+
+  if (value == 0) return "0s";
 
   // seconds
   const seconds = value % 60;
