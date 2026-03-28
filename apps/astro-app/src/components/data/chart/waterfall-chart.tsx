@@ -117,18 +117,28 @@ export function WaterfallChart({
           type: "shadow",
         },
         formatter: function (params: any) {
-          var tar = params[1];
-          let value;
+          const startTime = params[0];
+          const duration = params[1];
+          let durationValue;
+          let startTimeValue;
           switch (datatype) {
             case "time":
             case "timestamp":
             case "date":
-              value = prettifyDuration(tar.value);
+              startTimeValue = new Date(startTime.value).toLocaleString();
+              durationValue = prettifyDuration(duration.value);
               break;
             default:
-              value = tar.value;
+              startTimeValue = startTime;
+              durationValue = duration.value;
           }
-          return tar.name + "<br/>" + tar.seriesName + " : " + value;
+          return (
+            startTime.name +
+            "<br/>Duration : " +
+            durationValue +
+            "<br/>Start : " +
+            startTimeValue
+          );
         },
       },
       grid: {
