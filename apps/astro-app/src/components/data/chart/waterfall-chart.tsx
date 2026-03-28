@@ -1,14 +1,14 @@
 import type { WaterfallChartProps } from "@/types/chart";
 import { EChart, GenericChartError, GenericEmptyChart } from "../chart";
 import { useMemo } from "react";
-import type {
-  DefaultLabelFormatterCallbackParams,
-  EChartsOption,
-  LabelFormatterCallback,
-  XAXisComponentOption,
-  YAXisComponentOption,
+import {
+  time,
+  type DefaultLabelFormatterCallbackParams,
+  type EChartsOption,
+  type LabelFormatterCallback,
+  type XAXisComponentOption,
+  type YAXisComponentOption,
 } from "echarts";
-import { format } from "echarts";
 import { prettifyDurationShortened as prettifyDuration } from "@utils/parse";
 
 export function WaterfallChart({
@@ -78,7 +78,7 @@ export function WaterfallChart({
         case "date":
           // @TODO customizable formatter
           dependentAxisLabel["formatter"] = (value: number) =>
-            format.formatTime("hh:mm", value);
+            time.format(value, "{hh}:{mm}", true);
           break;
         default:
       }
