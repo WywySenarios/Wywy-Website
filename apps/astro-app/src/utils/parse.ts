@@ -294,10 +294,22 @@ export function prettifyDuration(duration: number | Date): string {
   // days
   const days = value;
 
-  if (days) parts.push(`${days} days`);
-  if (hours) parts.push(`${hours} hours`);
-  if (minutes) parts.push(`${minutes} minutes`);
-  if (seconds) parts.push(`${seconds} seconds`);
+  if (days) {
+    if (days == 1) parts.push("1 day");
+    else parts.push(`${days} days`);
+  }
+  if (hours) {
+    if (hours == 1) parts.push("1 hour");
+    else parts.push(`${hours} hours`);
+  }
+  if (minutes) {
+    if (minutes == 1) parts.push("1 minute");
+    else parts.push(`${minutes} minutes`);
+  }
+  if (seconds) {
+    if (seconds == 1) parts.push("1 second");
+    else parts.push(`${seconds} seconds`);
+  }
 
   return parts.join(" ");
 }
