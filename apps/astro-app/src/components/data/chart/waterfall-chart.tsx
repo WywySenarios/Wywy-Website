@@ -30,7 +30,11 @@ export function WaterfallChart({
 
       let indices = [...startValues.keys()];
       // reverse sort so that earlier items appear on the top
-      indices.sort((a, b) => startValues[b] - startValues[a]);
+      if (invertAxes) {
+        indices.sort((a, b) => startValues[b] - startValues[a]);
+      } else {
+        indices.sort((a, b) => startValues[a] - startValues[b]);
+      }
 
       let sortedLabels = indices.map((i) => labels[i]);
       let sortedStartValues = indices.map((i) => startValues[i]);
