@@ -119,22 +119,6 @@ export function Dashboard({
     [refreshState],
   );
 
-  const dataSchema = useMemo(() => {
-    let output: Record<string, any> = {};
-
-    for (const tableInfo of databaseInfo.tables) {
-      // table data
-      output[tableInfo.tableName] = getZodDatasetType(tableInfo.schema);
-
-      // descriptor data
-      // for (const descriptorInfo of tableInfo.descriptors)
-      //   output[`${tableInfo.tableName}_${descriptorInfo.name}_descriptors`] =
-      //     getZodDatasetType(tableInfo.schema);
-    }
-
-    return output;
-  }, [databaseInfo]);
-
   const databaseName: string = useMemo(() => {
     return toSnakeCase(databaseInfo.dbname);
   }, [databaseInfo]);

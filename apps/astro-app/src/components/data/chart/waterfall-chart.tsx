@@ -1,15 +1,16 @@
 import type { WaterfallChartProps } from "@/types/chart";
 import { EChart, GenericChartError, GenericEmptyChart } from "../chart";
 import { useMemo } from "react";
-import type {
-  DefaultLabelFormatterCallbackParams,
-  EChartsOption,
-  LabelFormatterCallback,
-  XAXisComponentOption,
-  YAXisComponentOption,
+import {
+  time,
+  type DefaultLabelFormatterCallbackParams,
+  type EChartsOption,
+  type LabelFormatterCallback,
+  type XAXisComponentOption,
+  type YAXisComponentOption,
 } from "echarts";
-import { format } from "echarts";
-import { prettifyDuration } from "@utils/parse";
+import { prettifyDurationShortened as prettifyDuration } from "@utils/parse";
+import { colorFromLabel } from "@utils/chart";
 
 export function WaterfallChart({
   name,
@@ -30,7 +31,11 @@ export function WaterfallChart({
 
       let indices = [...startValues.keys()];
       // reverse sort so that earlier items appear on the top
-      indices.sort((a, b) => startValues[b] - startValues[a]);
+      if (invertAxes) {
+        indices.sort((a, b) => startValues[b] - startValues[a]);
+      } else {
+        indices.sort((a, b) => startValues[a] - startValues[b]);
+      }
 
       let sortedLabels = indices.map((i) => labels[i]);
       let sortedStartValues = indices.map((i) => startValues[i]);
@@ -74,7 +79,7 @@ export function WaterfallChart({
         case "date":
           // @TODO customizable formatter
           dependentAxisLabel["formatter"] = (value: number) =>
-            format.formatTime("hh:mm", value);
+            time.format(value, "{hh}:{mm}", true);
           break;
         default:
       }
@@ -113,18 +118,28 @@ export function WaterfallChart({
           type: "shadow",
         },
         formatter: function (params: any) {
-          var tar = params[1];
-          let value;
+          const startTime = params[0];
+          const duration = params[1];
+          let durationValue;
+          let startTimeValue;
           switch (datatype) {
             case "time":
             case "timestamp":
             case "date":
-              value = prettifyDuration(tar.value);
+              startTimeValue = new Date(startTime.value).toLocaleString();
+              durationValue = prettifyDuration(duration.value);
               break;
             default:
-              value = tar.value;
+              startTimeValue = startTime;
+              durationValue = duration.value;
           }
-          return tar.name + "<br/>" + tar.seriesName + " : " + value;
+          return (
+            startTime.name +
+            "<br/>Duration : " +
+            durationValue +
+            "<br/>Start : " +
+            startTimeValue
+          );
         },
       },
       grid: {
@@ -165,7 +180,12 @@ export function WaterfallChart({
             position: "inside",
             formatter: durationFormatter,
           },
-
+          itemStyle: {
+            color: function (params: any) {
+              const label = params.name;
+              return colorFromLabel(label);
+            },
+          },
           data: durations,
         },
       ],
@@ -177,5 +197,5 @@ export function WaterfallChart({
   if (!sortedStartValues || !durations || !sortedLabels)
     return GenericEmptyChart();
 
-  return <EChart options={options}></EChart>;
+  return <EChart className="h-[80vh]" options={options} />;
 }

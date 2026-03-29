@@ -122,6 +122,15 @@ export function getZodDatasetType(
 
   for (let columnSchema of datasetSchema) {
     switch (columnSchema.datatype) {
+      case "date":
+      case "time":
+      case "timestamp":
+        rowSchema.push(
+          z.preprocess((val) => {
+            if (typeof val === "string" && !val.endsWith("Z")) return val + "Z";
+          }, z.coerce.date()),
+        );
+        break;
       case "geodetic point": // geodetic point
         rowSchema.push(
           z

@@ -282,6 +282,8 @@ export function prettifyDuration(duration: number | Date): string {
   let value = Number(duration) / 1000;
   const parts: Array<string> = [];
 
+  if (value == 0) return "0 seconds";
+
   // seconds
   const seconds = value % 60;
   value = Math.floor(value / 60);
@@ -294,10 +296,71 @@ export function prettifyDuration(duration: number | Date): string {
   // days
   const days = value;
 
-  if (days) parts.push(`${days} days`);
-  if (hours) parts.push(`${hours} hours`);
-  if (minutes) parts.push(`${minutes} minutes`);
-  if (seconds) parts.push(`${seconds} seconds`);
+  if (days) {
+    if (days == 1) parts.push("1 day");
+    else parts.push(`${days} days`);
+  }
+  if (hours) {
+    if (hours == 1) parts.push("1 hour");
+    else parts.push(`${hours} hours`);
+  }
+  if (minutes) {
+    if (minutes == 1) parts.push("1 minute");
+    else parts.push(`${minutes} minutes`);
+  }
+  if (seconds) {
+    if (seconds == 1) parts.push("1 second");
+    else parts.push(`${seconds} seconds`);
+  }
+
+  return parts.join(" ");
+}
+
+const PRETTIFY_DURATION_MAX_FIELDS_DISPLAYED = 2;
+/**
+ * Transforms a given time into user-readable format (e.g. 1min 2s). Only has resolution between seconds and days, inclusive. Cuts down the number of fields displayed to two.
+ * @param duration The duration to prettify
+ * @returns The prettified duration
+ */
+export function prettifyDurationShortened(duration: number | Date): string {
+  let value = Number(duration) / 1000;
+  let fieldsDisplayed = 0;
+  const parts: Array<string> = [];
+
+  if (value == 0) return "0s";
+
+  // seconds
+  const seconds = value % 60;
+  value = Math.floor(value / 60);
+  // minutes
+  const minutes = value % 60;
+  value = Math.floor(value / 60);
+  // hours
+  const hours = value % 24;
+  value = Math.floor(value / 24);
+  // days
+  const days = value;
+
+  if (fieldsDisplayed < PRETTIFY_DURATION_MAX_FIELDS_DISPLAYED && days) {
+    parts.push(`${days}d`);
+
+    fieldsDisplayed++;
+  }
+  if (fieldsDisplayed < PRETTIFY_DURATION_MAX_FIELDS_DISPLAYED && hours) {
+    parts.push(`${hours}h`);
+
+    fieldsDisplayed++;
+  }
+  if (fieldsDisplayed < PRETTIFY_DURATION_MAX_FIELDS_DISPLAYED && minutes) {
+    parts.push(`${minutes}min`);
+
+    fieldsDisplayed++;
+  }
+  if (fieldsDisplayed < PRETTIFY_DURATION_MAX_FIELDS_DISPLAYED && seconds) {
+    parts.push(`${seconds}s`);
+
+    fieldsDisplayed++;
+  }
 
   return parts.join(" ");
 }
