@@ -10,6 +10,7 @@ import {
   type YAXisComponentOption,
 } from "echarts";
 import { prettifyDurationShortened as prettifyDuration } from "@utils/parse";
+import { colorFromLabel } from "@utils/chart";
 
 export function WaterfallChart({
   name,
@@ -179,7 +180,12 @@ export function WaterfallChart({
             position: "inside",
             formatter: durationFormatter,
           },
-
+          itemStyle: {
+            color: function (params: any) {
+              const label = params.name;
+              return colorFromLabel(label);
+            },
+          },
           data: durations,
         },
       ],
