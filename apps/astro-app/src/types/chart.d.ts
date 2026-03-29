@@ -34,6 +34,14 @@ export type WaterfallChartProps = {
   invertAxes?: boolean; // defaults to false
 } & EChartProps;
 
+export type ShallowTreeMapProps = {
+  // data
+  names: Array<string>;
+  values: Array<number>;
+
+  // options
+} & EChartProps;
+
 export type TreeMapProps = {
   // data
   names: Array<string>;

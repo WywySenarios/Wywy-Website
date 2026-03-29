@@ -1,7 +1,7 @@
 import type { GenericChartProps } from "@/types/chart";
 import { GaugeChart } from "./chart/gauge-chart";
 import { WaterfallChart } from "./chart/waterfall-chart";
-import { TreeMap } from "./chart/tree-map";
+import { ShallowTreeMap, TreeMap } from "./chart/tree-map";
 import { coerceToNumber } from "@utils/math/datatype";
 import {
   getInstanceByDom,
@@ -52,6 +52,10 @@ export function GenericChart({ data, options }: GenericChartProps) {
           values={data[1]}
           ancestries={data[2]}
         />
+      );
+    case "shallow_treemap":
+      return (
+        <ShallowTreeMap name={options.name} names={data[0]} values={data[1]} />
       );
     default:
       console.warn(`Could not find chart type "${chartType}"`);
