@@ -139,7 +139,6 @@ export function TimerForm({
             }
 
             setData(output);
-            setIsCaching(false);
             setCacheError(false);
           })
           .catch((reason: any) => {
@@ -163,7 +162,9 @@ export function TimerForm({
   useEffect(fetchCache, []);
 
   // automatically update the cache when the user changes either the start or the end time.
+  // only update when desired & valid
   useEffect(() => {
+    if (cacheError || !isCaching) return;
     // @TODO generalize
     setStartTime(data["Start Time"]);
 
@@ -179,7 +180,7 @@ export function TimerForm({
 
     form.reset({ data: data, descriptors: descriptorDefaultValues });
 
-    if (isCaching) cache();
+    cache();
   }, [data]);
 
   /**
@@ -205,7 +206,16 @@ export function TimerForm({
             "Content-type": "application/json; charset=UTF-8",
             "X-CSRFToken": csrftoken,
           },
-        });
+        })
+          .catch((reason) => {
+            toast(
+              `Something went wrong when trying to store the start or end time: ${reason}`,
+            );
+            setCacheError(true);
+          })
+          .then(() => {
+            setCacheError(false);
+          });
       })
       .catch((reason: string) => {
         toast(
@@ -296,6 +306,7 @@ export function TimerForm({
     switch (action) {
       case "split":
         start();
+        break;
       default:
         cancel();
     }
