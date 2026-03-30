@@ -79,7 +79,7 @@ export function WaterfallChart({
         case "date":
           // @TODO customizable formatter
           dependentAxisLabel["formatter"] = (value: number) =>
-            time.format(value, "{hh}:{mm}", true);
+            time.format(value, "{hh}:{mm}", false);
           break;
         default:
       }
