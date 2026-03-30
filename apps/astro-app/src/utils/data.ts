@@ -61,7 +61,8 @@ export function getZodType(columnInfo: DataColumn): ZodTypeAny {
     case "geodetic point":
       output = z.custom<GeodeticCoordinate>(
         (val) => {
-          if (typeof val !== "object" || val === null) return false;
+          if (typeof val !== "object") return false;
+          if (val === null) return true;
 
           const v = val as GeodeticCoordinate;
 
