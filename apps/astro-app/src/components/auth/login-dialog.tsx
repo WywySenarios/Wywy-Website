@@ -73,7 +73,6 @@ function LoginDialogContents(): JSX.Element {
       sameSite: "lax",
     });
 
-    console.log(formData.get("password"));
     fetch(`${DATABASE_URL}/auth`, {
       method: "POST",
       body: formData.get("password"),
