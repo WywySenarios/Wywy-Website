@@ -149,7 +149,7 @@ type EnumColumn = {
 type GeodeticPointColumn = {
   datatype: "geodetic point";
   defaultValue: string;
-  entrytype: "geodetic point" | "geodetic point minimal";
+  entrytype: "geodetic point" | "geodetic point minimal" | "none";
 };
 
 export type DataColumn = {

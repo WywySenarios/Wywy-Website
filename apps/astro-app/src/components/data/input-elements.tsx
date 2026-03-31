@@ -130,6 +130,8 @@ export function FormElement({
   columnInfo: DataColumn;
   controllerNamer?: (strings: TemplateStringsArray, name: string) => string;
 }) {
+  if (columnInfo.entrytype == "none") return null;
+
   return (
     <div className="rounded-lg border p-5 shadow-md" key={columnInfo.name}>
       <Controller
