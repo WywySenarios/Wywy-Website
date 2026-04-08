@@ -7,7 +7,7 @@ import { toSnakeCase } from "@root/src/utils/parse";
 import { getFallbackValue, getZodType } from "@/utils/data";
 import { useForm, type FieldErrors, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
-import { z, ZodArray, type AnyZodObject, type ZodTypeAny } from "zod";
+import { z, ZodArray, type ZodType } from "zod";
 import { getCSRFToken } from "@/utils/auth";
 
 /**
@@ -78,7 +78,7 @@ export function formatValues(
 
 export function populateZodSchema(
   itemInfo: DataColumn[],
-  schema: Record<string, ZodTypeAny>,
+  schema: Record<string, ZodType<any>>,
   defaultValues: Record<string, any>,
 ) {
   for (let columnInfo of itemInfo) {
@@ -152,17 +152,17 @@ export function createFormSchemaAndHandlers(
   dbURL: string,
 ) {
   // direct column related
-  let dataSchema: Record<string, ZodTypeAny> = {};
+  let dataSchema: Record<string, ZodType<any>> = {};
   let dataDefaultValues: Record<string, any> = {};
 
   populateZodSchema(tableInfo.schema, dataSchema, dataDefaultValues);
 
   // descriptors
-  let descriptorSchema: Record<string, ZodArray<AnyZodObject>> = {};
+  let descriptorSchema: Record<string, ZodArray<ZodType<any>>> = {};
   let descriptorDefaultValues: Record<string, Array<Object>> = {};
   if (tableInfo.descriptors) {
     for (let descriptor of tableInfo.descriptors) {
-      let thisSchema: Record<string, ZodTypeAny> = {};
+      let thisSchema: Record<string, ZodType<any>> = {};
       let thisDefaultValues: Record<string, any> = {};
 
       populateZodSchema(descriptor.schema, thisSchema, thisDefaultValues);
