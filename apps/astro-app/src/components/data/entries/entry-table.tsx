@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
   type Dispatch,
+  type ReactNode,
   type SetStateAction,
 } from "react";
 import { toast } from "sonner";
@@ -26,6 +27,9 @@ import { CloudDownload, Plus, RefreshCw } from "lucide-react";
 import { CACHE_URL, DATABASE_URL } from "astro:env/client";
 import { OriginPicker } from "@/components/data/origin-picker";
 import { getCSRFToken } from "@/utils/auth";
+import { getZodDatasetType, safeFetchDataset } from "@utils/data";
+import { z, type ZodType } from "zod";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 /**
  * Fetches the data from the endpoint and assumes the data to be of the specified type.
@@ -124,7 +128,14 @@ function EntryTable({
   schema?: TableInfo | DescriptorInfo | undefined;
   databaseName: string;
   tableName: string;
-  type?: undefined | "tags" | "tag_names" | "tag_aliases" | "tag_groups";
+  type?:
+    | undefined
+    | "tags"
+    | "tag_names"
+    | "tag_aliases"
+    | "tag_groups"
+    | "descriptors"
+    | "data";
 }): JSX.Element {
   const [origin, setOrigin] = useState<string>(DATABASE_URL);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
@@ -225,10 +236,16 @@ function EntryTable({
 
   switch (type) {
     case undefined:
+    case "data":
+    case "descriptors":
       if (schema == undefined) return <NoTable />;
 
       table = (
-        <GenericEntryTable schema={schema} {...genericEntryTableParams} />
+        <GenericEntryTable
+          type={type ? type : "data"}
+          schema={schema}
+          {...genericEntryTableParams}
+        />
       );
       break;
     case "tag_aliases":
@@ -281,6 +298,11 @@ interface EntryTableProps {
 
 interface GenericEntryTableProps extends EntryTableProps {
   schema: TableInfo | DescriptorInfo;
+  type: "data" | "descriptors";
+}
+
+interface TaggingEntryTableProps extends EntryTableProps {
+  type: "tags" | "tag_names" | "tag_aliases" | "tag_groups";
 }
 
 /**
@@ -298,12 +320,37 @@ function GenericEntryTable({
   tableName,
   endpoint,
   refreshTrigger,
+  type,
 }: GenericEntryTableProps): JSX.Element {
-  return <></>;
-}
+  const datasetSchema = useMemo(
+    () =>
+      getZodDatasetType(
+        schema.schema,
+        "tagging" in schema ? schema["tagging"] : false,
+      ),
+    [schema],
+  );
+  const [data, setData] = useState<Dataset>();
+  const [loading, setLoading] = useState<boolean>(true);
 
-interface TaggingEntryTableProps extends EntryTableProps {
-  type: "tags" | "tag_names" | "tag_aliases" | "tag_groups";
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
+
+  useEffect(() => {
+    getData(
+      `${endpoint}/${databaseName}/${tableName}/${type}`,
+      setLoading,
+      setData,
+      datasetSchema,
+    );
+  }, [endpoint, refreshTrigger]);
+
+  if (loading) return <p>Loading...</p>;
+
+  if (!data) return <p>No data.</p>;
+
+  return <DatasetTable dataset={data} />;
 }
 
 /**
