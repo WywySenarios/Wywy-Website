@@ -1,5 +1,5 @@
-import { z, ZodNumber, type ZodTypeAny } from "zod";
-import type { DataColumn, Datatype, TableInfo } from "@/types/data";
+import { z, ZodNumber, type ZodTypeAny, type ZodType } from "zod";
+import type { DataColumn, Dataset, Datatype, TableInfo } from "@/types/data";
 import {
   GeodeticCoordinate,
   GetCurrentGeodeticCoordinatePromise,
@@ -246,6 +246,51 @@ export function handleRecordOn(
     fetchTasksCompleted.finally(() => {
       resolve(finalData);
     });
+  });
+}
+
+/**
+ * Promise wrapper for dataset fetching.
+ * @param fetchPromise
+ * @param schema The zod schema to validate against.
+ * @returns A promise to fetch the data.
+ */
+export function safeFetchDataset<T extends ZodType<any>>(
+  fetchPromise: Promise<Response>,
+  schema: T,
+): Promise<z.infer<T>> {
+  return new Promise((resolve, reject) => {
+    fetchPromise
+      .then((response) => {
+        if (!response.ok) {
+          reject(
+            `Server response not OK: ${response.status} ${response.statusText}`,
+          );
+          return;
+        }
+
+        response
+          .json()
+          .then((body) => {
+            const result = schema.safeParse(body);
+            if (!result.success) {
+              reject(result.error);
+              return;
+            }
+
+            if (!result.data) {
+              // if Zod's behaviour is unexpected,
+              reject(
+                "Undefined data? Contact website administrator or dev for a fix.",
+              );
+              return;
+            } else {
+              resolve(result.data);
+            }
+          })
+          .catch(reject);
+      })
+      .catch(reject);
   });
 }
 

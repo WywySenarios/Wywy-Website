@@ -32,69 +32,79 @@ import { getCSRFToken } from "@/utils/auth";
  * @param URL Endpoint/source URL
  * @param setLoading The function to set the loading state of the caller.
  * @param setData The function to set the data of the caller.
+ * @param schema Zod schema to validate against.
  */
 function getData<T extends Dataset>(
   URL: string,
   setLoading: Dispatch<SetStateAction<boolean>>,
-  setData: Dispatch<SetStateAction<T>>,
+  setData: Dispatch<SetStateAction<T | undefined>>,
+  schema: ZodType<any>,
 ): void {
-  fetch(URL, {
-    method: "GET",
-    mode: "cors",
-    credentials: "include",
-    headers: {
-      "Content-type": "application/json; charset=UTF-8",
-    },
-  })
-    .then((response: Response) => {
-      if (!response.ok) {
-        response
-          .text()
-          .then((body: string) => {
-            toast(
-              `Something went wrong while fetching data: ${response.statusText}: ${body}`,
-            );
-          })
-          .catch((reason) => {
-            toast(
-              `Something went wrong while fetching data: ${response.statusText}: ${reason}`,
-            );
-          });
-
-        return;
-      }
-
-      response
-        .json()
-        .then((body: Record<string, any>) => {
-          let valid = true;
-          let output: T = body as T;
-
-          setLoading(false);
-          // fallback value (erroneous, so the component will realize something is wrong)
-          setData({
-            data: [],
-            columns: [],
-          } as Dataset as T);
-
-          // validate data
-          // validate the amount of columns inside every row of data
-          let numEntries = output.columns.length;
-          for (const row of output.data) {
-            if (row.length != numEntries) return;
-          }
-
-          setData(output);
-        })
-        .catch((reason) => {
-          toast(`Something went wrong while parsing data: ${reason}`);
-          setLoading(false);
-        });
+  safeFetchDataset(
+    fetch(URL, {
+      method: "GET",
+      mode: "cors",
+      credentials: "include",
+      headers: {
+        "Content-type": "application/json; charset=UTF-8",
+      },
+    }),
+    schema,
+  )
+    .then((dataset) => {
+      setData(dataset as T);
     })
-    .catch((reason: any) => {
-      toast(`Something went wrong while contacting the cache: ${reason}`);
+    .catch((reason) => {
+      toast(`An error occurred while fetching data: ${reason}`);
+      setData(undefined);
+    })
+    .finally(() => {
       setLoading(false);
     });
+}
+
+function DatasetTable({
+  dataset,
+  footer = null,
+}: {
+  dataset: Dataset;
+  footer?: null | ReactNode;
+}) {
+  return (
+    <ScrollArea orientation="horizontal">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {dataset.columns.map((columnName: string) => (
+              <TableHead
+                className="text-center"
+                key={`entry-table-head-${columnName}`}
+              >
+                {columnName}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {dataset.data.map(
+            (row: Array<string | number>, entryIndex: number) => (
+              <TableRow key={`entry-table-row-${entryIndex}`}>
+                {row.map((value: string | number, columnIndex: number) => (
+                  <TableCell
+                    key={`entry-table-cell-${columnIndex}-${entryIndex}`}
+                  >
+                    {String(value)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ),
+          )}
+        </TableBody>
+        {footer}
+      </Table>
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
+  );
 }
 
 /**
@@ -312,10 +322,7 @@ function TaggingTable({
   refreshTrigger,
   type,
 }: TaggingEntryTableProps) {
-  const [data, setData] = useState<Dataset>({
-    columns: [],
-    data: [],
-  });
+  const [data, setData] = useState<Dataset>();
   const [loading, setLoading] = useState<boolean>(true);
 
   const expectedLength = useMemo(() => {
@@ -337,6 +344,7 @@ function TaggingTable({
       `${endpoint}/${databaseName}/${tableName}/${type}`,
       setLoading,
       setData,
+      z.any(), // @TODO strict typing
     );
   }, [endpoint, refreshTrigger]);
 
@@ -351,6 +359,8 @@ function TaggingTable({
   if (loading) {
     return <p>Loading...</p>;
   }
+
+  if (!data) return <p>No data</p>;
 
   if (data.columns.length != expectedLength) {
     return <p>Something went wrong!</p>;
