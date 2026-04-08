@@ -1,8 +1,14 @@
 "use client";
 
-import type { DescriptorInfo, TableInfo } from "@/types/data";
+import type { Dataset, DescriptorInfo, TableInfo } from "@/types/data";
 import type { JSX } from "astro/jsx-runtime";
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { toast } from "sonner";
 import {
   Table,
@@ -27,7 +33,7 @@ import { getCSRFToken } from "@/utils/auth";
  * @param setLoading The function to set the loading state of the caller.
  * @param setData The function to set the data of the caller.
  */
-function getData<T extends TableData>(
+function getData<T extends Dataset>(
   URL: string,
   setLoading: Dispatch<SetStateAction<boolean>>,
   setData: Dispatch<SetStateAction<T>>,
@@ -69,7 +75,7 @@ function getData<T extends TableData>(
           setData({
             data: [],
             columns: [],
-          } as TableData as T);
+          } as Dataset as T);
 
           // validate data
           // validate the amount of columns inside every row of data
@@ -215,19 +221,12 @@ function EntryTable({
         <GenericEntryTable schema={schema} {...genericEntryTableParams} />
       );
       break;
-    case "tags":
-      table = <TagsTable {...genericEntryTableParams} />;
-      break;
-    case "tag_names":
-      table = <TagNamesTable {...genericEntryTableParams} />;
-      disablePullTrigger = false;
-      break;
     case "tag_aliases":
-      table = <TagAliasesTable {...genericEntryTableParams} />;
+    case "tag_names":
       disablePullTrigger = false;
-      break;
+    case "tags":
     case "tag_groups":
-      table = <TagGroupsTable {...genericEntryTableParams} />;
+      table = <TaggingTable type={type} {...genericEntryTableParams} />;
       break;
   }
 
@@ -270,11 +269,6 @@ interface EntryTableProps {
   refreshTrigger: number;
 }
 
-interface TableData {
-  columns: Array<string>;
-  data: Array<Array<string | number>>;
-}
-
 interface GenericEntryTableProps extends EntryTableProps {
   schema: TableInfo | DescriptorInfo;
 }
@@ -298,43 +292,54 @@ function GenericEntryTable({
   return <></>;
 }
 
-interface TaggingEntryTableProps extends EntryTableProps {}
-
-interface TagsData extends TableData {
-  columns: Array<"id" | "entry_id" | "tag_id">;
-}
-
-interface TagNamesData extends TableData {
-  columns: Array<"tag_name" | "id">;
-}
-
-interface TagAliasesData extends TableData {
-  columns: Array<"alias" | "tag_id">;
-}
-
-interface TagGroupsData extends TableData {
-  columns: Array<"id" | "tag_id" | "group_name">;
+interface TaggingEntryTableProps extends EntryTableProps {
+  type: "tags" | "tag_names" | "tag_aliases" | "tag_groups";
 }
 
 /**
- * Render a table full of data and a form at the bottom to insert new entries in.
- * @param data The data to render.
- * @param databaseName The name of the respective database.
- * @param tableName The name of the respective table.
+ * TAGGING SUB-TABLES ONLY: Render an entry table full of data and a form at the bottom to insert new entries in.
+ * @param databaseName The name of the database that contains the target table.
+ * @param tableName The name of the parent table (or the target table if there is no parent).
+ * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
+ * @param refreshTrigger A controlled field to trigger a refresh through useEffect.
  * @param type The type of TaggingTable to render.
  * @returns
  */
 function TaggingTable({
-  data,
   databaseName,
   tableName,
+  endpoint,
+  refreshTrigger,
   type,
-}: {
-  data: TableData;
-  databaseName: string;
-  tableName: string;
-  type: "tags" | "tag_names" | "tag_aliases" | "tag_groups";
-}) {
+}: TaggingEntryTableProps) {
+  const [data, setData] = useState<Dataset>({
+    columns: [],
+    data: [],
+  });
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const expectedLength = useMemo(() => {
+    switch (type) {
+      case "tag_aliases":
+        return 2;
+      case "tag_groups":
+        return 3;
+      case "tag_names":
+        return 2;
+      case "tags":
+        return 3;
+    }
+  }, [type]);
+
+  // load in data from
+  useEffect(() => {
+    getData(
+      `${endpoint}/${databaseName}/${tableName}/${type}`,
+      setLoading,
+      setData,
+    );
+  }, [endpoint, refreshTrigger]);
+
   const { controller, onSubmit, onSubmitInvalid } =
     createTaggingTableFormSchemaAndHandlers(
       databaseName,
@@ -342,6 +347,14 @@ function TaggingTable({
       type,
       CACHE_URL,
     );
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (data.columns.length != expectedLength) {
+    return <p>Something went wrong!</p>;
+  }
 
   return (
     <form onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}>
@@ -385,191 +398,6 @@ function TaggingTable({
         <Plus />
       </Button>
     </form>
-  );
-}
-
-/**
- * A tags editor table. May add or remove tags links from tags to generic entries.
- * @param databaseName The name of the database that contains the target table.
- * @param tableName The name of the parent table (or the target table if there is no parent).
- * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
- * @param refreshTrigger A controlled field to trigger a refresh through useEffect.
- * @returns
- */
-function TagsTable({
-  databaseName,
-  tableName,
-  endpoint,
-  refreshTrigger,
-}: TaggingEntryTableProps): JSX.Element {
-  const [data, setData] = useState<TagsData>({
-    columns: ["id", "entry_id", "tag_id"],
-    data: [],
-  });
-  const [loading, setLoading] = useState<boolean>(true);
-
-  // load in data from
-  useEffect(() => {
-    getData(
-      `${endpoint}/${databaseName}/${tableName}/tags`,
-      setLoading,
-      setData,
-    );
-  }, [endpoint, refreshTrigger]);
-
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
-  if (data.columns.length != 3) {
-    return <p>Something went wrong!</p>;
-  }
-
-  return (
-    <TaggingTable
-      data={data}
-      databaseName={databaseName}
-      tableName={tableName}
-      type="tags"
-    />
-  );
-}
-/**
- * A tag name editor table. May create new tags but cannot remove old tags.
- * @param databaseName The name of the database that contains the target table.
- * @param tableName The name of the parent table (or the target table if there is no parent).
- * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
- * @param refreshTrigger A controlled field to trigger a refresh through useEffect.
- * @returns
- */
-function TagNamesTable({
-  databaseName,
-  tableName,
-  endpoint,
-  refreshTrigger,
-}: TaggingEntryTableProps): JSX.Element {
-  const [data, setData] = useState<TagNamesData>({
-    columns: ["id", "tag_name"],
-    data: [],
-  });
-  const [loading, setLoading] = useState<boolean>(true);
-
-  // load in data from
-  useEffect(() => {
-    getData(
-      `${endpoint}/${databaseName}/${tableName}/tag_names`,
-      setLoading,
-      setData,
-    );
-  }, [endpoint, refreshTrigger]);
-
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
-  if (data.columns.length != 2) {
-    return <p>Something went wrong!</p>;
-  }
-
-  return (
-    <TaggingTable
-      data={data}
-      databaseName={databaseName}
-      tableName={tableName}
-      type="tag_names"
-    />
-  );
-}
-/**
- * A tags aliases table. May create or remove tag aliases. The user is not prevented from removing all aliases from a given tag, nor are they barred from removing the respective tag's direct name.
- * @param databaseName The name of the database that contains the target table.
- * @param tableName The name of the parent table (or the target table if there is no parent).
- * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
- * @param refreshTrigger A controlled field to trigger a refresh through useEffect.
- * @returns
- */
-function TagAliasesTable({
-  databaseName,
-  tableName,
-  endpoint,
-  refreshTrigger,
-}: TaggingEntryTableProps): JSX.Element {
-  const [data, setData] = useState<TagAliasesData>({
-    columns: ["alias", "tag_id"],
-    data: [],
-  });
-  const [loading, setLoading] = useState<boolean>(true);
-
-  // load in data from
-  useEffect(() => {
-    getData(
-      `${endpoint}/${databaseName}/${tableName}/tag_aliases`,
-      setLoading,
-      setData,
-    );
-  }, [endpoint, refreshTrigger]);
-
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
-  if (data.columns.length != 2) {
-    return <p>Something went wrong!</p>;
-  }
-
-  return (
-    <TaggingTable
-      data={data}
-      databaseName={databaseName}
-      tableName={tableName}
-      type="tag_aliases"
-    />
-  );
-}
-/**
- * A tag group editor table. May create or remove links from tags to tag groups.
- * @param databaseName The name of the database that contains the target table.
- * @param tableName The name of the parent table (or the target table if there is no parent).
- * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
- * @param refreshTrigger A controlled field to trigger a refresh through useEffect.
- * @returns
- */
-function TagGroupsTable({
-  databaseName,
-  tableName,
-  endpoint,
-  refreshTrigger,
-}: TaggingEntryTableProps): JSX.Element {
-  const [data, setData] = useState<TagGroupsData>({
-    columns: ["id", "tag_id", "group_name"],
-    data: [],
-  });
-  const [loading, setLoading] = useState<boolean>(true);
-
-  // load in data from
-  useEffect(() => {
-    getData(
-      `${endpoint}/${databaseName}/${tableName}/tag_groups`,
-      setLoading,
-      setData,
-    );
-  }, [endpoint, refreshTrigger]);
-
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
-  if (data.columns.length != 3) {
-    return <p>Something went wrong!</p>;
-  }
-
-  return (
-    <TaggingTable
-      data={data}
-      databaseName={databaseName}
-      tableName={tableName}
-      type="tag_groups"
-    />
   );
 }
 
