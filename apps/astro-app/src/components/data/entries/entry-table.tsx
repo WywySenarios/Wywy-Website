@@ -413,44 +413,21 @@ function TaggingTable({
     return <p>Something went wrong!</p>;
   }
 
+  const footer = (
+    <TableFooter>
+      <TableRow>
+        {data.columns.map((columnName: string) => (
+          <TableCell key={`entry-table-footer-${columnName}`}>
+            <TaggingTableEntry controller={controller} name={columnName} />
+          </TableCell>
+        ))}
+      </TableRow>
+    </TableFooter>
+  );
+
   return (
     <form onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {data.columns.map((columnName: string) => (
-              <TableHead
-                className="text-center"
-                key={`entry-table-head-${columnName}`}
-              >
-                {columnName}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.data.map((row: Array<string | number>, entryIndex: number) => (
-            <TableRow key={`entry-table-row-${entryIndex}`}>
-              {row.map((value: string | number, columnIndex: number) => (
-                <TableCell
-                  key={`entry-table-cell-${columnIndex}-${entryIndex}`}
-                >
-                  {value}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-        <TableFooter>
-          <TableRow>
-            {data.columns.map((columnName: string) => (
-              <TableCell key={`entry-table-footer-${columnName}`}>
-                <TaggingTableEntry controller={controller} name={columnName} />
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableFooter>
-      </Table>
+      <DatasetTable dataset={data} footer={footer}></DatasetTable>
       <Button className="w-full" type="submit">
         <Plus />
       </Button>
