@@ -144,12 +144,14 @@ export function submitForm(
  * @param databaseName The name of the database containing the table whose schema is to be replicated.
  * @param tableInfo The table full table schema.
  * @param dbURL The URL of the cache or database to POST to
+ * @param includeDescriptors Whether or not to create a schema that requires descriptors. This is important for the entry tables, which cannot include descriptors.
  * @returns A zod schema, produced by `useForm`, a onSubmit handler, and a onSubmitInvalid handler.
  */
 export function createFormSchemaAndHandlers(
   databaseName: string,
   tableInfo: TableInfo,
   dbURL: string,
+  includeDescriptors: boolean = true,
 ) {
   // direct column related
   let dataSchema: Record<string, ZodType<any>> = {};
@@ -160,7 +162,7 @@ export function createFormSchemaAndHandlers(
   // descriptors
   let descriptorSchema: Record<string, ZodArray<ZodType<any>>> = {};
   let descriptorDefaultValues: Record<string, Array<Object>> = {};
-  if (tableInfo.descriptors) {
+  if (tableInfo.descriptors && includeDescriptors) {
     for (let descriptor of tableInfo.descriptors) {
       let thisSchema: Record<string, ZodType<any>> = {};
       let thisDefaultValues: Record<string, any> = {};
