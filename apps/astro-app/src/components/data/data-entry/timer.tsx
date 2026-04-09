@@ -57,9 +57,9 @@ export function TimerForm({
       headers: {},
     })
       .then((res: Response) => {
-        if (res.status == 403) {
+        if (!res.ok) {
           toast(
-            "Something went wrong while fetching the start/end time: Invalid credentials.",
+            `Something went wrong while fetching the start/end time: ${res.status} ${res.statusText}`,
           );
           setIsCaching(false);
           setCacheError(true);
@@ -207,14 +207,21 @@ export function TimerForm({
             "X-CSRFToken": csrftoken,
           },
         })
+          .then((response) => {
+            const newErrorState = !response.ok;
+            if (newErrorState) {
+              toast(
+                `Something went wrong when trying to store the start or end time: ${response.status} ${response.statusText}`,
+              );
+            }
+
+            setCacheError(newErrorState);
+          })
           .catch((reason) => {
             toast(
               `Something went wrong when trying to store the start or end time: ${reason}`,
             );
             setCacheError(true);
-          })
-          .then(() => {
-            setCacheError(false);
           });
       })
       .catch((reason: string) => {
