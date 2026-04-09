@@ -328,7 +328,7 @@ export function getFallbackValue(
     case "time":
       return "01:00:00";
     case "timestamp":
-      return "0001-01-01T01:00:00";
+      return new Date().toString();
     default:
       return null;
   }
