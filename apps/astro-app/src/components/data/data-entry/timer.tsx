@@ -1,21 +1,19 @@
 import type { TableInfo } from "@/types/data";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
 import { Columns, Descriptors, Tags } from "@/components/data/data-entry";
 import type z from "zod";
 import { toast } from "sonner";
-import { CACHE_CSRF_ENDPOINT } from "@utils/auth";
-import {
-  handleRecordOn,
-  parseDatabaseValue,
-  type formOutput,
-} from "@utils/data";
+import { CACHE_CSRF_ENDPOINT, getCSRFToken } from "@utils/auth";
+import { handleRecordOn, parseDatabaseValue } from "@utils/data";
 import type { JSONValue } from "@utils/http";
 import { CACHE_URL } from "astro:env/client";
 import { RefreshCcw, Upload } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { GeodeticCoordinate } from "@utils/datatypes/geodetic";
+import { createFormController } from "@/utils/data/form/full-entry-handlers";
+import { submitEntry } from "@/utils/data/http";
+import type { FieldErrors } from "react-hook-form";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -25,7 +23,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * Timer based form component. Expects "Start Time" & "End Time" columns to be present.
  * @param databaseName The name of the database that this form gathers data for.
  * @param tableInfo The full table schema.
- * @param dbURL The URL that the form will post to on submit.
  */
 export function TimerForm({
   databaseName,
@@ -41,8 +38,7 @@ export function TimerForm({
   const [data, setData] = useState<Record<string, any>>({});
 
   const isStart: boolean = Object.keys(data).length > 0;
-  const { form, formSchema, onSubmit, onSubmitInvalid } =
-    createFormSchemaAndHandlers(databaseName, tableInfo, CACHE_URL);
+  const { controller, schema } = createFormController(tableInfo);
 
   function fetchCache() {
     // only allow one concurrent fetch
@@ -177,7 +173,7 @@ export function TimerForm({
       }
     }
 
-    form.reset({ data: data, descriptors: descriptorDefaultValues });
+    controller.reset({ data: data, descriptors: descriptorDefaultValues });
 
     cache();
   }, [data]);
@@ -235,7 +231,7 @@ export function TimerForm({
 
     setIsSplit(false);
 
-    handleRecordOn({}, tableInfo, "start", form, toast)
+    handleRecordOn({}, tableInfo, "start", controller, toast)
       .then((newData: Record<string, any>) => {
         setData(newData);
       })
@@ -253,7 +249,7 @@ export function TimerForm({
     if (isCaching) return;
     setIsCaching(true);
 
-    handleRecordOn(data, tableInfo, "split", form, toast)
+    handleRecordOn(data, tableInfo, "split", controller, toast)
       .then((newData: Record<string, any>) => {
         setData(newData);
         setIsSplit(true);
@@ -271,7 +267,7 @@ export function TimerForm({
     if (isCaching) return;
     setIsCaching(true);
 
-    handleRecordOn(data, tableInfo, "split", form, toast, "purge")
+    handleRecordOn(data, tableInfo, "split", controller, toast, "purge")
       .then((newData: Record<string, any>) => {
         setData(newData);
         setIsSplit(false);
@@ -294,22 +290,32 @@ export function TimerForm({
     setData({});
   }
 
-  function submission(
-    values: z.infer<typeof formSchema>,
+  function onSubmit(
+    values: z.infer<typeof schema>,
     event?: React.BaseSyntheticEvent,
   ): void {
     const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
     const action = submitter?.getAttribute("value");
 
-    onSubmit(values);
+    submitEntry(CACHE_URL, values, CACHE_CSRF_ENDPOINT)
+      .then(() => {
+        switch (action) {
+          case "split":
+            start();
+            break;
+          default:
+            cancel();
+        }
+      })
+      .catch((reason) => {
+        toast(`Form submission failed: ${reason}`);
+        console.log(`Form submission failed: ${reason}`);
+      });
+  }
 
-    switch (action) {
-      case "split":
-        start();
-        break;
-      default:
-        cancel();
-    }
+  function onSubmitInvalid(errors: FieldErrors<z.infer<typeof schema>>) {
+    console.log(`Invalid form submission: ${errors}`);
+    toast("Invalid form submission.");
   }
 
   if (cacheError)
@@ -330,7 +336,7 @@ export function TimerForm({
   if (isSplit) {
     return (
       <form
-        onSubmit={form.handleSubmit(submission, onSubmitInvalid)}
+        onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}
         className="flex flex-col gap-4"
       >
         <Button type="button" disabled={isCaching} onClick={cancelSplit}>
@@ -346,15 +352,19 @@ export function TimerForm({
         {/* Submit button */}
         <Button type="submit">Submit</Button>
         {/* Columns */}
-        <Columns fieldsToEnter={tableInfo.schema} form={form} />
+        <Columns fieldsToEnter={tableInfo.schema} form={controller} />
         {/* Quick actions */}
         {/* Tags */}
         {tableInfo.tagging && (
-          <Tags databaseName={databaseName} tableInfo={tableInfo} form={form} />
+          <Tags
+            databaseName={databaseName}
+            tableInfo={tableInfo}
+            form={controller}
+          />
         )}
         {/* Descriptors */}
         {tableInfo.descriptors && (
-          <Descriptors tableInfo={tableInfo} form={form} />
+          <Descriptors tableInfo={tableInfo} form={controller} />
         )}
         {/* Submit & restart button */}
         <Button type="submit" value="split">
