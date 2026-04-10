@@ -4,25 +4,11 @@ import {
   GetCurrentGeodeticCoordinatePromise,
 } from "./datatypes/geodetic";
 import type { JSONValue } from "./http";
-import type { UseFormReturn } from "react-hook-form";
-
-type form = UseFormReturn<{
-  descriptors: {
-    [x: string]: {
-      [x: string]: any;
-    }[];
-  };
-  data: {
-    [x: string]: any;
-  };
-  tags?: unknown;
-}>;
 
 export function handleRecordOn(
   initialData: Record<string, any>,
   tableInfo: TableInfo,
   event_name: "start" | "split",
-  form: form,
   printError: (msg: string) => unknown = (msg: string) => {},
   mode: "insert" | "purge" = "insert",
 ): Promise<Record<string, any>> {

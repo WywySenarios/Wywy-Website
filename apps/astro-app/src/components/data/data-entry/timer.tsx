@@ -231,7 +231,7 @@ export function TimerForm({
 
     setIsSplit(false);
 
-    handleRecordOn({}, tableInfo, "start", controller, toast)
+    handleRecordOn({}, tableInfo, "start", toast)
       .then((newData: Record<string, any>) => {
         setData(newData);
       })
@@ -249,7 +249,7 @@ export function TimerForm({
     if (isCaching) return;
     setIsCaching(true);
 
-    handleRecordOn(data, tableInfo, "split", controller, toast)
+    handleRecordOn(data, tableInfo, "split", toast)
       .then((newData: Record<string, any>) => {
         setData(newData);
         setIsSplit(true);
