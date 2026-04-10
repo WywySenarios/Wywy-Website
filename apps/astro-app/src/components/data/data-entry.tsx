@@ -16,10 +16,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsContent } from "@radix-ui/react-tabs";
 import { useFieldArray, type UseFieldArrayRemove } from "react-hook-form";
 import { getDefaultValues } from "./form-helper";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { SearchSelect } from "./input-element/search-select";
-import { CACHE_URL } from "astro:env/client";
+import { useMemo, useState } from "react";
+import type { TAG_NAMES_DATASET } from "@utils/data/schema";
 
 export function Columns({
   fieldsToEnter,
@@ -43,167 +42,117 @@ export function Columns({
   );
 }
 
-export interface TagName {
-  id: string;
-  tag_name: string;
-}
-interface TagNameRaw {
-  id: number;
-  tag_name: string;
-}
-
-function Tag({
-  index,
-  form,
-  tags,
-  remove,
-}: {
-  index: number;
-  form: any;
-  tags: Array<TagName>;
-  remove: Function;
-}): JSX.Element {
-  const tagColumn: DataColumn = {
-    name: index == 0 ? "Primary Tag" : "Tag",
-    datatype: "enum",
-    entrytype: "search-select",
-    values: tags.map((tagInfo: TagName) => String(tagInfo.id)),
-    labels: tags.map((tagInfo: TagName) => tagInfo.tag_name),
-    defaultValue: String(tags[0].id),
-  };
-
-  function controllerNamer(
-    strings: TemplateStringsArray,
-    name: string,
-  ): string {
-    return `tags[${index}]`;
-  }
-
-  return (
-    <div>
-      {index == 0 ? (
-        <FormElement
-          form={form}
-          columnInfo={tagColumn}
-          controllerNamer={controllerNamer}
-        />
-      ) : (
-        <div className="flex flex-row items-center justify-center gap-2">
-          <ConstantFormElement
-            form={form}
-            columnInfo={tagColumn}
-            controllerNamer={controllerNamer}
-          />
-          <Button
-            onClick={() => {
-              remove(index);
-            }}
-            type="button"
-          >
-            <Trash />
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
-
 /**
- * The tagging related form component.
- * @param databaseName The name of the database that this form gathers data for.
- * @param tableName The name of the table that this form gathers data for.
+ * The tagging section of the form. This includes the primary_tag and the secondary tags.
+ * @param tags The respective tag_names dataset.
  * @returns
  */
 export function Tags({
   form,
-  databaseName,
-  tableInfo,
+  tagNamesDataset,
 }: {
   form: any;
-  databaseName: string;
-  tableInfo: TableInfo;
+  tagNamesDataset: TAG_NAMES_DATASET;
 }): JSX.Element {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: `tags`,
   });
-  const [tags, setTags] = useState<Array<TagName>>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [nextTag, setNextTag] = useState<string>("");
 
-  useEffect(() => {
-    fetch(`${CACHE_URL}/tags/${databaseName}/${tableInfo.tableName}`, {
-      credentials: "include",
-    }).then((res: Response) => {
-      if (res.ok)
-        res
-          .json()
-          .then((data) => {
-            setTags(
-              data["tags"].map((item: TagNameRaw) => {
-                return {
-                  id: String(item.id),
-                  tag_name: item.tag_name,
-                };
-              }),
-            );
-            setLoading(false);
-          })
-          .catch(() => {
-            toast(
-              "Failed to get the tag names. Please reload the page to try again.",
-            );
-            setLoading(false);
-          });
-    });
-  }, []);
-  useEffect(() => {
-    // @TODO better default value
-    if (fields.length == 0 && tags.length > 0) append(tags[0].id);
-  }, [tags]);
+  const values = useMemo(() => {
+    return tagNamesDataset.data.map((row: [number, string]) => String(row[0]));
+  }, [tagNamesDataset]);
 
-  if (loading) {
-    return <p>Loading...</p>;
-  } else {
-    return (
-      <Card>
-        <CardHeader>Tags</CardHeader>
-        <CardContent className="flex flex-col gap-2 justify-center">
-          {fields.map((field: Record<"id", string>, index: number) => (
-            <Tag
-              key={field.id}
-              index={index}
-              form={form}
-              tags={tags}
-              remove={remove}
-            ></Tag>
-          ))}
-        </CardContent>
-        <CardFooter>
-          <SearchSelect
-            data={tags.map((value: TagName) => {
-              return {
-                value: value.id,
-                label: value.tag_name,
-              };
-            })}
-            value={nextTag}
-            onChange={setNextTag}
-          />
-          <Button
-            onClick={() => {
-              // @TODO better default value
-              append(nextTag ? nextTag : tags[0].id);
-            }}
-            className="w-full"
-            type="button"
+  const labels = useMemo(() => {
+    return tagNamesDataset.data.map((row: [number, string]) => row[1]);
+  }, [tagNamesDataset]);
+
+  const defaultValue = useMemo(() => {
+    return String(tagNamesDataset.data[0][0]);
+  }, [tagNamesDataset]);
+
+  const searchSelectData = useMemo(() => {
+    return tagNamesDataset.data.map((row: [number, string]) => {
+      return {
+        value: String(row[0]),
+        label: row[1],
+      };
+    });
+  }, [tagNamesDataset]);
+
+  return (
+    <Card>
+      <CardHeader>Tags</CardHeader>
+      <CardContent className="flex flex-col gap-2 justify-center">
+        {/* Primary tag */}
+        <FormElement
+          form={form}
+          columnInfo={{
+            name: "Primary Tag",
+            datatype: "enum",
+            entrytype: "search-select",
+            values: values as [string, ...string[]], // @TODO fix TAG_NAMES_DATASET type
+            labels: labels,
+            defaultValue: defaultValue,
+          }}
+          controllerNamer={(strings: TemplateStringsArray, name: string) => {
+            return `data.primary_tag`;
+          }}
+        />
+        {/* Secondary tags */}
+        {fields.map((field: Record<"id", string>, index: number) => (
+          <div
+            key={field.id}
+            className="flex flex-row items-center justify-center gap-2"
           >
-            <Plus />
-          </Button>
-        </CardFooter>
-      </Card>
-    );
-  }
+            <ConstantFormElement
+              form={form}
+              columnInfo={{
+                name: "Tag",
+                datatype: "enum",
+                entrytype: "search-select",
+                values: values as [string, ...string[]], // @TODO fix TAG_NAMES_DATASET type
+                labels: labels,
+                defaultValue: defaultValue,
+              }}
+              controllerNamer={(
+                strings: TemplateStringsArray,
+                name: string,
+              ) => {
+                return `tags[${index}]`;
+              }}
+            />
+            <Button
+              onClick={() => {
+                remove(index);
+              }}
+              type="button"
+            >
+              <Trash />
+            </Button>
+          </div>
+        ))}
+      </CardContent>
+      <CardFooter>
+        <SearchSelect
+          data={searchSelectData}
+          value={nextTag}
+          onChange={setNextTag}
+        />
+        <Button
+          onClick={() => {
+            // @TODO better default value
+            append(nextTag ? nextTag : defaultValue);
+          }}
+          className="w-full"
+          type="button"
+        >
+          <Plus />
+        </Button>
+      </CardFooter>
+    </Card>
+  );
 }
 
 /**
