@@ -16,10 +16,6 @@ import { createFormController } from "@/utils/data/form/full-entry-handlers";
 import { submitEntry } from "@/utils/data/http";
 import type { FieldErrors } from "react-hook-form";
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 /**
  * Timer based form component. Expects "Start Time" & "End Time" columns to be present.
  * @param databaseName The name of the database that this form gathers data for.
