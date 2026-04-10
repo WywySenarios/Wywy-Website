@@ -43,22 +43,22 @@ export function createFormController(tableInfo: TableInfo) {
     }
   }
 
-  const formSchema = z.object({
+  const schema = z.object({
     data: getZodEntrySchema(tableInfo),
     tags: tableInfo.tagging ? FORM_TAGS_ZOD_SCHEMA : z.never().optional(),
     descriptors: tableInfo.descriptors
       ? z.object(descriptorSchemaShape)
       : z.never().optional(),
   });
-  const form: UseFormReturn<z.infer<typeof formSchema>> = useForm<
-    z.infer<typeof formSchema>
+  const controller: UseFormReturn<z.infer<typeof schema>> = useForm<
+    z.infer<typeof schema>
   >({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(schema),
     defaultValues: defaultValues,
   });
 
   return {
-    form,
-    formSchema,
+    controller,
+    schema,
   };
 }
