@@ -26,8 +26,9 @@ import { Button } from "@/components/ui/button";
 import { CloudDownload, Plus, RefreshCw } from "lucide-react";
 import { CACHE_URL, DATABASE_URL } from "astro:env/client";
 import { OriginPicker } from "@/components/data/origin-picker";
-import { getCSRFToken } from "@/utils/auth";
-import { getZodDatasetType, safeFetchDataset } from "@utils/data";
+import { CACHE_CSRF_ENDPOINT, getCSRFToken } from "@utils/auth";
+import { getZodDatasetType } from "@utils/data/schema";
+import { safeFetchDataset } from "@utils/data/http";
 import { z, type ZodType } from "zod";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
@@ -185,8 +186,7 @@ function EntryTable({
     }
 
     // tell the cache to fetch data from the master database.
-    const csrfTokenPromise: Promise<string> = getCSRFToken(CACHE_URL);
-    csrfTokenPromise
+    getCSRFToken(CACHE_CSRF_ENDPOINT)
       .catch((reason: any) => {
         toast(`Failed to request cache data update: ${reason}`);
       })

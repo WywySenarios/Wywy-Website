@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import type { JSX } from "astro/jsx-runtime";
 import { useEffect, useState } from "react";
 import { useCookies, CookiesProvider } from "react-cookie";
-import { getCSRFToken } from "@/utils/auth";
+import { CACHE_CSRF_ENDPOINT, getCSRFToken } from "@utils/auth";
 import { toast } from "sonner";
 
 /**
@@ -93,7 +93,7 @@ function LoginDialogContents(): JSX.Element {
         toast(`Something went wrong while trying to authenticate: ${reason}`);
       });
 
-    getCSRFToken(CACHE_URL)
+    getCSRFToken(CACHE_CSRF_ENDPOINT)
       .then((csrftoken: string) => {
         fetch(`${CACHE_URL}/auth`, {
           method: "POST",
