@@ -45,21 +45,21 @@ export function* resolveColumnSchema(
       };
       yield {
         ...column,
-        name: column.name + "_latlong_accuracy",
+        name: column.name + " LatLong Accuracy",
         datatype: "number",
         entrytype: "none",
         defaultValue: undefined,
       };
       yield {
         ...column,
-        name: column.name + "_altitude",
+        name: column.name + " Altitude",
         datatype: "number",
         entrytype: "none",
         defaultValue: undefined,
       };
       yield {
         ...column,
-        name: column.name + "_altitude_accuracy",
+        name: column.name + " Altitude Accuracy",
         datatype: "number",
         entrytype: "none",
         defaultValue: undefined,
@@ -110,7 +110,7 @@ export function* resolveEntrySchema(
 ): Generator<ResolvedColumnSchema> {
   if ("tagging" in entrySchema && entrySchema.tagging) {
     yield {
-      name: "primary_tag",
+      name: "Primary Tag",
       entrytype: "none",
       datatype: "int",
     };
