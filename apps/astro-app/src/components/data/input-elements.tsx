@@ -23,14 +23,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Slider } from "@/components/ui/slider/labelslider";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@root/src/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar24 } from "@root/src/components/data/input-element/timestamp-picker";
-import { TimePicker } from "@root/src/components/ui/time-picker";
+import { Calendar24 } from "@/components/data/input-element/timestamp-picker";
+import { TimePicker } from "@/components/ui/time-picker";
 import {
   Popover,
   PopoverTrigger,

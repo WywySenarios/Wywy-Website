@@ -1,5 +1,5 @@
 import { GeodeticCoordinateInputElement } from "@/components/data/input-element/geodetic-coordinate";
-import { GeodeticCoordinate } from "@/utils/datatypes/geodetic";
+import { GeodeticCoordinate } from "@utils/datatypes/geodetic";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
