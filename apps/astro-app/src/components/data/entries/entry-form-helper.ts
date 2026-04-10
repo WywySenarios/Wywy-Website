@@ -1,15 +1,10 @@
 import type { DescriptorInfo, TableInfo } from "@/types/data";
 import { toast } from "sonner";
-import { z, type AnyZodObject, type ZodTypeAny } from "zod";
-import {
-  formatValues,
-  populateZodSchema,
-  submitForm,
-} from "@/components/data/form-helper";
+import { z, type ZodType } from "zod";
+import { submitForm } from "@/components/data/form-helper";
 import { useForm, type FieldErrors, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { isTaggingEnabled } from "@/utils/data";
-import { toSnakeCase } from "@root/src/utils/parse";
+import { toSnakeCase } from "@utils/parse";
 
 export function createGenericTableFormSchemaAndHandlers(
   databaseName: string,
@@ -20,12 +15,12 @@ export function createGenericTableFormSchemaAndHandlers(
   const isTableInfo = "tableName" in schema;
 
   // direct column related
-  let zodSchema: Record<string, ZodTypeAny> = {};
+  let zodSchema: Record<string, ZodType<any>> = {};
   let defaultValues: Record<string, any> = {};
 
   populateZodSchema(schema.schema, zodSchema, defaultValues);
 
-  if (isTableInfo && isTaggingEnabled(schema)) {
+  if (isTableInfo && schema.tagging) {
     zodSchema["primary_tag"] = z.number().int().min(1);
     // defaultValues["primary_tag"] = 1;
   }
@@ -125,7 +120,7 @@ export function createTaggingTableFormSchemaAndHandlers(
   type: "tags" | "tag_names" | "tag_aliases" | "tag_groups",
   cacheURL: string,
 ) {
-  let zodSchema: AnyZodObject;
+  let zodSchema: ZodType<any>;
   let defaultValues: Record<string, any>;
   switch (type) {
     case "tags":
@@ -169,7 +164,7 @@ export function createTaggingTableFormSchemaAndHandlers(
       break;
   }
 
-  const formSchema: AnyZodObject = zodSchema;
+  const formSchema: ZodType<any> = zodSchema;
   const controller: UseFormReturn<z.infer<typeof formSchema>> = useForm<
     z.infer<typeof formSchema>
   >({

@@ -5,18 +5,17 @@ import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
 import { Columns, Descriptors, Tags } from "@/components/data/data-entry";
 import type z from "zod";
 import { toast } from "sonner";
-import { getCSRFToken } from "@utils/auth";
+import { CACHE_CSRF_ENDPOINT } from "@utils/auth";
 import {
   handleRecordOn,
   parseDatabaseValue,
-  serializeFormOutput,
   type formOutput,
 } from "@utils/data";
 import type { JSONValue } from "@utils/http";
 import { CACHE_URL } from "astro:env/client";
 import { RefreshCcw, Upload } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
-import { GeodeticCoordinate } from "@root/src/utils/datatypes/geodetic";
+import { GeodeticCoordinate } from "@utils/datatypes/geodetic";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -187,19 +186,13 @@ export function TimerForm({
    * Stores the startTime and endTime into the cache.
    */
   function cache() {
-    let output: formOutput = serializeFormOutput(
-      { data: data },
-      false,
-      tableInfo,
-    );
-
     // store values in cache
     // @TODO don't hardcode start_time & end_time
-    getCSRFToken(CACHE_URL)
+    getCSRFToken(CACHE_CSRF_ENDPOINT)
       .then((csrftoken: string) => {
         fetch(`${CACHE_URL}/cache/${databaseName}/${tableInfo.tableName}`, {
           method: "POST",
-          body: JSON.stringify(output.data),
+          body: JSON.stringify({ data: data }),
           mode: "cors",
           credentials: "include",
           headers: {
