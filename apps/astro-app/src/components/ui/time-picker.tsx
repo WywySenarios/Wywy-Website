@@ -1,7 +1,7 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { parseTime } from "@utils/parse";
-import { getFallbackValue } from "@utils/data";
+import { getFallbackValue } from "@utils/data/default-values";
 
 function toTimeString(date: Date): string {
   if (isNaN(date.getTime())) return getFallbackValue("time");
