@@ -1,5 +1,5 @@
-import type { DataColumn } from "@/types/data";
-import { resolveColumnsSchema } from "./iterators";
+import type { DescriptorInfo, TableInfo } from "@/types/data";
+import { resolveEntrySchema } from "./iterators";
 import { toSnakeCase } from "@utils/parse";
 
 /**
@@ -7,9 +7,11 @@ import { toSnakeCase } from "@utils/parse";
  * @param schema
  * @returns The default values pertaining to the respective schema.
  */
-export function getDefaultValues(schema: DataColumn[]): Record<string, any> {
+export function getDefaultValues(
+  entrySchema: TableInfo | DescriptorInfo,
+): Record<string, any> {
   let defaultValues: Record<string, any> = {};
-  for (const resolvedColumn of resolveColumnsSchema(schema)) {
+  for (const resolvedColumn of resolveEntrySchema(entrySchema)) {
     if (resolvedColumn.defaultValue !== undefined) {
       defaultValues[toSnakeCase(resolvedColumn.name)] =
         resolvedColumn.defaultValue;

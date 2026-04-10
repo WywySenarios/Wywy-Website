@@ -1,4 +1,9 @@
-import type { DataColumn, ResolvedColumnSchema } from "@/types/data";
+import type {
+  DataColumn,
+  DescriptorInfo,
+  ResolvedColumnSchema,
+  TableInfo,
+} from "@/types/data";
 
 /**
  * Resolves a column and its sub columns.
@@ -94,4 +99,22 @@ export function* resolveColumnsSchema(
   for (const columnSchema of columnsSchema) {
     yield* resolveColumnSchema(columnSchema);
   }
+}
+
+/**
+ * Resolves an entry schema.
+ * @param entrySchema
+ */
+export function* resolveEntrySchema(
+  entrySchema: TableInfo | DescriptorInfo,
+): Generator<ResolvedColumnSchema> {
+  if ("tagging" in entrySchema && entrySchema.tagging) {
+    yield {
+      name: "primary_tag",
+      entrytype: "none",
+      datatype: "int",
+    };
+  }
+
+  yield* resolveColumnsSchema(entrySchema.schema);
 }
