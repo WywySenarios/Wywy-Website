@@ -152,8 +152,10 @@ export function getZodEntrySchema(entrySchema: TableInfo | DescriptorInfo) {
 
 export const TAG_NAMES_DATASET_SCHEMA = z.object({
   columns: z.tuple([z.literal("id"), z.literal("tag_name")]),
-  data: z.array(z.tuple([z.number().int(), z.string()])),
+  data: z.array(z.tuple([z.number().int(), z.string()])).nonempty(),
 });
+
+export type TAG_NAMES_DATASET = z.infer<typeof TAG_NAMES_DATASET_SCHEMA>;
 
 /**
  * Constructs a zod schema for a dataset from a columns schema.
