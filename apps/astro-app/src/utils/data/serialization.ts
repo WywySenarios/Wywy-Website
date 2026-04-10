@@ -125,10 +125,4 @@ function parseDatabaseValue(
   }
 }
 
-export interface formOutput {
-  data: Record<string, any>;
-  tags?: String[];
-  descriptors?: Record<string, any>;
-}
-
 export { parseDatabaseValue };
