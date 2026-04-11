@@ -86,11 +86,14 @@ function LoginDialogContents(): JSX.Element {
         response.text().then((text: string) => {
           if (response.ok)
             toast(`Successfully authenticated to master database!`);
-          else toast(`Error while authenticating: ${text}`);
+          else
+            toast(`Error while authenticating to the master database: ${text}`);
         });
       })
       .catch((reason) => {
-        toast(`Something went wrong while trying to authenticate: ${reason}`);
+        toast(
+          `Something went wrong while trying to authenticate to the master database: ${reason}`,
+        );
       });
 
     getCSRFToken(CACHE_CSRF_ENDPOINT)
@@ -112,13 +115,15 @@ function LoginDialogContents(): JSX.Element {
             if (response.ok) {
               toast(`Successfully authenticated to cache!`);
             } else {
-              toast(`Error while authenticating: ${text}`);
+              toast(`Error while authenticating to the cache: ${text}`);
             }
           });
         });
       })
       .catch((reason: string) => {
-        toast(`Something went wrong while trying to authenticate: ${reason}`);
+        toast(
+          `Something went wrong while trying to authenticate to the cache: ${reason}`,
+        );
       });
   }
 
