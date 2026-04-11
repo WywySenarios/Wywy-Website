@@ -98,6 +98,6 @@ export class GeodeticCoordinate {
     if (isNaN(this.latitude) || isNaN(this.longitude))
       throw `Cannot serialize invalid Geodetic Point.`;
 
-    return `'POINT (${this.longitude} ${this.latitude})'`;
+    return `POINT (${this.longitude} ${this.latitude})`;
   }
 }
