@@ -172,22 +172,16 @@ export function TimerForm({
   // initally try to GET the start time
   useEffect(fetchCache, []);
 
-  // automatically update the cache when the user changes either the start or the end time.
-  // only update when desired & valid
   useEffect(() => {
+    // always keep controller data up to date
+    controller.reset({
+      data: data,
+    });
+
+    // automatically update the cache when the user changes either the start or the end time.
+    // only update when desired & valid
     if (cacheError || !isCaching) return;
-
     // update form values
-
-    // @TODO restore all default values
-    let descriptorDefaultValues: Record<string, Array<Object>> = {};
-    if (tableInfo.descriptors) {
-      for (let descriptor of tableInfo.descriptors) {
-        descriptorDefaultValues[descriptor.name] = [];
-      }
-    }
-
-    controller.reset({ data: data, descriptors: descriptorDefaultValues });
 
     cache();
   }, [data]);
