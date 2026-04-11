@@ -36,17 +36,7 @@ function loadTagNames(
   setTagsLoading(true);
 
   // safe fetch dataset
-  safeFetchDataset(
-    fetch(endpoint, {
-      method: "GET",
-      mode: "cors",
-      credentials: "include",
-      headers: {
-        "Content-type": "application/json; charset=UTF-8",
-      },
-    }),
-    TAG_NAMES_DATASET_SCHEMA,
-  )
+  safeFetchDataset(endpoint, TAG_NAMES_DATASET_SCHEMA)
     .then((tagNames) => {
       setTagNames(tagNames);
     })

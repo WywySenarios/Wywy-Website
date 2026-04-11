@@ -45,17 +45,7 @@ function getData<T extends Dataset>(
   setData: Dispatch<SetStateAction<T | undefined>>,
   schema: ZodType<any>,
 ): void {
-  safeFetchDataset(
-    fetch(URL, {
-      method: "GET",
-      mode: "cors",
-      credentials: "include",
-      headers: {
-        "Content-type": "application/json; charset=UTF-8",
-      },
-    }),
-    schema,
-  )
+  safeFetchDataset(URL, schema)
     .then((dataset) => {
       setData(dataset as T);
     })

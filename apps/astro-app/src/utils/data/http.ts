@@ -34,46 +34,35 @@ export async function submitEntry(
 }
 
 /**
- * Promise wrapper for dataset fetching.
- * @param fetchPromise
+ * Asynchronous dataset validation with schema validation.
+ * @param endpoint The endpoint to GET from.
  * @param schema The zod schema to validate against.
  * @returns A promise to fetch the data.
  */
-export function safeFetchDataset<T extends ZodType<any>>(
-  fetchPromise: Promise<Response>,
+export async function safeFetchDataset<T extends ZodType<any>>(
+  endpoint: string,
   schema: T,
 ): Promise<z.infer<T>> {
-  return new Promise((resolve, reject) => {
-    fetchPromise
-      .then((response) => {
-        if (!response.ok) {
-          reject(
-            `Server response not OK: ${response.status} ${response.statusText}`,
-          );
-          return;
-        }
-
-        response
-          .json()
-          .then((body) => {
-            const result = schema.safeParse(body);
-            if (!result.success) {
-              reject(result.error);
-              return;
-            }
-
-            if (!result.data) {
-              // if Zod's behaviour is unexpected,
-              reject(
-                "Undefined data? Contact website administrator or dev for a fix.",
-              );
-              return;
-            } else {
-              resolve(result.data);
-            }
-          })
-          .catch(reject);
-      })
-      .catch(reject);
+  const response = await fetch(endpoint, {
+    method: "GET",
+    mode: "cors",
+    credentials: "include",
+    headers: {},
   });
+
+  if (!response.ok)
+    throw `Server response not OK: ${response.status} ${response.statusText}`;
+  const json = await response.json();
+
+  const result = schema.safeParse(json);
+  if (!result.success) {
+    throw result.error;
+  }
+
+  if (!result.data) {
+    // if Zod's behaviour is unexpected,
+    throw "Undefined data? Contact website administrator or dev for a fix.";
+  } else {
+    return result.data;
+  }
 }
