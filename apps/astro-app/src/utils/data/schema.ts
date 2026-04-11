@@ -76,7 +76,12 @@ export function getZodColumnSchema(columnInfo: DataColumn) {
       break;
     // THIS IS BY NO MEANS ROBUST
     case "timestamp":
-      output = z.coerce.date();
+      output = z.preprocess((value: any) => {
+        if (typeof value === "string" && !value.endsWith("Z")) {
+          value += "Z";
+        }
+        return value;
+      }, z.coerce.date());
       break;
     case "enum":
       output = z.enum(columnInfo.values);
