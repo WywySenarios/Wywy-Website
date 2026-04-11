@@ -13,8 +13,13 @@ import { RefreshCcw, Upload } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { GeodeticCoordinate } from "@utils/datatypes/geodetic";
 import { createFormController } from "@/utils/data/form/full-entry-handlers";
-import { submitEntry } from "@/utils/data/http";
+import { safeFetchDataset, submitEntry } from "@/utils/data/http";
 import type { FieldErrors } from "react-hook-form";
+import {
+  TAG_NAMES_DATASET_SCHEMA,
+  type TAG_NAMES_DATASET,
+} from "@utils/data/schema";
+import { toSnakeCase } from "@utils/parse";
 
 /**
  * Timer based form component. Expects "Start Time" & "End Time" columns to be present.
@@ -30,6 +35,7 @@ export function TimerForm({
 }) {
   const [startTime, setStartTime] = useState<Date | undefined>(undefined);
   const [isSplit, setIsSplit] = useState<boolean>(false);
+  const [tagNames, setTagNames] = useState<TAG_NAMES_DATASET>();
   const [isCaching, setIsCaching] = useState<boolean>(false);
   const [cacheError, setCacheError] = useState<boolean>(false);
   const [data, setData] = useState<Record<string, any>>({});
@@ -66,21 +72,6 @@ export function TimerForm({
               if (columnSchema.name in body) {
                 // transform dates to UTC
                 switch (columnSchema.datatype) {
-                  case "time":
-                  case "date":
-                  case "timestamp":
-                    if (typeof body[columnSchema.name] != "string") {
-                      toast(
-                        "Expected datatype string for time-related column.",
-                      );
-                      setCacheError(true);
-                      return;
-                    }
-                    output[columnSchema.name] = parseDatabaseValue(
-                      (body[columnSchema.name] as string).slice(1, -1) + "Z",
-                      columnSchema.datatype,
-                    );
-                    break;
                   case "geodetic point":
                     if (typeof body[columnSchema.name] != "string") {
                       toast(
@@ -174,6 +165,38 @@ export function TimerForm({
 
     cache();
   }, [data]);
+
+  // fetch tags if the
+  useEffect(() => {
+    // require no cache error & split
+    if (!isSplit || cacheError) return;
+
+    // only fetch data once
+    if (tagNames) return;
+
+    // safe fetch dataset
+    safeFetchDataset(
+      fetch(
+        `${CACHE_URL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}/tag_names`,
+        {
+          method: "GET",
+          mode: "cors",
+          credentials: "include",
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        },
+      ),
+      TAG_NAMES_DATASET_SCHEMA,
+    )
+      .then((tagNames) => {
+        setTagNames(tagNames);
+      })
+      .catch(() => {
+        setCacheError(true);
+        setTagNames(undefined);
+      });
+  }, [isSplit, cacheError]);
 
   /**
    * Stores the startTime and endTime into the cache.
@@ -331,6 +354,8 @@ export function TimerForm({
     );
 
   if (isSplit) {
+    if (tagNames === undefined) return <p>Loading...</p>;
+
     return (
       <form
         onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}
@@ -353,11 +378,7 @@ export function TimerForm({
         {/* Quick actions */}
         {/* Tags */}
         {tableInfo.tagging && (
-          <Tags
-            databaseName={databaseName}
-            tableInfo={tableInfo}
-            form={controller}
-          />
+          <Tags tagNamesDataset={tagNames} form={controller} />
         )}
         {/* Descriptors */}
         {tableInfo.descriptors && (
