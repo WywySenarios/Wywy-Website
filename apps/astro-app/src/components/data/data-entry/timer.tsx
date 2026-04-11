@@ -5,7 +5,7 @@ import { Columns, Descriptors, Tags } from "@/components/data/data-entry";
 import type z from "zod";
 import { toast } from "sonner";
 import { CACHE_CSRF_ENDPOINT, getCSRFToken } from "@utils/auth";
-import { parseDatabaseValue } from "@utils/data/serialization";
+import { parseDatabaseValue } from "@utils/data/deserialization";
 import { handleRecordOn } from "@utils/data/form/updates";
 import type { JSONValue } from "@utils/http";
 import { CACHE_URL } from "astro:env/client";
