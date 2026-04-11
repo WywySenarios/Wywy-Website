@@ -27,7 +27,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { TimestampPicker } from "@/components/data/input-element/timestamp-picker";
-import { TimePicker } from "@/components/ui/time-picker";
 import {
   Popover,
   PopoverTrigger,
@@ -279,12 +278,7 @@ function InputElement({
         );
         break;
       case "time":
-        body = (
-          <TimePicker
-            defaultValue={columnInfo.defaultValue}
-            onChange={field.onChange}
-          />
-        );
+        throw "time Input Element not implemented yet.";
         break;
       case "calendar time":
         body = <TimestampPicker className="w-full" {...field} />;
