@@ -3,6 +3,7 @@ import {
   GeodeticCoordinate,
   GetCurrentGeodeticCoordinatePromise,
 } from "@utils/datatypes/geodetic";
+import { toSnakeCase } from "@utils/parse";
 
 export function handleRecordOn(
   initialData: Record<string, any>,
@@ -16,16 +17,18 @@ export function handleRecordOn(
     let fetchTasks: Promise<any>[] = [];
 
     // update values that need to be recorded on start
-    for (let columnSchema of tableInfo.schema) {
+    for (const columnSchema of tableInfo.schema) {
+      const columnName = toSnakeCase(columnSchema.name);
+
       if (columnSchema.record_on === event_name) {
         switch (mode) {
           case "purge":
-            delete finalData[columnSchema.name];
+            delete finalData[columnName];
             break;
           case "insert":
             switch (columnSchema.datatype) {
               case "timestamp":
-                finalData[columnSchema.name] = new Date(Date.now());
+                finalData[columnName] = new Date(Date.now());
                 break;
               case "geodetic point":
                 const currentTask = GetCurrentGeodeticCoordinatePromise(
@@ -36,10 +39,10 @@ export function handleRecordOn(
                   },
                 )
                   .then((value: GeodeticCoordinate) => {
-                    finalData[columnSchema.name] = value;
+                    finalData[columnName] = value;
                   })
                   .catch((reason?: GeolocationPositionError) => {
-                    finalData[columnSchema.name] = undefined;
+                    finalData[columnName] = undefined;
                     if (reason)
                       printError(`Failed to fetch location: ${reason.message}`);
                   });
