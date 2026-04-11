@@ -1,6 +1,6 @@
 import type { TableInfo } from "@/types/data";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { Columns, Descriptors, Tags } from "@/components/data/data-entry";
 import type z from "zod";
 import { toast } from "sonner";
@@ -22,6 +22,44 @@ import {
 import { toSnakeCase } from "@utils/parse";
 
 /**
+ * Helper to a load tag names dataset. Assumes that only one concurrent fetch can occur.
+ * @param endpoint The endpoint to GET.
+ * @param setTagNames The setter for the tagNames dataset.
+ * @param setTagsLoading The setter for the loading state.
+ */
+function loadTagNames(
+  endpoint: string,
+  setTagNames: Dispatch<SetStateAction<TAG_NAMES_DATASET | undefined>>,
+  setTagsLoading: Dispatch<SetStateAction<boolean>>,
+) {
+  // only allow one concurrent fetch
+  setTagsLoading(true);
+
+  // safe fetch dataset
+  safeFetchDataset(
+    fetch(endpoint, {
+      method: "GET",
+      mode: "cors",
+      credentials: "include",
+      headers: {
+        "Content-type": "application/json; charset=UTF-8",
+      },
+    }),
+    TAG_NAMES_DATASET_SCHEMA,
+  )
+    .then((tagNames) => {
+      setTagNames(tagNames);
+    })
+    .catch((reason) => {
+      toast(`Failed to load tags: ${reason}`);
+      setTagNames(undefined);
+    })
+    .finally(() => {
+      setTagsLoading(false);
+    });
+}
+
+/**
  * Timer based form component. Expects "Start Time" & "End Time" columns to be present.
  * @param databaseName The name of the database that this form gathers data for.
  * @param tableInfo The full table schema.
@@ -33,9 +71,9 @@ export function TimerForm({
   databaseName: string;
   tableInfo: TableInfo;
 }) {
-  const [startTime, setStartTime] = useState<Date | undefined>(undefined);
   const [isSplit, setIsSplit] = useState<boolean>(false);
   const [tagNames, setTagNames] = useState<TAG_NAMES_DATASET>();
+  const [tagsLoading, setTagsLoading] = useState<boolean>(false);
   const [isCaching, setIsCaching] = useState<boolean>(false);
   const [cacheError, setCacheError] = useState<boolean>(false);
   const [data, setData] = useState<Record<string, any>>({});
@@ -68,12 +106,13 @@ export function TimerForm({
           .json()
           .then((body: Record<string, JSONValue>) => {
             let output: Record<string, any> = {};
-            for (let columnSchema of tableInfo.schema) {
-              if (columnSchema.name in body) {
+            for (const columnSchema of tableInfo.schema) {
+              const columnName = toSnakeCase(columnSchema.name);
+              if (columnName in body) {
                 // transform dates to UTC
                 switch (columnSchema.datatype) {
                   case "geodetic point":
-                    if (typeof body[columnSchema.name] != "string") {
+                    if (typeof body[columnName] != "string") {
                       toast(
                         "Expected datatype string for geodetic point column.",
                       );
@@ -84,34 +123,32 @@ export function TimerForm({
                     let altitude_accuracy: number | null = null;
 
                     if (
-                      `${columnSchema.name}_latlong_accuracy` in body &&
-                      typeof body[`${columnSchema.name}_latlong_accuracy`] ==
-                        "number"
+                      `${columnName}_latlong_accuracy` in body &&
+                      typeof body[`${columnName}_latlong_accuracy`] == "number"
                     ) {
                       latlong_accuracy = body[
-                        `${columnSchema.name}_latlong_accuracy`
+                        `${columnName}_latlong_accuracy`
                       ] as number;
                     }
 
                     if (
-                      `${columnSchema.name}_altitude_accuracy` in body &&
-                      typeof body[`${columnSchema.name}_altitude_accuracy`] ==
-                        "number"
+                      `${columnName}_altitude_accuracy` in body &&
+                      typeof body[`${columnName}_altitude_accuracy`] == "number"
                     ) {
                       latlong_accuracy = body[
-                        `${columnSchema.name}_altitude_accuracy`
+                        `${columnName}_altitude_accuracy`
                       ] as number;
                     }
 
-                    output[columnSchema.name] = new GeodeticCoordinate(
-                      body[columnSchema.name] as string,
+                    output[columnName] = new GeodeticCoordinate(
+                      body[columnName] as string,
                       latlong_accuracy,
                       altitude_accuracy,
                     );
                     break;
                   default:
-                    output[columnSchema.name] = parseDatabaseValue(
-                      body[columnSchema.name],
+                    output[columnName] = parseDatabaseValue(
+                      body[columnName],
                       columnSchema.datatype,
                     );
                     break;
@@ -122,6 +159,7 @@ export function TimerForm({
             }
 
             setData(output);
+            setIsCaching(false);
             setCacheError(false);
           })
           .catch((reason: any) => {
@@ -148,8 +186,6 @@ export function TimerForm({
   // only update when desired & valid
   useEffect(() => {
     if (cacheError || !isCaching) return;
-    // @TODO generalize
-    setStartTime(data["Start Time"]);
 
     // update form values
 
@@ -171,31 +207,17 @@ export function TimerForm({
     // require no cache error & split
     if (!isSplit || cacheError) return;
 
-    // only fetch data once
+    // only automatically fetch data once
     if (tagNames) return;
 
-    // safe fetch dataset
-    safeFetchDataset(
-      fetch(
-        `${CACHE_URL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}/tag_names`,
-        {
-          method: "GET",
-          mode: "cors",
-          credentials: "include",
-          headers: {
-            "Content-type": "application/json; charset=UTF-8",
-          },
-        },
-      ),
-      TAG_NAMES_DATASET_SCHEMA,
-    )
-      .then((tagNames) => {
-        setTagNames(tagNames);
-      })
-      .catch(() => {
-        setCacheError(true);
-        setTagNames(undefined);
-      });
+    // only allow one concurrent fetch
+    if (tagsLoading) return;
+
+    loadTagNames(
+      `${CACHE_URL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}/tag_names`,
+      setTagNames,
+      setTagsLoading,
+    );
   }, [isSplit, cacheError]);
 
   /**
@@ -208,7 +230,7 @@ export function TimerForm({
       .then((csrftoken: string) => {
         fetch(`${CACHE_URL}/cache/${databaseName}/${tableInfo.tableName}`, {
           method: "POST",
-          body: JSON.stringify({ data: data }),
+          body: JSON.stringify(data),
           mode: "cors",
           credentials: "include",
           headers: {
@@ -354,7 +376,35 @@ export function TimerForm({
     );
 
   if (isSplit) {
-    if (tagNames === undefined) return <p>Loading...</p>;
+    if (tagsLoading)
+      return (
+        <div className="flex flex-col items-center">
+          <p>Loading tags...</p>
+          <Button disabled={true}>
+            <Spinner />
+          </Button>
+        </div>
+      );
+
+    if (tagNames === undefined)
+      return (
+        <div className="flex flex-col items-center">
+          <p>Error while loading tags.</p>
+          <Button
+            onClick={() => {
+              if (!tagsLoading) {
+                loadTagNames(
+                  `${CACHE_URL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}/tag_names`,
+                  setTagNames,
+                  setTagsLoading,
+                );
+              }
+            }}
+          >
+            <RefreshCcw />
+          </Button>
+        </div>
+      );
 
     return (
       <form
@@ -406,7 +456,7 @@ export function TimerForm({
 
   return (
     <div className="flex flex-col items-center">
-      <p>{isStart ? startTime?.toLocaleString() : "No start time."}</p>
+      <p>{isStart ? data["start_time"].toLocaleString() : "No start time."}</p>
       <div className="flex flex-row justify-center">
         <Button
           className="min-w-[16ch]"
