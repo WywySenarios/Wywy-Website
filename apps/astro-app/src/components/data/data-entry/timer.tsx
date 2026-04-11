@@ -264,7 +264,7 @@ export function TimerForm({
     if (isCaching) return;
     setIsCaching(true);
 
-    handleRecordOn(data, tableInfo, "split", controller, toast, "purge")
+    handleRecordOn(data, tableInfo, "split", toast, "purge")
       .then((newData: Record<string, any>) => {
         setData(newData);
         setIsSplit(false);
