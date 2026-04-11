@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -19,20 +19,17 @@ import {
   toLocaleISOString,
 } from "@utils/parse";
 
-export function Calendar24({
+export function TimestampPicker({
   value,
   onChange,
-  defaultValue,
 }: {
-  value: string;
-  onChange: (val: string) => void;
-  defaultValue?: string;
+  value: Date;
+  onChange: (val: Date) => void;
 }) {
   const [open, setOpen] = useState<boolean>(false);
 
-  const date: Date = new Date(value);
   // these fragments are in the user's locale.
-  const dateFragments = fragmentTimestamp(toLocaleISOString(date));
+  const dateFragments = fragmentTimestamp(toLocaleISOString(value));
 
   return (
     <div className="flex flex-row w-full items-center gap-4">
@@ -48,23 +45,27 @@ export function Calendar24({
               id="date-picker"
               className="w-32 justify-between font-normal"
             >
-              {date ? date.toLocaleDateString() : "Select date"}
+              {value ? value.toLocaleDateString() : "Select date"}
               <ChevronDownIcon />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto overflow-hidden p-0" align="start">
             <Calendar
               mode="single"
-              selected={date}
+              selected={value}
               captionLayout="dropdown"
               onSelect={(newDate: Date | undefined) => {
-                if (newDate)
-                  onChange(
-                    recombineLocaleTimestamp([
-                      fragmentTimestamp(newDate.toISOString())[0],
-                      dateFragments[1],
-                    ]).toISOString(),
+                if (newDate) {
+                  // carry over the time part
+                  const updatedDate = new Date(newDate);
+                  updatedDate.setHours(
+                    value.getHours(),
+                    value.getMinutes(),
+                    value.getSeconds(),
+                    value.getMilliseconds(),
                   );
+                  onChange(updatedDate);
+                }
                 setOpen(false);
               }}
             />
@@ -79,14 +80,10 @@ export function Calendar24({
           type="time"
           id="time-picker"
           step="1"
-          defaultValue={defaultValue}
           value={dateFragments[1]}
           onChange={(val: React.ChangeEvent<HTMLInputElement>) => {
             onChange(
-              recombineLocaleTimestamp([
-                dateFragments[0],
-                val.target.value,
-              ]).toISOString(),
+              recombineLocaleTimestamp([dateFragments[0], val.target.value]),
             );
           }}
           className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
