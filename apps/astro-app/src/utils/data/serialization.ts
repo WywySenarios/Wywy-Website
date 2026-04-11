@@ -111,7 +111,7 @@ function parseDatabaseValue(
     case "timestamp":
       switch (typeof value) {
         case "string":
-          const result = new Date(value + "Z");
+          const result = new Date(value.endsWith("Z") ? value : value + "Z");
           if (isNaN(result.getDate()))
             throw `Failed to parse database value "${value}". Expected a ${datatype}-like string.`;
           return result;
