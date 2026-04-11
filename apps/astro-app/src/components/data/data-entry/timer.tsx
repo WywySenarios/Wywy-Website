@@ -340,7 +340,7 @@ export function TimerForm({
   }
 
   function onSubmitInvalid(errors: FieldErrors<z.infer<typeof schema>>) {
-    console.log(`Invalid form submission: ${errors}`);
+    console.error("Invalid form submission.", errors);
     toast("Invalid form submission.");
   }
 
