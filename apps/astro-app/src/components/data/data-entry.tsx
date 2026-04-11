@@ -15,7 +15,7 @@ import { Plus, Trash } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsContent } from "@radix-ui/react-tabs";
 import { useFieldArray, type UseFieldArrayRemove } from "react-hook-form";
-import { getDefaultValues } from "./form-helper";
+import { getDefaultValues } from "@utils/data/default-values";
 import { SearchSelect } from "./input-element/search-select";
 import { useMemo, useState } from "react";
 import type { TAG_NAMES_DATASET } from "@utils/data/schema";
@@ -232,7 +232,7 @@ function DescriptorTab({
       <CardFooter>
         <Button
           onClick={() => {
-            append(getDefaultValues(descriptorInfo.schema));
+            append(getDefaultValues(descriptorInfo));
           }}
           className="w-full"
           type="button"
