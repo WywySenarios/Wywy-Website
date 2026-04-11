@@ -46,19 +46,27 @@ export function getZodColumnSchema(columnInfo: DataColumn) {
         output = (output as ZodNumber).max(columnInfo.min);
       if ("max" in columnInfo && columnInfo.max !== undefined)
         output = (output as ZodNumber).max(columnInfo.max);
+      if ("defaultValue" in columnInfo)
+        output = output.default(columnInfo.defaultValue);
       break;
     case "float":
     case "number":
       output = z.number();
+      if (columnInfo.defaultValue !== undefined)
+        output = output.default(columnInfo.defaultValue);
       break;
     case "str":
     case "string":
     case "text":
       output = z.string();
+      if (columnInfo.defaultValue !== undefined)
+        output = output.default(columnInfo.defaultValue);
       break;
     case "bool":
     case "boolean":
       output = z.coerce.boolean();
+      if (columnInfo.defaultValue !== undefined)
+        output = output.default(columnInfo.defaultValue);
       break;
     // THIS IS BY NO MEANS ROBUST
     case "time":
@@ -82,51 +90,58 @@ export function getZodColumnSchema(columnInfo: DataColumn) {
         }
         return value;
       }, z.coerce.date());
+      if (columnInfo.defaultValue !== undefined)
+        output = output.default(new Date(columnInfo.defaultValue));
       break;
     case "enum":
       output = z.enum(columnInfo.values);
       break;
     case "geodetic point":
-      output = z.custom<GeodeticCoordinate>(
-        (val) => {
-          if (typeof val !== "object") return false;
-          if (val === null) return true;
+      output = z
+        .custom<GeodeticCoordinate>(
+          (val) => {
+            if (typeof val !== "object") return false;
+            if (val === null) return true;
 
-          const v = val as GeodeticCoordinate;
+            const v = val as GeodeticCoordinate;
 
-          if (typeof v.latitude !== "number" || !Number.isFinite(v.latitude))
-            return false;
-          if (typeof v.longitude !== "number" || !Number.isFinite(v.longitude))
-            return false;
+            if (typeof v.latitude !== "number" || !Number.isFinite(v.latitude))
+              return false;
+            if (
+              typeof v.longitude !== "number" ||
+              !Number.isFinite(v.longitude)
+            )
+              return false;
 
-          if (v.latitude < -90 || v.latitude > 90) return false;
+            if (v.latitude < -90 || v.latitude > 90) return false;
 
-          if (v.longitude < -180 || v.longitude > 180) return false;
+            if (v.longitude < -180 || v.longitude > 180) return false;
 
-          // Optional numeric fields (must be number or null if present)
-          const optionalNumberOrNull = (n: unknown) =>
-            n === null ||
-            n === undefined ||
-            (typeof n === "number" && Number.isFinite(n));
+            // Optional numeric fields (must be number or null if present)
+            const optionalNumberOrNull = (n: unknown) =>
+              n === null ||
+              n === undefined ||
+              (typeof n === "number" && Number.isFinite(n));
 
-          if (!optionalNumberOrNull(v.altitude)) return false;
-          if (!optionalNumberOrNull(v.accuracy)) return false;
-          if (!optionalNumberOrNull(v.altitudeAccuracy)) return false;
-          if (!optionalNumberOrNull(v.heading)) return false;
-          if (!optionalNumberOrNull(v.speed)) return false;
+            if (!optionalNumberOrNull(v.altitude)) return false;
+            if (!optionalNumberOrNull(v.accuracy)) return false;
+            if (!optionalNumberOrNull(v.altitudeAccuracy)) return false;
+            if (!optionalNumberOrNull(v.heading)) return false;
+            if (!optionalNumberOrNull(v.speed)) return false;
 
-          return true;
-        },
-        {
-          message: "Invalid geodetic point",
-        },
-      );
+            return true;
+          },
+          {
+            message: "Invalid geodetic point",
+          },
+        )
+        .nullable();
       break;
   }
 
   // traits that might apply to any column
   // optional
-  output = output.optional();
+  // output = output.optional();
 
   return output;
 }
