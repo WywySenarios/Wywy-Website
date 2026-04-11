@@ -19,6 +19,7 @@ import { getDefaultValues } from "@utils/data/default-values";
 import { SearchSelect } from "./input-element/search-select";
 import { useMemo, useState } from "react";
 import type { TAG_NAMES_DATASET } from "@utils/data/schema";
+import { toSnakeCase } from "@utils/parse";
 
 export function Columns({
   fieldsToEnter,
@@ -174,16 +175,17 @@ function Descriptor({
   form: any;
   remove: UseFieldArrayRemove;
 }): JSX.Element {
+  const descriptorName = toSnakeCase(descriptorInfo.name);
   return (
     <div>
       {descriptorInfo.schema.map((columnInfo: DataColumn) => {
         return (
           <FormElement
-            key={`${descriptorInfo.name}[${index}]-${columnInfo.name}-form-element`}
+            key={`${descriptorName}[${index}]-${toSnakeCase(columnInfo.name)}-form-element`}
             form={form}
             columnInfo={columnInfo}
             controllerNamer={(strings: TemplateStringsArray, name: string) =>
-              `descriptors.${descriptorInfo.name}[${index}].${strings[0]}${name}${strings[1]}`
+              `descriptors.${descriptorName}[${index}].${strings[0]}${name}${strings[1]}`
             }
           />
         );
@@ -211,7 +213,7 @@ function DescriptorTab({
 }): JSX.Element {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: `descriptors.${descriptorInfo.name}`,
+    name: `descriptors.${toSnakeCase(descriptorInfo.name)}`,
   });
 
   return (
@@ -258,8 +260,6 @@ export function Descriptors({
   form: any;
 }): JSX.Element {
   if (tableInfo.descriptors.length == 0) return null;
-
-  console.log(form.getValues());
 
   return (
     <Card className="flex flex-col justify-center">
