@@ -20,17 +20,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { createTaggingTableFormSchemaAndHandlers } from "./entry-form-helper";
 import { TaggingTableEntry } from "./entry";
 import { Button } from "@/components/ui/button";
 import { CloudDownload, Plus, RefreshCw } from "lucide-react";
 import { CACHE_URL, DATABASE_URL } from "astro:env/client";
 import { OriginPicker } from "@/components/data/origin-picker";
 import { CACHE_CSRF_ENDPOINT, getCSRFToken } from "@utils/auth";
-import { getZodDatasetType } from "@utils/data/schema";
-import { safeFetchDataset } from "@utils/data/http";
+import {
+  getZodDatasetType,
+  TAGGING_TABLE_TAG_ALIASES_SCHEMA,
+  TAGGING_TABLE_TAG_GROUPS_SCHEMA,
+  TAGGING_TABLE_TAG_NAMES_SCHEMA,
+  TAGGING_TABLE_TAGS_SCHEMA,
+} from "@utils/data/schema";
+import { safeFetchDataset, submitEntry } from "@utils/data/http";
 import { z, type ZodType } from "zod";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useForm, type FieldErrors } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toSnakeCase } from "@utils/parse";
 
 /**
  * Fetches the data from the endpoint and assumes the data to be of the specified type.
@@ -362,6 +370,43 @@ function TaggingTable({
   const [data, setData] = useState<Dataset>();
   const [loading, setLoading] = useState<boolean>(true);
 
+  const schema = useMemo(() => {
+    switch (type) {
+      case "tag_aliases":
+        return TAGGING_TABLE_TAG_ALIASES_SCHEMA;
+      case "tag_groups":
+        return TAGGING_TABLE_TAG_GROUPS_SCHEMA;
+      case "tag_names":
+        return TAGGING_TABLE_TAG_NAMES_SCHEMA;
+      case "tags":
+        return TAGGING_TABLE_TAGS_SCHEMA;
+    }
+  }, [type]);
+
+  const controller = useForm({
+    resolver: zodResolver(schema),
+  });
+
+  function onSubmit(values: z.infer<typeof schema>) {
+    submitEntry(
+      `${CACHE_URL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableName)}/${type}`,
+      values,
+      CACHE_CSRF_ENDPOINT,
+    )
+      .then(() => {
+        // @TODO redirect, popup, etc.
+      })
+      .catch((reason) => {
+        toast(`Form submission failed: ${reason}`);
+        console.log(`Form submission failed: ${reason}`);
+      });
+  }
+
+  function onSubmitInvalid(errors: FieldErrors<z.infer<typeof schema>>) {
+    console.error("Invalid form submission.", errors);
+    toast("Invalid form submission.");
+  }
+
   const expectedLength = useMemo(() => {
     switch (type) {
       case "tag_aliases":
@@ -384,14 +429,6 @@ function TaggingTable({
       z.any(), // @TODO strict typing
     );
   }, [endpoint, refreshTrigger]);
-
-  const { controller, onSubmit, onSubmitInvalid } =
-    createTaggingTableFormSchemaAndHandlers(
-      databaseName,
-      tableName,
-      type,
-      CACHE_URL,
-    );
 
   if (loading) {
     return <p>Loading...</p>;
