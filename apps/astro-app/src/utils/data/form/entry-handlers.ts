@@ -11,18 +11,18 @@ import { getDefaultValues } from "../default-values";
  * @returns A form controller and zod schema.
  */
 export function createFormController(entrySchema: TableInfo | DescriptorInfo) {
-  const formSchema = z.object({
+  const schema = z.object({
     data: getZodEntrySchema(entrySchema),
   });
-  const form: UseFormReturn<z.infer<typeof formSchema>> = useForm<
-    z.infer<typeof formSchema>
+  const controller: UseFormReturn<z.infer<typeof schema>> = useForm<
+    z.infer<typeof schema>
   >({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(schema),
     defaultValues: getDefaultValues(entrySchema),
   });
 
   return {
-    form,
-    formSchema,
+    controller,
+    schema,
   };
 }
