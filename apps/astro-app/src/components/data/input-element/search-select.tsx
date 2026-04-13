@@ -32,7 +32,15 @@ export function SearchSelect({
   onChange: (value: string) => void;
 }) {
   React.useEffect(() => {
-    if (value === undefined) onChange(defaultValue);
+    if (value === undefined) {
+      onChange(defaultValue);
+      const currentItem: SearchSelectItem | undefined = data.find(
+        (item) => item.value == defaultValue,
+      );
+      if (currentItem) setLabel(currentItem.label);
+      else
+        throw TypeError("SearchSelectData does not contain the initial value.");
+    }
   }, []);
 
   const [open, setOpen] = React.useState(false);
