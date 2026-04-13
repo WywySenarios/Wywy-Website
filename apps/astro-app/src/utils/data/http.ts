@@ -24,13 +24,17 @@ export async function submitEntry(
     headers["X-CSRFToken"] = await getCSRFToken(csrfEndpoint);
   }
 
-  fetch(endpoint, {
+  const response = await fetch(endpoint, {
     method: "POST",
     body: JSON.stringify(values),
     mode: "cors",
     credentials: "include",
     headers: headers,
   });
+
+  if (!response.ok) {
+    throw `Response not OK: ${response.status} ${response.statusText}`;
+  }
 }
 
 /**
