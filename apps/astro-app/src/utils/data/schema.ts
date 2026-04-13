@@ -33,7 +33,7 @@ export const TAGGING_TABLE_TAG_GROUPS_SCHEMA = z.object({
   group_name: z.string(),
 });
 
-export const FORM_TAGS_ZOD_SCHEMA = z.array(z.string()).nonempty();
+export const FORM_TAGS_ZOD_SCHEMA = z.array(z.string());
 
 export function getZodColumnSchema(columnInfo: DataColumn) {
   let output: ZodType<any>;
