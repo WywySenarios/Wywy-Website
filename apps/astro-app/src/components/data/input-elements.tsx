@@ -312,6 +312,7 @@ function InputElement({
                   : value,
               };
             })}
+            defaultValue={columnInfo.defaultValue}
             {...field}
           />
         );

@@ -22,15 +22,19 @@ export type SearchSelectData = Record<"value" | "label", string>[];
 
 export function SearchSelect({
   data,
-  value,
   defaultValue,
+  value,
   onChange,
 }: {
   data: SearchSelectData;
-  value: string;
-  defaultValue?: string;
+  value?: string;
+  defaultValue: string;
   onChange: (value: string) => void;
 }) {
+  React.useEffect(() => {
+    if (value === undefined) onChange(defaultValue);
+  }, []);
+
   const [open, setOpen] = React.useState(false);
   const [label, setLabel] = React.useState<string>(() => {
     if (!value) return "Select...";
