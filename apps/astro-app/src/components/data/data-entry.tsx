@@ -139,6 +139,7 @@ export function Tags({
         <SearchSelect
           data={searchSelectData}
           value={nextTag}
+          defaultValue={defaultValue}
           onChange={setNextTag}
         />
         <Button
