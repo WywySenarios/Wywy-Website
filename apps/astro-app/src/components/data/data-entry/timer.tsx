@@ -323,7 +323,11 @@ export function TimerForm({
     const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
     const action = submitter?.getAttribute("value");
 
-    submitEntry(CACHE_URL, values, CACHE_CSRF_ENDPOINT)
+    submitEntry(
+      `${CACHE_URL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}`,
+      values,
+      CACHE_CSRF_ENDPOINT,
+    )
       .then(() => {
         toast("Form submitted!");
         switch (action) {
