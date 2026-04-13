@@ -39,6 +39,7 @@ export function FormForm({
     )
       .then(() => {
         // @TODO redirect, popup, etc.
+        toast("Form submitted!");
       })
       .catch((reason) => {
         toast(`Form submission failed: ${reason}`);

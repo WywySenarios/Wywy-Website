@@ -325,6 +325,7 @@ export function TimerForm({
 
     submitEntry(CACHE_URL, values, CACHE_CSRF_ENDPOINT)
       .then(() => {
+        toast("Form submitted!");
         switch (action) {
           case "split":
             start();
