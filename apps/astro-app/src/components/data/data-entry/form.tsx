@@ -11,6 +11,7 @@ import { CACHE_CSRF_ENDPOINT } from "@utils/auth";
 import { submitEntry } from "@utils/data/http";
 import { toast } from "sonner";
 import type { FieldErrors } from "react-hook-form";
+import { toSnakeCase } from "@utils/parse";
 
 /**
  * Basic form component.
@@ -31,10 +32,11 @@ export function FormForm({
     values: z.infer<typeof schema>,
     event?: React.BaseSyntheticEvent,
   ): void {
-    const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
-    const action = submitter?.getAttribute("value");
-
-    submitEntry(CACHE_URL, values, CACHE_CSRF_ENDPOINT)
+    submitEntry(
+      `${CACHE_URL}/main/${databaseName}/${toSnakeCase(tableInfo.tableName)}`,
+      values,
+      CACHE_CSRF_ENDPOINT,
+    )
       .then(() => {
         // @TODO redirect, popup, etc.
       })
