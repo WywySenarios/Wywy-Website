@@ -29,7 +29,9 @@ export function TimestampPicker({
   const [open, setOpen] = useState<boolean>(false);
 
   // these fragments are in the user's locale.
-  const dateFragments = fragmentTimestamp(toLocaleISOString(value));
+  const dateFragments = fragmentTimestamp(
+    toLocaleISOString(value ?? new Date()),
+  );
 
   return (
     <div className="flex flex-row w-full items-center gap-4">
