@@ -12,13 +12,13 @@ import { toSnakeCase } from "../parse";
 import type { GeodeticCoordinate } from "../datatypes/geodetic";
 
 export const TAGGING_TABLE_TAGS_SCHEMA = z.object({
-  id: z.number().int(),
+  id: z.number().int().optional(),
   entry_id: z.number().int(),
   tag_id: z.number().int(),
 });
 
 export const TAGGING_TABLE_TAG_NAMES_SCHEMA = z.object({
-  id: z.number().int(),
+  id: z.number().int().optional(),
   tag_name: z.string(),
 });
 
@@ -28,7 +28,7 @@ export const TAGGING_TABLE_TAG_ALIASES_SCHEMA = z.object({
 });
 
 export const TAGGING_TABLE_TAG_GROUPS_SCHEMA = z.object({
-  id: z.number().int(),
+  id: z.number().int().optional(),
   tag_id: z.number().int(),
   group_name: z.string(),
 });
