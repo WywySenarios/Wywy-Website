@@ -28,6 +28,8 @@ export function TimestampPicker({
 }) {
   const [open, setOpen] = useState<boolean>(false);
 
+  if (!value) onChange(new Date());
+
   // these fragments are in the user's locale.
   const dateFragments = fragmentTimestamp(
     toLocaleISOString(value ?? new Date()),
