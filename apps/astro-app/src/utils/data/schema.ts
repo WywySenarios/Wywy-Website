@@ -135,7 +135,8 @@ export function getZodColumnSchema(columnInfo: DataColumn) {
             message: "Invalid geodetic point",
           },
         )
-        .nullable();
+        .nullable()
+        .default(null);
       break;
   }
 
