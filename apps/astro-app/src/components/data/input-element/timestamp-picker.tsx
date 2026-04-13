@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,9 @@ export function TimestampPicker({
 }) {
   const [open, setOpen] = useState<boolean>(false);
 
-  if (!value) onChange(new Date());
+  useEffect(() => {
+    if (!value) onChange(new Date());
+  }, []);
 
   // these fragments are in the user's locale.
   const dateFragments = fragmentTimestamp(
