@@ -148,12 +148,17 @@ export function getZodColumnSchema(columnInfo: DataColumn) {
 }
 
 /**
- * Creates a Zod Object that corresponds with the given entry schema. The zod object excludes the primary tag attribute because it is processed post-submission.
+ * Creates a Zod Object that corresponds with the given entry schema.
  * @param entrySchema
  * @returns
  */
 export function getZodEntrySchema(entrySchema: TableInfo | DescriptorInfo) {
   const outputShape: Record<string, ZodType<any>> = {};
+
+  // primary tag
+  if ("tagging" in entrySchema && entrySchema["tagging"]) {
+    outputShape["primary_tag"] = z.coerce.number().int().min(1);
+  }
 
   for (const columnInfo of entrySchema.schema) {
     const columnName = toSnakeCase(columnInfo.name);
