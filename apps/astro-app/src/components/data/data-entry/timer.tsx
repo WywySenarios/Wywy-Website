@@ -64,6 +64,7 @@ export function TimerForm({
   const [isSplit, setIsSplit] = useState<boolean>(false);
   const [tagNames, setTagNames] = useState<TAG_NAMES_DATASET>();
   const [tagsLoading, setTagsLoading] = useState<boolean>(false);
+  const [tagsRefreshState, setTagsRefreshState] = useState<number>(0);
   const [isCaching, setIsCaching] = useState<boolean>(false);
   const [cacheError, setCacheError] = useState<boolean>(false);
   const [data, setData] = useState<Record<string, any>>({});
@@ -174,9 +175,12 @@ export function TimerForm({
 
   useEffect(() => {
     // always keep controller data up to date
-    controller.reset({
-      data: data,
-    });
+    for (const key in data) {
+      controller.setValue(`data.${key}`, data[key], {
+        shouldValidate: true,
+        shouldTouch: false,
+      });
+    }
 
     // automatically update the cache when the user changes either the start or the end time.
     // only update when desired & valid
@@ -186,23 +190,34 @@ export function TimerForm({
     cache();
   }, [data]);
 
-  // fetch tags if the
+  // fetch tags
   useEffect(() => {
     // require no cache error & split
     if (!isSplit || cacheError) return;
 
-    // only automatically fetch data once
-    if (tagNames) return;
-
     // only allow one concurrent fetch
     if (tagsLoading) return;
+    setTagsLoading(true);
 
-    loadTagNames(
+    // safe fetch dataset
+    safeFetchDataset(
       `${CACHE_URL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}/tag_names`,
-      setTagNames,
-      setTagsLoading,
-    );
-  }, [isSplit, cacheError]);
+      TAG_NAMES_DATASET_SCHEMA,
+    )
+      .then((tagNames) => {
+        setTagNames(tagNames);
+        controller.resetField("data.primary_tag", {
+          defaultValue: tagNames["data"][0][0],
+        });
+      })
+      .catch((reason) => {
+        toast(`Failed to load tags: ${reason}`);
+        setTagNames(undefined);
+      })
+      .finally(() => {
+        setTagsLoading(false);
+      });
+  }, [isSplit, cacheError, tagsRefreshState]);
 
   /**
    * Stores the startTime and endTime into the cache.
@@ -382,11 +397,7 @@ export function TimerForm({
           <Button
             onClick={() => {
               if (!tagsLoading) {
-                loadTagNames(
-                  `${CACHE_URL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}/tag_names`,
-                  setTagNames,
-                  setTagsLoading,
-                );
+                setTagsRefreshState(tagsRefreshState + 1);
               }
             }}
           >
