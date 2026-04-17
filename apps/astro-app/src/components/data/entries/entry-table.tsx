@@ -136,7 +136,7 @@ function EntryTable({
     | "descriptors"
     | "data";
 }): JSX.Element {
-  const [origin, setOrigin] = useState<string>(DATABASE_URL);
+  const [origin, setOrigin] = useState<string>(CACHE_URL);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [pullTrigger, setPullTrigger] = useState<number>(0);
   let disablePullTrigger = true;
