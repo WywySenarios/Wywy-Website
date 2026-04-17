@@ -34,7 +34,7 @@ import {
   TAGGING_TABLE_TAGS_SCHEMA,
 } from "@utils/data/schema";
 import { safeFetchDataset, submitEntry } from "@utils/data/http";
-import { z, type ZodType } from "zod";
+import { z, ZodError, type ZodType } from "zod";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -59,6 +59,11 @@ function getData<T extends Dataset>(
     })
     .catch((reason) => {
       toast(`An error occurred while fetching data: ${reason}`);
+      if (reason instanceof ZodError) {
+        console.error(reason.issues);
+      } else {
+        console.error(reason);
+      }
       setData(undefined);
     })
     .finally(() => {
@@ -310,6 +315,7 @@ interface TaggingEntryTableProps extends EntryTableProps {
  * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
  * @param refreshTrigger A controlled field to trigger a refresh through useEffect.
+ * @param type The table type to fetch.
  * @returns
  */
 function GenericEntryTable({
