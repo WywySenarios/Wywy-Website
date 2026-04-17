@@ -46,8 +46,12 @@ export async function submitEntry(
 export async function safeFetchDataset<T extends ZodType<any>>(
   endpoint: string,
   schema: T,
+  options: {} = {
+    SELECT: "*",
+    ORDER_BY: "DESC",
+  },
 ): Promise<z.infer<T>> {
-  const response = await fetch(endpoint, {
+  const response = await fetch(`${endpoint}?${new URLSearchParams(options)}`, {
     method: "GET",
     mode: "cors",
     credentials: "include",
