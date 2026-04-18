@@ -199,7 +199,7 @@ export function getZodDatasetType(
   rowSchema.push(z.number().int());
 
   // primary_tag column
-  if (tagging) rowSchema.push(z.string().nonempty());
+  if (tagging) rowSchema.push(z.coerce.string().nonempty());
 
   for (let columnSchema of datasetSchema) {
     switch (columnSchema.datatype) {
