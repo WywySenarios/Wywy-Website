@@ -57,9 +57,11 @@ function loadTagNames(
 export function TimerForm({
   databaseName,
   tableInfo,
+  submissionCallback = () => {},
 }: {
   databaseName: string;
   tableInfo: TableInfo;
+  submissionCallback?: () => void;
 }) {
   const [isSplit, setIsSplit] = useState<boolean>(false);
   const [tagNames, setTagNames] = useState<TAG_NAMES_DATASET>();
@@ -345,6 +347,7 @@ export function TimerForm({
     )
       .then(() => {
         toast("Form submitted!");
+        submissionCallback();
         switch (action) {
           case "split":
             start();

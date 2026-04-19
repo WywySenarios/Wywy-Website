@@ -22,9 +22,11 @@ import { toSnakeCase } from "@utils/parse";
 export function FormForm({
   databaseName,
   tableInfo,
+  submissionCallback = () => {},
 }: {
   databaseName: string;
   tableInfo: TableInfo;
+  submissionCallback?: () => void;
 }) {
   const { controller, schema } = createFormController(tableInfo);
 
@@ -38,8 +40,8 @@ export function FormForm({
       CACHE_CSRF_ENDPOINT,
     )
       .then(() => {
-        // @TODO redirect, popup, etc.
         toast("Form submitted!");
+        submissionCallback();
       })
       .catch((reason) => {
         toast(`Form submission failed: ${reason}`);
