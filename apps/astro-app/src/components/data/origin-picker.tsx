@@ -56,22 +56,24 @@ export function OriginTypePicker({
   origin: OriginName;
   setOrigin: Dispatch<SetStateAction<OriginName>>;
 }) {
-  <Select
-    onValueChange={
-      // ignore the type error because the value is restricted based on the SelectItem values.
-      setOrigin as any
-    }
-    value={origin}
-  >
-    <SelectTrigger className="w-full max-w-48">
-      <SelectValue placeholder="Select an Origin" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectGroup>
-        <SelectLabel>Origin</SelectLabel>
-        <SelectItem value={"master-database"}>Master Database</SelectItem>
-        <SelectItem value={"cache"}>Cache</SelectItem>
-      </SelectGroup>
-    </SelectContent>
-  </Select>;
+  return (
+    <Select
+      onValueChange={
+        // ignore the type error because the value is restricted based on the SelectItem values.
+        setOrigin as any
+      }
+      value={origin}
+    >
+      <SelectTrigger className="w-full max-w-48">
+        <SelectValue placeholder="Select an Origin" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          <SelectLabel>Origin</SelectLabel>
+          <SelectItem value={"master-database"}>Master Database</SelectItem>
+          <SelectItem value={"cache"}>Cache</SelectItem>
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  );
 }
