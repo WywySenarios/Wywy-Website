@@ -1,5 +1,63 @@
 import type { z, ZodType } from "zod";
 import { getCSRFToken } from "../auth";
+import { CACHE_URL, DATABASE_URL } from "astro:env/client";
+
+export interface DATA_ENDPOINT_PARAMS {
+  databaseName: string;
+  tableName: string;
+}
+export interface DESCRIPTOR_ENDPOINT_PARAMS {
+  databaseName: string;
+  tableName: string;
+  descriptorName: string;
+}
+export interface TAGGING_ENDPOINT_PARAMS {
+  databaseName: string;
+  tableName: string;
+  tableType: string;
+}
+
+export function cacheDataEndpoint({
+  databaseName,
+  tableName,
+}: DATA_ENDPOINT_PARAMS): string {
+  return `${CACHE_URL}/main/${databaseName}/${tableName}/data`;
+}
+export function cacheDescriptorEndpoint({
+  databaseName,
+  tableName,
+  descriptorName,
+}: DESCRIPTOR_ENDPOINT_PARAMS): string {
+  return `${CACHE_URL}/main/${databaseName}/${tableName}/descriptors/${descriptorName}`;
+}
+export function cacheTaggingEndpoint({
+  databaseName,
+  tableName,
+  tableType,
+}: TAGGING_ENDPOINT_PARAMS): string {
+  return `${CACHE_URL}/tags/${databaseName}/${tableName}/${tableType}`;
+}
+
+export function masterDatabaseDataEndpoint({
+  databaseName,
+  tableName,
+}: DATA_ENDPOINT_PARAMS): string {
+  return `${DATABASE_URL}/${databaseName}/${tableName}/data`;
+}
+export function masterDatabaseDescriptorEndpoint({
+  databaseName,
+  tableName,
+  descriptorName,
+}: DESCRIPTOR_ENDPOINT_PARAMS): string {
+  return `${DATABASE_URL}/${databaseName}/${tableName}/descriptors/${descriptorName}`;
+}
+export function masterDatabaseTaggingEndpoint({
+  databaseName,
+  tableName,
+  tableType,
+}: TAGGING_ENDPOINT_PARAMS): string {
+  return `${DATABASE_URL}/${databaseName}/${tableName}/${tableType}`;
+}
 
 /**
  * Asynchronous entry submission to an undetermined endpoint.
