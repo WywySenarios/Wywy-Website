@@ -56,13 +56,42 @@ export function getData<T extends Dataset>(
     });
 }
 
+/**
+ * Renders a table to display a dataset.
+ * @param dataset The dataset to display.
+ * @param footer The footer to display. This is important for the band-aid version of tagging tables.
+ * @param readonly Whether or not table cells should be text-only.
+ * @param explorePath The base path for the explore section of the respective dataset. This allows the user to navigate to an area to look a given entry individually.
+ * @returns
+ */
 export function DatasetTable({
   dataset,
   footer = null,
+  subcolumnVisibility = true,
+  readonly = true,
+  explorePath,
 }: {
   dataset: Dataset;
   footer?: null | ReactNode;
+  subcolumnVisibility?: boolean;
+  readonly?: boolean;
+  explorePath: string;
 }) {
+  const indexesToDisplay = useMemo(() => {
+    const output: Array<number> = [];
+    dataset.columns.map((columnName, index) => {
+      if (index == 0) return; // special treatment for ID column
+      if (!subcolumnVisibility) {
+        if (columnName.endsWith("_comments")) return;
+        if (columnName.endsWith("_latlong_accuracy")) return;
+        if (columnName.endsWith("_altitude")) return;
+        if (columnName.endsWith("_altitude_accuracy")) return;
+      }
+      output.push(index);
+    });
+    return output;
+  }, []);
+
   return (
     <ScrollArea orientation="horizontal">
       <Table>
@@ -82,11 +111,18 @@ export function DatasetTable({
           {dataset.data.map(
             (row: Array<string | number>, entryIndex: number) => (
               <TableRow key={`entry-table-row-${entryIndex}`}>
-                {row.map((value: string | number, columnIndex: number) => (
+                {/* Primary key */}
+                {readonly ? (
+                  String(row[0])
+                ) : (
+                  <a href={`${explorePath}?pkey=${row[0]}`}>{String(row[0])}</a>
+                )}
+                {/* Other data */}
+                {indexesToDisplay.map((indexToDisplay: number) => (
                   <TableCell
-                    key={`entry-table-cell-${columnIndex}-${entryIndex}`}
+                    key={`entry-table-cell-${indexToDisplay}-${entryIndex}`}
                   >
-                    {String(value)}
+                    {String(row[indexToDisplay])}
                   </TableCell>
                 ))}
               </TableRow>

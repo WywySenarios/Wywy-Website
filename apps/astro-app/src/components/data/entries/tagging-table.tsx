@@ -130,7 +130,12 @@ export function TaggingTable({
 
   return (
     <form onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}>
-      <DatasetTable dataset={data} footer={footer}></DatasetTable>
+      <DatasetTable
+        dataset={data}
+        footer={footer}
+        readonly={true}
+        explorePath={"undefined"}
+      ></DatasetTable>
       <Button className="w-full" type="submit">
         <Plus />
       </Button>
