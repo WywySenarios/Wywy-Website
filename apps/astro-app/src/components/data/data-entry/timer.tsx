@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { CACHE_CSRF_ENDPOINT, getCSRFToken } from "@utils/auth";
 import { parseDatabaseValue } from "@utils/data/deserialization";
 import { handleRecordOn } from "@utils/data/form/updates";
-import type { JSONValue } from "@utils/http";
+import type { JSONValue } from "@/types/http";
 import { CACHE_URL } from "astro:env/client";
 import { RefreshCcw, Upload } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";

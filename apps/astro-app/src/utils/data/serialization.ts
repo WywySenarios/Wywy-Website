@@ -1,6 +1,5 @@
-import type { Datatype } from "@/types/data";
 import { GeodeticCoordinate } from "../datatypes/geodetic";
-import type { JSONValue } from "../http";
+import type { JSONValue } from "@/types/http";
 
 type formatDatabaseValueParams =
   | { datatype: "int" | "integer" | "float" | "number"; value: number }
