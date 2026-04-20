@@ -112,11 +112,15 @@ export function DatasetTable({
             (row: Array<string | number>, entryIndex: number) => (
               <TableRow key={`entry-table-row-${entryIndex}`}>
                 {/* Primary key */}
-                {readonly ? (
-                  String(row[0])
-                ) : (
-                  <a href={`${explorePath}?pkey=${row[0]}`}>{String(row[0])}</a>
-                )}
+                <TableCell key={`entry-table-cell-id-${entryIndex}`}>
+                  {readonly ? (
+                    String(row[0])
+                  ) : (
+                    <a href={`${explorePath}?pkey=${row[0]}`}>
+                      {String(row[0])}
+                    </a>
+                  )}
+                </TableCell>
                 {/* Other data */}
                 {indexesToDisplay.map((indexToDisplay: number) => (
                   <TableCell
