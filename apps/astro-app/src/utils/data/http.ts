@@ -1,63 +1,24 @@
+"use client";
+
 import type { z, ZodType } from "zod";
 import { getCSRFToken } from "../auth";
 import { CACHE_URL, DATABASE_URL } from "astro:env/client";
-
-export interface DATA_ENDPOINT_PARAMS {
-  databaseName: string;
-  tableName: string;
-}
-export interface DESCRIPTOR_ENDPOINT_PARAMS {
-  databaseName: string;
-  tableName: string;
-  descriptorName: string;
-}
-export interface TAGGING_ENDPOINT_PARAMS {
-  databaseName: string;
-  tableName: string;
-  tableType: string;
-}
-
-export function cacheDataEndpoint({
-  databaseName,
-  tableName,
-}: DATA_ENDPOINT_PARAMS): string {
-  return `${CACHE_URL}/main/${databaseName}/${tableName}/data`;
-}
-export function cacheDescriptorEndpoint({
-  databaseName,
-  tableName,
-  descriptorName,
-}: DESCRIPTOR_ENDPOINT_PARAMS): string {
-  return `${CACHE_URL}/main/${databaseName}/${tableName}/descriptors/${descriptorName}`;
-}
-export function cacheTaggingEndpoint({
-  databaseName,
-  tableName,
-  tableType,
-}: TAGGING_ENDPOINT_PARAMS): string {
-  return `${CACHE_URL}/tags/${databaseName}/${tableName}/${tableType}`;
-}
-
-export function masterDatabaseDataEndpoint({
-  databaseName,
-  tableName,
-}: DATA_ENDPOINT_PARAMS): string {
-  return `${DATABASE_URL}/${databaseName}/${tableName}/data`;
-}
-export function masterDatabaseDescriptorEndpoint({
-  databaseName,
-  tableName,
-  descriptorName,
-}: DESCRIPTOR_ENDPOINT_PARAMS): string {
-  return `${DATABASE_URL}/${databaseName}/${tableName}/descriptors/${descriptorName}`;
-}
-export function masterDatabaseTaggingEndpoint({
-  databaseName,
-  tableName,
-  tableType,
-}: TAGGING_ENDPOINT_PARAMS): string {
-  return `${DATABASE_URL}/${databaseName}/${tableName}/${tableType}`;
-}
+import { useEffect, useMemo, useState } from "react";
+import type {
+  Dataset,
+  DescriptorInfo,
+  TableInfo,
+  TableType,
+} from "@/types/data";
+import {
+  getZodDatasetType,
+  TAG_ALIASES_DATASET_SCHEMA,
+  TAG_GROUPS_DATASET_SCHEMA,
+  TAG_NAMES_DATASET_SCHEMA,
+  TAGS_DATASET_SCHEMA,
+} from "./schema";
+import { useEndpoint } from "./endpoints";
+import type { OriginName } from "@/types/http";
 
 /**
  * Asynchronous entry submission to an undetermined endpoint.
@@ -131,4 +92,74 @@ export async function safeFetchDataset<T extends ZodType<any>>(
   } else {
     return result.data;
   }
+}
+
+/**
+ * React hook for dataset fetching.
+ * @param ready Whether or not the parameters are ready for dataset fetching. The datasetSchema will still be constructed immediately, though.
+ * @param table_type The type of the dataset to fetch.
+ * @param schema The related configuration schema (if available) of the dataset to fetch.
+ * @param source The source to consturct an endpoint off of.
+ * @param endpointOptions The options for the endpoint construction.
+ * @param refreshState A refreshState to update the dataset when desried. This is optional.
+ * @param options The options for dataset fetching.
+ * @returns The dataset, the loading state, and an error message (empty (but not necessarily falsy) if there is no error).
+ */
+export function useDataset(
+  ready: boolean,
+  table_type: TableType,
+  schema: TableInfo | DescriptorInfo | undefined,
+  source: OriginName,
+  endpointOptions: {
+    databaseName: string;
+    tableName: string;
+    descriptorName?: string;
+  },
+  refreshState?: number,
+  options: Record<string, any> = {},
+): [Dataset | null, boolean, string] {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const datasetSchema = useMemo(() => {
+    switch (table_type) {
+      case "data":
+      case "descriptors":
+        if (schema === undefined) throw TypeError("Undefined schema.");
+
+        return getZodDatasetType(schema["schema"]);
+      case "tag_aliases":
+        return TAG_ALIASES_DATASET_SCHEMA;
+      case "tags":
+        return TAGS_DATASET_SCHEMA;
+      case "tag_names":
+        return TAG_NAMES_DATASET_SCHEMA;
+      case "tag_groups":
+        return TAG_GROUPS_DATASET_SCHEMA;
+    }
+  }, [table_type, schema]);
+  const endpoint = useEndpoint(source, table_type, endpointOptions);
+  const [dataset, setDataset] = useState<Dataset | null>(null);
+
+  useEffect(() => {
+    if (!ready) return;
+
+    if (endpoint === undefined) {
+      setError("Invalid endpoint.");
+      return;
+    }
+
+    setLoading(true);
+
+    safeFetchDataset(endpoint, datasetSchema, options)
+      .then((newDataset) => {
+        setDataset(newDataset);
+        setError("");
+        setLoading(false);
+      })
+      .catch((msg) => {
+        setError(msg);
+      });
+  }, [ready, refreshState, endpoint, datasetSchema]);
+
+  return [loading ? null : dataset, loading, error];
 }
