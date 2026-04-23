@@ -176,12 +176,41 @@ export function getZodEntrySchema(entrySchema: TableInfo | DescriptorInfo) {
   return z.object(outputShape);
 }
 
+export const TAGS_DATASET_SCHEMA = z.object({
+  columns: z.tuple([
+    z.literal("id"),
+    z.literal("entry_id"),
+    z.literal("tag_id"),
+  ]),
+  data: z
+    .array(z.tuple([z.number().int(), z.number().int(), z.number().int()]))
+    .nonempty(),
+});
+export type TAGS_DATASET = z.infer<typeof TAG_NAMES_DATASET_SCHEMA>;
+
 export const TAG_NAMES_DATASET_SCHEMA = z.object({
   columns: z.tuple([z.literal("id"), z.literal("tag_name")]),
   data: z.array(z.tuple([z.number().int(), z.string()])).nonempty(),
 });
-
 export type TAG_NAMES_DATASET = z.infer<typeof TAG_NAMES_DATASET_SCHEMA>;
+
+export const TAG_ALIASES_DATASET_SCHEMA = z.object({
+  columns: z.tuple([z.literal("alias"), z.literal("tag_id")]),
+  data: z.array(z.tuple([z.string(), z.number().int()])).nonempty(),
+});
+export type TAG_ALIASES_DATASET = z.infer<typeof TAG_NAMES_DATASET_SCHEMA>;
+
+export const TAG_GROUPS_DATASET_SCHEMA = z.object({
+  columns: z.tuple([
+    z.literal("id"),
+    z.literal("tag_id"),
+    z.literal("group_name"),
+  ]),
+  data: z
+    .array(z.tuple([z.number().int(), z.number().int(), z.string()]))
+    .nonempty(),
+});
+export type TAG_GROUPS_DATASET = z.infer<typeof TAG_NAMES_DATASET_SCHEMA>;
 
 /**
  * Constructs a zod schema for a dataset from a columns schema.
