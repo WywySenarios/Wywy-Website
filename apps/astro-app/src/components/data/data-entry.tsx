@@ -44,16 +44,62 @@ export function Columns({
 }
 
 /**
+ * The input element for the primary tag.
+ * @param controller The form controller.
+ * @param fieldPath The path of the primary tag field.
+ * @param tagsDataset The tags that are available to select.
+ */
+export function PrimaryTag({
+  controller,
+  fieldPath,
+  tagsDataset,
+}: {
+  controller: any;
+  tagsDataset: TAG_NAMES_DATASET;
+  fieldPath: string;
+}) {
+  const values = useMemo(() => {
+    return tagsDataset.data.map((row: [number, string]) => String(row[0]));
+  }, [tagsDataset]);
+
+  const labels = useMemo(() => {
+    return tagsDataset.data.map((row: [number, string]) => row[1]);
+  }, [tagsDataset]);
+
+  const defaultValue = useMemo(() => {
+    return String(tagsDataset.data[0][0]);
+  }, [tagsDataset]);
+
+  return (
+    <FormElement
+      form={controller}
+      columnInfo={{
+        name: "Primary Tag",
+        datatype: "enum",
+        entrytype: "search-select",
+        values: values as [string, ...string[]], // @TODO fix TAG_NAMES_DATASET type
+        labels: labels,
+        defaultValue: defaultValue,
+      }}
+      controllerNamer={(strings: TemplateStringsArray, name: string) => {
+        return fieldPath;
+      }}
+    />
+  );
+}
+
+/**
  * The tagging section of the form. This includes the primary_tag and the secondary tags.
- * @param tags The respective tag_names dataset.
+ * @param form The form contrller.
+ * @param tagsDataset The tags that are available to select.
  * @returns
  */
 export function Tags({
   form,
-  tagNamesDataset,
+  tagsDataset,
 }: {
   form: any;
-  tagNamesDataset: TAG_NAMES_DATASET;
+  tagsDataset: TAG_NAMES_DATASET;
 }): JSX.Element {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -62,44 +108,35 @@ export function Tags({
   const [nextTag, setNextTag] = useState<string>("");
 
   const values = useMemo(() => {
-    return tagNamesDataset.data.map((row: [number, string]) => String(row[0]));
-  }, [tagNamesDataset]);
+    return tagsDataset.data.map((row: [number, string]) => String(row[0]));
+  }, [tagsDataset]);
 
   const labels = useMemo(() => {
-    return tagNamesDataset.data.map((row: [number, string]) => row[1]);
-  }, [tagNamesDataset]);
+    return tagsDataset.data.map((row: [number, string]) => row[1]);
+  }, [tagsDataset]);
 
   const defaultValue = useMemo(() => {
-    return String(tagNamesDataset.data[0][0]);
-  }, [tagNamesDataset]);
+    return String(tagsDataset.data[0][0]);
+  }, [tagsDataset]);
 
   const searchSelectData = useMemo(() => {
-    return tagNamesDataset.data.map((row: [number, string]) => {
+    return tagsDataset.data.map((row: [number, string]) => {
       return {
         value: String(row[0]),
         label: row[1],
       };
     });
-  }, [tagNamesDataset]);
+  }, [tagsDataset]);
 
   return (
     <Card>
       <CardHeader>Tags</CardHeader>
       <CardContent className="flex flex-col gap-2 justify-center">
         {/* Primary tag */}
-        <FormElement
-          form={form}
-          columnInfo={{
-            name: "Primary Tag",
-            datatype: "enum",
-            entrytype: "search-select",
-            values: values as [string, ...string[]], // @TODO fix TAG_NAMES_DATASET type
-            labels: labels,
-            defaultValue: defaultValue,
-          }}
-          controllerNamer={(strings: TemplateStringsArray, name: string) => {
-            return `data.primary_tag`;
-          }}
+        <PrimaryTag
+          controller={form}
+          fieldPath="data.primary_tag"
+          tagsDataset={tagsDataset}
         />
         {/* Secondary tags */}
         {fields.map((field: Record<"id", string>, index: number) => (

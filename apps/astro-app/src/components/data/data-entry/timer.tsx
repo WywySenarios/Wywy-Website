@@ -430,9 +430,7 @@ export function TimerForm({
         <Columns fieldsToEnter={tableInfo.schema} form={controller} />
         {/* Quick actions */}
         {/* Tags */}
-        {tableInfo.tagging && (
-          <Tags tagNamesDataset={tagNames} form={controller} />
-        )}
+        {tableInfo.tagging && <Tags tagsDataset={tagNames} form={controller} />}
         {/* Descriptors */}
         {tableInfo.descriptors && (
           <Descriptors tableInfo={tableInfo} form={controller} />
