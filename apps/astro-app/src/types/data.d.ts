@@ -203,3 +203,12 @@ export type FullDataset = Record<string, Dataset>;
 
 export type VectorDataset = Record<string, Array<any>>;
 // END - Datasets
+
+// Basic table type.
+export type TableType =
+  | "data"
+  | "descriptors"
+  | "tags"
+  | "tag_names"
+  | "tag_aliases"
+  | "tag_groups";
