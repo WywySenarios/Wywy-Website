@@ -19,6 +19,7 @@ import {
 } from "./schema";
 import { useEndpoint } from "./endpoints";
 import type { OriginName } from "@/types/http";
+import { toSnakeCase } from "@utils/parse";
 
 /**
  * Asynchronous entry submission to an undetermined endpoint.
@@ -94,9 +95,23 @@ export async function safeFetchDataset<T extends ZodType<any>>(
   }
 }
 
+export interface useDatasetProps {
+  valid: boolean;
+  table_type: TableType;
+  schema: TableInfo | DescriptorInfo | undefined;
+  source: OriginName;
+  endpointOptions: {
+    databaseName: string;
+    tableName: string;
+    descriptorName?: string;
+  };
+  refreshState?: any;
+  options?: Record<string, any>;
+}
+
 /**
  * React hook for dataset fetching.
- * @param ready Whether or not the parameters are ready for dataset fetching. The datasetSchema will still be constructed immediately, though.
+ * @param valid Whether or not the given parameters are valid (i.e. whether or not the dataset is ready to be fetched)
  * @param table_type The type of the dataset to fetch.
  * @param schema The related configuration schema (if available) of the dataset to fetch.
  * @param source The source to consturct an endpoint off of.
@@ -105,19 +120,15 @@ export async function safeFetchDataset<T extends ZodType<any>>(
  * @param options The options for dataset fetching.
  * @returns The dataset, the loading state, and an error message (empty (but not necessarily falsy) if there is no error).
  */
-export function useDataset(
-  ready: boolean,
-  table_type: TableType,
-  schema: TableInfo | DescriptorInfo | undefined,
-  source: OriginName,
-  endpointOptions: {
-    databaseName: string;
-    tableName: string;
-    descriptorName?: string;
-  },
-  refreshState?: number,
-  options: Record<string, any> = {},
-): [Dataset | null, boolean, string] {
+export function useDataset({
+  valid,
+  table_type,
+  schema,
+  source,
+  endpointOptions,
+  refreshState,
+  options = {},
+}: useDatasetProps): [Dataset | null, boolean, string] {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const datasetSchema = useMemo(() => {
@@ -141,7 +152,7 @@ export function useDataset(
   const [dataset, setDataset] = useState<Dataset | null>(null);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!valid) return;
 
     if (endpoint === undefined) {
       setError("Invalid endpoint.");
@@ -149,17 +160,91 @@ export function useDataset(
     }
 
     setLoading(true);
+    setError("");
 
     safeFetchDataset(endpoint, datasetSchema, options)
       .then((newDataset) => {
         setDataset(newDataset);
-        setError("");
         setLoading(false);
       })
       .catch((msg) => {
         setError(msg);
       });
-  }, [ready, refreshState, endpoint, datasetSchema]);
+  }, [valid, refreshState, endpoint, datasetSchema]);
 
   return [loading ? null : dataset, loading, error];
+}
+
+/**
+ * React hook for related descriptor dataset fetching.
+ * @param valid Whether or not the given parameters are valid (i.e. whether or not the dataset is ready to be fetched)
+ * @param table_type The type of the dataset to fetch.
+ * @param schema The related configuration schema (if available) of the dataset to fetch.
+ * @param source The source to consturct an endpoint off of.
+ * @param endpointOptions The options for the endpoint construction.
+ * @param refreshState A refreshState to update the dataset when desried. This is optional.
+ * @param options The options for dataset fetching.
+ * @returns The dataset, the loading state, and an error message (empty (but not necessarily falsy) if there is no error).
+ */
+export function useDescriptorDatasets({
+  valid,
+  table_type,
+  schema,
+  source,
+  endpointOptions,
+  refreshState,
+  options = {},
+}: useDatasetProps): [Record<string, Dataset> | null, boolean, string] {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const datasetSchemas = useMemo(() => {
+    if (!schema) return {};
+    if (!("descriptors" in schema)) return {};
+
+    const schemas: Record<string, any> = {};
+
+    for (const descriptorInfo of schema["descriptors"]) {
+      schemas[toSnakeCase(descriptorInfo.name)] = getZodDatasetType(
+        descriptorInfo["schema"],
+      );
+    }
+
+    return schemas;
+  }, [table_type, schema]);
+  const endpoint = useEndpoint(source, table_type, endpointOptions);
+  const [datasets, setDatasets] = useState<Record<string, Dataset>>({});
+
+  useEffect(() => {
+    if (!valid) return;
+
+    if (endpoint === undefined) {
+      setError("Invalid endpoint.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    let error = "";
+
+    const promises: Array<Promise<any>> = [];
+
+    for (const descriptorName in datasetSchemas) {
+      promises.push(
+        safeFetchDataset(endpoint, datasetSchemas[descriptorName], options)
+          .then((newDataset) => {
+            datasets[descriptorName] = newDataset;
+          })
+          .catch((msg) => {
+            error += `${msg}\n`;
+          }),
+      );
+    }
+
+    Promise.allSettled(promises).then(() => {
+      setError(error);
+      setLoading(false);
+    });
+  }, [valid, refreshState, endpoint, datasetSchemas]);
+
+  return [loading ? null : datasets, loading, error];
 }
