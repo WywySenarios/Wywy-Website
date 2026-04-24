@@ -110,7 +110,7 @@ export function EntryViewer({
     if (taggingDataError || data === null)
       return (
         <>
-          <p>Error: {dataError}</p>
+          <p>An error occured while loading data.</p>
           <Button
             type="button"
             onClick={() => {
