@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { OriginTypePicker } from "../origin-picker";
 import { Check, RefreshCcw } from "lucide-react";
 import { Table, TableCell, TableRow } from "@/components/ui/table";
+import { toSnakeCase } from "@utils/parse";
+import { DatasetTable } from "./entry-table";
 
 export function EntryViewer({
   schema,
@@ -65,8 +67,8 @@ export function EntryViewer({
     schema: schema,
     source: origin,
     endpointOptions: {
-      databaseName: databaseName,
-      tableName: tableName,
+      databaseName: toSnakeCase(databaseName),
+      tableName: toSnakeCase(tableName),
     },
     refreshState: dataRefreshState,
   });
@@ -76,8 +78,9 @@ export function EntryViewer({
     schema: undefined,
     source: origin,
     endpointOptions: {
-      databaseName: databaseName,
-      tableName: tableName,
+      databaseName: toSnakeCase(databaseName),
+      tableName: toSnakeCase(tableName),
+      tableType: type,
     },
     refreshState: dataRefreshState,
   });
@@ -88,8 +91,8 @@ export function EntryViewer({
       schema: schema,
       source: origin,
       endpointOptions: {
-        databaseName: databaseName,
-        tableName: tableName,
+        databaseName: toSnakeCase(databaseName),
+        tableName: toSnakeCase(tableName),
         descriptorName: descriptorName,
       },
       refreshState: descriptorDataRefreshState,

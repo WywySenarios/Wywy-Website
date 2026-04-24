@@ -104,6 +104,7 @@ export interface useDatasetProps {
     databaseName: string;
     tableName: string;
     descriptorName?: string;
+    tableType?: string;
   };
   refreshState?: any;
   options?: Record<string, any>;

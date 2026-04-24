@@ -109,6 +109,7 @@ export function useEndpoint(
       return endpointHelpers[source][endpointHelperTableType](options as any);
     } catch (error) {
       if (error instanceof Error) return undefined;
+      throw error;
     }
   }, [source, table_type, options]);
 }
