@@ -154,6 +154,7 @@ export function useDataset({
 
   useEffect(() => {
     if (!valid) return;
+    if (loading) return; // avoid race condition
 
     if (endpoint === undefined) {
       setError("Invalid endpoint.");
@@ -170,6 +171,7 @@ export function useDataset({
       })
       .catch((msg) => {
         setError(msg);
+        setLoading(false);
       });
   }, [valid, refreshState, endpoint, datasetSchema]);
 
@@ -217,6 +219,7 @@ export function useDescriptorDatasets({
 
   useEffect(() => {
     if (!valid) return;
+    if (loading) return; // avoid race condition
 
     if (endpoint === undefined) {
       setError("Invalid endpoint.");
