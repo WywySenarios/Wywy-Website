@@ -17,7 +17,7 @@ import {
   TAG_NAMES_DATASET_SCHEMA,
   TAGS_DATASET_SCHEMA,
 } from "./schema";
-import { useEndpoint } from "./endpoints";
+import { resolveEndpoint, useEndpoint } from "./endpoints";
 import type { OriginName } from "@/types/http";
 import { toSnakeCase } from "@utils/parse";
 
@@ -217,17 +217,11 @@ export function useDescriptorDatasets({
 
     return schemas;
   }, [table_type, schema]);
-  const endpoint = useEndpoint(source, table_type, endpointOptions);
   const [datasets, setDatasets] = useState<Record<string, Dataset>>({});
 
   useEffect(() => {
     if (!valid) return;
     if (loading) return; // avoid race condition
-
-    if (endpoint === undefined) {
-      setError("Invalid endpoint.");
-      return;
-    }
 
     setLoading(true);
     setError("");
@@ -236,6 +230,18 @@ export function useDescriptorDatasets({
     const promises: Array<Promise<any>> = [];
 
     for (const descriptorName in datasetSchemas) {
+      const endpoint = resolveEndpoint(source, "descriptors", {
+        ...endpointOptions,
+        descriptorName: descriptorName,
+      });
+      if (endpoint === undefined) {
+        setError(
+          `Failed to construct endpoint for descriptor ${descriptorName}.`,
+        );
+        setLoading(false);
+        return;
+      }
+
       promises.push(
         safeFetchDataset(endpoint, datasetSchemas[descriptorName], options)
           .then((newDataset) => {
@@ -251,7 +257,7 @@ export function useDescriptorDatasets({
       setError(error);
       setLoading(false);
     });
-  }, [valid, refreshState, endpoint, datasetSchemas]);
+  }, [valid, refreshState, datasetSchemas, table_type, schema]);
 
   return [loading ? null : datasets, loading, error];
 }
