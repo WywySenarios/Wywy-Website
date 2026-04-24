@@ -3,7 +3,7 @@
 import type { DescriptorInfo, TableInfo, TableType } from "@/types/data";
 import { type OriginName } from "@/types/http";
 import { useDataset, useDescriptorDatasets } from "@utils/data/http";
-import { useMemo, useState, type Dispatch } from "react";
+import { useEffect, useMemo, useState, type Dispatch } from "react";
 import { NumberBox } from "../input-element/number-box";
 import { Button } from "@/components/ui/button";
 import { OriginTypePicker } from "../origin-picker";
@@ -89,6 +89,15 @@ export function EntryViewer({
     return "descriptors" in schema;
   }, [schema, id]);
   // END - SELECT query readiness
+
+  // automatically update table data when the ID changes
+  useEffect(() => {
+    if (id === null) return; // updates are not useful when the ID is null.
+
+    setDataRefreshState(dataRefreshState + 1);
+    setTaggingDataRefreshState(taggingDataRefreshState + 1);
+    setDescriptorDataRefreshState(descriptorDataRefreshState + 1);
+  }, [id]);
 
   // START - load data
   const [data, dataLoading, dataError] = useDataset({
