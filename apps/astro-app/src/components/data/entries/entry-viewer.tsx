@@ -190,8 +190,48 @@ export function EntryViewer({
   const descriptorTable = useMemo(() => {
     if (!descriptorTableReady) return null;
     if (descriptorDataLoading) return <p>Loading data...</p>;
+    if (descriptorDataError || descriptorData === null) {
+      return (
+        <>
+          <p>
+            An error occured while loading data. {String(descriptorDataError)}
+          </p>
+          <Button
+            type="button"
+            onClick={() => {
+              setDescriptorDataRefreshState(descriptorDataRefreshState + 1);
+            }}
+          >
+            <RefreshCcw />
+          </Button>
+        </>
+      );
+    }
 
-    return null;
+    const descriptorTables = [];
+    for (const descriptorName in descriptorData) {
+      descriptorTables.push(
+        <DatasetTable
+          dataset={descriptorData[descriptorName]}
+          explorePath=""
+        />,
+      );
+    }
+    console.log(descriptorDataError);
+
+    return (
+      <>
+        {descriptorTables.map((table) => table)}
+        <Button
+          type="button"
+          onClick={() => {
+            setDescriptorDataRefreshState(descriptorDataRefreshState + 1);
+          }}
+        >
+          <RefreshCcw />
+        </Button>
+      </>
+    );
   }, [descriptorData, descriptorTableReady]);
 
   // END - data tables
