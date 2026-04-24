@@ -138,7 +138,10 @@ export function useDataset({
       case "descriptors":
         if (schema === undefined) throw TypeError("Undefined schema.");
 
-        return getZodDatasetType(schema["schema"]);
+        return getZodDatasetType(
+          schema["schema"],
+          "tagging" in schema ? schema["tagging"] : false,
+        );
       case "tag_aliases":
         return TAG_ALIASES_DATASET_SCHEMA;
       case "tags":
