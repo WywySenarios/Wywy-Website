@@ -8,7 +8,13 @@ import { NumberBox } from "../input-element/number-box";
 import { Button } from "@/components/ui/button";
 import { OriginTypePicker } from "../origin-picker";
 import { Check, RefreshCcw } from "lucide-react";
-import { Table, TableCell, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { toSnakeCase } from "@utils/parse";
 import { DatasetTable } from "./entry-table";
 
@@ -109,18 +115,26 @@ export function EntryViewer({
     return (
       <>
         <Table>
-          {data.columns.map((columnName, index) => {
-            return (
-              <TableRow key={`data_table.${columnName}`}>
-                <TableCell key={`data_table.${columnName}.column_name`}>
-                  {columnName}
-                </TableCell>
-                <TableCell key={`data_table.${columnName}.value`}>
-                  {String(data.data[0][index])}
-                </TableCell>
-              </TableRow>
-            );
-          })}
+          <TableHeader>
+            <TableRow>
+              <TableCell>Column Name</TableCell>
+              <TableCell>Value</TableCell>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.columns.map((columnName, index) => {
+              return (
+                <TableRow key={`data_table.${columnName}`}>
+                  <TableCell key={`data_table.${columnName}.column_name`}>
+                    {columnName}
+                  </TableCell>
+                  <TableCell key={`data_table.${columnName}.value`}>
+                    {String(data.data[0][index])}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
         </Table>
         <Button
           type="button"
