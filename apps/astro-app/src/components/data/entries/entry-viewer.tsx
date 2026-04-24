@@ -101,7 +101,6 @@ export function EntryViewer({
 
   // START - data tables
   const dataTable = useMemo(() => {
-    if (dataError) return <p>Error: {dataError}</p>;
     if (!dataTableReady) return null;
     if (dataLoading) return <p>Loading data...</p>;
     if (dataError || data === null)
