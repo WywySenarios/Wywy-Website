@@ -86,7 +86,7 @@ export function EntryViewer({
     endpointOptions: {
       databaseName: toSnakeCase(databaseName),
       tableName: toSnakeCase(tableName),
-      tableType: type,
+      tableType: "tags",
     },
     refreshState: dataRefreshState,
   });
