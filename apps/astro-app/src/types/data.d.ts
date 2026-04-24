@@ -1,4 +1,4 @@
-import { DashboardComponentBaseSchema } from "dashboard";
+import { DashboardComponentBaseSchema } from "./dashboard";
 
 // START - Schema
 export interface DatabaseInfo {
