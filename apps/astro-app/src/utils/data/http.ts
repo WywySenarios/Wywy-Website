@@ -76,7 +76,7 @@ export async function safeFetchDataset<T extends ZodType<any>>(
   });
 
   if (!response.ok)
-    throw `Server response not OK: ${response.status} ${response.statusText}`;
+    throw `Server response not OK: ${response.status} ${response.statusText} ${await response.text()}`;
   const json = await response.json();
 
   const result = schema.safeParse(json);
