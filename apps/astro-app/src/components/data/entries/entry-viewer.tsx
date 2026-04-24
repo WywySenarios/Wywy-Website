@@ -104,16 +104,43 @@ export function EntryViewer({
     if (dataError) return <p>Error: {dataError}</p>;
     if (!dataTableReady) return null;
     if (dataLoading) return <p>Loading data...</p>;
+    if (dataError || data === null)
+      return <p>An error occured while loading data. {String(dataError)}</p>;
 
-    return null;
-  }, [data, dataTableReady]);
+    return (
+      <>
+        <Table>
+          {data.columns.map((columnName, index) => {
+            return (
+              <TableRow key={`data_table.${columnName}`}>
+                <TableCell key={`data_table.${columnName}.column_name`}>
+                  {columnName}
+                </TableCell>
+                <TableCell key={`data_table.${columnName}.value`}>
+                  {String(data.data[0][index])}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </Table>
+        <Button
+          type="button"
+          onClick={() => {
+            setDataRefreshState(dataRefreshState + 1);
+          }}
+        >
+          <RefreshCcw />
+        </Button>
+      </>
+    );
+  }, [data, dataTableReady, dataLoading, dataError]);
   const taggingTable = useMemo(() => {
     if (!taggingTableReady) return null;
     if (taggingDataLoading) return <p>Loading data...</p>;
-    if (taggingDataError || data === null)
+    if (taggingDataError || taggingData === null)
       return (
         <>
-          <p>An error occured while loading data.</p>
+          <p>An error occured while loading data. {String(taggingDataError)}</p>
           <Button
             type="button"
             onClick={() => {
@@ -127,20 +154,7 @@ export function EntryViewer({
 
     return (
       <>
-        <Table>
-          {data.columns.map((columnName, index) => {
-            return (
-              <TableRow key={`data_table.${columnName}`}>
-                <TableCell key={`data_table.${columnName}.column_name`}>
-                  {columnName}
-                </TableCell>
-                <TableCell key={`data_table.${columnName}.value`}>
-                  {data.data[0][index]}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </Table>
+        <DatasetTable dataset={taggingData} explorePath="" />
         <Button
           type="button"
           onClick={() => {
