@@ -77,6 +77,9 @@ export function EntryViewer({
       tableName: toSnakeCase(tableName),
     },
     refreshState: dataRefreshState,
+    options: {
+      id: id,
+    },
   });
   const [taggingData, taggingDataLoading, taggingDataError] = useDataset({
     valid: dataTableReady,
@@ -89,6 +92,9 @@ export function EntryViewer({
       tableType: "tags",
     },
     refreshState: dataRefreshState,
+    options: {
+      parent_id: id,
+    },
   });
   const [descriptorData, descriptorDataLoading, descriptorDataError] =
     useDescriptorDatasets({
@@ -99,9 +105,11 @@ export function EntryViewer({
       endpointOptions: {
         databaseName: toSnakeCase(databaseName),
         tableName: toSnakeCase(tableName),
-        descriptorName: descriptorName,
       },
       refreshState: descriptorDataRefreshState,
+      options: {
+        parent_id: id,
+      },
     });
   // END - load data
 
@@ -157,7 +165,7 @@ export function EntryViewer({
           <Button
             type="button"
             onClick={() => {
-              setDataRefreshState(dataRefreshState + 1);
+              setTaggingDataRefreshState(taggingDataRefreshState + 1);
             }}
           >
             <RefreshCcw />
@@ -171,7 +179,7 @@ export function EntryViewer({
         <Button
           type="button"
           onClick={() => {
-            setDataRefreshState(dataRefreshState + 1);
+            setTaggingDataRefreshState(taggingDataRefreshState + 1);
           }}
         >
           <RefreshCcw />
