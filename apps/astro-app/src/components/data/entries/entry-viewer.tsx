@@ -3,7 +3,7 @@
 import type { DescriptorInfo, TableInfo, TableType } from "@/types/data";
 import { type OriginName } from "@/types/http";
 import { useDataset, useDescriptorDatasets } from "@utils/data/http";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type Dispatch } from "react";
 import { NumberBox } from "../input-element/number-box";
 import { Button } from "@/components/ui/button";
 import { OriginTypePicker } from "../origin-picker";
@@ -17,6 +17,30 @@ import {
 } from "@/components/ui/table";
 import { toSnakeCase } from "@utils/parse";
 import { DatasetTable } from "./entry-table";
+
+function EntryViewerError({
+  message,
+  refreshState,
+  setRefreshState,
+}: {
+  message: string;
+  refreshState: number;
+  setRefreshState: Dispatch<number>;
+}) {
+  return (
+    <>
+      <p>An error occured while loading data. {message}</p>
+      <Button
+        type="button"
+        onClick={() => {
+          setRefreshState(refreshState + 1);
+        }}
+      >
+        <RefreshCcw />
+      </Button>
+    </>
+  );
+}
 
 export function EntryViewer({
   schema,
@@ -117,8 +141,30 @@ export function EntryViewer({
   const dataTable = useMemo(() => {
     if (!dataTableReady) return null;
     if (dataLoading) return <p>Loading data...</p>;
-    if (dataError || data === null)
-      return <p>An error occured while loading data. {String(dataError)}</p>;
+    if (dataError)
+      return (
+        <EntryViewerError
+          message={String(dataError)}
+          refreshState={dataRefreshState}
+          setRefreshState={setDataRefreshState}
+        />
+      );
+    if (data === null || data.data.length == 0)
+      return (
+        <EntryViewerError
+          message="No data."
+          refreshState={dataRefreshState}
+          setRefreshState={setDataRefreshState}
+        />
+      );
+    if (data.data.length != 1)
+      return (
+        <EntryViewerError
+          message="Unexpected number of rows found."
+          refreshState={dataRefreshState}
+          setRefreshState={setDataRefreshState}
+        />
+      );
 
     return (
       <>
@@ -158,19 +204,21 @@ export function EntryViewer({
   const taggingTable = useMemo(() => {
     if (!taggingTableReady) return null;
     if (taggingDataLoading) return <p>Loading data...</p>;
-    if (taggingDataError || taggingData === null)
+    if (taggingDataError)
       return (
-        <>
-          <p>An error occured while loading data. {String(taggingDataError)}</p>
-          <Button
-            type="button"
-            onClick={() => {
-              setTaggingDataRefreshState(taggingDataRefreshState + 1);
-            }}
-          >
-            <RefreshCcw />
-          </Button>
-        </>
+        <EntryViewerError
+          message={String(taggingDataError)}
+          refreshState={taggingDataRefreshState}
+          setRefreshState={setTaggingDataRefreshState}
+        />
+      );
+    if (taggingData === null)
+      return (
+        <EntryViewerError
+          message="No data."
+          refreshState={taggingDataRefreshState}
+          setRefreshState={setTaggingDataRefreshState}
+        />
       );
 
     return (
@@ -186,27 +234,26 @@ export function EntryViewer({
         </Button>
       </>
     );
-  }, [taggingData, taggingTableReady]);
+  }, [taggingData, taggingTableReady, taggingDataLoading, taggingDataError]);
   const descriptorTable = useMemo(() => {
     if (!descriptorTableReady) return null;
     if (descriptorDataLoading) return <p>Loading data...</p>;
-    if (descriptorDataError || descriptorData === null) {
+    if (descriptorDataError)
       return (
-        <>
-          <p>
-            An error occured while loading data. {String(descriptorDataError)}
-          </p>
-          <Button
-            type="button"
-            onClick={() => {
-              setDescriptorDataRefreshState(descriptorDataRefreshState + 1);
-            }}
-          >
-            <RefreshCcw />
-          </Button>
-        </>
+        <EntryViewerError
+          message={String(descriptorDataError)}
+          refreshState={descriptorDataRefreshState}
+          setRefreshState={setDescriptorDataRefreshState}
+        />
       );
-    }
+    if (descriptorData === null)
+      return (
+        <EntryViewerError
+          message="No data."
+          refreshState={descriptorDataRefreshState}
+          setRefreshState={setDescriptorDataRefreshState}
+        />
+      );
 
     const descriptorTables = [];
     for (const descriptorName in descriptorData) {
@@ -232,7 +279,12 @@ export function EntryViewer({
         </Button>
       </>
     );
-  }, [descriptorData, descriptorTableReady]);
+  }, [
+    descriptorData,
+    descriptorTableReady,
+    descriptorDataLoading,
+    descriptorDataError,
+  ]);
 
   // END - data tables
 
