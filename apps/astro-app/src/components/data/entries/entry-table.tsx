@@ -75,7 +75,7 @@ export function DatasetTable({
   footer?: null | ReactNode;
   subcolumnVisibility?: boolean;
   readonly?: boolean;
-  explorePath: string;
+  explorePath?: string;
 }) {
   const indexesToDisplay = useMemo(() => {
     const output: Array<number> = [];
@@ -113,7 +113,7 @@ export function DatasetTable({
               <TableRow key={`entry-table-row-${entryIndex}`}>
                 {/* Primary key */}
                 <TableCell key={`entry-table-cell-id-${entryIndex}`}>
-                  {readonly ? (
+                  {readonly || explorePath === undefined ? (
                     String(row[0])
                   ) : (
                     <a href={`${explorePath}?pkey=${row[0]}`}>
