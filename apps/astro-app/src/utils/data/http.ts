@@ -33,9 +33,6 @@ export async function submitEntry(
   values: Record<string, any>,
   csrfEndpoint?: string,
 ): Promise<void> {
-  console.log(`POSTING to: ${endpoint}`);
-  console.log(values);
-
   const headers: HeadersInit = {
     "Content-type": "application/json; charset=UTF-8",
   };
