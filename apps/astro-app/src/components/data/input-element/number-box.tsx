@@ -5,10 +5,16 @@ import { Input } from "@/components/ui/input";
 type InputProps = {
   value: number | null;
   onChange: (val: number) => void;
+  placeholder?: string;
   [key: string]: any;
 };
 
-export function NumberBox({ value, onChange, ...props }: InputProps) {
+export function NumberBox({
+  value,
+  onChange,
+  placeholder,
+  ...props
+}: InputProps) {
   const [valid, setValid] = useState<boolean>(true);
   return (
     <Input
@@ -28,6 +34,7 @@ export function NumberBox({ value, onChange, ...props }: InputProps) {
         onChange(output);
         setValid(true);
       }}
+      placeholder={placeholder}
       aria-invalid={!valid}
       {...props}
     />
