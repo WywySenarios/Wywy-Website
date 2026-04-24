@@ -73,6 +73,38 @@ export function masterDatabaseTaggingEndpoint({
   return `${DATABASE_URL}/${databaseName}/${tableName}/${tableType}`;
 }
 
+export function resolveEndpoint(
+  source: OriginName,
+  table_type: TableType,
+  options:
+    | DATA_ENDPOINT_PARAMS
+    | DESCRIPTOR_ENDPOINT_PARAMS
+    | TAGGING_ENDPOINT_PARAMS,
+) {
+  let endpointHelperTableType: "data" | "descriptors" | "tagging";
+  switch (table_type) {
+    case "data":
+      endpointHelperTableType = "data";
+      break;
+    case "descriptors":
+      endpointHelperTableType = "descriptors";
+      break;
+    case "tag_aliases":
+    case "tag_groups":
+    case "tag_names":
+    case "tags":
+      endpointHelperTableType = "tagging";
+      break;
+  }
+
+  try {
+    return endpointHelpers[source][endpointHelperTableType](options as any);
+  } catch (error) {
+    if (error instanceof Error) return undefined;
+    throw error;
+  }
+}
+
 /**
  * React hook for endpoint selection. Returns undefined on failure.
  * @param source The source of the endpoint.
@@ -89,27 +121,6 @@ export function useEndpoint(
     | TAGGING_ENDPOINT_PARAMS,
 ) {
   return useMemo(() => {
-    let endpointHelperTableType: "data" | "descriptors" | "tagging";
-    switch (table_type) {
-      case "data":
-        endpointHelperTableType = "data";
-        break;
-      case "descriptors":
-        endpointHelperTableType = "descriptors";
-        break;
-      case "tag_aliases":
-      case "tag_groups":
-      case "tag_names":
-      case "tags":
-        endpointHelperTableType = "tagging";
-        break;
-    }
-
-    try {
-      return endpointHelpers[source][endpointHelperTableType](options as any);
-    } catch (error) {
-      if (error instanceof Error) return undefined;
-      throw error;
-    }
+    return resolveEndpoint(source, table_type, options);
   }, [source, table_type, options]);
 }
