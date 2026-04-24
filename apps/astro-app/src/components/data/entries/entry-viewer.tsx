@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { NumberBox } from "../input-element/number-box";
 import { Button } from "@/components/ui/button";
 import { OriginTypePicker } from "../origin-picker";
-import { RefreshCcw } from "lucide-react";
+import { Check, RefreshCcw } from "lucide-react";
 import { Table, TableCell, TableRow } from "@/components/ui/table";
 
 export function EntryViewer({
@@ -163,20 +163,27 @@ export function EntryViewer({
    * Select Origin
    */
   const control = (
-    <>
-      <div>
-        <NumberBox value={tempID} onChange={setTempID} />
+    <div className="flex flex-col justify-center gap-2">
+      <div className="flex flex-row gap-2 items-center">
+        <p>ID: </p>
+        <NumberBox
+          value={tempID}
+          onChange={setTempID}
+          placeholder="Select an ID."
+        />
         <Button
           type="button"
           onClick={() => {
             if (tempID !== null) setId(tempID);
           }}
-        />
+        >
+          <Check />
+        </Button>
       </div>
-      <div>
+      <div className="flex flex-row justify-center">
         <OriginTypePicker origin={origin} setOrigin={setOrigin} />
       </div>
-    </>
+    </div>
   );
 
   if (id === null)
