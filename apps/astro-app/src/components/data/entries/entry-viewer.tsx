@@ -258,7 +258,7 @@ export function EntryViewer({
   const control = (
     <div className="flex flex-col justify-center gap-2">
       <div className="flex flex-row gap-2 items-center">
-        <p>ID: </p>
+        <p className="whitespace-nowrap">ID: {id ?? ""}</p>
         <NumberBox
           value={tempID}
           onChange={setTempID}
