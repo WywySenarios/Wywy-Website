@@ -191,5 +191,11 @@ export function GenericEntryTable({
 
   if (!data) return <p>No data.</p>;
 
-  return <DatasetTable dataset={data} />;
+  return (
+    <DatasetTable
+      dataset={data}
+      explorePath={`/data/${databaseName}/${tableName}/explore/${type}`}
+      readonly={false}
+    />
+  );
 }
