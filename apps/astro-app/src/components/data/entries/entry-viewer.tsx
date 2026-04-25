@@ -17,27 +17,12 @@ import {
 } from "@/components/ui/table";
 import { toSnakeCase } from "@utils/parse";
 import { DatasetTable } from "./entry-table";
+import type { JSX } from "astro/jsx-runtime";
 
-function EntryViewerError({
-  message,
-  refreshState,
-  setRefreshState,
-}: {
-  message: string;
-  refreshState: number;
-  setRefreshState: Dispatch<number>;
-}) {
+function EntryViewerError({ message }: { message: string }) {
   return (
     <>
       <p>An error occured while loading data. {message}</p>
-      <Button
-        type="button"
-        onClick={() => {
-          setRefreshState(refreshState + 1);
-        }}
-      >
-        <RefreshCcw />
-      </Button>
     </>
   );
 }
@@ -149,34 +134,15 @@ export function EntryViewer({
   // START - data tables
   const dataTable = useMemo(() => {
     if (!dataTableReady) return null;
-    if (dataLoading) return <p>Loading data...</p>;
-    if (dataError)
-      return (
-        <EntryViewerError
-          message={String(dataError)}
-          refreshState={dataRefreshState}
-          setRefreshState={setDataRefreshState}
-        />
-      );
-    if (data === null || data.data.length == 0)
-      return (
-        <EntryViewerError
-          message="No data."
-          refreshState={dataRefreshState}
-          setRefreshState={setDataRefreshState}
-        />
-      );
-    if (data.data.length != 1)
-      return (
-        <EntryViewerError
-          message="Unexpected number of rows found."
-          refreshState={dataRefreshState}
-          setRefreshState={setDataRefreshState}
-        />
-      );
-
-    return (
-      <>
+    let body: JSX.Element | null;
+    if (dataLoading) body = <p>Loading data...</p>;
+    else if (dataError) body = <EntryViewerError message={String(dataError)} />;
+    else if (data === null || data.data.length == 0)
+      body = <EntryViewerError message="No data." />;
+    else if (data.data.length != 1)
+      body = <EntryViewerError message="Unexpected number of rows found." />;
+    else
+      body = (
         <Table>
           <TableHeader>
             <TableRow>
@@ -199,6 +165,12 @@ export function EntryViewer({
             })}
           </TableBody>
         </Table>
+      );
+
+    return (
+      <>
+        <h1>Entry Data</h1>
+        {body}
         <Button
           type="button"
           onClick={() => {
@@ -212,27 +184,18 @@ export function EntryViewer({
   }, [data, dataTableReady, dataLoading, dataError]);
   const taggingTable = useMemo(() => {
     if (!taggingTableReady) return null;
-    if (taggingDataLoading) return <p>Loading data...</p>;
-    if (taggingDataError)
-      return (
-        <EntryViewerError
-          message={String(taggingDataError)}
-          refreshState={taggingDataRefreshState}
-          setRefreshState={setTaggingDataRefreshState}
-        />
-      );
-    if (taggingData === null)
-      return (
-        <EntryViewerError
-          message="No data."
-          refreshState={taggingDataRefreshState}
-          setRefreshState={setTaggingDataRefreshState}
-        />
-      );
+    let body: JSX.Element | null;
+    if (taggingDataLoading) body = <p>Loading data...</p>;
+    else if (taggingDataError)
+      body = <EntryViewerError message={String(taggingDataError)} />;
+    else if (taggingData === null)
+      return <EntryViewerError message="No data." />;
+    else body = <DatasetTable dataset={taggingData} explorePath="" />;
 
     return (
       <>
-        <DatasetTable dataset={taggingData} explorePath="" />
+        <h1>Secondary Tags</h1>
+        {body}
         <Button
           type="button"
           onClick={() => {
@@ -246,37 +209,29 @@ export function EntryViewer({
   }, [taggingData, taggingTableReady, taggingDataLoading, taggingDataError]);
   const descriptorTable = useMemo(() => {
     if (!descriptorTableReady) return null;
-    if (descriptorDataLoading) return <p>Loading data...</p>;
-    if (descriptorDataError)
-      return (
-        <EntryViewerError
-          message={String(descriptorDataError)}
-          refreshState={descriptorDataRefreshState}
-          setRefreshState={setDescriptorDataRefreshState}
-        />
-      );
-    if (descriptorData === null)
-      return (
-        <EntryViewerError
-          message="No data."
-          refreshState={descriptorDataRefreshState}
-          setRefreshState={setDescriptorDataRefreshState}
-        />
-      );
-
-    const descriptorTables = [];
-    for (const descriptorName in descriptorData) {
-      descriptorTables.push(
-        <DatasetTable
-          dataset={descriptorData[descriptorName]}
-          explorePath=""
-        />,
-      );
+    let body: JSX.Element | null;
+    if (descriptorDataLoading) body = <p>Loading data...</p>;
+    else if (descriptorDataError)
+      body = <EntryViewerError message={String(descriptorDataError)} />;
+    else if (descriptorData === null)
+      body = <EntryViewerError message="No data." />;
+    else {
+      const descriptorTables = [];
+      for (const descriptorName in descriptorData) {
+        descriptorTables.push(
+          <DatasetTable
+            dataset={descriptorData[descriptorName]}
+            explorePath=""
+          />,
+        );
+      }
+      body = descriptorTables.map((table) => table);
     }
 
     return (
       <>
-        {descriptorTables.map((table) => table)}
+        <h1>Descriptors</h1>
+        {body}
         <Button
           type="button"
           onClick={() => {
