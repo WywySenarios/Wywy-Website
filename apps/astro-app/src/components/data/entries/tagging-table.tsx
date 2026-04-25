@@ -133,8 +133,8 @@ export function TaggingTable({
       <DatasetTable
         dataset={data}
         footer={footer}
-        readonly={true}
-        explorePath={"undefined"}
+        readonly={false}
+        explorePath={`/data/${databaseName}/${tableName}/explore/${type}`}
       ></DatasetTable>
       <Button className="w-full" type="submit">
         <Plus />
