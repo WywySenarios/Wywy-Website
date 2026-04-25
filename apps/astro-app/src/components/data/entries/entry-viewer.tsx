@@ -168,7 +168,7 @@ export function EntryViewer({
       );
 
     return (
-      <>
+      <div className="flex flex-col justify-center">
         <h1>Entry Data</h1>
         {body}
         <Button
@@ -179,7 +179,7 @@ export function EntryViewer({
         >
           <RefreshCcw />
         </Button>
-      </>
+      </div>
     );
   }, [data, dataTableReady, dataLoading, dataError]);
   const taggingTable = useMemo(() => {
@@ -193,7 +193,7 @@ export function EntryViewer({
     else body = <DatasetTable dataset={taggingData} explorePath="" />;
 
     return (
-      <>
+      <div className="flex flex-col justify-items-center">
         <h1>Secondary Tags</h1>
         {body}
         <Button
@@ -204,7 +204,7 @@ export function EntryViewer({
         >
           <RefreshCcw />
         </Button>
-      </>
+      </div>
     );
   }, [taggingData, taggingTableReady, taggingDataLoading, taggingDataError]);
   const descriptorTable = useMemo(() => {
@@ -229,7 +229,7 @@ export function EntryViewer({
     }
 
     return (
-      <>
+      <div className="flex flex-col justify-items-center">
         <h1>Descriptors</h1>
         {body}
         <Button
@@ -240,7 +240,7 @@ export function EntryViewer({
         >
           <RefreshCcw />
         </Button>
-      </>
+      </div>
     );
   }, [
     descriptorData,
@@ -288,7 +288,7 @@ export function EntryViewer({
     );
 
   return (
-    <>
+    <div className="flex flex-col justify-center gap-5">
       {control}
       {/* entry data display */}
       {dataTable}
@@ -297,6 +297,6 @@ export function EntryViewer({
       {/* descriptor data display */}
       {descriptorTable}
       {/* edit entry */}
-    </>
+    </div>
   );
 }
