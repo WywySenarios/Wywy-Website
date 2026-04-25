@@ -115,6 +115,7 @@ let type: undefined | "tags" | "tag_names" | "tag_aliases" | "tag_groups" =
 
 // add descriptor info if needed
 switch (slug) {
+  case "data":
   case undefined:
     schema = tableInfo;
     targetTableName = tableName;
