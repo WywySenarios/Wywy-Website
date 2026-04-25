@@ -18,6 +18,7 @@ import {
 import { toSnakeCase } from "@utils/parse";
 import { DatasetTable } from "./entry-table";
 import type { JSX } from "astro/jsx-runtime";
+import { resolveEndpoint } from "@utils/data/endpoints";
 
 function EntryViewerError({ message }: { message: string }) {
   return (
@@ -189,7 +190,14 @@ export function EntryViewer({
       body = <EntryViewerError message={String(taggingDataError)} />;
     else if (taggingData === null)
       return <EntryViewerError message="No data." />;
-    else body = <DatasetTable dataset={taggingData} explorePath="" />;
+    else
+      body = (
+        <DatasetTable
+          dataset={taggingData}
+          explorePath={`/data/${databaseName}/${tableName}/explore/tags`}
+          readonly={false}
+        />
+      );
 
     return (
       <div className="flex flex-col justify-items-center">
