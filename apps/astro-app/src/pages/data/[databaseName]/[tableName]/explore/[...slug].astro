@@ -20,6 +20,7 @@ export function getStaticPaths() {
       slug?:
         | undefined
         | string
+        | "data"
         | "tags"
         | "tag_names"
         | "tag_aliases"
@@ -36,6 +37,13 @@ export function getStaticPaths() {
         params: {
           databaseName: dbinfo.dbname,
           tableName: tableInfo.tableName,
+        },
+      });
+      output.push({
+        params: {
+          databaseName: dbinfo.dbname,
+          tableName: tableInfo.tableName,
+          slug: "data",
         },
       });
       if (tableInfo.tagging === true) {
