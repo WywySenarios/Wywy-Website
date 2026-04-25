@@ -124,7 +124,7 @@ export function EntryViewer({
       tableName: toSnakeCase(tableName),
       tableType: "tags",
     },
-    refreshState: dataRefreshState,
+    refreshState: taggingDataRefreshState,
     options: {
       parent_id: id,
     },
