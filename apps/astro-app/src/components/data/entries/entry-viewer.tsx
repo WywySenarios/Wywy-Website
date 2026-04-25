@@ -273,7 +273,6 @@ export function EntryViewer({
         />,
       );
     }
-    console.log(descriptorDataError);
 
     return (
       <>
