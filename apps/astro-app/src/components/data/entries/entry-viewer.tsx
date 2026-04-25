@@ -93,10 +93,7 @@ export function EntryViewer({
       databaseName: toSnakeCase(databaseName),
       tableName: toSnakeCase(tableName),
       tableType: type,
-      descriptorName:
-        schema !== undefined && "name" in schema
-          ? toSnakeCase(schema.name)
-          : undefined,
+      descriptorName: descriptorName,
     },
     refreshState: dataRefreshState,
     options: {
