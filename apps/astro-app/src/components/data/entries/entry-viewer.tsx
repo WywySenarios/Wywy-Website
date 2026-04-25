@@ -262,7 +262,7 @@ export function EntryViewer({
         <NumberBox
           value={tempID}
           onChange={setTempID}
-          placeholder="Select an ID."
+          placeholder="Select a new ID."
         />
         <Button
           type="button"
