@@ -18,7 +18,6 @@ import {
 import { toSnakeCase } from "@utils/parse";
 import { DatasetTable } from "./entry-table";
 import type { JSX } from "astro/jsx-runtime";
-import { resolveEndpoint } from "@utils/data/endpoints";
 
 function EntryViewerError({ message }: { message: string }) {
   return (
