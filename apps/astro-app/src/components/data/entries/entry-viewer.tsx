@@ -41,12 +41,11 @@ export function EntryViewer({
   type?: TableType;
 }) {
   const [id, setId] = useState<number | null>(() => {
-    return null;
-    // if (window === undefined) return null;
-    // const primaryKey = Number(
-    //   new URLSearchParams(window.location.search).get("pkey"),
-    // );
-    // return isNaN(primaryKey) ? null : primaryKey;
+    if (window == undefined) return null;
+    const primaryKey = Number(
+      new URLSearchParams(window.location.search).get("pkey"),
+    );
+    return isNaN(primaryKey) ? null : primaryKey;
   });
   const [origin, setOrigin] = useState<OriginName>("cache");
   const [tempID, setTempID] = useState<number | null>(null);
