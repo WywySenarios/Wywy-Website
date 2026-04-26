@@ -1,5 +1,10 @@
 import { CACHE_URL } from "astro:env/client";
 
+export const CSRF_ENDPOITNS = {
+  "master-database": undefined,
+  cache: `${CACHE_URL}/cache/csrf`,
+} as const;
+
 export const CACHE_CSRF_ENDPOINT = `${CACHE_URL}/cache/csrf`;
 
 /**
