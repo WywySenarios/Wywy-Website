@@ -57,7 +57,7 @@ export function EntryViewer({
   descriptorName,
   type = "data",
 }: {
-  schema?: TableInfo | DescriptorInfo | undefined;
+  schema: TableInfo | DescriptorInfo;
   databaseName: string;
   tableName: string;
   descriptorName?: string;
@@ -86,12 +86,11 @@ export function EntryViewer({
   }, [id]);
   const taggingTableReady = useMemo(() => {
     if (id === null) return false;
-    if (schema !== undefined && "tagging" in schema) return schema["tagging"];
+    if ("tagging" in schema) return schema["tagging"];
     return false;
   }, [schema, id]);
   const descriptorTableReady = useMemo(() => {
     if (id === null) return false;
-    if (schema === undefined) return false;
 
     return "descriptors" in schema;
   }, [schema, id]);
@@ -291,10 +290,6 @@ export function EntryViewer({
     switch (type) {
       case "data":
       case "descriptors":
-        if (schema === undefined)
-          throw new TypeError(
-            "Expected a schema for a main table or descriptor.",
-          );
         return getZodEntrySchema(schema);
       case "tag_aliases":
         return TAGGING_TABLE_TAG_ALIASES_SCHEMA;
@@ -308,7 +303,7 @@ export function EntryViewer({
   }, [schema]);
   const controller = useForm({
     resolver: zodResolver(entrySchema),
-    defaultValues: schema === undefined ? {} : getDefaultValues(schema),
+    defaultValues: getDefaultValues(schema),
   });
   function onSubmit(values: z.infer<typeof entrySchema>) {
     const endpoint = resolveEndpoint(origin, type, entryEndpointOptions);
@@ -368,15 +363,12 @@ export function EntryViewer({
       });
   }, [origin]);
   const form = useMemo(() => {
-    if (schema === undefined) return;
-
     if (tagsError) return <p>{tagsError}</p>;
 
     return (
       <form onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}>
         <Columns fieldsToEnter={schema.schema} form={controller} />
-        {schema !== undefined &&
-          "tagging" in schema &&
+        {"tagging" in schema &&
           schema.tagging &&
           (tags === undefined ? (
             <p>Loading...</p>

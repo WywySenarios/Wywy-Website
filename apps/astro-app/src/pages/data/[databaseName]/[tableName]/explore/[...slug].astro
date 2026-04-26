@@ -9,6 +9,10 @@ import Layout from "@/layouts/Layout.astro";
 import { Toaster } from "@/components/ui/sonner";
 import LoginDialog from "@/components/auth/login-dialog";
 import { EntryViewer } from "@/components/data/entries/entry-viewer";
+import { TAGGING_TABLE_TAGS_TABLE_SCHEMA } from "@utils/data/schema";
+import { TAGGING_TABLE_TAG_ALIASES_TABLE_SCHEMA } from "@utils/data/schema";
+import { TAGGING_TABLE_TAG_NAMES_TABLE_SCHEMA } from "@utils/data/schema";
+import { TAGGING_TABLE_TAG_GROUPS_TABLE_SCHEMA } from "@utils/data/schema";
 
 export const prerender = true;
 export function getStaticPaths() {
@@ -121,9 +125,22 @@ switch (slug) {
     targetTableName = tableName;
     break;
   case "tags":
+    schema = { ...tableInfo, ...TAGGING_TABLE_TAGS_TABLE_SCHEMA };
+    type = slug;
+    targetTableName = `${tableName}_${slug}`;
+    break;
   case "tag_names":
+    schema = { ...tableInfo, ...TAGGING_TABLE_TAG_NAMES_TABLE_SCHEMA };
+    type = slug;
+    targetTableName = `${tableName}_${slug}`;
+    break;
   case "tag_aliases":
+    schema = { ...tableInfo, ...TAGGING_TABLE_TAG_ALIASES_TABLE_SCHEMA };
+    type = slug;
+    targetTableName = `${tableName}_${slug}`;
+    break;
   case "tag_groups":
+    schema = { ...tableInfo, ...TAGGING_TABLE_TAG_GROUPS_TABLE_SCHEMA };
     type = slug;
     targetTableName = `${tableName}_${slug}`;
     break;

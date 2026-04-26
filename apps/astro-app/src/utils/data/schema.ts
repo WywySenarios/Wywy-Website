@@ -11,6 +11,79 @@ import { z, ZodNumber, type ZodType } from "zod";
 import { toSnakeCase } from "../parse";
 import type { GeodeticCoordinate } from "../datatypes/geodetic";
 
+// START - tagging table table schemas
+// These are not valid table schemas, nor do they necessarily reflect the true properties of the parent table.
+// To achieve a TableInfo that is very similar to the actual properties of a real table, spread these templates to override attributes of the parent table.
+// e.g. {...parent_table, ...TAGGING_TABLE_TAGS_TABLE_SCHEMA}
+export const TAGGING_TABLE_TAGS_TABLE_SCHEMA = {
+  entrytype: "form" as const,
+  tagging: false,
+  schema: [
+    {
+      name: "entry_id",
+      datatype: "int", // @TODO pointer
+      entrytype: "none",
+    } as const,
+    {
+      name: "tag_id",
+      datatype: "int", // @TODO pointer
+      entrytype: "none",
+    } as const,
+  ],
+  descriptors: [],
+};
+
+export const TAGGING_TABLE_TAG_NAMES_TABLE_SCHEMA = {
+  entrytype: "form" as const,
+  tagging: false,
+  schema: [
+    {
+      name: "tag_name",
+      datatype: "str", // @TODO pointer
+      entrytype: "none",
+      unique: true,
+    } as const,
+  ],
+  descriptors: [],
+};
+
+export const TAGGING_TABLE_TAG_ALIASES_TABLE_SCHEMA = {
+  entrytype: "form" as const,
+  tagging: false,
+  schema: [
+    {
+      name: "alias",
+      datatype: "str",
+      entrytype: "none",
+    } as const,
+    {
+      name: "tag_id",
+      datatype: "int", // @TODO pointer
+      entrytype: "none",
+    } as const,
+  ],
+  descriptors: [],
+};
+
+export const TAGGING_TABLE_TAG_GROUPS_TABLE_SCHEMA = {
+  entrytype: "form" as const,
+  tagging: false,
+  schema: [
+    {
+      name: "tag_id",
+      datatype: "int", // @TODO pointer
+      entrytype: "none",
+    } as const,
+    {
+      name: "group_name",
+      datatype: "str",
+      entrytype: "none",
+    } as const,
+  ],
+  descriptors: [],
+};
+// END - tagging table table schemas
+
 export const TAGGING_TABLE_TAGS_SCHEMA = z.object({
   id: z.number().int().optional(),
   entry_id: z.number().int(),
