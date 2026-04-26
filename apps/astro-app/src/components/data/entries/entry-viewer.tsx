@@ -2,8 +2,13 @@
 
 import type { DescriptorInfo, TableInfo, TableType } from "@/types/data";
 import { type OriginName } from "@/types/http";
-import { useDataset, useDescriptorDatasets } from "@utils/data/http";
-import { useEffect, useMemo, useState, type Dispatch } from "react";
+import {
+  safeFetchDataset,
+  submitEntry,
+  useDataset,
+  useDescriptorDatasets,
+} from "@utils/data/http";
+import { useEffect, useMemo, useState } from "react";
 import { NumberBox } from "../input-element/number-box";
 import { Button } from "@/components/ui/button";
 import { OriginTypePicker } from "../origin-picker";
@@ -18,6 +23,24 @@ import {
 import { toSnakeCase } from "@utils/parse";
 import { DatasetTable } from "./entry-table";
 import type { JSX } from "astro/jsx-runtime";
+import {
+  getZodEntrySchema,
+  TAG_NAMES_DATASET_SCHEMA,
+  TAGGING_TABLE_TAG_ALIASES_SCHEMA,
+  TAGGING_TABLE_TAG_GROUPS_SCHEMA,
+  TAGGING_TABLE_TAG_NAMES_SCHEMA,
+  TAGGING_TABLE_TAGS_SCHEMA,
+  type TAGS_DATASET,
+} from "@utils/data/schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { getDefaultValues } from "@utils/data/default-values";
+import { useForm, type FieldErrors } from "react-hook-form";
+import type z from "zod";
+import { toast } from "sonner";
+import { resolveEndpoint } from "@utils/data/endpoints";
+import { CSRF_ENDPOITNS } from "@utils/auth";
+import { Columns, PrimaryTag } from "../data-entry";
+import { Spinner } from "@/components/ui/spinner";
 
 function EntryViewerError({ message }: { message: string }) {
   return (
@@ -83,18 +106,23 @@ export function EntryViewer({
     setDescriptorDataRefreshState(descriptorDataRefreshState + 1);
   }, [id]);
 
+  const entryEndpointOptions = useMemo(
+    () => ({
+      databaseName: toSnakeCase(databaseName),
+      tableName: toSnakeCase(tableName),
+      tableType: type,
+      descriptorName: descriptorName,
+    }),
+    [databaseName, tableName, type, descriptorName],
+  );
+
   // START - load data
   const [data, dataLoading, dataError] = useDataset({
     valid: dataTableReady,
     table_type: type,
     schema: schema,
     source: origin,
-    endpointOptions: {
-      databaseName: toSnakeCase(databaseName),
-      tableName: toSnakeCase(tableName),
-      tableType: type,
-      descriptorName: descriptorName,
-    },
+    endpointOptions: entryEndpointOptions,
     refreshState: dataRefreshState,
     options: {
       id: id,
@@ -256,8 +284,114 @@ export function EntryViewer({
     descriptorDataLoading,
     descriptorDataError,
   ]);
-
   // END - data tables
+
+  // START - edit entry
+  const entrySchema = useMemo(() => {
+    switch (type) {
+      case "data":
+      case "descriptors":
+        if (schema === undefined)
+          throw new TypeError(
+            "Expected a schema for a main table or descriptor.",
+          );
+        return getZodEntrySchema(schema);
+      case "tag_aliases":
+        return TAGGING_TABLE_TAG_ALIASES_SCHEMA;
+      case "tag_groups":
+        return TAGGING_TABLE_TAG_GROUPS_SCHEMA;
+      case "tag_names":
+        return TAGGING_TABLE_TAG_NAMES_SCHEMA;
+      case "tags":
+        return TAGGING_TABLE_TAGS_SCHEMA;
+    }
+  }, [schema]);
+  const controller = useForm({
+    resolver: zodResolver(entrySchema),
+    defaultValues: schema === undefined ? {} : getDefaultValues(schema),
+  });
+  function onSubmit(values: z.infer<typeof entrySchema>) {
+    const endpoint = resolveEndpoint(origin, type, entryEndpointOptions);
+    if (endpoint === undefined) {
+      console.error("Form submission failed: Could not resolve endpoint.");
+      toast("Form submission failed: Could not resolve endpoint.");
+      return;
+    }
+
+    submitEntry(endpoint, values, CSRF_ENDPOITNS[origin])
+      .then(() => {
+        toast("Form submitted!");
+      })
+      .catch((reason) => {
+        console.error(`Form submission failed: ${reason}`);
+        toast(`Form submission failed: ${reason}`);
+      });
+  }
+  function onSubmitInvalid(errors: FieldErrors) {
+    console.error("Invalid form submission.", errors);
+    toast("Invalid form submission.");
+  }
+  const [tags, setTags] = useState<TAGS_DATASET>();
+  const [tagsLoading, setTagsLoading] = useState(false);
+  const [tagsRefreshState, setTagsRefreshState] = useState(0);
+  const [tagsError, setTagsError] = useState("");
+  useEffect(() => {
+    // only allow one concurrent fetch
+    if (tagsLoading) return;
+    setTagsLoading(true);
+
+    const tagEndpoint = resolveEndpoint(origin, "tag_names", {
+      tableName: toSnakeCase(tableName),
+      databaseName: toSnakeCase(databaseName),
+      tableType: "tag_names",
+    });
+
+    if (tagEndpoint === undefined)
+      throw new Error("Failed to resolve tag names endpoint.");
+
+    // safe fetch dataset
+    safeFetchDataset(tagEndpoint, TAG_NAMES_DATASET_SCHEMA)
+      .then((tagNames) => {
+        setTags(tagNames);
+        controller.resetField("primary_tag", {
+          defaultValue: tagNames["data"][0][0],
+        });
+        setTagsError("");
+      })
+      .catch((reason) => {
+        toast(`Failed to load tags: ${reason}`);
+        setTags(undefined);
+        setTagsError(`An error occured while loading tags: ${reason}`);
+      })
+      .finally(() => {
+        setTagsLoading(false);
+      });
+  }, [origin]);
+  const form = useMemo(() => {
+    if (schema === undefined) return;
+
+    if (tagsError) return <p>{tagsError}</p>;
+
+    return (
+      <form onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}>
+        <Columns fieldsToEnter={schema.schema} form={controller} />
+        {schema !== undefined &&
+          "tagging" in schema &&
+          schema.tagging &&
+          (tags === undefined ? (
+            <p>Loading...</p>
+          ) : (
+            <PrimaryTag
+              tagsDataset={tags}
+              controller={controller}
+              fieldPath="primary_tag"
+            />
+          ))}
+        <Button type="submit">Submit</Button>
+      </form>
+    );
+  }, [schema, controller, tagsLoading]);
+  // END - edit entry
 
   /*
    * Select ID
@@ -283,6 +417,22 @@ export function EntryViewer({
       </div>
       <div className="flex flex-row justify-center">
         <OriginTypePicker origin={origin} setOrigin={setOrigin} />
+        <Button
+          disabled={tagsLoading}
+          onClick={() => {
+            setTagsRefreshState(tagsRefreshState + 1);
+          }}
+        >
+          {tagsLoading ? (
+            <>
+              Loading tags... <Spinner />
+            </>
+          ) : (
+            <>
+              Refresh Tags <RefreshCcw />
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );
@@ -305,6 +455,7 @@ export function EntryViewer({
       {/* descriptor data display */}
       {descriptorTable}
       {/* edit entry */}
+      {form}
     </div>
   );
 }
