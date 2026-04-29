@@ -38,6 +38,7 @@ import { SearchSelect } from "./input-element/search-select";
 import { Controller } from "react-hook-form";
 import { GeodeticPointMinimalInputElement } from "./input-element/geodetic-point-minimal";
 import { toSnakeCase } from "@utils/parse";
+import { NumberBox } from "./input-element/number-box";
 
 export interface FormElementProps {
   form: any;
@@ -221,6 +222,9 @@ function InputElement({
     switch (columnInfo.entrytype) {
       case "textbox":
         body = <Textarea placeholder={columnInfo.defaultValue} {...field} />;
+        break;
+      case "numberbox":
+        body = <NumberBox {...field} />;
         break;
       case "linearSlider":
         body = (

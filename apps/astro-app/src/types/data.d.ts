@@ -77,6 +77,10 @@ type NoRestrictions = {
   entrytype: "none";
 };
 
+type NumberBoxRestrictions = {
+  entrytype: "numberbox";
+};
+
 type SliderRestrictions = {
   entrytype: "linearSlider";
   min?: number;
@@ -116,7 +120,12 @@ type SelectRestrictions = {
 type IntegerColumn = {
   datatype: "int" | "integer";
   defaultValue?: number;
-} & (SliderRestrictions | RadioRestrictions | NoRestrictions);
+} & (
+  | SliderRestrictions
+  | RadioRestrictions
+  | NumberBoxRestrictions
+  | NoRestrictions
+);
 
 type FloatColumn = {
   datatype: "float" | "number";
