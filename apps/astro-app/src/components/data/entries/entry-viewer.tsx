@@ -325,6 +325,17 @@ export function EntryViewer({
     console.error("Invalid form submission.", errors);
     toast("Invalid form submission.");
   }
+  useEffect(() => {
+    if (!dataTableReady || data === null) return;
+
+    // skip ID column if it's not a tag aliases table
+    for (let i = type === "tag_aliases" ? 0 : 1; i < data.columns.length; i++) {
+      // always keep controller data up to date
+      controller.setValue(data.columns[i], data.data[0][i], {
+        shouldValidate: true,
+      });
+    }
+  }, [data]);
   const [tags, setTags] = useState<TAGS_DATASET>();
   const [tagsLoading, setTagsLoading] = useState(false);
   const [tagsRefreshState, setTagsRefreshState] = useState(0);
