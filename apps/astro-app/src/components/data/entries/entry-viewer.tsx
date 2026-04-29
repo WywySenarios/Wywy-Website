@@ -33,7 +33,6 @@ import {
   type TAGS_DATASET,
 } from "@utils/data/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getDefaultValues } from "@utils/data/default-values";
 import { useForm, type FieldErrors } from "react-hook-form";
 import type z from "zod";
 import { toast } from "sonner";
@@ -303,7 +302,7 @@ export function EntryViewer({
   }, [schema]);
   const controller = useForm({
     resolver: zodResolver(entrySchema),
-    defaultValues: getDefaultValues(schema),
+    // defaultValues: getDefaultValues(schema),
   });
   function onSubmit(values: z.infer<typeof entrySchema>) {
     const endpoint = resolveEndpoint(origin, type, entryEndpointOptions);
