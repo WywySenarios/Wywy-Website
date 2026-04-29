@@ -50,7 +50,8 @@ export async function submitEntry(
   });
 
   if (!response.ok) {
-    throw `Response not OK: ${response.status} ${response.statusText}`;
+    const message = await response.text();
+    throw `Response not OK: ${response.status} ${response.statusText}; ${message}`;
   }
 }
 
