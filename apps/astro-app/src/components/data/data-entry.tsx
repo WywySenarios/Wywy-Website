@@ -24,9 +24,12 @@ import { toSnakeCase } from "@utils/parse";
 export function Columns({
   fieldsToEnter,
   form,
+  controllerNamer = (strings: TemplateStringsArray, name: string) =>
+    `data.${strings[0]}${name}${strings[1]}`,
 }: {
   fieldsToEnter: Array<DataColumn>;
   form: any;
+  controllerNamer?: (strings: TemplateStringsArray, name: string) => string;
 }): JSX.Element {
   return (
     <div className="flex flex-col gap-2">
@@ -36,6 +39,7 @@ export function Columns({
             key={columnInfo.name + "-form-element"}
             form={form}
             columnInfo={columnInfo}
+            controllerNamer={controllerNamer}
           />
         );
       })}
