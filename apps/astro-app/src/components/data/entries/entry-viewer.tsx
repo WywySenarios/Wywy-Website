@@ -377,7 +377,13 @@ export function EntryViewer({
 
     return (
       <form onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}>
-        <Columns fieldsToEnter={schema.schema} form={controller} />
+        <Columns
+          fieldsToEnter={schema.schema}
+          form={controller}
+          controllerNamer={(strings: TemplateStringsArray, name: string) =>
+            `${strings[0]}${name}${strings[1]}`
+          }
+        />
         {"tagging" in schema &&
           schema.tagging &&
           (tags === undefined ? (
