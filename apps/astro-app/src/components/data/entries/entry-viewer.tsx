@@ -38,7 +38,7 @@ import { useForm, type FieldErrors } from "react-hook-form";
 import type z from "zod";
 import { toast } from "sonner";
 import { resolveEndpoint } from "@utils/data/endpoints";
-import { CSRF_ENDPOITNS } from "@utils/auth";
+import { CSRF_ENDPOINTS } from "@utils/auth";
 import { Columns, PrimaryTag } from "../data-entry";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -313,7 +313,7 @@ export function EntryViewer({
       return;
     }
 
-    submitEntry(endpoint, values, CSRF_ENDPOITNS[origin])
+    submitEntry(endpoint, values, CSRF_ENDPOINTS[origin])
       .then(() => {
         toast("Form submitted!");
       })
