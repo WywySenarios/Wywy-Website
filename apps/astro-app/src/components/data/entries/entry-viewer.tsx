@@ -34,7 +34,7 @@ import {
 } from "@utils/data/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type FieldErrors } from "react-hook-form";
-import type z from "zod";
+import z from "zod";
 import { toast } from "sonner";
 import { resolveEndpoint } from "@utils/data/endpoints";
 import { CSRF_ENDPOINTS } from "@utils/auth";
@@ -289,7 +289,9 @@ export function EntryViewer({
     switch (type) {
       case "data":
       case "descriptors":
-        return getZodEntrySchema(schema);
+        return getZodEntrySchema(schema).extend({
+          id: z.number().int().min(1),
+        });
       case "tag_aliases":
         return TAGGING_TABLE_TAG_ALIASES_SCHEMA;
       case "tag_groups":
@@ -328,8 +330,7 @@ export function EntryViewer({
   useEffect(() => {
     if (!dataTableReady || data === null) return;
 
-    // skip ID column if it's not a tag aliases table
-    for (let i = type === "tag_aliases" ? 0 : 1; i < data.columns.length; i++) {
+    for (let i = 0; i < data.columns.length; i++) {
       // always keep controller data up to date
       controller.setValue(data.columns[i], data.data[0][i], {
         shouldValidate: true,
