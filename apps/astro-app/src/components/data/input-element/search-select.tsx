@@ -1,5 +1,4 @@
 "use client";
-import * as React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,23 +15,24 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useMemo, useState } from "react";
 
 export type SearchSelectItem = Record<"value" | "label", string>;
 export type SearchSelectData = Record<"value" | "label", string>[];
 
 export function SearchSelect({
   data,
-  value,
   defaultValue,
+  value,
   onChange,
 }: {
   data: SearchSelectData;
-  value: string;
-  defaultValue?: string;
+  value?: string;
+  defaultValue: string;
   onChange: (value: string) => void;
 }) {
-  const [open, setOpen] = React.useState(false);
-  const [label, setLabel] = React.useState<string>(() => {
+  const [open, setOpen] = useState(false);
+  const label = useMemo(() => {
     if (!value) return "Select...";
 
     const currentItem: SearchSelectItem | undefined = data.find(
@@ -41,7 +41,7 @@ export function SearchSelect({
     if (currentItem) return currentItem.label;
     else
       throw TypeError("SearchSelectData does not contain the initial value.");
-  });
+  }, [value]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -74,9 +74,8 @@ export function SearchSelect({
                 <CommandItem
                   key={item.value}
                   value={item.label}
-                  onSelect={(newValue: string) => {
+                  onSelect={(name: string) => {
                     onChange(item.value);
-                    setLabel(item.label);
                     setOpen(false);
                   }}
                 >

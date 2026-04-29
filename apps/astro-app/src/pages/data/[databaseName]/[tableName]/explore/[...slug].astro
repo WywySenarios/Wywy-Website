@@ -6,9 +6,13 @@ import type { DatabaseInfo, DescriptorInfo, TableInfo } from "@/types/data";
 import config from "@universal_root/config.yml";
 import Layout from "@/layouts/Layout.astro";
 
-import { EntryTable } from "@/components/data/entries/entry-table-page";
 import { Toaster } from "@/components/ui/sonner";
 import LoginDialog from "@/components/auth/login-dialog";
+import { EntryViewer } from "@/components/data/entries/entry-viewer";
+import { TAGGING_TABLE_TAGS_TABLE_SCHEMA } from "@utils/data/schema";
+import { TAGGING_TABLE_TAG_ALIASES_TABLE_SCHEMA } from "@utils/data/schema";
+import { TAGGING_TABLE_TAG_NAMES_TABLE_SCHEMA } from "@utils/data/schema";
+import { TAGGING_TABLE_TAG_GROUPS_TABLE_SCHEMA } from "@utils/data/schema";
 
 export const prerender = true;
 export function getStaticPaths() {
@@ -20,6 +24,7 @@ export function getStaticPaths() {
       slug?:
         | undefined
         | string
+        | "data"
         | "tags"
         | "tag_names"
         | "tag_aliases"
@@ -36,6 +41,13 @@ export function getStaticPaths() {
         params: {
           databaseName: dbinfo.dbname,
           tableName: tableInfo.tableName,
+        },
+      });
+      output.push({
+        params: {
+          databaseName: dbinfo.dbname,
+          tableName: tableInfo.tableName,
+          slug: "data",
         },
       });
       if (tableInfo.tagging === true) {
@@ -88,22 +100,17 @@ if (slug) {
     " Entry Editor";
 }
 
-function invalidConfig(message?: string): Response {
-  // @TODO more communicative and fancier redirect page (maybe to a home page in /data?)
-  return Astro.redirect("/");
-}
-
 const databaseInfo: DatabaseInfo | undefined = config.data.find(
   (databaseInfo: DatabaseInfo) => databaseInfo.dbname == databaseName,
 );
 if (!databaseInfo) {
-  return invalidConfig();
+  throw TypeError("No database schema supplied.");
 }
 const tableInfo: TableInfo | undefined = databaseInfo.tables.find(
   (tableInfo) => tableInfo.tableName == tableName,
 );
 if (!tableInfo) {
-  return invalidConfig();
+  throw TypeError("No table schema supplied.");
 }
 let targetTableName: string = "";
 let schema: TableInfo | DescriptorInfo | undefined = undefined;
@@ -112,14 +119,28 @@ let type: undefined | "tags" | "tag_names" | "tag_aliases" | "tag_groups" =
 
 // add descriptor info if needed
 switch (slug) {
+  case "data":
   case undefined:
     schema = tableInfo;
     targetTableName = tableName;
     break;
   case "tags":
+    schema = { ...tableInfo, ...TAGGING_TABLE_TAGS_TABLE_SCHEMA };
+    type = slug;
+    targetTableName = `${tableName}_${slug}`;
+    break;
   case "tag_names":
+    schema = { ...tableInfo, ...TAGGING_TABLE_TAG_NAMES_TABLE_SCHEMA };
+    type = slug;
+    targetTableName = `${tableName}_${slug}`;
+    break;
   case "tag_aliases":
+    schema = { ...tableInfo, ...TAGGING_TABLE_TAG_ALIASES_TABLE_SCHEMA };
+    type = slug;
+    targetTableName = `${tableName}_${slug}`;
+    break;
   case "tag_groups":
+    schema = { ...tableInfo, ...TAGGING_TABLE_TAG_GROUPS_TABLE_SCHEMA };
     type = slug;
     targetTableName = `${tableName}_${slug}`;
     break;
@@ -129,7 +150,7 @@ switch (slug) {
         descriptorInfo.name == slug.slice("descriptors/".length),
     );
     if (!schema) {
-      return invalidConfig(
+      throw Error(
         `Descriptor "${slug.slice("descriptors/".length)}" not found.`,
       );
     }
@@ -144,12 +165,12 @@ switch (slug) {
   useAstroDefaultCSS={false}
 >
   <LoginDialog client:load slot="top-bar-button2" />
-  <EntryTable
+  <EntryViewer
     schema={schema}
     databaseName={databaseName}
     tableName={tableName}
     type={type}
-    client:load
+    client:only
   />
   <Toaster client:idle />
 </Layout>

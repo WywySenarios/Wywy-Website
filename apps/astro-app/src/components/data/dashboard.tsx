@@ -5,12 +5,12 @@ import type {
   VectorDataset,
 } from "@/types/data";
 import type { DashboardComponentBaseSchema } from "@/types/dashboard";
-import { getZodDatasetType } from "@/utils/data";
+import { getZodDatasetType } from "@utils/data/schema";
 import { toSnakeCase } from "@utils/parse";
 import { DATABASE_URL } from "astro:env/client";
 import React, { useEffect, useMemo, useState, type JSX } from "react";
 import { toast } from "sonner";
-import { MATH } from "@/utils/math";
+import { MATH } from "@utils/math";
 import { GenericChart } from "./chart";
 
 /**

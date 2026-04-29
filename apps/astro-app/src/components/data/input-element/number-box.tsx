@@ -3,22 +3,17 @@ import { useState, type ChangeEvent } from "react";
 import { Input } from "@/components/ui/input";
 
 type InputProps = {
-  value: number;
+  value: number | null;
   onChange: (val: number) => void;
   [key: string]: any;
 };
 
 export function NumberBox({ value, onChange, ...props }: InputProps) {
-  const [valid, setValid] = useState<boolean>(true);
+  const [valid, setValid] = useState<boolean>(value === null);
   return (
     <Input
-      value={value}
+      value={value === null || !valid ? "" : value}
       onChange={(e: ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.value) {
-          setValid(true);
-          return;
-        }
-
         let output: number = parseInt(e.target.value);
         if (isNaN(output)) {
           setValid(false);

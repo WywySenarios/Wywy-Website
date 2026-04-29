@@ -1,4 +1,4 @@
-import { type NumberLike, toNumber } from "@/utils/math";
+import { type NumberLike, toNumber } from "@utils/math";
 
 export function number_subtraction(x: number, ...args: number[]) {
   return x - args.reduce((accumulatedValue, value) => accumulatedValue + value);

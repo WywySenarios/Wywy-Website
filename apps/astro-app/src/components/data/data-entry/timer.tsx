@@ -1,49 +1,78 @@
 import type { TableInfo } from "@/types/data";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
-import { createFormSchemaAndHandlers } from "@/components/data/form-helper";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { Columns, Descriptors, Tags } from "@/components/data/data-entry";
 import type z from "zod";
 import { toast } from "sonner";
-import { getCSRFToken } from "@utils/auth";
-import {
-  handleRecordOn,
-  parseDatabaseValue,
-  serializeFormOutput,
-  type formOutput,
-} from "@utils/data";
-import type { JSONValue } from "@utils/http";
+import { CACHE_CSRF_ENDPOINT, getCSRFToken } from "@utils/auth";
+import { parseDatabaseValue } from "@utils/data/deserialization";
+import { handleRecordOn } from "@utils/data/form/updates";
+import type { JSONValue } from "@/types/http";
 import { CACHE_URL } from "astro:env/client";
 import { RefreshCcw, Upload } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
-import { GeodeticCoordinate } from "@root/src/utils/datatypes/geodetic";
+import { GeodeticCoordinate } from "@utils/datatypes/geodetic";
+import { createFormController } from "@/utils/data/form/full-entry-handlers";
+import { safeFetchDataset, submitEntry } from "@/utils/data/http";
+import type { FieldErrors } from "react-hook-form";
+import {
+  TAG_NAMES_DATASET_SCHEMA,
+  type TAG_NAMES_DATASET,
+} from "@utils/data/schema";
+import { toSnakeCase } from "@utils/parse";
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+/**
+ * Helper to a load tag names dataset. Assumes that only one concurrent fetch can occur.
+ * @param endpoint The endpoint to GET.
+ * @param setTagNames The setter for the tagNames dataset.
+ * @param setTagsLoading The setter for the loading state.
+ */
+function loadTagNames(
+  endpoint: string,
+  setTagNames: Dispatch<SetStateAction<TAG_NAMES_DATASET | undefined>>,
+  setTagsLoading: Dispatch<SetStateAction<boolean>>,
+) {
+  // only allow one concurrent fetch
+  setTagsLoading(true);
+
+  // safe fetch dataset
+  safeFetchDataset(endpoint, TAG_NAMES_DATASET_SCHEMA)
+    .then((tagNames) => {
+      setTagNames(tagNames);
+    })
+    .catch((reason) => {
+      toast(`Failed to load tags: ${reason}`);
+      setTagNames(undefined);
+    })
+    .finally(() => {
+      setTagsLoading(false);
+    });
 }
 
 /**
  * Timer based form component. Expects "Start Time" & "End Time" columns to be present.
  * @param databaseName The name of the database that this form gathers data for.
  * @param tableInfo The full table schema.
- * @param dbURL The URL that the form will post to on submit.
  */
 export function TimerForm({
   databaseName,
   tableInfo,
+  submissionCallback = () => {},
 }: {
   databaseName: string;
   tableInfo: TableInfo;
+  submissionCallback?: () => void;
 }) {
-  const [startTime, setStartTime] = useState<Date | undefined>(undefined);
   const [isSplit, setIsSplit] = useState<boolean>(false);
+  const [tagNames, setTagNames] = useState<TAG_NAMES_DATASET>();
+  const [tagsLoading, setTagsLoading] = useState<boolean>(false);
+  const [tagsRefreshState, setTagsRefreshState] = useState<number>(0);
   const [isCaching, setIsCaching] = useState<boolean>(false);
   const [cacheError, setCacheError] = useState<boolean>(false);
   const [data, setData] = useState<Record<string, any>>({});
 
   const isStart: boolean = Object.keys(data).length > 0;
-  const { form, formSchema, onSubmit, onSubmitInvalid } =
-    createFormSchemaAndHandlers(databaseName, tableInfo, CACHE_URL);
+  const { controller, schema } = createFormController(tableInfo);
 
   function fetchCache() {
     // only allow one concurrent fetch
@@ -57,9 +86,9 @@ export function TimerForm({
       headers: {},
     })
       .then((res: Response) => {
-        if (res.status == 403) {
+        if (!res.ok) {
           toast(
-            "Something went wrong while fetching the start/end time: Invalid credentials.",
+            `Something went wrong while fetching the start/end time: ${res.status} ${res.statusText}`,
           );
           setIsCaching(false);
           setCacheError(true);
@@ -70,27 +99,13 @@ export function TimerForm({
           .json()
           .then((body: Record<string, JSONValue>) => {
             let output: Record<string, any> = {};
-            for (let columnSchema of tableInfo.schema) {
-              if (columnSchema.name in body) {
+            for (const columnSchema of tableInfo.schema) {
+              const columnName = toSnakeCase(columnSchema.name);
+              if (columnName in body) {
                 // transform dates to UTC
                 switch (columnSchema.datatype) {
-                  case "time":
-                  case "date":
-                  case "timestamp":
-                    if (typeof body[columnSchema.name] != "string") {
-                      toast(
-                        "Expected datatype string for time-related column.",
-                      );
-                      setCacheError(true);
-                      return;
-                    }
-                    output[columnSchema.name] = parseDatabaseValue(
-                      (body[columnSchema.name] as string).slice(1, -1) + "Z",
-                      columnSchema.datatype,
-                    );
-                    break;
                   case "geodetic point":
-                    if (typeof body[columnSchema.name] != "string") {
+                    if (typeof body[columnName] != "string") {
                       toast(
                         "Expected datatype string for geodetic point column.",
                       );
@@ -101,34 +116,32 @@ export function TimerForm({
                     let altitude_accuracy: number | null = null;
 
                     if (
-                      `${columnSchema.name}_latlong_accuracy` in body &&
-                      typeof body[`${columnSchema.name}_latlong_accuracy`] ==
-                        "number"
+                      `${columnName}_latlong_accuracy` in body &&
+                      typeof body[`${columnName}_latlong_accuracy`] == "number"
                     ) {
                       latlong_accuracy = body[
-                        `${columnSchema.name}_latlong_accuracy`
+                        `${columnName}_latlong_accuracy`
                       ] as number;
                     }
 
                     if (
-                      `${columnSchema.name}_altitude_accuracy` in body &&
-                      typeof body[`${columnSchema.name}_altitude_accuracy`] ==
-                        "number"
+                      `${columnName}_altitude_accuracy` in body &&
+                      typeof body[`${columnName}_altitude_accuracy`] == "number"
                     ) {
                       latlong_accuracy = body[
-                        `${columnSchema.name}_altitude_accuracy`
+                        `${columnName}_altitude_accuracy`
                       ] as number;
                     }
 
-                    output[columnSchema.name] = new GeodeticCoordinate(
-                      body[columnSchema.name] as string,
+                    output[columnName] = new GeodeticCoordinate(
+                      body[columnName] as string,
                       latlong_accuracy,
                       altitude_accuracy,
                     );
                     break;
                   default:
-                    output[columnSchema.name] = parseDatabaseValue(
-                      body[columnSchema.name],
+                    output[columnName] = parseDatabaseValue(
+                      body[columnName],
                       columnSchema.datatype,
                     );
                     break;
@@ -139,6 +152,7 @@ export function TimerForm({
             }
 
             setData(output);
+            setIsCaching(false);
             setCacheError(false);
           })
           .catch((reason: any) => {
@@ -161,45 +175,63 @@ export function TimerForm({
   // initally try to GET the start time
   useEffect(fetchCache, []);
 
-  // automatically update the cache when the user changes either the start or the end time.
-  // only update when desired & valid
   useEffect(() => {
-    if (cacheError || !isCaching) return;
-    // @TODO generalize
-    setStartTime(data["Start Time"]);
-
-    // update form values
-
-    // @TODO restore all default values
-    let descriptorDefaultValues: Record<string, Array<Object>> = {};
-    if (tableInfo.descriptors) {
-      for (let descriptor of tableInfo.descriptors) {
-        descriptorDefaultValues[descriptor.name] = [];
-      }
+    // always keep controller data up to date
+    for (const key in data) {
+      controller.setValue(`data.${key}`, data[key], {
+        shouldValidate: true,
+        shouldTouch: false,
+      });
     }
 
-    form.reset({ data: data, descriptors: descriptorDefaultValues });
+    // automatically update the cache when the user changes either the start or the end time.
+    // only update when desired & valid
+    if (cacheError || !isCaching) return;
+    // update form values
 
     cache();
   }, [data]);
+
+  // fetch tags
+  useEffect(() => {
+    // require no cache error & split
+    if (!isSplit || cacheError) return;
+
+    // only allow one concurrent fetch
+    if (tagsLoading) return;
+    setTagsLoading(true);
+
+    // safe fetch dataset
+    safeFetchDataset(
+      `${CACHE_URL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}/tag_names`,
+      TAG_NAMES_DATASET_SCHEMA,
+    )
+      .then((tagNames) => {
+        setTagNames(tagNames);
+        controller.resetField("data.primary_tag", {
+          defaultValue: tagNames["data"][0][0],
+        });
+      })
+      .catch((reason) => {
+        toast(`Failed to load tags: ${reason}`);
+        setTagNames(undefined);
+      })
+      .finally(() => {
+        setTagsLoading(false);
+      });
+  }, [isSplit, cacheError, tagsRefreshState]);
 
   /**
    * Stores the startTime and endTime into the cache.
    */
   function cache() {
-    let output: formOutput = serializeFormOutput(
-      { data: data },
-      false,
-      tableInfo,
-    );
-
     // store values in cache
     // @TODO don't hardcode start_time & end_time
-    getCSRFToken(CACHE_URL)
+    getCSRFToken(CACHE_CSRF_ENDPOINT)
       .then((csrftoken: string) => {
         fetch(`${CACHE_URL}/cache/${databaseName}/${tableInfo.tableName}`, {
           method: "POST",
-          body: JSON.stringify(output.data),
+          body: JSON.stringify(data),
           mode: "cors",
           credentials: "include",
           headers: {
@@ -207,14 +239,21 @@ export function TimerForm({
             "X-CSRFToken": csrftoken,
           },
         })
+          .then((response) => {
+            const newErrorState = !response.ok;
+            if (newErrorState) {
+              toast(
+                `Something went wrong when trying to store the start or end time: ${response.status} ${response.statusText}`,
+              );
+            }
+
+            setCacheError(newErrorState);
+          })
           .catch((reason) => {
             toast(
               `Something went wrong when trying to store the start or end time: ${reason}`,
             );
             setCacheError(true);
-          })
-          .then(() => {
-            setCacheError(false);
           });
       })
       .catch((reason: string) => {
@@ -235,7 +274,7 @@ export function TimerForm({
 
     setIsSplit(false);
 
-    handleRecordOn({}, tableInfo, "start", form, toast)
+    handleRecordOn({}, tableInfo, "start", toast)
       .then((newData: Record<string, any>) => {
         setData(newData);
       })
@@ -253,7 +292,7 @@ export function TimerForm({
     if (isCaching) return;
     setIsCaching(true);
 
-    handleRecordOn(data, tableInfo, "split", form, toast)
+    handleRecordOn(data, tableInfo, "split", toast)
       .then((newData: Record<string, any>) => {
         setData(newData);
         setIsSplit(true);
@@ -271,7 +310,7 @@ export function TimerForm({
     if (isCaching) return;
     setIsCaching(true);
 
-    handleRecordOn(data, tableInfo, "split", form, toast, "purge")
+    handleRecordOn(data, tableInfo, "split", toast, "purge")
       .then((newData: Record<string, any>) => {
         setData(newData);
         setIsSplit(false);
@@ -294,22 +333,38 @@ export function TimerForm({
     setData({});
   }
 
-  function submission(
-    values: z.infer<typeof formSchema>,
+  function onSubmit(
+    values: z.infer<typeof schema>,
     event?: React.BaseSyntheticEvent,
   ): void {
     const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
     const action = submitter?.getAttribute("value");
 
-    onSubmit(values);
+    submitEntry(
+      `${CACHE_URL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}`,
+      values,
+      CACHE_CSRF_ENDPOINT,
+    )
+      .then(() => {
+        toast("Form submitted!");
+        submissionCallback();
+        switch (action) {
+          case "split":
+            start();
+            break;
+          default:
+            cancel();
+        }
+      })
+      .catch((reason) => {
+        toast(`Form submission failed: ${reason}`);
+        console.log(`Form submission failed: ${reason}`);
+      });
+  }
 
-    switch (action) {
-      case "split":
-        start();
-        break;
-      default:
-        cancel();
-    }
+  function onSubmitInvalid(errors: FieldErrors<z.infer<typeof schema>>) {
+    console.error("Invalid form submission.", errors);
+    toast("Invalid form submission.");
   }
 
   if (cacheError)
@@ -328,9 +383,35 @@ export function TimerForm({
     );
 
   if (isSplit) {
+    if (tagsLoading)
+      return (
+        <div className="flex flex-col items-center">
+          <p>Loading tags...</p>
+          <Button disabled={true}>
+            <Spinner />
+          </Button>
+        </div>
+      );
+
+    if (tagNames === undefined)
+      return (
+        <div className="flex flex-col items-center">
+          <p>Error while loading tags.</p>
+          <Button
+            onClick={() => {
+              if (!tagsLoading) {
+                setTagsRefreshState(tagsRefreshState + 1);
+              }
+            }}
+          >
+            <RefreshCcw />
+          </Button>
+        </div>
+      );
+
     return (
       <form
-        onSubmit={form.handleSubmit(submission, onSubmitInvalid)}
+        onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}
         className="flex flex-col gap-4"
       >
         <Button type="button" disabled={isCaching} onClick={cancelSplit}>
@@ -346,15 +427,13 @@ export function TimerForm({
         {/* Submit button */}
         <Button type="submit">Submit</Button>
         {/* Columns */}
-        <Columns fieldsToEnter={tableInfo.schema} form={form} />
+        <Columns fieldsToEnter={tableInfo.schema} form={controller} />
         {/* Quick actions */}
         {/* Tags */}
-        {tableInfo.tagging && (
-          <Tags databaseName={databaseName} tableInfo={tableInfo} form={form} />
-        )}
+        {tableInfo.tagging && <Tags tagsDataset={tagNames} form={controller} />}
         {/* Descriptors */}
         {tableInfo.descriptors && (
-          <Descriptors tableInfo={tableInfo} form={form} />
+          <Descriptors tableInfo={tableInfo} form={controller} />
         )}
         {/* Submit & restart button */}
         <Button type="submit" value="split">
@@ -378,7 +457,7 @@ export function TimerForm({
 
   return (
     <div className="flex flex-col items-center">
-      <p>{isStart ? startTime?.toLocaleString() : "No start time."}</p>
+      <p>{isStart ? data["start_time"].toLocaleString() : "No start time."}</p>
       <div className="flex flex-row justify-center">
         <Button
           className="min-w-[16ch]"

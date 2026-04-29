@@ -9,26 +9,26 @@
 import type { DatabaseInfo, TableInfo } from "src/env";
 import config from "@universal_root/config.yml";
 import Layout from "@/layouts/Layout.astro";
-import DatasetControlPanel from "@root/src/components/data/chart/dataset-control-panel";
+import DatasetControlPanel from "@/components/data/chart/dataset-control-panel";
 import LoginDialog from "@/components/auth/login-dialog";
 
 export const prerender = true;
 export function getStaticPaths() {
-    let output: Array<{ params: { databaseName: string; tableName: string } }> =
-        [];
+  let output: Array<{ params: { databaseName: string; tableName: string } }> =
+    [];
 
-    Object.values(config.data as DatabaseInfo[]).map((dbinfo: DatabaseInfo) =>
-        Object.values(dbinfo.tables).map((tableInfo: TableInfo) => {
-            output.push({
-                params: {
-                    databaseName: dbinfo.dbname,
-                    tableName: tableInfo.tableName,
-                },
-            });
-        }),
-    );
+  Object.values(config.data as DatabaseInfo[]).map((dbinfo: DatabaseInfo) =>
+    Object.values(dbinfo.tables).map((tableInfo: TableInfo) => {
+      output.push({
+        params: {
+          databaseName: dbinfo.dbname,
+          tableName: tableInfo.tableName,
+        },
+      });
+    }),
+  );
 
-    return output;
+  return output;
 } // It's crucial that this page loads as quickly as possible to provide the best experience.
 
 const { databaseName, tableName } = Astro.params;
@@ -37,39 +37,39 @@ const { databaseName, tableName } = Astro.params;
 let tableSchema: TableInfo | undefined = undefined;
 
 for (const dbinfo of config.data as DatabaseInfo[]) {
-    if (dbinfo.dbname === databaseName) {
-        for (const tableInfo of dbinfo.tables) {
-            if (tableInfo.tableName === tableName) {
-                tableSchema = tableInfo;
-                break;
-            }
-        }
+  if (dbinfo.dbname === databaseName) {
+    for (const tableInfo of dbinfo.tables) {
+      if (tableInfo.tableName === tableName) {
+        tableSchema = tableInfo;
         break;
+      }
     }
+    break;
+  }
 }
 
 if (!tableSchema) {
-    throw new Error(`Table schema for ${databaseName}/${tableName} not found.`);
+  throw new Error(`Table schema for ${databaseName}/${tableName} not found.`);
 }
 
 const pageTitle: string =
-    databaseName.charAt(0).toUpperCase() +
-    databaseName.slice(1) +
-    "/" +
-    tableName.charAt(0).toUpperCase() +
-    tableName.slice(1) +
-    " Graphs";
+  databaseName.charAt(0).toUpperCase() +
+  databaseName.slice(1) +
+  "/" +
+  tableName.charAt(0).toUpperCase() +
+  tableName.slice(1) +
+  " Graphs";
 ---
 
 <Layout
-    title={pageTitle}
-    css_color_palette="light_mode"
-    useAstroDefaultCSS={false}
+  title={pageTitle}
+  css_color_palette="light_mode"
+  useAstroDefaultCSS={false}
 >
-    <LoginDialog client:load slot="top-bar-button2" />
-    <DatasetControlPanel
-        databaseName={databaseName}
-        tableSchema={tableSchema}
-        client:load
-    />
+  <LoginDialog client:load slot="top-bar-button2" />
+  <DatasetControlPanel
+    databaseName={databaseName}
+    tableSchema={tableSchema}
+    client:load
+  />
 </Layout>

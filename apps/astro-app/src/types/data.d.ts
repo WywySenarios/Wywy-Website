@@ -1,4 +1,4 @@
-import { DashboardComponentBaseSchema } from "dashboard";
+import { DashboardComponentBaseSchema } from "./dashboard";
 
 // START - Schema
 export interface DatabaseInfo {
@@ -50,6 +50,17 @@ export type Datatype =
   | "enum"
   | "geodetic point";
 
+export type ResolvedDatatype =
+  | "int"
+  | "number"
+  | "str"
+  | "bool"
+  | "date"
+  | "time"
+  | "timestamp"
+  | "enum"
+  | "geodetic point";
+
 export interface GeodeticCoordinates {
   latitude: number;
   longitude: number;
@@ -66,8 +77,8 @@ type NoRestrictions = {
   entrytype: "none";
 };
 
-type TextboxRestrictiions = {
-  entrytype: "textbox";
+type NumberBoxRestrictions = {
+  entrytype: "numberbox";
 };
 
 type SliderRestrictions = {
@@ -109,42 +120,51 @@ type SelectRestrictions = {
 type IntegerColumn = {
   datatype: "int" | "integer";
   defaultValue?: number;
-} & (SliderRestrictions | RadioRestrictions);
+} & (
+  | SliderRestrictions
+  | RadioRestrictions
+  | NumberBoxRestrictions
+  | NoRestrictions
+);
 
 type FloatColumn = {
   datatype: "float" | "number";
   defaultValue?: number;
-} & (SliderRestrictions | RadioRestrictions);
+} & (SliderRestrictions | RadioRestrictions | NoRestrictions);
 
 type StringColumn = {
   datatype: "string" | "str" | "text";
+  entrytype: "textbox" | "none";
   defaultValue?: string;
-} & TextboxRestrictiions;
+};
 
 type BooleanColumn = {
   datatype: "bool" | "boolean";
   defaultValue?: boolean;
-} & (RadioRestrictions | SwitchRestrictions);
+} & (RadioRestrictions | SwitchRestrictions | NoRestrictions);
 
 type DateColumn = {
   datatype: "date";
   defaultValue?: string; // @TODO consider switching datatypes?
-} & DateRestrictions;
+} & (DateRestrictions | NoRestrictions);
 
 type TimeColumn = {
   datatype: "time";
+  entrytype: "time" | "none";
   defaultValue?: string; // @TODO consider switching datatypes?
-} & TimeRestrictions;
+};
 
 type TimestampColumn = {
   datatype: "timestamp";
+  entrytype: "calendar time" | "none";
   defaultValue?: string; // @TODO consider switching datatypes?
-} & TimestampRestrictions;
+};
 
 type EnumColumn = {
   datatype: "enum";
+  values: [string, ...string[]];
   defaultValue: string; // @TODO ensure defaultValue is within values
-} & SelectRestrictions;
+} & (SelectRestrictions | NoRestrictions);
 
 type GeodeticPointColumn = {
   datatype: "geodetic point";
@@ -156,9 +176,6 @@ export type DataColumn = {
   name: string;
   parser?: Datatype;
   datatype: Datatype;
-  // Definitely optional:
-  //@TODO add regex restrictions
-  // restrictions?: Array<[number, number]>
   invalidInputMessage?: string;
   comments?: boolean;
   description?: string;
@@ -175,6 +192,11 @@ export type DataColumn = {
   | EnumColumn
   | GeodeticPointColumn
 );
+
+export type ResolvedColumnSchema = DataColumn & {
+  entrytype: "none";
+  datatype: ResolvedDatatype;
+};
 // END - Schema
 
 // START - Datasets
@@ -190,3 +212,12 @@ export type FullDataset = Record<string, Dataset>;
 
 export type VectorDataset = Record<string, Array<any>>;
 // END - Datasets
+
+// Basic table type.
+export type TableType =
+  | "data"
+  | "descriptors"
+  | "tags"
+  | "tag_names"
+  | "tag_aliases"
+  | "tag_groups";

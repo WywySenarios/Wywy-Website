@@ -23,14 +23,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Slider } from "@/components/ui/slider/labelslider";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@root/src/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar24 } from "@root/src/components/data/input-element/timestamp-picker";
-import { TimePicker } from "@root/src/components/ui/time-picker";
+import { TimestampPicker } from "@/components/data/input-element/timestamp-picker";
 import {
   Popover,
   PopoverTrigger,
@@ -38,12 +34,11 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import type { DataColumn, EnumColumn, SelectRestrictions } from "@/types/data";
-import {
-  SearchSelect,
-  type SearchSelectData,
-} from "./input-element/search-select";
+import { SearchSelect } from "./input-element/search-select";
 import { Controller } from "react-hook-form";
 import { GeodeticPointMinimalInputElement } from "./input-element/geodetic-point-minimal";
+import { toSnakeCase } from "@utils/parse";
+import { NumberBox } from "./input-element/number-box";
 
 export interface FormElementProps {
   form: any;
@@ -58,7 +53,7 @@ export function ConstantFormElement({
   controllerNamer = (strings: TemplateStringsArray, name: string) =>
     `data.${strings[0]}${name}${strings[1]}`,
 }: FormElementProps & { label?: string }): JSX.Element {
-  type StringArray = string[];
+  const columnName = toSnakeCase(columnInfo.name);
 
   function checkForLabels(
     column: DataColumn,
@@ -72,8 +67,8 @@ export function ConstantFormElement({
   return (
     <Controller
       control={form.control}
-      name={controllerNamer`${columnInfo.name}`}
-      key={columnInfo.name + "-field"}
+      name={controllerNamer`${columnName}`}
+      key={columnName + "-field"}
       render={({ field }) => (
         <p>
           {checkForLabels(columnInfo)?.labels?.at(
@@ -131,13 +126,14 @@ export function FormElement({
   controllerNamer?: (strings: TemplateStringsArray, name: string) => string;
 }) {
   if (columnInfo.entrytype == "none") return null;
+  const columnName = toSnakeCase(columnInfo.name);
 
   return (
-    <div className="rounded-lg border p-5 shadow-md" key={columnInfo.name}>
+    <div className="rounded-lg border p-5 shadow-md" key={columnName}>
       <Controller
         control={form.control}
-        name={controllerNamer`${columnInfo.name}`}
-        key={columnInfo.name + "-field"}
+        name={controllerNamer`${columnName}`}
+        key={columnName + "-field"}
         render={({ field }) => (
           <InputElement field={field} columnInfo={columnInfo} />
         )}
@@ -145,8 +141,8 @@ export function FormElement({
       {columnInfo.comments ? (
         <Controller
           control={form.control}
-          name={controllerNamer`${columnInfo.name}_comments`}
-          key={columnInfo.name + "_comments-field"}
+          name={controllerNamer`${columnName}_comments`}
+          key={columnName + "_comments-field"}
           render={({ field }) => (
             <Field>
               <div className="w-full flex flex-col items-center gap-4">
@@ -170,6 +166,7 @@ function InputElement({
   field: any;
   columnInfo: DataColumn;
 }): JSX.Element {
+  const columnName = toSnakeCase(columnInfo.name);
   let grouped: boolean;
   switch (columnInfo.entrytype) {
     case "radio":
@@ -191,7 +188,7 @@ function InputElement({
               <Field
                 className="flex flex-row items-center gap-3"
                 orientation="horizontal"
-                key={columnInfo.name + "-" + option + "-radio"}
+                key={columnName + "-" + option + "-radio"}
               >
                 <RadioGroupItem value={option} />
                 <FieldLabel>{option}</FieldLabel>
@@ -202,7 +199,7 @@ function InputElement({
         break;
       default:
         console.warn(
-          `No input element found for column ${columnInfo.name} (entrytype: ${columnInfo.entrytype}). This is likely a bug.`,
+          `No input element found for column ${columnName} (entrytype: ${columnInfo.entrytype}). This is likely a bug.`,
         );
         body = <></>;
         break;
@@ -225,6 +222,9 @@ function InputElement({
     switch (columnInfo.entrytype) {
       case "textbox":
         body = <Textarea placeholder={columnInfo.defaultValue} {...field} />;
+        break;
+      case "numberbox":
+        body = <NumberBox {...field} />;
         break;
       case "linearSlider":
         body = (
@@ -282,15 +282,10 @@ function InputElement({
         );
         break;
       case "time":
-        body = (
-          <TimePicker
-            defaultValue={columnInfo.defaultValue}
-            onChange={field.onChange}
-          />
-        );
+        throw "time Input Element not implemented yet.";
         break;
       case "calendar time":
-        body = <Calendar24 className="w-full" {...field} />;
+        body = <TimestampPicker className="w-full" {...field} />;
         break;
       case "select":
         body = (
@@ -321,6 +316,7 @@ function InputElement({
                   : value,
               };
             })}
+            defaultValue={columnInfo.defaultValue}
             {...field}
           />
         );
@@ -338,7 +334,7 @@ function InputElement({
 
     return (
       <SingleFormElement
-        key={columnInfo.name}
+        key={columnName}
         orientation={fieldOrientation}
         title={columnInfo.name}
         body={body}
