@@ -22,12 +22,12 @@ export const TAGGING_TABLE_TAGS_TABLE_SCHEMA = {
     {
       name: "entry_id",
       datatype: "int", // @TODO pointer
-      entrytype: "none",
+      entrytype: "numberbox",
     } as const,
     {
       name: "tag_id",
       datatype: "int", // @TODO pointer
-      entrytype: "none",
+      entrytype: "numberbox",
     } as const,
   ],
   descriptors: [],
@@ -40,13 +40,14 @@ export const TAGGING_TABLE_TAG_NAMES_TABLE_SCHEMA = {
     {
       name: "tag_name",
       datatype: "str", // @TODO pointer
-      entrytype: "none",
+      entrytype: "textbox",
       unique: true,
     } as const,
   ],
   descriptors: [],
 };
 
+// @TODO figure out entry editing because there's a PKEY here
 export const TAGGING_TABLE_TAG_ALIASES_TABLE_SCHEMA = {
   entrytype: "form" as const,
   tagging: false,
@@ -72,12 +73,12 @@ export const TAGGING_TABLE_TAG_GROUPS_TABLE_SCHEMA = {
     {
       name: "tag_id",
       datatype: "int", // @TODO pointer
-      entrytype: "none",
+      entrytype: "numberbox",
     } as const,
     {
       name: "group_name",
       datatype: "str",
-      entrytype: "none",
+      entrytype: "textbox",
     } as const,
   ],
   descriptors: [],
