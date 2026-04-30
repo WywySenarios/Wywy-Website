@@ -189,7 +189,7 @@ export function GenericEntryTable({
 
   if (loading) return <p>Loading...</p>;
 
-  if (!data) return <p>No data.</p>;
+  if (data === undefined) return <p>No data.</p>;
 
   return (
     <DatasetTable
