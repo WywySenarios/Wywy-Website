@@ -348,6 +348,7 @@ export function TimerForm({
       .then(() => {
         toast("Form submitted!");
         submissionCallback();
+        controller.reset();
         switch (action) {
           case "split":
             start();
