@@ -348,7 +348,7 @@ export function getZodDatasetType(
     }
 
     if (columnSchema.comments) {
-      rowSchema.push(z.string().optional());
+      rowSchema.push(z.string().nullable().optional());
     }
   }
 
