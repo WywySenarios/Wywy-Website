@@ -52,6 +52,7 @@ function fetchDataset(
               toast(
                 `Failed to fetch data from table ${target}: ${result.error}`, // @TODO prettify
               );
+              console.error(result);
               reject(result.error);
               return;
             }
