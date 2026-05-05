@@ -330,7 +330,7 @@ export function prettifyDurationShortened(duration: number | Date): string {
   if (value == 0) return "0s";
 
   // seconds
-  const seconds = value % 60;
+  const seconds = Math.round(value % 60);
   value = Math.floor(value / 60);
   // minutes
   const minutes = value % 60;
