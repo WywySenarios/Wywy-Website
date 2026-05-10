@@ -10,7 +10,7 @@ import {
   type YAXisComponentOption,
 } from "echarts";
 import { prettifyDurationShortened as prettifyDuration } from "@utils/parse";
-import { colorFromLabel } from "@utils/chart";
+import { colorFromLabel } from "@utils/data/chart";
 
 export function WaterfallChart({
   name,
