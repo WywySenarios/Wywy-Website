@@ -31,7 +31,7 @@ const databaseInfo = (config as MainConfigSchema)["data"].find(
   css_color_palette="light_mode"
   useAstroDefaultCSS={false}
 >
-  <LoginDialog client:load slot="top-bar-button2" />
+  <LoginDialog client:only="react" slot="top-bar-button2" />
   {
     databaseInfo ? (
       <WywyDashboard databaseInfo={databaseInfo} client:load />
