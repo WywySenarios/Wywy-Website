@@ -14,7 +14,7 @@ export function CSRF_ENDPOINT_FACTORY(origin: OriginName) {
 
 export const LOGIN_ENDPOINTS = {
   "master-database": `${DATABASE_URL}/auth`,
-  cache: `${CACHE_URL}/auth`,
+  cache: `${CACHE_URL}/auth/login`,
 } as const;
 
 export function LOGIN_ENDPOINT_FACTORY(origin: OriginName) {
