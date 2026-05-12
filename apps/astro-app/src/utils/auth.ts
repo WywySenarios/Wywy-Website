@@ -95,13 +95,13 @@ export async function whoami(origin: OriginName): Promise<string | undefined> {
 
 export async function loginAll(username: string, password: string) {
   for (const originName of ORIGIN_NAMES) {
-    login(originName, username, password);
+    await login(originName, username, password);
   }
 }
 
 export async function logoutAll() {
   for (const originName of ORIGIN_NAMES) {
-    logout(originName);
+    await logout(originName);
   }
 }
 
