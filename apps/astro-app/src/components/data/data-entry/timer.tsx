@@ -64,6 +64,7 @@ export function TimerForm({
   submissionCallback?: () => void;
 }) {
   const [isSplit, setIsSplit] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [tagNames, setTagNames] = useState<TAG_NAMES_DATASET>();
   const [tagsLoading, setTagsLoading] = useState<boolean>(false);
   const [tagsRefreshState, setTagsRefreshState] = useState<number>(0);
@@ -337,6 +338,8 @@ export function TimerForm({
     values: z.infer<typeof schema>,
     event?: React.BaseSyntheticEvent,
   ): void {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     const submitter = (event?.nativeEvent as SubmitEvent)?.submitter;
     const action = submitter?.getAttribute("value");
 
@@ -360,6 +363,9 @@ export function TimerForm({
       .catch((reason) => {
         toast(`Form submission failed: ${reason}`);
         console.log(`Form submission failed: ${reason}`);
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
   }
 
@@ -437,8 +443,9 @@ export function TimerForm({
           <Descriptors tableInfo={tableInfo} form={controller} />
         )}
         {/* Submit & restart button */}
-        <Button type="submit" value="split">
+        <Button type="submit" disabled={isSubmitting} value="split">
           Submit & Restart
+          {isSubmitting ? <Spinner /> : null}
         </Button>
       </form>
     );
