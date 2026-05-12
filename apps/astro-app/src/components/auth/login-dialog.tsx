@@ -1,4 +1,3 @@
-import { DATABASE_URL, CACHE_URL } from "astro:env/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,125 +13,79 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { JSX } from "astro/jsx-runtime";
 import { useEffect, useState } from "react";
-import { useCookies, CookiesProvider } from "react-cookie";
-import { CACHE_CSRF_ENDPOINT, getCSRFToken } from "@utils/auth";
+import { loginAll, logoutAll, whoamiAll } from "@utils/auth";
 import { toast } from "sonner";
 
 /**
- * The returned element must be wrapped in a CookiesProvider element.
- * @todo expand to not just admin user
- * @todo use React Hook Form or similar
+ * The returned element must be wrapped in a CookiesProvider element. Assumes there is a valid toaster to use.
+ * @TODO React Hook Form
  * @returns Login Dialog Button
  */
 export default function LoginDialog(): JSX.Element {
-  return (
-    <CookiesProvider>
-      <LoginDialogContents />
-    </CookiesProvider>
-  );
-}
-
-function LoginDialogContents(): JSX.Element {
-  const [isMounted, setIsMounted] = useState(false);
-  const [usernameCookie, setUsernameCookie, removeUsernameCookie] = useCookies([
-    "username",
-  ]);
-  const [passwordCookie, setPasswordCookie, removePasswordCookie] = useCookies([
-    "password",
-  ]);
-
+  const [username, setUsername] = useState<string>();
+  const [loading, setLoading] = useState<boolean>(true);
   useEffect(() => {
-    setIsMounted(true);
+    setLoading(true);
+    whoamiAll()
+      .then((value) => {
+        setUsername(value);
+        setLoading(false);
+      })
+      .catch((reason: any) => {
+        console.error("Who am I failed.", reason);
+        setLoading(false);
+        toast(`An error occured while identifying: ${reason}`);
+      });
   }, []);
-
-  if (!isMounted) {
-    return null;
-  }
-
   function onResetLoginInfo() {
-    removeUsernameCookie("username", {
-      path: "/",
-      sameSite: "lax",
-    });
-    removePasswordCookie("password", {
-      path: "/",
-      sameSite: "lax",
-    });
-  }
-
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); // prevent dialog from closing automatically
-
-    const formData = new FormData(event.currentTarget);
-    setUsernameCookie("username", formData.get("username"), {
-      path: "/",
-      sameSite: "lax",
-    });
-    setPasswordCookie("password", formData.get("password"), {
-      path: "/",
-      sameSite: "lax",
-    });
-
-    fetch(`${DATABASE_URL}/auth`, {
-      method: "POST",
-      body: formData.get("password"),
-      mode: "cors",
-      credentials: "include",
-      headers: {
-        "Content-type": "application/json; charset=UTF-8",
-      },
-    })
-      .then((response) => {
-        response.text().then((text: string) => {
-          if (response.ok)
-            toast(`Successfully authenticated to master database!`);
-          else
-            toast(`Error while authenticating to the master database: ${text}`);
-        });
+    if (loading) return;
+    setLoading(true);
+    logoutAll()
+      .then(() => {
+        toast(`Goodbye ${username}.`);
       })
       .catch((reason) => {
-        toast(
-          `Something went wrong while trying to authenticate to the master database: ${reason}`,
-        );
-      });
-
-    getCSRFToken(CACHE_CSRF_ENDPOINT)
-      .then((csrftoken: string) => {
-        fetch(`${CACHE_URL}/auth`, {
-          method: "POST",
-          body: JSON.stringify({
-            username: formData.get("username"),
-            password: formData.get("password"),
-          }),
-          mode: "cors",
-          credentials: "include",
-          headers: {
-            "Content-type": "application/json; charset=UTF-8",
-            "X-CSRFToken": csrftoken,
-          },
-        }).then((response) => {
-          response.text().then((text: string) => {
-            if (response.ok) {
-              toast(`Successfully authenticated to cache!`);
-            } else {
-              toast(`Error while authenticating to the cache: ${text}`);
-            }
-          });
-        });
+        toast(`An error occured while logging out: ${reason}`);
       })
-      .catch((reason: string) => {
-        toast(
-          `Something went wrong while trying to authenticate to the cache: ${reason}`,
-        );
+      .finally(() => {
+        setLoading(false);
+        setUsername(undefined);
       });
   }
-
+  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    if (loading) return;
+    setLoading(true);
+    event.preventDefault(); // prevent dialog from closing automatically
+    const formData = new FormData(event.currentTarget);
+    const username = formData.get("username") as string | null;
+    const password = formData.get("password") as string | null;
+    if (username === null || password === null)
+      throw Error("Unexpectedly null username or password.");
+    loginAll(username, password)
+      .then(() => {
+        toast(`Login succeeded! Welcome back ${username}.`);
+        setUsername(username);
+      })
+      .catch((reason) => {
+        toast(`Login failed: ${reason}`);
+        setUsername(undefined);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }
+  if (loading) {
+    return null;
+  }
   return (
-    <div>
-      {usernameCookie.username && passwordCookie.password ? (
-        <Button onClick={onResetLoginInfo} type="button">
-          Log Out
-        </Button>
+    <>
+      {username ? (
+        <>
+          <p>Welcome back, {username}!</p>
+          <Button onClick={onResetLoginInfo} type="button">
+            Log Out
+          </Button>
+        </>
       ) : (
         <Dialog>
           <DialogTrigger asChild>
@@ -140,7 +93,6 @@ function LoginDialogContents(): JSX.Element {
               Login
             </Button>
           </DialogTrigger>
-
           <DialogContent className="sm:max-w-[425px]">
             <form onSubmit={onSubmit}>
               <DialogHeader>
@@ -171,6 +123,6 @@ function LoginDialogContents(): JSX.Element {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </>
   );
 }
