@@ -2,7 +2,6 @@
 
 import type { z, ZodType } from "zod";
 import { getCSRFToken } from "../auth";
-import { CACHE_URL, DATABASE_URL } from "astro:env/client";
 import { useEffect, useMemo, useState } from "react";
 import type {
   Dataset,
@@ -31,14 +30,14 @@ import { toSnakeCase } from "@utils/parse";
 export async function submitEntry(
   endpoint: string,
   values: Record<string, any>,
-  csrfEndpoint?: string,
+  origin?: OriginName,
 ): Promise<void> {
   const headers: HeadersInit = {
     "Content-type": "application/json; charset=UTF-8",
   };
 
-  if (csrfEndpoint !== undefined) {
-    headers["X-CSRFToken"] = await getCSRFToken(csrfEndpoint);
+  if (origin !== undefined) {
+    headers["X-CSRFToken"] = await getCSRFToken(origin);
   }
 
   const response = await fetch(endpoint, {

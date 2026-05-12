@@ -4,7 +4,7 @@ import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { Columns, Descriptors, Tags } from "@/components/data/data-entry";
 import type z from "zod";
 import { toast } from "sonner";
-import { CACHE_CSRF_ENDPOINT, getCSRFToken } from "@utils/auth";
+import { getCSRFToken } from "@utils/auth";
 import { parseDatabaseValue } from "@utils/data/deserialization";
 import { handleRecordOn } from "@utils/data/form/updates";
 import type { JSONValue } from "@/types/http";
@@ -227,7 +227,7 @@ export function TimerForm({
   function cache() {
     // store values in cache
     // @TODO don't hardcode start_time & end_time
-    getCSRFToken(CACHE_CSRF_ENDPOINT)
+    getCSRFToken("cache")
       .then((csrftoken: string) => {
         fetch(`${CACHE_URL}/cache/${databaseName}/${tableInfo.tableName}`, {
           method: "POST",
@@ -343,7 +343,7 @@ export function TimerForm({
     submitEntry(
       `${CACHE_URL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}`,
       values,
-      CACHE_CSRF_ENDPOINT,
+      "cache",
     )
       .then(() => {
         toast("Form submitted!");

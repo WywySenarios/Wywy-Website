@@ -7,7 +7,6 @@ import { createFormController } from "@utils/data/form/full-entry-handlers";
 import { Columns } from "@/components/data/data-entry";
 import { CACHE_URL } from "astro:env/client";
 import type z from "zod";
-import { CACHE_CSRF_ENDPOINT } from "@utils/auth";
 import { submitEntry } from "@utils/data/http";
 import { toast } from "sonner";
 import type { FieldErrors } from "react-hook-form";
@@ -37,7 +36,7 @@ export function FormForm({
     submitEntry(
       `${CACHE_URL}/main/${databaseName}/${toSnakeCase(tableInfo.tableName)}`,
       values,
-      CACHE_CSRF_ENDPOINT,
+      "cache",
     )
       .then(() => {
         toast("Form submitted!");

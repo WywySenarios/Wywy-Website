@@ -8,7 +8,6 @@ import { TaggingTableEntry } from "./entry";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CACHE_URL } from "astro:env/client";
-import { CACHE_CSRF_ENDPOINT } from "@utils/auth";
 import {
   TAGGING_TABLE_TAG_ALIASES_SCHEMA,
   TAGGING_TABLE_TAG_GROUPS_SCHEMA,
@@ -67,10 +66,10 @@ export function TaggingTable({
     submitEntry(
       `${CACHE_URL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableName)}/${type}`,
       values,
-      CACHE_CSRF_ENDPOINT,
+      "cache",
     )
       .then(() => {
-        // @TODO redirect, popup, etc.
+        toast("Submitted!");
       })
       .catch((reason) => {
         toast(`Form submission failed: ${reason}`);
