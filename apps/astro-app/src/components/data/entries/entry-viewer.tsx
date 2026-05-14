@@ -289,7 +289,7 @@ export function EntryViewer({
       case "data":
       case "descriptors":
         return getZodEntrySchema(schema).extend({
-          id: z.number().int().min(1),
+          id: z.int().min(1),
         });
       case "tag_aliases":
         return TAGGING_TABLE_TAG_ALIASES_SCHEMA;

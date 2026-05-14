@@ -86,24 +86,24 @@ export const TAGGING_TABLE_TAG_GROUPS_TABLE_SCHEMA = {
 // END - tagging table table schemas
 
 export const TAGGING_TABLE_TAGS_SCHEMA = z.object({
-  id: z.number().int().optional(),
-  entry_id: z.number().int(),
-  tag_id: z.number().int(),
+  id: z.int().optional(),
+  entry_id: z.int(),
+  tag_id: z.int(),
 });
 
 export const TAGGING_TABLE_TAG_NAMES_SCHEMA = z.object({
-  id: z.number().int().optional(),
+  id: z.int().optional(),
   tag_name: z.string(),
 });
 
 export const TAGGING_TABLE_TAG_ALIASES_SCHEMA = z.object({
   alias: z.string(),
-  tag_id: z.number().int(),
+  tag_id: z.int(),
 });
 
 export const TAGGING_TABLE_TAG_GROUPS_SCHEMA = z.object({
-  id: z.number().int().optional(),
-  tag_id: z.number().int(),
+  id: z.int().optional(),
+  tag_id: z.int(),
   group_name: z.string(),
 });
 
@@ -115,7 +115,7 @@ export function getZodColumnSchema(columnInfo: DataColumn) {
   switch (columnInfo.datatype) {
     case "int":
     case "integer":
-      output = z.number().int();
+      output = z.int();
       if ("min" in columnInfo && columnInfo.min !== undefined)
         output = (output as ZodNumber).max(columnInfo.min);
       if ("max" in columnInfo && columnInfo.max !== undefined)
@@ -256,21 +256,19 @@ export const TAGS_DATASET_SCHEMA = z.object({
     z.literal("entry_id"),
     z.literal("tag_id"),
   ]),
-  data: z.array(
-    z.tuple([z.number().int(), z.number().int(), z.number().int()]),
-  ),
+  data: z.array(z.tuple([z.int(), z.int(), z.int()])),
 });
 export type TAGS_DATASET = z.infer<typeof TAG_NAMES_DATASET_SCHEMA>;
 
 export const TAG_NAMES_DATASET_SCHEMA = z.object({
   columns: z.tuple([z.literal("id"), z.literal("tag_name")]),
-  data: z.array(z.tuple([z.number().int(), z.string()])),
+  data: z.array(z.tuple([z.int(), z.string()])),
 });
 export type TAG_NAMES_DATASET = z.infer<typeof TAG_NAMES_DATASET_SCHEMA>;
 
 export const TAG_ALIASES_DATASET_SCHEMA = z.object({
   columns: z.tuple([z.literal("alias"), z.literal("tag_id")]),
-  data: z.array(z.tuple([z.string(), z.number().int()])),
+  data: z.array(z.tuple([z.string(), z.int()])),
 });
 export type TAG_ALIASES_DATASET = z.infer<typeof TAG_NAMES_DATASET_SCHEMA>;
 
@@ -280,7 +278,7 @@ export const TAG_GROUPS_DATASET_SCHEMA = z.object({
     z.literal("tag_id"),
     z.literal("group_name"),
   ]),
-  data: z.array(z.tuple([z.number().int(), z.number().int(), z.string()])),
+  data: z.array(z.tuple([z.int(), z.int(), z.string()])),
 });
 export type TAG_GROUPS_DATASET = z.infer<typeof TAG_NAMES_DATASET_SCHEMA>;
 
@@ -297,7 +295,7 @@ export function getZodDatasetType(
   const rowSchema: Array<ZodType<any>> = [];
 
   // ID column
-  rowSchema.push(z.number().int());
+  rowSchema.push(z.int());
 
   // primary_tag column
   if (tagging) rowSchema.push(z.coerce.string().nonempty());
