@@ -98,7 +98,10 @@ export function resolveEndpoint(
   }
 
   try {
-    return endpointHelpers[source][endpointHelperTableType](options as any);
+    return endpointHelpers[source][endpointHelperTableType]({
+      ...options,
+      tableType: table_type,
+    } as any);
   } catch (error) {
     if (error instanceof Error) return undefined;
     throw error;
