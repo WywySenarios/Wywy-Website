@@ -432,7 +432,7 @@ export function TimerForm({
           )}
         </Button>
         {/* Submit button */}
-        <Button type="submit">Submit</Button>
+        <Button type="submit" disabled={isSubmitting}>Submit</Button>
         {/* Columns */}
         <Columns fieldsToEnter={tableInfo.schema} form={controller} />
         {/* Quick actions */}
