@@ -49,7 +49,10 @@ export function handleRecordOn(
                 fetchTasks.push(currentTask);
                 break;
               default:
-                throw `Column "${columnSchema.name}"'s datatype does not support record_on.`;
+                const msg = `Column "${columnSchema.name}"'s datatype ${columnSchema.datatype} does not support record_on.`;
+                console.warn(msg);
+                printError(msg);
+                continue;
             }
             break;
         }
