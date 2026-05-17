@@ -108,7 +108,7 @@ export default function LoginDialog(): JSX.Element {
                 </div>
                 <div className="grid gap-3">
                   <Label htmlFor="password">Password</Label>
-                  <Input id="password" name="password" defaultValue="" />
+                  <Input id="password" name="password" type="password" autoComplete="off" defaultValue="" />
                 </div>
               </div>
               <DialogFooter>
