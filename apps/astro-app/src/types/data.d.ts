@@ -172,6 +172,8 @@ type GeodeticPointColumn = {
   entrytype: "geodetic point" | "geodetic point minimal" | "none";
 };
 
+export type RecordOnEvent = "start" | "split" | "submit";
+
 export type DataColumn = {
   name: string;
   parser?: Datatype;

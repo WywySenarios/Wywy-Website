@@ -1,4 +1,4 @@
-import type { TableInfo } from "@/types/data";
+import type { TableInfo, RecordOnEvent } from "@/types/data";
 import {
   GeodeticCoordinate,
   GetCurrentGeodeticCoordinatePromise,
@@ -8,7 +8,7 @@ import { toSnakeCase } from "@utils/parse";
 export function handleRecordOn(
   initialData: Record<string, any>,
   tableInfo: TableInfo,
-  event_name: "start" | "split",
+  event_name: RecordOnEvent,
   printError: (msg: string) => unknown = (msg: string) => {},
   mode: "insert" | "purge" = "insert",
 ): Promise<Record<string, any>> {
