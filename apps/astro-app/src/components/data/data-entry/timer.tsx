@@ -1,4 +1,3 @@
-import type { TableInfo } from "@/types/data";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { Columns, Descriptors, Tags } from "@/components/data/data-entry";
@@ -20,21 +19,21 @@ import {
 } from "@utils/data/schema";
 import { toSnakeCase } from "@utils/parse";
 import { useAutoPopulate } from "@utils/data/form/useAutoPopulate";
+import {
+  useDatabaseName,
+  useTableInfo,
+} from "@utils/data/schema-context";
 
 /**
  * Timer based form component. Expects "Start Time" & "End Time" columns to be present.
- * @param databaseName The name of the database that this form gathers data for.
- * @param tableInfo The full table schema.
  */
 export function TimerForm({
-  databaseName,
-  tableInfo,
-  submissionCallback = () => {},
+  onSubmitted,
 }: {
-  databaseName: string;
-  tableInfo: TableInfo;
-  submissionCallback?: () => void;
+  onSubmitted?: () => void;
 }) {
+  const databaseName = useDatabaseName();
+  const tableInfo = useTableInfo()!;
   const [isSplit, setIsSplit] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [tagsRefreshState, setTagsRefreshState] = useState<number>(0);
@@ -287,7 +286,7 @@ export function TimerForm({
     )
       .then(() => {
         toast("Form submitted!");
-        submissionCallback();
+        onSubmitted?.();
         controller.reset();
         switch (action) {
           case "split":
@@ -379,7 +378,7 @@ export function TimerForm({
         )}
         {/* Descriptors */}
         {tableInfo.descriptors && (
-          <Descriptors tableInfo={tableInfo} form={controller} />
+          <Descriptors form={controller} />
         )}
         {/* Submit & restart button */}
         <Button type="submit" disabled={isSubmitting} value="split">

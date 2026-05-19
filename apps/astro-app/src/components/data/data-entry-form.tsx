@@ -1,41 +1,39 @@
 "use client";
 
-import type { TableInfo } from "@/types/data";
+import type { DatabaseInfo, TableInfo } from "@/types/data";
 import type { JSX } from "astro/jsx-runtime";
 import { FormForm } from "@/components/data/data-entry/form";
 import { TimerForm } from "@/components/data/data-entry/timer";
+import { SchemaProvider, useTableInfo } from "@utils/data/schema-context";
 
 /**
  * Selects the correct form element to use. Expects there to be a valid Toast element inside the page.
- * @param databaseName The name of the database that this form gathers data for.
+ * @param databaseInfo The full database info.
  * @param tableInfo The full table schema.
- * @param dbURL The URL that the form will post to on submit.
+ * @param onSubmitted Called after a successful form submission.
  */
 export default function DataEntryForm({
-  databaseName,
+  databaseInfo,
   tableInfo,
-  submissionCallback = () => {},
+  onSubmitted,
 }: {
-  databaseName: string;
+  databaseInfo: DatabaseInfo;
   tableInfo: TableInfo;
-  submissionCallback?: () => void;
+  onSubmitted?: () => void;
 }): JSX.Element {
+  return (
+    <SchemaProvider databaseInfo={databaseInfo} tableInfo={tableInfo}>
+      <DataEntryFormBody onSubmitted={onSubmitted} />
+    </SchemaProvider>
+  );
+}
+
+function DataEntryFormBody({ ...props }) {
+  const tableInfo = useTableInfo()!;
   switch (tableInfo.entrytype) {
     case "form":
-      return (
-        <FormForm
-          databaseName={databaseName}
-          tableInfo={tableInfo}
-          submissionCallback={submissionCallback}
-        />
-      );
+      return <FormForm {...props} />;
     case "timer":
-      return (
-        <TimerForm
-          databaseName={databaseName}
-          tableInfo={tableInfo}
-          submissionCallback={submissionCallback}
-        />
-      );
+      return <TimerForm {...props} />;
   }
 }

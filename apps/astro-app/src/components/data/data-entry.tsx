@@ -3,7 +3,7 @@ import {
   ConstantFormElement,
   FormElement,
 } from "@/components/data/input-elements";
-import type { DataColumn, DescriptorInfo, TableInfo } from "@/types/data";
+import type { DataColumn, DescriptorInfo } from "@/types/data";
 import {
   Card,
   CardContent,
@@ -20,6 +20,7 @@ import { SearchSelect } from "./input-element/search-select";
 import { useMemo, useState } from "react";
 import type { TAG_NAMES_DATASET } from "@utils/data/schema";
 import { toSnakeCase } from "@utils/parse";
+import { useTableInfo } from "@utils/data/schema-context";
 
 export function Columns({
   fieldsToEnter,
@@ -290,17 +291,15 @@ function DescriptorTab({
 
 /**
  * The desciptor related form component. Dialogs are used to enter in the descriptors because it is assumed that each desciptor does not have a lot of associated information.
- * @param tableInfo The schema for the respective table.
  * @param form The controller for the overarching form.
  * @returns
  */
 export function Descriptors({
-  tableInfo,
   form,
 }: {
-  tableInfo: TableInfo;
   form: any;
 }): JSX.Element {
+  const tableInfo = useTableInfo()!;
   if (tableInfo.descriptors.length == 0) return null;
 
   return (

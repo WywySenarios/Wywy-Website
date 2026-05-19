@@ -24,6 +24,10 @@ import { safeFetchDataset } from "@utils/data/http";
 import { ZodError, type ZodType } from "zod";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import type { EntryTableProps } from "./entry-table-page";
+import {
+  useDatabaseName,
+  useTableName,
+} from "@utils/data/schema-context";
 
 /**
  * Fetches the data from the endpoint and assumes the data to be of the specified type.
@@ -148,8 +152,6 @@ interface GenericEntryTableProps extends EntryTableProps {
 /**
  * A generic entry editor table.
  * @param schema The table schema.
- * @param databaseName The name of the database that contains the target table.
- * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
  * @param refreshTrigger A controlled field to trigger a refresh through useEffect.
  * @param type The table type to fetch.
@@ -157,12 +159,12 @@ interface GenericEntryTableProps extends EntryTableProps {
  */
 export function GenericEntryTable({
   schema,
-  databaseName,
-  tableName,
   endpoint,
   refreshTrigger,
   type,
 }: GenericEntryTableProps): JSX.Element {
+  const databaseName = useDatabaseName();
+  const tableName = useTableName()!;
   const datasetSchema = useMemo(
     () =>
       getZodDatasetType(

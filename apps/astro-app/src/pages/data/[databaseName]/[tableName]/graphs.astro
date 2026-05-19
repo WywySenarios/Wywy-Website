@@ -34,10 +34,12 @@ export function getStaticPaths() {
 const { databaseName, tableName } = Astro.params;
 
 // search for the table schema
+let databaseInfo: DatabaseInfo | undefined = undefined;
 let tableSchema: TableInfo | undefined = undefined;
 
 for (const dbinfo of config.data as DatabaseInfo[]) {
   if (dbinfo.dbname === databaseName) {
+    databaseInfo = dbinfo;
     for (const tableInfo of dbinfo.tables) {
       if (tableInfo.tableName === tableName) {
         tableSchema = tableInfo;
@@ -48,7 +50,7 @@ for (const dbinfo of config.data as DatabaseInfo[]) {
   }
 }
 
-if (!tableSchema) {
+if (!databaseInfo || !tableSchema) {
   throw new Error(`Table schema for ${databaseName}/${tableName} not found.`);
 }
 
@@ -68,7 +70,7 @@ const pageTitle: string =
 >
   <LoginDialog client:only="react" slot="top-bar-button2" />
   <DatasetControlPanel
-    databaseName={databaseName}
+    databaseInfo={databaseInfo}
     tableSchema={tableSchema}
     client:load
   />

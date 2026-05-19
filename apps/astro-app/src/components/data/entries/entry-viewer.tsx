@@ -1,6 +1,6 @@
 "use client";
 
-import type { DescriptorInfo, TableInfo, TableType } from "@/types/data";
+import type { DatabaseInfo, DescriptorInfo, TableInfo, TableType } from "@/types/data";
 import { type OriginName } from "@/types/http";
 import {
   safeFetchDataset,
@@ -39,6 +39,11 @@ import { toast } from "sonner";
 import { resolveEndpoint } from "@utils/data/endpoints";
 import { Columns, PrimaryTag } from "../data-entry";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  SchemaProvider,
+  useDatabaseName,
+  useTableName,
+} from "@utils/data/schema-context";
 
 function EntryViewerError({ message }: { message: string }) {
   return (
@@ -50,17 +55,35 @@ function EntryViewerError({ message }: { message: string }) {
 
 export function EntryViewer({
   schema,
-  databaseName,
-  tableName,
+  databaseInfo,
+  tableInfo,
   descriptorName,
   type = "data",
 }: {
   schema: TableInfo | DescriptorInfo;
-  databaseName: string;
-  tableName: string;
+  databaseInfo: DatabaseInfo;
+  tableInfo: TableInfo;
   descriptorName?: string;
   type?: TableType;
 }) {
+  return (
+    <SchemaProvider databaseInfo={databaseInfo} tableInfo={tableInfo}>
+      <EntryViewerBody schema={schema} descriptorName={descriptorName} type={type} />
+    </SchemaProvider>
+  );
+}
+
+function EntryViewerBody({
+  schema,
+  descriptorName,
+  type = "data",
+}: {
+  schema: TableInfo | DescriptorInfo;
+  descriptorName?: string;
+  type?: TableType;
+}) {
+  const databaseName = useDatabaseName();
+  const tableName = useTableName()!;
   const [id, setId] = useState<number | null>(() => {
     if (window == undefined) return null;
     const primaryKey = Number(

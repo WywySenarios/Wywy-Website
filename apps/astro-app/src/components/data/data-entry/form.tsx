@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 
-import type { TableInfo } from "@/types/data";
 import { createFormController } from "@utils/data/form/full-entry-handlers";
 import { Columns, Tags, Descriptors } from "@/components/data/data-entry";
 import { CACHE_URL } from "astro:env/client";
@@ -16,21 +15,21 @@ import { useAutoPopulate } from "@utils/data/form/useAutoPopulate";
 import { Spinner } from "@/components/ui/spinner";
 import { RefreshCcw } from "lucide-react";
 import { type TAG_NAMES_DATASET } from "@utils/data/schema";
+import {
+  useDatabaseName,
+  useTableInfo,
+} from "@utils/data/schema-context";
 
 /**
  * Basic form component.
- * @param databaseName The name of the database that this form gathers data for.
- * @param tableInfo The full table schema.
  */
 export function FormForm({
-  databaseName,
-  tableInfo,
-  submissionCallback = () => {},
+  onSubmitted,
 }: {
-  databaseName: string;
-  tableInfo: TableInfo;
-  submissionCallback?: () => void;
+  onSubmitted?: () => void;
 }) {
+  const databaseName = useDatabaseName();
+  const tableInfo = useTableInfo()!;
   // TODO: extract a reusable form stage hook (idle -> populating -> ready -> submitting -> submitted)
   const { controller, schema } = createFormController(tableInfo);
   const { populate, isPopulating } = useAutoPopulate(tableInfo, controller);
@@ -76,7 +75,7 @@ export function FormForm({
         },
       )();
 
-      if (submitted) submissionCallback();
+      if (submitted) onSubmitted?.();
     } catch (reason) {
       toast(`Form submission failed: ${reason}`);
       console.error(`Form submission failed: ${reason}`);
@@ -117,7 +116,7 @@ export function FormForm({
         ) : null
       ) : null}
       {tableInfo.descriptors ? (
-        <Descriptors tableInfo={tableInfo} form={controller} />
+        <Descriptors form={controller} />
       ) : null}
       <Button
         type="button"
