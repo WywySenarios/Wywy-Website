@@ -1,82 +1,69 @@
-import type { TableInfo } from "@/types/data";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState } from "react";
 import { Columns, Descriptors, Tags } from "@/components/data/data-entry";
 import type z from "zod";
 import { toast } from "sonner";
 import { getCSRFToken } from "@utils/auth";
 import { parseDatabaseValue } from "@utils/data/deserialization";
-import { handleRecordOn } from "@utils/data/form/updates";
 import type { JSONValue } from "@/types/http";
 import { CACHE_URL } from "astro:env/client";
 import { RefreshCcw, Upload } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { GeodeticCoordinate } from "@utils/datatypes/geodetic";
 import { createFormController } from "@/utils/data/form/full-entry-handlers";
-import { safeFetchDataset, submitEntry } from "@/utils/data/http";
-import type { FieldErrors } from "react-hook-form";
+import { submitEntry, useDataset } from "@/utils/data/http";
+import { FormProvider, type FieldErrors } from "react-hook-form";
 import {
   TAG_NAMES_DATASET_SCHEMA,
   type TAG_NAMES_DATASET,
 } from "@utils/data/schema";
 import { toSnakeCase } from "@utils/parse";
-
-/**
- * Helper to a load tag names dataset. Assumes that only one concurrent fetch can occur.
- * @param endpoint The endpoint to GET.
- * @param setTagNames The setter for the tagNames dataset.
- * @param setTagsLoading The setter for the loading state.
- */
-function loadTagNames(
-  endpoint: string,
-  setTagNames: Dispatch<SetStateAction<TAG_NAMES_DATASET | undefined>>,
-  setTagsLoading: Dispatch<SetStateAction<boolean>>,
-) {
-  // only allow one concurrent fetch
-  setTagsLoading(true);
-
-  // safe fetch dataset
-  safeFetchDataset(endpoint, TAG_NAMES_DATASET_SCHEMA)
-    .then((tagNames) => {
-      setTagNames(tagNames);
-    })
-    .catch((reason) => {
-      toast(`Failed to load tags: ${reason}`);
-      setTagNames(undefined);
-    })
-    .finally(() => {
-      setTagsLoading(false);
-    });
-}
+import { useAutoPopulate } from "@utils/data/form/useAutoPopulate";
+import {
+  useDatabaseName,
+  useTableInfo,
+} from "@utils/data/schema-context";
 
 /**
  * Timer based form component. Expects "Start Time" & "End Time" columns to be present.
- * @param databaseName The name of the database that this form gathers data for.
- * @param tableInfo The full table schema.
  */
 export function TimerForm({
-  databaseName,
-  tableInfo,
-  submissionCallback = () => {},
+  onSubmitted,
 }: {
-  databaseName: string;
-  tableInfo: TableInfo;
-  submissionCallback?: () => void;
+  onSubmitted?: () => void;
 }) {
+  const databaseName = useDatabaseName();
+  const tableInfo = useTableInfo()!;
   const [isSplit, setIsSplit] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [tagNames, setTagNames] = useState<TAG_NAMES_DATASET>();
-  const [tagsLoading, setTagsLoading] = useState<boolean>(false);
   const [tagsRefreshState, setTagsRefreshState] = useState<number>(0);
   const [isCaching, setIsCaching] = useState<boolean>(false);
   const [cacheError, setCacheError] = useState<boolean>(false);
-  const [data, setData] = useState<Record<string, any>>({});
 
-  const isStart: boolean = Object.keys(data).length > 0;
   const { controller, schema } = createFormController(tableInfo);
+  const { populate } = useAutoPopulate(tableInfo, controller);
 
+  const startTime = controller.watch("data.start_time");
+  const isStart: boolean = startTime != null;
+
+  const [tagNamesDataset, tagsLoading, tagsError] = useDataset({
+    valid: isSplit && !cacheError,
+    table_type: "tag_names",
+    schema: undefined,
+    source: "cache",
+    endpointOptions: {
+      databaseName,
+      tableName: tableInfo.tableName,
+    },
+    refreshState: tagsRefreshState,
+  });
+  // type assertion: fallback to undefined preserves the expected type while useDataset gates rendering behind loading/error checks
+  const tagNames =
+    tagNamesDataset ??
+    (undefined as unknown as z.infer<typeof TAG_NAMES_DATASET_SCHEMA>);
+
+  // GETs the cached start/end times from the cache server and injects them into the controller
   function fetchCache() {
-    // only allow one concurrent fetch
     if (isCaching) return;
     setIsCaching(true);
 
@@ -103,7 +90,6 @@ export function TimerForm({
             for (const columnSchema of tableInfo.schema) {
               const columnName = toSnakeCase(columnSchema.name);
               if (columnName in body) {
-                // transform dates to UTC
                 switch (columnSchema.datatype) {
                   case "geodetic point":
                     if (typeof body[columnName] != "string") {
@@ -152,7 +138,11 @@ export function TimerForm({
               }
             }
 
-            setData(output);
+            for (const [key, value] of Object.entries(output)) {
+              controller.setValue(`data.${key}`, value, {
+                shouldValidate: true,
+              });
+            }
             setIsCaching(false);
             setCacheError(false);
           })
@@ -176,164 +166,110 @@ export function TimerForm({
   // initally try to GET the start time
   useEffect(fetchCache, []);
 
+  // @TODO tag suggestions — pick the most likely tag instead of the first one
+  // automatically set primary_tag when tag names load
   useEffect(() => {
-    // always keep controller data up to date
-    for (const key in data) {
-      controller.setValue(`data.${key}`, data[key], {
-        shouldValidate: true,
-        shouldTouch: false,
-      });
+    if (tagNamesDataset) {
+      controller.setValue("data.primary_tag", tagNamesDataset["data"][0][0]);
     }
-
-    // automatically update the cache when the user changes either the start or the end time.
-    // only update when desired & valid
-    if (cacheError || !isCaching) return;
-    // update form values
-
-    cache();
-  }, [data]);
-
-  // fetch tags
-  useEffect(() => {
-    // require no cache error & split
-    if (!isSplit || cacheError) return;
-
-    // only allow one concurrent fetch
-    if (tagsLoading) return;
-    setTagsLoading(true);
-
-    // safe fetch dataset
-    safeFetchDataset(
-      `${CACHE_URL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}/tag_names`,
-      TAG_NAMES_DATASET_SCHEMA,
-    )
-      .then((tagNames) => {
-        setTagNames(tagNames);
-        controller.resetField("data.primary_tag", {
-          defaultValue: tagNames["data"][0][0],
-        });
-      })
-      .catch((reason) => {
-        toast(`Failed to load tags: ${reason}`);
-        setTagNames(undefined);
-      })
-      .finally(() => {
-        setTagsLoading(false);
-      });
-  }, [isSplit, cacheError, tagsRefreshState]);
+  }, [tagNamesDataset]);
 
   /**
    * Stores the startTime and endTime into the cache.
    */
-  function cache() {
-    // store values in cache
-    // @TODO don't hardcode start_time & end_time
-    getCSRFToken("cache")
-      .then((csrftoken: string) => {
-        fetch(`${CACHE_URL}/cache/${databaseName}/${tableInfo.tableName}`, {
+  async function cache(customData?: Record<string, any>) {
+    try {
+      const cacheData = customData ?? controller.getValues("data");
+      const csrftoken = await getCSRFToken("cache");
+      const response = await fetch(
+        `${CACHE_URL}/cache/${databaseName}/${tableInfo.tableName}`,
+        {
           method: "POST",
-          body: JSON.stringify(data),
+          body: JSON.stringify(cacheData),
           mode: "cors",
           credentials: "include",
           headers: {
             "Content-type": "application/json; charset=UTF-8",
             "X-CSRFToken": csrftoken,
           },
-        })
-          .then((response) => {
-            const newErrorState = !response.ok;
-            if (newErrorState) {
-              toast(
-                `Something went wrong when trying to store the start or end time: ${response.status} ${response.statusText}`,
-              );
-            }
-
-            setCacheError(newErrorState);
-          })
-          .catch((reason) => {
-            toast(
-              `Something went wrong when trying to store the start or end time: ${reason}`,
-            );
-            setCacheError(true);
-          });
-      })
-      .catch((reason: string) => {
+        },
+      );
+      const newErrorState = !response.ok;
+      if (newErrorState) {
         toast(
-          `Something went wrong when trying to store the start or end time: ${reason}`,
+          `Something went wrong when trying to store the start or end time: ${response.status} ${response.statusText}`,
         );
-        setCacheError(true);
-      })
-      .finally(() => {
-        setIsCaching(false);
-      });
+      }
+      setCacheError(newErrorState);
+    } catch (reason) {
+      toast(
+        `Something went wrong when trying to store the start or end time: ${reason}`,
+      );
+      setCacheError(true);
+    } finally {
+      setIsCaching(false);
+    }
   }
 
-  function start() {
-    // only allow one concurrent cache operation (avoid race condition)
+  // Starts a new timing session: populates start-time columns and caches them
+  async function start() {
     if (isCaching) return;
     setIsCaching(true);
 
     setIsSplit(false);
 
-    handleRecordOn({}, tableInfo, "start", toast)
-      .then((newData: Record<string, any>) => {
-        setData(newData);
-      })
-      .catch((reason?: any) => {
-        if (reason) toast(`Failed to start: ${reason}`);
-        setCacheError(true);
-      });
+    try {
+      await populate("start");
+      await cache();
+    } catch (reason) {
+      if (reason) toast(`Failed to start: ${reason}`);
+      setCacheError(true);
+    }
   }
 
-  /**
-   * Splits the time & records the start & end time in the cache.
-   */
-  function split() {
-    // only allow one concurrent cache operation (avoid race condition)
+  // Ends the current timing segment: populates split-time columns and caches them
+  async function split() {
     if (isCaching) return;
     setIsCaching(true);
 
-    handleRecordOn(data, tableInfo, "split", toast)
-      .then((newData: Record<string, any>) => {
-        setData(newData);
-        setIsSplit(true);
-      })
-      .catch((reason?: any) => {
-        if (reason) toast(`Failed to split: ${reason}`);
-        setCacheError(true);
-      });
+    try {
+      await populate("split");
+      setIsSplit(true);
+      await cache();
+      if (tableInfo.tagging && tagNames) {
+        controller.setValue("data.primary_tag", tagNames["data"][0][0]);
+      }
+    } catch (reason) {
+      if (reason) toast(`Failed to split: ${reason}`);
+      setCacheError(true);
+    }
   }
 
-  /**
-   * Undos and removes the end time from the cache but keeps the start time.
-   */
-  function cancelSplit() {
+  // Undoes the split: purges split-time columns from the controller and cache
+  async function cancelSplit() {
     if (isCaching) return;
     setIsCaching(true);
 
-    handleRecordOn(data, tableInfo, "split", toast, "purge")
-      .then((newData: Record<string, any>) => {
-        setData(newData);
-        setIsSplit(false);
-      })
-      .catch((reason?: any) => {
-        if (reason) toast(`Failed to cancel split: ${reason}`);
-        setCacheError(true);
-      });
+    try {
+      await populate("split", "purge");
+      setIsSplit(false);
+      await cache();
+    } catch (reason) {
+      if (reason) toast(`Failed to cancel split: ${reason}`);
+      setCacheError(true);
+    }
   }
 
-  /**
-   * Completely empty the cache (both start and end times)
-   */
-  function cancel() {
+  // Cancels the entire session: clears the cache and resets split state
+  async function cancel() {
     if (isCaching) return;
     setIsCaching(true);
 
     setIsSplit(false);
-
-    setData({});
+    await cache({});
   }
 
+  // Handles form entry submission, then restarts or cancels based on the clicked button's value
   function onSubmit(
     values: z.infer<typeof schema>,
     event?: React.BaseSyntheticEvent,
@@ -350,7 +286,7 @@ export function TimerForm({
     )
       .then(() => {
         toast("Form submitted!");
-        submissionCallback();
+        onSubmitted?.();
         controller.reset();
         switch (action) {
           case "split":
@@ -369,6 +305,7 @@ export function TimerForm({
       });
   }
 
+  // Logs and notifies the user when form validation fails
   function onSubmitInvalid(errors: FieldErrors<z.infer<typeof schema>>) {
     console.error("Invalid form submission.", errors);
     toast("Invalid form submission.");
@@ -382,7 +319,7 @@ export function TimerForm({
           <Button onClick={fetchCache}>
             <RefreshCcw></RefreshCcw>
           </Button>
-          <Button onClick={cache}>
+          <Button onClick={() => cache()}>
             <Upload />
           </Button>
         </div>
@@ -400,15 +337,13 @@ export function TimerForm({
         </div>
       );
 
-    if (tagNames === undefined)
+    if (tagsError || tagNames === undefined)
       return (
         <div className="flex flex-col items-center">
           <p>Error while loading tags.</p>
           <Button
             onClick={() => {
-              if (!tagsLoading) {
-                setTagsRefreshState(tagsRefreshState + 1);
-              }
+              setTagsRefreshState(tagsRefreshState + 1);
             }}
           >
             <RefreshCcw />
@@ -417,10 +352,11 @@ export function TimerForm({
       );
 
     return (
-      <form
-        onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}
-        className="flex flex-col gap-4"
-      >
+      <FormProvider {...controller}>
+        <form
+          onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}
+          className="flex flex-col gap-4"
+        >
         <Button type="button" disabled={isCaching} onClick={cancelSplit}>
           {isCaching ? (
             <div className="flex flex-row justify-center items-center gap-2">
@@ -432,22 +368,26 @@ export function TimerForm({
           )}
         </Button>
         {/* Submit button */}
-        <Button type="submit">Submit</Button>
+        <Button type="submit" disabled={isSubmitting}>Submit</Button>
         {/* Columns */}
         <Columns fieldsToEnter={tableInfo.schema} form={controller} />
         {/* Quick actions */}
         {/* Tags */}
-        {tableInfo.tagging && <Tags tagsDataset={tagNames} form={controller} />}
+        {tableInfo.tagging && (
+          // type assertion: useDataset validates against TAG_NAMES_DATASET_SCHEMA internally
+          <Tags tagsDataset={tagNames as TAG_NAMES_DATASET} form={controller} />
+        )}
         {/* Descriptors */}
         {tableInfo.descriptors && (
-          <Descriptors tableInfo={tableInfo} form={controller} />
+          <Descriptors form={controller} />
         )}
         {/* Submit & restart button */}
         <Button type="submit" disabled={isSubmitting} value="split">
           Submit & Restart
           {isSubmitting ? <Spinner /> : null}
-        </Button>
-      </form>
+          </Button>
+        </form>
+      </FormProvider>
     );
   }
 
@@ -465,7 +405,7 @@ export function TimerForm({
 
   return (
     <div className="flex flex-col items-center">
-      <p>{isStart ? data["start_time"].toLocaleString() : "No start time."}</p>
+      <p>{isStart ? startTime.toLocaleString() : "No start time."}</p>
       <div className="flex flex-row justify-center">
         <Button
           className="min-w-[16ch]"

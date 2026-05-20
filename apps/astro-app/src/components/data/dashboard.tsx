@@ -12,6 +12,7 @@ import React, { useEffect, useMemo, useState, type JSX } from "react";
 import { toast } from "sonner";
 import { MATH } from "@utils/math";
 import { GenericChart } from "./chart";
+import { SchemaProvider, useDatabaseInfo } from "@utils/data/schema-context";
 
 /**
  * Attempts to fetch a dataset. The URL to GET from is "[endpoint]/[target]?querystring"
@@ -104,6 +105,15 @@ export function Dashboard({
 }: {
   databaseInfo: DatabaseInfo;
 }): JSX.Element {
+  return (
+    <SchemaProvider databaseInfo={databaseInfo}>
+      <DashboardInner />
+    </SchemaProvider>
+  );
+}
+
+function DashboardInner(): JSX.Element {
+  const databaseInfo = useDatabaseInfo();
   const [loadingDataState, setLoadingDataState] = useState<boolean>(false);
   const [errorState, setErrorState] = useState<boolean>(false);
   const [refreshState, setRefreshState] = useState<number>(0);

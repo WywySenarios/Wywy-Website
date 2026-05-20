@@ -32,9 +32,6 @@ export function getStaticPaths() {
 } // It's crucial that this page loads as quickly as possible to provide the best experience.
 
 const { databaseName, tableName } = Astro.params;
-let entrytype: TableInfo["entrytype"] | undefined;
-
-// const fieldsToEnter: Array<DataColumn | JsonColumn> = Object.values(config.data.databases[databaseName].schema);
 
 const pageTitle: string =
   databaseName.charAt(0).toUpperCase() +
@@ -44,13 +41,14 @@ const pageTitle: string =
   tableName.slice(1) +
   " Data Entry";
 
+let databaseInfo: DatabaseInfo | undefined = undefined;
 let tableInfo: TableInfo | undefined = undefined;
 for (let i of config.data) {
   if (i.dbname == databaseName) {
+    databaseInfo = i;
     for (let j of i.tables) {
       if (j.tableName == tableName) {
         tableInfo = j;
-        entrytype = j.entrytype;
         break;
       }
     }
@@ -58,8 +56,7 @@ for (let i of config.data) {
   }
 }
 
-if (!tableInfo || !entrytype) {
-  // @todo say something isn't working
+if (!databaseInfo || !tableInfo) {
   return Astro.redirect("/");
 }
 ---
@@ -71,7 +68,7 @@ if (!tableInfo || !entrytype) {
 >
   <LoginDialog client:only="react" slot="top-bar-button2" />
   <DataEntryForm
-    databaseName={databaseName}
+    databaseInfo={databaseInfo}
     tableInfo={tableInfo}
     client:only="react"
   >

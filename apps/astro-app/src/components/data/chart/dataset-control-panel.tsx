@@ -1,4 +1,4 @@
-import type { EChartsDataset, TableInfo } from "@/types/data";
+import type { DatabaseInfo, EChartsDataset, TableInfo } from "@/types/data";
 import { DATABASE_URL } from "astro:env/client";
 import type { JSX } from "astro/jsx-runtime";
 import { useEffect, useState } from "react";
@@ -14,9 +14,13 @@ import {
   prettyParseTimestamp,
   prettifySnakeCase,
 } from "@utils/parse";
+import {
+  SchemaProvider,
+  useDatabaseName,
+} from "@utils/data/schema-context";
 
 type DatasetControlPanelProps = {
-  databaseName: string;
+  databaseInfo: DatabaseInfo;
   tableSchema: TableInfo;
 };
 
@@ -36,9 +40,22 @@ const prettyParseFunctions = {
 };
 
 export default function DatasetControlPanel({
-  databaseName,
+  databaseInfo,
   tableSchema,
 }: DatasetControlPanelProps): JSX.Element {
+  return (
+    <SchemaProvider databaseInfo={databaseInfo} tableInfo={tableSchema}>
+      <DatasetControlPanelBody tableSchema={tableSchema} />
+    </SchemaProvider>
+  );
+}
+
+function DatasetControlPanelBody({
+  tableSchema,
+}: {
+  tableSchema: TableInfo;
+}): JSX.Element {
+  const databaseName = useDatabaseName();
   const [dataset, setDataset] = useState<EChartsDataset>([]);
   const [columns, setColumns] = useState<Array<any>>([]);
 

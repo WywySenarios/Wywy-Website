@@ -21,9 +21,15 @@ import {
 } from "@/components/ui/table";
 import { getZodDatasetType } from "@utils/data/schema";
 import { safeFetchDataset } from "@utils/data/http";
+import { toSnakeCase } from "@utils/parse";
 import { ZodError, type ZodType } from "zod";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import type { EntryTableProps } from "./entry-table-page";
+import {
+  useDatabaseInfo,
+  useDatabaseName,
+  useTableName,
+} from "@utils/data/schema-context";
 
 /**
  * Fetches the data from the endpoint and assumes the data to be of the specified type.
@@ -92,6 +98,51 @@ export function DatasetTable({
     return output;
   }, []);
 
+  const dbInfo = useDatabaseInfo();
+  const curTableName = useTableName();
+  const databaseName = useDatabaseName();
+  const pointerColumnMap = useMemo(() => {
+    const map: Record<
+      number,
+      {
+        targetTable?: string;
+        typeColumnIndex?: number;
+        references?: string[];
+      }
+    > = {};
+
+    if (!curTableName) return map;
+
+    const tableInfo = dbInfo.tables.find(
+      (t) => t.tableName === curTableName,
+    );
+    if (!tableInfo) return map;
+
+    for (const col of tableInfo.schema) {
+      const colSnake = toSnakeCase(col.name);
+      const colIndex = dataset.columns.indexOf(colSnake);
+      if (colIndex === -1) continue;
+
+      if (col.datatype === "pointer" && col.references) {
+        map[colIndex] = { targetTable: col.references };
+      } else if (
+        (col.datatype === "polypointer" ||
+          col.datatype === "polymorphic pointer") &&
+        col.references &&
+        typeof col.references === "object"
+      ) {
+        const typeColSnake = toSnakeCase(col.name + " Type");
+        const typeIndex = dataset.columns.indexOf(typeColSnake);
+        map[colIndex] = {
+          references: col.references,
+          typeColumnIndex: typeIndex !== -1 ? typeIndex : undefined,
+        };
+      }
+    }
+
+    return map;
+  }, [dbInfo, curTableName, dataset.columns]);
+
   return (
     <ScrollArea orientation="horizontal">
       <Table>
@@ -122,13 +173,49 @@ export function DatasetTable({
                   )}
                 </TableCell>
                 {/* Other data */}
-                {indexesToDisplay.map((indexToDisplay: number) => (
-                  <TableCell
-                    key={`entry-table-cell-${indexToDisplay}-${entryIndex}`}
-                  >
-                    {String(row[indexToDisplay])}
-                  </TableCell>
-                ))}
+                {indexesToDisplay.map((indexToDisplay: number) => {
+                  const pointerInfo = pointerColumnMap[indexToDisplay];
+                  const cellValue = row[indexToDisplay];
+
+                  if (pointerInfo) {
+                    let targetTable = pointerInfo.targetTable;
+
+                    if (
+                      pointerInfo.typeColumnIndex !== undefined &&
+                      pointerInfo.references
+                    ) {
+                      const typeValue = String(
+                        row[pointerInfo.typeColumnIndex],
+                      );
+                      targetTable =
+                        pointerInfo.references.find(
+                          (r) => toSnakeCase(r) === toSnakeCase(typeValue),
+                        ) ?? "";
+                    }
+
+                    if (targetTable) {
+                      return (
+                        <TableCell
+                          key={`entry-table-cell-${indexToDisplay}-${entryIndex}`}
+                        >
+                          <a
+                            href={`/data/${toSnakeCase(databaseName)}/${toSnakeCase(targetTable)}/explore/data?pkey=${cellValue}`}
+                          >
+                            {String(cellValue)}
+                          </a>
+                        </TableCell>
+                      );
+                    }
+                  }
+
+                  return (
+                    <TableCell
+                      key={`entry-table-cell-${indexToDisplay}-${entryIndex}`}
+                    >
+                      {String(cellValue)}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ),
           )}
@@ -148,8 +235,6 @@ interface GenericEntryTableProps extends EntryTableProps {
 /**
  * A generic entry editor table.
  * @param schema The table schema.
- * @param databaseName The name of the database that contains the target table.
- * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
  * @param refreshTrigger A controlled field to trigger a refresh through useEffect.
  * @param type The table type to fetch.
@@ -157,12 +242,12 @@ interface GenericEntryTableProps extends EntryTableProps {
  */
 export function GenericEntryTable({
   schema,
-  databaseName,
-  tableName,
   endpoint,
   refreshTrigger,
   type,
 }: GenericEntryTableProps): JSX.Element {
+  const databaseName = useDatabaseName();
+  const tableName = useTableName()!;
   const datasetSchema = useMemo(
     () =>
       getZodDatasetType(

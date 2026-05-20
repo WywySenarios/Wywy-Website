@@ -2,66 +2,131 @@
 
 import { Button } from "@/components/ui/button";
 
-import type { TableInfo } from "@/types/data";
 import { createFormController } from "@utils/data/form/full-entry-handlers";
-import { Columns } from "@/components/data/data-entry";
+import { Columns, Tags, Descriptors } from "@/components/data/data-entry";
 import { CACHE_URL } from "astro:env/client";
 import type z from "zod";
-import { submitEntry } from "@utils/data/http";
+import { submitEntry, useDataset } from "@utils/data/http";
 import { toast } from "sonner";
-import type { FieldErrors } from "react-hook-form";
+import { FormProvider, type FieldErrors } from "react-hook-form";
 import { toSnakeCase } from "@utils/parse";
+import { useEffect, useState } from "react";
+import { useAutoPopulate } from "@utils/data/form/useAutoPopulate";
+import { Spinner } from "@/components/ui/spinner";
+import { RefreshCcw } from "lucide-react";
+import { type TAG_NAMES_DATASET } from "@utils/data/schema";
+import {
+  useDatabaseName,
+  useTableInfo,
+} from "@utils/data/schema-context";
 
 /**
  * Basic form component.
- * @param databaseName The name of the database that this form gathers data for.
- * @param tableInfo The full table schema.
- * @param dbURL The URL that the form will post to on submit.
  */
 export function FormForm({
-  databaseName,
-  tableInfo,
-  submissionCallback = () => {},
+  onSubmitted,
 }: {
-  databaseName: string;
-  tableInfo: TableInfo;
-  submissionCallback?: () => void;
+  onSubmitted?: () => void;
 }) {
+  const databaseName = useDatabaseName();
+  const tableInfo = useTableInfo()!;
+  // TODO: extract a reusable form stage hook (idle -> populating -> ready -> submitting -> submitted)
   const { controller, schema } = createFormController(tableInfo);
+  const { populate, isPopulating } = useAutoPopulate(tableInfo, controller);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tagsRefreshState, setTagsRefreshState] = useState<number>(0);
 
-  function onSubmit(
-    values: z.infer<typeof schema>,
-    event?: React.BaseSyntheticEvent,
-  ): void {
-    submitEntry(
-      `${CACHE_URL}/main/${databaseName}/${toSnakeCase(tableInfo.tableName)}`,
-      values,
-      "cache",
-    )
-      .then(() => {
-        toast("Form submitted!");
-        submissionCallback();
-      })
-      .catch((reason) => {
-        toast(`Form submission failed: ${reason}`);
-        console.log(`Form submission failed: ${reason}`);
-      });
-  }
+  const [tagNamesDataset, tagsLoading, tagsError] = useDataset({
+    valid: tableInfo.tagging === true,
+    table_type: "tag_names",
+    schema: undefined,
+    source: "cache",
+    endpointOptions: {
+      databaseName,
+      tableName: tableInfo.tableName,
+    },
+    refreshState: tagsRefreshState,
+  });
 
-  function onSubmitInvalid(errors: FieldErrors<z.infer<typeof schema>>) {
-    console.error("Invalid form submission.", errors);
-    toast("Invalid form submission.");
+  useEffect(() => {
+    populate("start");
+  }, []);
+
+  const endpoint = `${CACHE_URL}/main/${toSnakeCase(databaseName)}/${toSnakeCase(tableInfo.tableName)}`;
+
+  // Populates submit-time columns then validates and sends the form entry
+  async function handleSubmitClick() {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      await populate("submit");
+
+      let submitted = false;
+      await controller.handleSubmit(
+        async (values: z.infer<typeof schema>) => {
+          await submitEntry(endpoint, values, "cache");
+          toast("Form submitted!");
+          submitted = true;
+        },
+        (errors: FieldErrors<z.infer<typeof schema>>) => {
+          console.error("Invalid form submission.", errors);
+          toast("Invalid form submission.");
+        },
+      )();
+
+      if (submitted) onSubmitted?.();
+    } catch (reason) {
+      toast(`Form submission failed: ${reason}`);
+      console.error(`Form submission failed: ${reason}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
-    <form
-      onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}
-      className="flex flex-col gap-4"
-    >
+    <FormProvider {...controller}>
+      <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-4">
       <Columns fieldsToEnter={tableInfo.schema} form={controller} />
-      {/* @TODO add tags */}
-      {/* @TODO add descriptors */}
-      <Button type="submit">Submit</Button>
-    </form>
+      {tableInfo.tagging ? (
+        tagsLoading ? (
+          <div className="flex flex-col items-center">
+            <p>Loading tags...</p>
+            <Spinner />
+          </div>
+        ) : tagsError ? (
+          <div className="flex flex-col items-center">
+            <p>Error while loading tags.</p>
+            <Button
+              onClick={() => {
+                setTagsRefreshState(tagsRefreshState + 1);
+              }}
+            >
+              <RefreshCcw />
+            </Button>
+          </div>
+        ) : tagNamesDataset ? (
+          <>
+            {/* @TODO tag suggestions — pick the most likely tag instead of the first one */}
+            <Tags
+              /* type assertion: useDataset validates against TAG_NAMES_DATASET_SCHEMA internally, so the cast is safe */
+              tagsDataset={tagNamesDataset as TAG_NAMES_DATASET}
+              form={controller}
+            />
+          </>
+        ) : null
+      ) : null}
+      {tableInfo.descriptors ? (
+        <Descriptors form={controller} />
+      ) : null}
+      <Button
+        type="button"
+        disabled={isSubmitting || isPopulating}
+        onClick={handleSubmitClick}
+      >
+        {isSubmitting ? <Spinner /> : "Submit"}
+        </Button>
+      </form>
+    </FormProvider>
   );
 }

@@ -78,6 +78,19 @@ export function* resolveColumnSchema(
     case "text":
       yield { ...column, datatype: "str", entrytype: "none" };
       break;
+    case "pointer":
+      yield { ...column, datatype: "pointer", entrytype: "pointer" };
+      break;
+    case "polymorphic pointer":
+    case "polypointer":
+      yield { ...column, datatype: "polypointer", entrytype: "polypointer" };
+      yield {
+        ...column,
+        name: column.name + " Type",
+        datatype: "str",
+        entrytype: "none",
+      };
+      break;
   }
 
   if (column.comments) {
@@ -85,6 +98,7 @@ export function* resolveColumnSchema(
       name: column.name + "_comments",
       entrytype: "none",
       datatype: "str",
+      optional: true,
     };
   }
 }

@@ -16,11 +16,15 @@ import {
 } from "@utils/data/schema";
 import { submitEntry } from "@utils/data/http";
 import { z } from "zod";
-import { useForm, type FieldErrors } from "react-hook-form";
+import { FormProvider, useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toSnakeCase } from "@utils/parse";
 import { DatasetTable, getData } from "./entry-table";
 import type { EntryTableProps } from "./entry-table-page";
+import {
+  useDatabaseName,
+  useTableName,
+} from "@utils/data/schema-context";
 
 interface TaggingEntryTableProps extends EntryTableProps {
   type: "tags" | "tag_names" | "tag_aliases" | "tag_groups";
@@ -28,20 +32,18 @@ interface TaggingEntryTableProps extends EntryTableProps {
 
 /**
  * TAGGING SUB-TABLES ONLY: Render an entry table full of data and a form at the bottom to insert new entries in.
- * @param databaseName The name of the database that contains the target table.
- * @param tableName The name of the parent table (or the target table if there is no parent).
  * @param endpoint The endpoint prefix to get data from. (i.e. DATABASE_URL or CACHE_URL/main)
  * @param refreshTrigger A controlled field to trigger a refresh through useEffect.
  * @param type The type of TaggingTable to render.
  * @returns
  */
 export function TaggingTable({
-  databaseName,
-  tableName,
   endpoint,
   refreshTrigger,
   type,
 }: TaggingEntryTableProps) {
+  const databaseName = useDatabaseName();
+  const tableName = useTableName()!;
   const [data, setData] = useState<Dataset>();
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -128,16 +130,18 @@ export function TaggingTable({
   );
 
   return (
-    <form onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}>
-      <DatasetTable
-        dataset={data}
-        footer={footer}
-        readonly={false}
-        explorePath={`/data/${databaseName}/${tableName}/explore/${type}`}
-      ></DatasetTable>
-      <Button className="w-full" type="submit">
-        <Plus />
-      </Button>
-    </form>
+    <FormProvider {...controller}>
+      <form onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}>
+        <DatasetTable
+          dataset={data}
+          footer={footer}
+          readonly={false}
+          explorePath={`/data/${databaseName}/${tableName}/explore/${type}`}
+        ></DatasetTable>
+        <Button className="w-full" type="submit">
+          <Plus />
+        </Button>
+      </form>
+    </FormProvider>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import type { DescriptorInfo, TableInfo } from "@/types/data";
+import type { DatabaseInfo, DescriptorInfo, TableInfo } from "@/types/data";
 import type { JSX } from "astro/jsx-runtime";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -11,10 +11,13 @@ import { OriginPicker } from "@/components/data/origin-picker";
 import { CACHE_CSRF_ENDPOINT, getCSRFToken } from "@utils/auth";
 import { GenericEntryTable } from "./entry-table";
 import { TaggingTable } from "./tagging-table";
+import {
+  SchemaProvider,
+  useDatabaseName,
+  useTableName,
+} from "@utils/data/schema-context";
 
 export interface EntryTableProps {
-  databaseName: string;
-  tableName: string;
   endpoint: string;
   refreshTrigger: number;
 }
@@ -22,20 +25,20 @@ export interface EntryTableProps {
 /**
  * Renders an EntryTable to view and modify entries on specific tables.
  * @param schema The schema of the table.
- * @param databaseName The name of the target database
- * @param tableName The name of the parent table, or the target table if the table has no parent.
+ * @param databaseInfo The full database info.
+ * @param tableInfo The full table info.
  * @param type The type of table to render. Is either undefined (generic) or a tagging table type.
  * @returns an EntryTable component.
  */
 export function EntryTable({
   schema,
-  databaseName,
-  tableName,
+  databaseInfo,
+  tableInfo,
   type,
 }: {
   schema?: TableInfo | DescriptorInfo | undefined;
-  databaseName: string;
-  tableName: string;
+  databaseInfo: DatabaseInfo;
+  tableInfo: TableInfo;
   type?:
     | undefined
     | "tags"
@@ -45,6 +48,29 @@ export function EntryTable({
     | "descriptors"
     | "data";
 }): JSX.Element {
+  return (
+    <SchemaProvider databaseInfo={databaseInfo} tableInfo={tableInfo}>
+      <EntryTableBody schema={schema} type={type} />
+    </SchemaProvider>
+  );
+}
+
+function EntryTableBody({
+  schema,
+  type,
+}: {
+  schema?: TableInfo | DescriptorInfo | undefined;
+  type?:
+    | undefined
+    | "tags"
+    | "tag_names"
+    | "tag_aliases"
+    | "tag_groups"
+    | "descriptors"
+    | "data";
+}): JSX.Element {
+  const databaseName = useDatabaseName();
+  const tableName = useTableName()!;
   const [origin, setOrigin] = useState<string>(CACHE_URL);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [pullTrigger, setPullTrigger] = useState<number>(0);
@@ -64,8 +90,6 @@ export function EntryTable({
   let table: JSX.Element = null;
   // params applicable to every type of entry table
   const genericEntryTableParams: EntryTableProps = {
-    databaseName: databaseName,
-    tableName: tableName,
     endpoint: endpoint,
     refreshTrigger: refreshTrigger,
   };

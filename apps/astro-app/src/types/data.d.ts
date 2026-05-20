@@ -48,7 +48,10 @@ export type Datatype =
   | "time"
   | "timestamp"
   | "enum"
-  | "geodetic point";
+  | "geodetic point"
+  | "pointer"
+  | "polypointer"
+  | "polymorphic pointer";
 
 export type ResolvedDatatype =
   | "int"
@@ -59,7 +62,9 @@ export type ResolvedDatatype =
   | "time"
   | "timestamp"
   | "enum"
-  | "geodetic point";
+  | "geodetic point"
+  | "pointer"
+  | "polypointer";
 
 export interface GeodeticCoordinates {
   latitude: number;
@@ -172,6 +177,22 @@ type GeodeticPointColumn = {
   entrytype: "geodetic point" | "geodetic point minimal" | "none";
 };
 
+type PointerColumn = {
+  datatype: "pointer";
+  defaultValue: never;
+  entrytype: "pointer" | "none";
+  references?: string;
+};
+
+type PolyPointerColumn = {
+  datatype: "polypointer" | "polymorphic pointer";
+  defaultValue: never;
+  entrytype: "polypointer" | "none";
+  references?: string[];
+};
+
+export type RecordOnEvent = "start" | "split" | "submit";
+
 export type DataColumn = {
   name: string;
   parser?: Datatype;
@@ -180,7 +201,8 @@ export type DataColumn = {
   comments?: boolean;
   description?: string;
   unique?: boolean;
-  record_on?: "start" | "split";
+  optional?: boolean;
+  record_on?: RecordOnEvent;
 } & (
   | IntegerColumn
   | FloatColumn
@@ -191,10 +213,12 @@ export type DataColumn = {
   | TimestampColumn
   | EnumColumn
   | GeodeticPointColumn
+  | PointerColumn
+  | PolyPointerColumn
 );
 
 export type ResolvedColumnSchema = DataColumn & {
-  entrytype: "none";
+  entrytype: "none" | "pointer" | "polypointer";
   datatype: ResolvedDatatype;
 };
 // END - Schema
@@ -217,6 +241,7 @@ export type VectorDataset = Record<string, Array<any>>;
 export type TableType =
   | "data"
   | "descriptors"
+  | "search"
   | "tags"
   | "tag_names"
   | "tag_aliases"

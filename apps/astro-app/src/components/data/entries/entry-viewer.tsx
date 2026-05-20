@@ -1,6 +1,11 @@
 "use client";
 
-import type { DescriptorInfo, TableInfo, TableType } from "@/types/data";
+import type {
+  DatabaseInfo,
+  DescriptorInfo,
+  TableInfo,
+  TableType,
+} from "@/types/data";
 import { type OriginName } from "@/types/http";
 import {
   safeFetchDataset,
@@ -33,12 +38,17 @@ import {
   type TAGS_DATASET,
 } from "@utils/data/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, type FieldErrors } from "react-hook-form";
+import { FormProvider, useForm, type FieldErrors } from "react-hook-form";
 import z from "zod";
 import { toast } from "sonner";
 import { resolveEndpoint } from "@utils/data/endpoints";
 import { Columns, PrimaryTag } from "../data-entry";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  SchemaProvider,
+  useDatabaseName,
+  useTableName,
+} from "@utils/data/schema-context";
 
 function EntryViewerError({ message }: { message: string }) {
   return (
@@ -50,17 +60,68 @@ function EntryViewerError({ message }: { message: string }) {
 
 export function EntryViewer({
   schema,
-  databaseName,
-  tableName,
+  databaseInfo,
+  tableInfo,
   descriptorName,
   type = "data",
 }: {
   schema: TableInfo | DescriptorInfo;
-  databaseName: string;
-  tableName: string;
+  databaseInfo: DatabaseInfo;
+  tableInfo: TableInfo;
   descriptorName?: string;
   type?: TableType;
 }) {
+  const entrySchema = useMemo(() => {
+    switch (type) {
+      case "data":
+      case "descriptors":
+        return getZodEntrySchema(schema).extend({
+          id: z.int().min(1),
+        });
+      case "tag_aliases":
+        return TAGGING_TABLE_TAG_ALIASES_SCHEMA;
+      case "tag_groups":
+        return TAGGING_TABLE_TAG_GROUPS_SCHEMA;
+      case "tag_names":
+        return TAGGING_TABLE_TAG_NAMES_SCHEMA;
+      case "tags":
+        return TAGGING_TABLE_TAGS_SCHEMA;
+      default:
+        throw new Error(`Unknown table type: ${type}`);
+    }
+  }, [schema]);
+
+  const controller = useForm({
+    resolver: zodResolver(entrySchema),
+  });
+
+  return (
+    <SchemaProvider databaseInfo={databaseInfo} tableInfo={tableInfo}>
+      <FormProvider {...controller}>
+        <EntryViewerBody
+          schema={schema}
+          descriptorName={descriptorName}
+          type={type}
+          controller={controller}
+        />
+      </FormProvider>
+    </SchemaProvider>
+  );
+}
+
+function EntryViewerBody({
+  schema,
+  descriptorName,
+  type = "data",
+  controller,
+}: {
+  schema: TableInfo | DescriptorInfo;
+  descriptorName?: string;
+  type?: TableType;
+  controller: ReturnType<typeof useForm>;
+}) {
+  const databaseName = useDatabaseName();
+  const tableName = useTableName()!;
   const [id, setId] = useState<number | null>(() => {
     if (window == undefined) return null;
     const primaryKey = Number(
@@ -284,28 +345,7 @@ export function EntryViewer({
   // END - data tables
 
   // START - edit entry
-  const entrySchema = useMemo(() => {
-    switch (type) {
-      case "data":
-      case "descriptors":
-        return getZodEntrySchema(schema).extend({
-          id: z.number().int().min(1),
-        });
-      case "tag_aliases":
-        return TAGGING_TABLE_TAG_ALIASES_SCHEMA;
-      case "tag_groups":
-        return TAGGING_TABLE_TAG_GROUPS_SCHEMA;
-      case "tag_names":
-        return TAGGING_TABLE_TAG_NAMES_SCHEMA;
-      case "tags":
-        return TAGGING_TABLE_TAGS_SCHEMA;
-    }
-  }, [schema]);
-  const controller = useForm({
-    resolver: zodResolver(entrySchema),
-    // defaultValues: getDefaultValues(schema),
-  });
-  function onSubmit(values: z.infer<typeof entrySchema>) {
+  function onSubmit(values: any) {
     const endpoint = resolveEndpoint(origin, type, entryEndpointOptions);
     if (endpoint === undefined) {
       console.error("Form submission failed: Could not resolve endpoint.");
