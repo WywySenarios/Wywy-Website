@@ -35,10 +35,13 @@ import {
 import { Button } from "@/components/ui/button";
 import type { DataColumn, EnumColumn, SelectRestrictions } from "@/types/data";
 import { SearchSelect } from "./input-element/search-select";
-import { Controller } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import { GeodeticPointMinimalInputElement } from "./input-element/geodetic-point-minimal";
 import { toSnakeCase } from "@utils/parse";
 import { NumberBox } from "./input-element/number-box";
+import { RemoteSearchSelect } from "./input-element/remote-search-select";
+import { PolypointerInput } from "./input-element/polypointer-input";
+import { useDatabaseName } from "@utils/data/schema-context";
 
 export interface FormElementProps {
   form: any;
@@ -318,6 +321,27 @@ function InputElement({
             })}
             defaultValue={columnInfo.defaultValue}
             {...field}
+          />
+        );
+        break;
+      case "pointer":
+        body = (
+          <RemoteSearchSelect
+            databaseName={useDatabaseName()}
+            tableName={columnInfo.references ?? ""}
+            value={field.value as number | undefined}
+            onChange={(v) => field.onChange(v)}
+          />
+        );
+        break;
+      case "polypointer":
+        body = (
+          <PolypointerInput
+            columnInfo={columnInfo}
+            fieldName={columnName}
+            formFieldName={field.name}
+            value={field.value as number | undefined}
+            onChange={(v) => field.onChange(v)}
           />
         );
         break;

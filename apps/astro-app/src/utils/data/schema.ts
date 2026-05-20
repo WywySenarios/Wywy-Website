@@ -212,11 +212,17 @@ export function getZodColumnSchema(columnInfo: DataColumn) {
         .nullable()
         .default(null);
       break;
+    case "pointer":
+    case "polymorphic pointer":
+    case "polypointer":
+      output = z.int().min(1);
+      break;
   }
 
   // traits that might apply to any column
   // optional
-  // output = output.optional();
+  if (columnInfo.optional === true && columnInfo.datatype !== "geodetic point")
+    output = output.optional();
 
   return output;
 }
@@ -239,6 +245,14 @@ export function getZodEntrySchema(entrySchema: TableInfo | DescriptorInfo) {
 
     // data column, default values are not injected
     outputShape[columnName] = getZodColumnSchema(columnInfo);
+
+    // polypointer type subcolumn
+    if (
+      columnInfo.datatype === "polymorphic pointer" ||
+      columnInfo.datatype === "polypointer"
+    ) {
+      outputShape[`${columnName}_type`] = z.string().transform((val) => toSnakeCase(val));
+    }
 
     // comments column
     // @TODO add length restriction

@@ -16,7 +16,7 @@ import {
 } from "@utils/data/schema";
 import { submitEntry } from "@utils/data/http";
 import { z } from "zod";
-import { useForm, type FieldErrors } from "react-hook-form";
+import { FormProvider, useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toSnakeCase } from "@utils/parse";
 import { DatasetTable, getData } from "./entry-table";
@@ -130,16 +130,18 @@ export function TaggingTable({
   );
 
   return (
-    <form onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}>
-      <DatasetTable
-        dataset={data}
-        footer={footer}
-        readonly={false}
-        explorePath={`/data/${databaseName}/${tableName}/explore/${type}`}
-      ></DatasetTable>
-      <Button className="w-full" type="submit">
-        <Plus />
-      </Button>
-    </form>
+    <FormProvider {...controller}>
+      <form onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}>
+        <DatasetTable
+          dataset={data}
+          footer={footer}
+          readonly={false}
+          explorePath={`/data/${databaseName}/${tableName}/explore/${type}`}
+        ></DatasetTable>
+        <Button className="w-full" type="submit">
+          <Plus />
+        </Button>
+      </form>
+    </FormProvider>
   );
 }

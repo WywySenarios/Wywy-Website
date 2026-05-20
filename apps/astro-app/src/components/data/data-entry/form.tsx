@@ -8,7 +8,7 @@ import { CACHE_URL } from "astro:env/client";
 import type z from "zod";
 import { submitEntry, useDataset } from "@utils/data/http";
 import { toast } from "sonner";
-import type { FieldErrors } from "react-hook-form";
+import { FormProvider, type FieldErrors } from "react-hook-form";
 import { toSnakeCase } from "@utils/parse";
 import { useEffect, useState } from "react";
 import { useAutoPopulate } from "@utils/data/form/useAutoPopulate";
@@ -85,7 +85,8 @@ export function FormForm({
   }
 
   return (
-    <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-4">
+    <FormProvider {...controller}>
+      <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-4">
       <Columns fieldsToEnter={tableInfo.schema} form={controller} />
       {tableInfo.tagging ? (
         tagsLoading ? (
@@ -124,7 +125,8 @@ export function FormForm({
         onClick={handleSubmitClick}
       >
         {isSubmitting ? <Spinner /> : "Submit"}
-      </Button>
-    </form>
+        </Button>
+      </form>
+    </FormProvider>
   );
 }

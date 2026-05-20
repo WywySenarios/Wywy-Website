@@ -13,6 +13,7 @@ export const endpointHelpers = {
     data: masterDatabaseDataEndpoint,
     descriptors: masterDatabaseDescriptorEndpoint,
     tagging: masterDatabaseTaggingEndpoint,
+    search: masterDatabaseSearchEndpoint,
   },
 } as const;
 
@@ -73,6 +74,13 @@ export function masterDatabaseTaggingEndpoint({
   return `${DATABASE_URL}/${databaseName}/${tableName}/${tableType}`;
 }
 
+export function masterDatabaseSearchEndpoint({
+  databaseName,
+  tableName,
+}: DATA_ENDPOINT_PARAMS): string {
+  return `${DATABASE_URL}/${databaseName}/${tableName}/search`;
+}
+
 export function resolveEndpoint(
   source: OriginName,
   table_type: TableType,
@@ -81,13 +89,16 @@ export function resolveEndpoint(
     | DESCRIPTOR_ENDPOINT_PARAMS
     | TAGGING_ENDPOINT_PARAMS,
 ) {
-  let endpointHelperTableType: "data" | "descriptors" | "tagging";
+  let endpointHelperTableType: "data" | "descriptors" | "search" | "tagging";
   switch (table_type) {
     case "data":
       endpointHelperTableType = "data";
       break;
     case "descriptors":
       endpointHelperTableType = "descriptors";
+      break;
+    case "search":
+      endpointHelperTableType = "search";
       break;
     case "tag_aliases":
     case "tag_groups":
@@ -98,6 +109,10 @@ export function resolveEndpoint(
   }
 
   try {
+    if (endpointHelperTableType === "search") {
+      // search is only available on master-database
+      return masterDatabaseSearchEndpoint(options as DATA_ENDPOINT_PARAMS);
+    }
     return endpointHelpers[source][endpointHelperTableType]({
       ...options,
       tableType: table_type,

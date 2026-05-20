@@ -12,7 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { GeodeticCoordinate } from "@utils/datatypes/geodetic";
 import { createFormController } from "@/utils/data/form/full-entry-handlers";
 import { submitEntry, useDataset } from "@/utils/data/http";
-import type { FieldErrors } from "react-hook-form";
+import { FormProvider, type FieldErrors } from "react-hook-form";
 import {
   TAG_NAMES_DATASET_SCHEMA,
   type TAG_NAMES_DATASET,
@@ -352,10 +352,11 @@ export function TimerForm({
       );
 
     return (
-      <form
-        onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}
-        className="flex flex-col gap-4"
-      >
+      <FormProvider {...controller}>
+        <form
+          onSubmit={controller.handleSubmit(onSubmit, onSubmitInvalid)}
+          className="flex flex-col gap-4"
+        >
         <Button type="button" disabled={isCaching} onClick={cancelSplit}>
           {isCaching ? (
             <div className="flex flex-row justify-center items-center gap-2">
@@ -384,8 +385,9 @@ export function TimerForm({
         <Button type="submit" disabled={isSubmitting} value="split">
           Submit & Restart
           {isSubmitting ? <Spinner /> : null}
-        </Button>
-      </form>
+          </Button>
+        </form>
+      </FormProvider>
     );
   }
 
