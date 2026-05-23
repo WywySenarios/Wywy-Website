@@ -112,7 +112,6 @@ const tableInfo: TableInfo | undefined = databaseInfo.tables.find(
 if (!tableInfo) {
   throw TypeError("No table schema supplied.");
 }
-let targetTableName: string = "";
 let schema: TableInfo | DescriptorInfo | undefined = undefined;
 let type: undefined | "tags" | "tag_names" | "tag_aliases" | "tag_groups" =
   undefined;
@@ -122,27 +121,22 @@ switch (slug) {
   case "data":
   case undefined:
     schema = tableInfo;
-    targetTableName = tableName;
     break;
   case "tags":
     schema = { ...tableInfo, ...TAGGING_TABLE_TAGS_TABLE_SCHEMA };
     type = slug;
-    targetTableName = `${tableName}_${slug}`;
     break;
   case "tag_names":
     schema = { ...tableInfo, ...TAGGING_TABLE_TAG_NAMES_TABLE_SCHEMA };
     type = slug;
-    targetTableName = `${tableName}_${slug}`;
     break;
   case "tag_aliases":
     schema = { ...tableInfo, ...TAGGING_TABLE_TAG_ALIASES_TABLE_SCHEMA };
     type = slug;
-    targetTableName = `${tableName}_${slug}`;
     break;
   case "tag_groups":
     schema = { ...tableInfo, ...TAGGING_TABLE_TAG_GROUPS_TABLE_SCHEMA };
     type = slug;
-    targetTableName = `${tableName}_${slug}`;
     break;
   default:
     schema = tableInfo.descriptors.find(
@@ -154,7 +148,6 @@ switch (slug) {
         `Descriptor "${slug.slice("descriptors/".length)}" not found.`,
       );
     }
-    targetTableName = `${tableName}_${schema.name}_descriptors`;
     break;
 }
 ---

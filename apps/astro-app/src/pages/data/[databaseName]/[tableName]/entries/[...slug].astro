@@ -88,7 +88,7 @@ if (slug) {
     " Entry Editor";
 }
 
-function invalidConfig(message?: string): Response {
+function invalidConfig(): Response {
   // @TODO more communicative and fancier redirect page (maybe to a home page in /data?)
   return Astro.redirect("/");
 }
@@ -105,7 +105,6 @@ const tableInfo: TableInfo | undefined = databaseInfo.tables.find(
 if (!tableInfo) {
   return invalidConfig();
 }
-let targetTableName: string = "";
 let schema: TableInfo | DescriptorInfo | undefined = undefined;
 let type: undefined | "tags" | "tag_names" | "tag_aliases" | "tag_groups" =
   undefined;
@@ -114,14 +113,12 @@ let type: undefined | "tags" | "tag_names" | "tag_aliases" | "tag_groups" =
 switch (slug) {
   case undefined:
     schema = tableInfo;
-    targetTableName = tableName;
     break;
   case "tags":
   case "tag_names":
   case "tag_aliases":
   case "tag_groups":
     type = slug;
-    targetTableName = `${tableName}_${slug}`;
     break;
   default:
     schema = tableInfo.descriptors.find(
@@ -133,7 +130,6 @@ switch (slug) {
         `Descriptor "${slug.slice("descriptors/".length)}" not found.`,
       );
     }
-    targetTableName = `${tableName}_${schema.name}_descriptors`;
     break;
 }
 ---
