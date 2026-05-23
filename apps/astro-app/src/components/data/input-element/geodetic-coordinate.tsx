@@ -26,17 +26,14 @@ export interface GeodeticCoordinateFields {
  * An input element for a geographical coordinate. Assumes that there is a valid toaster to use.
  * @param value The controlled state of the value of the geographical coordinate. Must be used in tandem with onChange
  * @param onChange Event handler when the value of the geographical coordinate changes.
- * @param fields The fields that are relevant to the user. The relevant disabled fields will not necessarily explicitly be set to null.
  * @returns
  */
 export function GeodeticCoordinateInputElement({
   value,
   onChange,
-  fields = {},
 }: {
   value: GeodeticCoordinate;
   onChange: (val: GeodeticCoordinate) => void;
-  fields?: GeodeticCoordinateFields;
 }) {
   if (!value) return null;
 
@@ -182,7 +179,7 @@ export function GeodeticCoordinateInputElement({
       <Button
         type="button"
         className="w-full"
-        onClick={(event) => {
+        onClick={() => {
           navigator.geolocation.getCurrentPosition(
             (position: GeolocationPosition) => {
               onChange(new GeodeticCoordinate(position.coords));

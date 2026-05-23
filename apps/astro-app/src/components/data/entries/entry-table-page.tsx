@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CloudDownload, RefreshCw } from "lucide-react";
 import { CACHE_URL, DATABASE_URL } from "astro:env/client";
 import { OriginPicker } from "@/components/data/origin-picker";
-import { CACHE_CSRF_ENDPOINT, getCSRFToken } from "@utils/auth";
+import { getCSRFToken } from "@utils/auth";
 import { GenericEntryTable } from "./entry-table";
 import { TaggingTable } from "./tagging-table";
 import {
