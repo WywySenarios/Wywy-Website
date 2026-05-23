@@ -117,7 +117,7 @@ function EntryTableBody({
     }
 
     // tell the cache to fetch data from the master database.
-    getCSRFToken(CACHE_CSRF_ENDPOINT)
+    getCSRFToken("cache")
       .catch((reason: any) => {
         toast(`Failed to request cache data update: ${reason}`);
       })
