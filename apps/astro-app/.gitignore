@@ -79,6 +79,7 @@ nextPush.txt
 
 ## build output
 dist/
+.wrangler
 
 
 # ignore temporary installation files

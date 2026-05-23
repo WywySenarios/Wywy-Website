@@ -76,7 +76,7 @@ const datasets = defineCollection({
     endDate: z.coerce.date(),
     dateLastUpdated: z.coerce.date(),
     suppress: z.optional(z.array(z.string())),
-    data: z.record(z.any()), // @TODO make type safety through good schema
+    data: z.record(z.string(), z.any()), // @TODO make type safety through good schema
     totals: z.optional(z.any()), // @TODO make type safety through good schema
     constraints: z.optional(
       z
