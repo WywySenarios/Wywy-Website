@@ -4,9 +4,17 @@
 
 All commands run from `/etc/Wywy-Website-Control/`, NOT from inside this repo. See [`docs/wywy-website-control.mdx`](../../../etc/Wywy-Website-Control/docs/wywy-website-control.mdx) for control commands.
 
+## Implementation plans
+
+Plans live in the control repo: [`internal/implementation-plans/`](../../../etc/Wywy-Website-Control/internal/implementation-plans/)
+
 ## Service documentation
 
 See [`internal/services/website.mdx`](../../../etc/Wywy-Website-Control/internal/services/website.mdx) for architecture, commands, config YAML, path aliases, content collections, and schema context. Docker container details at [`internal/services/website/containers/`](../../../etc/Wywy-Website-Control/internal/services/website/containers/).
+
+## Dependencies
+
+Prefer using existing dependencies over adding new ones. Before adding a new package, check `package.json` for something that already does what you need. Add only when there is no reasonable existing alternative.
 
 ## Language conventions
 
