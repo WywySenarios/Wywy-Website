@@ -30,16 +30,6 @@ export interface MainConfigSchema {
   // govern website content
   websiteData: {
     schedule: string; // schedule to be displayed (e.g. default)
-    blog: {
-      homepage: {
-        pinned: Array<string>; // pinned posts (urls?)
-      };
-    };
-    Senarios: {
-      homepage: {
-        pinned: Array<string>; // @TODO explain
-      };
-    };
   };
   data: Array<DatabaseInfo>;
 }

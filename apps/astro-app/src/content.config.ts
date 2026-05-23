@@ -20,16 +20,6 @@ const docs = defineCollection({
 });
 // END - by default "mandatory collections"
 
-const awards = defineCollection({
-  loader: glob({ pattern: "**/*.md", base: "./src/data/awards" }),
-  schema: z.object({
-    title: z.string(),
-    description: z.string(),
-    date: z.string(),
-    imagePath: z.string().optional(),
-  }),
-});
-
 const projects = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/data/projects" }),
   schema: z.object({
@@ -47,38 +37,6 @@ const directives = defineCollection({
     description: z.string(),
     date: z.string(),
     imagePath: z.string().optional(),
-  }),
-});
-
-const blog = defineCollection({
-  loader: glob({ pattern: "**/*.md", base: "./src/data/blog" }),
-  schema: z.object({
-    url: z.string(),
-    title: z.string(),
-    description: z.string(),
-    publicationDate: z.string(),
-    dateLastUpdated: z.string(),
-    category: z.array(z.string()),
-  }),
-});
-
-const cards = defineCollection({
-  loader: glob({ pattern: "**/*.md", base: "./src/data/cards" }),
-  schema: z.object({
-    title: z.string(),
-    imagePath: z.string(),
-    description: z.string(),
-  }),
-});
-
-const privacyPolicies = defineCollection({
-  loader: glob({ pattern: "**/*.md", base: "./src/data/privacyPolicies" }),
-  schema: z.object({
-    title: z.string(),
-    dateLastUpdated: z.coerce.date(),
-    summary: z.string(),
-    datapointsReleased: z.array(z.string()),
-    datapointsKeptPrivate: z.array(z.string()),
   }),
 });
 
@@ -145,12 +103,8 @@ const datasets = defineCollection({
 
 export const collections = {
   docs,
-  awards,
   projects,
   directives,
-  blog,
-  cards,
-  privacyPolicies,
   schedules,
   wishlist,
   datasets,
