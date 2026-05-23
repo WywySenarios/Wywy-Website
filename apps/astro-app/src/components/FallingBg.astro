@@ -29,7 +29,7 @@ for (let i of itemsToGenerate) {
 <div id="fallingBgMain" data-itemsToGenerate={JSON.stringify(itemsToGenerate)} data-numItems={numItems} data-UID={JSON.stringify(UID)} data-endLocations={JSON.stringify(endLocations)} data-duration={JSON.stringify(duration)} data-rotationBounds={JSON.stringify(rotationBounds)}>
     {
         indexes.map((index) => {
-            return itemsToGenerate.map((i) => {
+            return itemsToGenerate.map((i: any) => {
                 return (
                     <img
                         src={path + i[0] + imageFileExtension}
