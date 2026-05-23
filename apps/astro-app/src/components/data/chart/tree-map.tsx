@@ -1,5 +1,5 @@
 import type { ShallowTreeMapProps, TreeMapProps } from "@/types/chart";
-import { EChart, GenericChartError, GenericEmptyChart } from "../chart";
+import { EChart, GenericEmptyChart } from "../chart";
 import { useEffect, useMemo } from "react";
 import type { EChartsOption } from "echarts";
 
