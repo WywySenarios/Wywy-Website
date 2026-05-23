@@ -1,5 +1,5 @@
 import type { WaterfallChartProps } from "@/types/chart";
-import { EChart, GenericChartError, GenericEmptyChart } from "../chart";
+import { EChart, GenericEmptyChart } from "../chart";
 import { useMemo } from "react";
 import {
   time,
@@ -17,35 +17,33 @@ export function WaterfallChart({
   startValues,
   endValues,
   labels,
-  offset,
   datatype,
   invertAxes,
 }: WaterfallChartProps) {
-  const { sortedLabels, sortedStartValues, sortedEndValues, durations } =
-    useMemo(() => {
-      if (
-        startValues.length != endValues.length ||
-        startValues.length != labels.length
-      )
-        throw new TypeError(`Waterfall chart data vector mismatch.`);
+  const { sortedLabels, sortedStartValues, durations } = useMemo(() => {
+    if (
+      startValues.length != endValues.length ||
+      startValues.length != labels.length
+    )
+      throw new TypeError(`Waterfall chart data vector mismatch.`);
 
-      let indices = [...startValues.keys()];
-      // reverse sort so that earlier items appear on the top
-      if (invertAxes) {
-        indices.sort((a, b) => startValues[b] - startValues[a]);
-      } else {
-        indices.sort((a, b) => startValues[a] - startValues[b]);
-      }
+    let indices = [...startValues.keys()];
+    // reverse sort so that earlier items appear on the top
+    if (invertAxes) {
+      indices.sort((a, b) => startValues[b] - startValues[a]);
+    } else {
+      indices.sort((a, b) => startValues[a] - startValues[b]);
+    }
 
-      let sortedLabels = indices.map((i) => labels[i]);
-      let sortedStartValues = indices.map((i) => startValues[i]);
-      let sortedEndValues = indices.map((i) => endValues[i]);
-      let durations = sortedStartValues.map(
-        (startValue, index) => sortedEndValues[index] - startValue,
-      );
+    let sortedLabels = indices.map((i) => labels[i]);
+    let sortedStartValues = indices.map((i) => startValues[i]);
+    let sortedEndValues = indices.map((i) => endValues[i]);
+    let durations = sortedStartValues.map(
+      (startValue, index) => sortedEndValues[index] - startValue,
+    );
 
-      return { sortedLabels, sortedStartValues, sortedEndValues, durations };
-    }, [startValues, endValues, labels]);
+    return { sortedLabels, sortedStartValues, durations };
+  }, [startValues, endValues, labels]);
 
   const durationFormatter: LabelFormatterCallback = useMemo(() => {
     switch (datatype) {
