@@ -15,7 +15,7 @@ import { toast } from "sonner";
 export function useAutoPopulate(
   tableInfo: TableInfo,
   controller: UseFormReturn<any>,
-  printError: (msg: string) => unknown = toast,
+  printError: (msg: any) => any = toast,
 ) {
   const [isPopulating, setIsPopulating] = useState<boolean>(false);
 
@@ -28,7 +28,6 @@ export function useAutoPopulate(
           current,
           tableInfo,
           eventName,
-          printError,
           mode,
         );
         for (const [key, value] of Object.entries(merged)) {
@@ -36,11 +35,13 @@ export function useAutoPopulate(
             shouldValidate: true,
           });
         }
+      } catch (error) {
+        printError(error);
       } finally {
         setIsPopulating(false);
       }
     },
-    [tableInfo, controller, printError],
+    [tableInfo, controller],
   );
 
   return { populate, isPopulating };

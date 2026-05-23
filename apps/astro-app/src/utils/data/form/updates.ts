@@ -5,64 +5,52 @@ import {
 } from "@utils/datatypes/geodetic";
 import { toSnakeCase } from "@utils/parse";
 
-export function handleRecordOn(
+export async function handleRecordOn(
   initialData: Record<string, any>,
   tableInfo: TableInfo,
   event_name: RecordOnEvent,
-  printError: (msg: string) => unknown = (msg: string) => {},
   mode: "insert" | "purge" = "insert",
 ): Promise<Record<string, any>> {
-  return new Promise((resolve, reject) => {
-    let finalData = { ...initialData };
-    let fetchTasks: Promise<any>[] = [];
+  const finalData = { ...initialData };
+  const fetchTasks: Promise<void>[] = [];
 
-    // update values that need to be recorded on start
-    for (const columnSchema of tableInfo.schema) {
-      const columnName = toSnakeCase(columnSchema.name);
+  for (const columnSchema of tableInfo.schema) {
+    const columnName = toSnakeCase(columnSchema.name);
 
-      if (columnSchema.record_on === event_name) {
-        switch (mode) {
-          case "purge":
-            delete finalData[columnName];
-            break;
-          case "insert":
-            switch (columnSchema.datatype) {
-              case "timestamp":
-                finalData[columnName] = new Date(Date.now());
-                break;
-              case "geodetic point":
-                const currentTask = GetCurrentGeodeticCoordinatePromise(
-                  navigator,
-                  {
-                    enableHighAccuracy: true,
-                    timeout: 1000,
-                  },
-                )
-                  .then((value: GeodeticCoordinate) => {
-                    finalData[columnName] = value;
-                  })
-                  .catch((reason?: GeolocationPositionError) => {
-                    finalData[columnName] = undefined;
-                    if (reason)
-                      printError(`Failed to fetch location: ${reason.message}`);
-                  });
-                fetchTasks.push(currentTask);
-                break;
-              default:
-                const msg = `Column "${columnSchema.name}"'s datatype ${columnSchema.datatype} does not support record_on.`;
-                console.warn(msg);
-                printError(msg);
-                continue;
-            }
-            break;
-        }
-      }
+    if (columnSchema.record_on !== event_name) continue;
+
+    if (mode === "purge") {
+      delete finalData[columnName];
+      continue;
     }
 
-    let fetchTasksCompleted = Promise.allSettled(fetchTasks);
-    fetchTasksCompleted.catch(() => {});
-    fetchTasksCompleted.finally(() => {
-      resolve(finalData);
-    });
-  });
+    switch (columnSchema.datatype) {
+      case "timestamp":
+        finalData[columnName] = new Date(Date.now());
+        break;
+      case "geodetic point":
+        fetchTasks.push(
+          GetCurrentGeodeticCoordinatePromise(navigator, {
+            enableHighAccuracy: true,
+            timeout: 1000,
+          })
+            .then((value: GeodeticCoordinate) => {
+              finalData[columnName] = value;
+            })
+            .catch((reason?: GeolocationPositionError) => {
+              finalData[columnName] = undefined;
+              if (reason)
+                console.warn(`Failed to fetch location: ${reason.message}`);
+            }),
+        );
+        break;
+      default:
+        console.warn(
+          `Column "${columnSchema.name}"'s datatype ${columnSchema.datatype} does not support record_on.`,
+        );
+    }
+  }
+
+  await Promise.allSettled(fetchTasks);
+  return finalData;
 }
