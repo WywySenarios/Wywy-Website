@@ -286,7 +286,6 @@ function InputElement({
         break;
       case "time":
         throw "time Input Element not implemented yet.";
-        break;
       case "calendar time":
         body = <TimestampPicker className="w-full" {...field} />;
         break;
