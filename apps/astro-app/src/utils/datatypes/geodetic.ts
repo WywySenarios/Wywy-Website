@@ -89,7 +89,6 @@ export class GeodeticCoordinate {
         break;
       default:
         throw "Invalid GeodeticCoordinate.";
-        break;
     }
   }
 
