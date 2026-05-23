@@ -147,6 +147,8 @@ export function useDataset({
         return TAG_NAMES_DATASET_SCHEMA;
       case "tag_groups":
         return TAG_GROUPS_DATASET_SCHEMA;
+      default:
+        throw new Error(`Unexpected table_type: ${table_type}`);
     }
   }, [table_type, schema]);
   const endpoint = useEndpoint(source, table_type, endpointOptions);
