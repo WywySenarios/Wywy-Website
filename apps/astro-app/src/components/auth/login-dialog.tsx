@@ -17,7 +17,7 @@ import { loginAll, logoutAll, whoamiAll } from "@utils/auth";
 import { toast } from "sonner";
 
 /**
- * The returned element must be wrapped in a CookiesProvider element. Assumes there is a valid toaster to use.
+ * Assumes there is a valid toaster to use.
  * @TODO React Hook Form
  * @returns Login Dialog Button
  */
@@ -108,7 +108,13 @@ export default function LoginDialog(): JSX.Element {
                 </div>
                 <div className="grid gap-3">
                   <Label htmlFor="password">Password</Label>
-                  <Input id="password" name="password" type="password" autoComplete="off" defaultValue="" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="off"
+                    defaultValue=""
+                  />
                 </div>
               </div>
               <DialogFooter>
