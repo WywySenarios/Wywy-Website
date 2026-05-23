@@ -144,7 +144,7 @@ export function DatasetTable({
   }, [dbInfo, curTableName, dataset.columns]);
 
   return (
-    <ScrollArea orientation="horizontal">
+    <ScrollArea>
       <Table>
         <TableHeader>
           <TableRow>
