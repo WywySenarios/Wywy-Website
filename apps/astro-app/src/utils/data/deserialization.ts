@@ -94,6 +94,8 @@ function parseDatabaseValue(
       return ""; // @TODO
     case "geodetic point":
       return ""; // @TODO
+    default:
+      return ""; // @TODO
   }
 }
 
