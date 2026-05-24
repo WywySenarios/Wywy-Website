@@ -3,7 +3,7 @@
  * @TODO redirect if dataHarvesting is disabled
  */
 import type { DatabaseInfo, DescriptorInfo, TableInfo } from "@/types/data";
-import config from "@universal_root/config.yml";
+import config from "@root/config.yml";
 import Layout from "@/layouts/Layout.astro";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -16,6 +16,9 @@ import { TAGGING_TABLE_TAG_GROUPS_TABLE_SCHEMA } from "@utils/data/schema";
 
 export const prerender = true;
 export function getStaticPaths() {
+  const BUILD_TARGET = import.meta.env.BUILD_TARGET || "web";
+  const dataEntries = config.data as DatabaseInfo[] | undefined;
+  if (!dataEntries) return [];
   const taggingTableNames: Array<
     "tags" | "tag_names" | "tag_aliases" | "tag_groups"
   > = ["tags", "tag_aliases", "tag_names", "tag_groups"];
@@ -34,7 +37,7 @@ export function getStaticPaths() {
     };
   }> = [];
 
-  Object.values(config.data as DatabaseInfo[]).map((dbinfo: DatabaseInfo) =>
+  dataEntries.map((dbinfo: DatabaseInfo) =>
     Object.values(dbinfo.tables).map((tableInfo: TableInfo) => {
       // regular tables
       output.push({

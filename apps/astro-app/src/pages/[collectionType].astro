@@ -1,0 +1,158 @@
+---
+export const prerender = true;
+import { getCollection, render } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Card from "@/components/Card.astro";
+import LinklessCard from "@/components/LinklessCard.astro";
+
+type CollectionConfig = {
+  title: string;
+  collectionName: string;
+  cardType: "Card" | "LinklessCard";
+  cssColorPalette: string;
+  useAstroDefaultCSS: boolean;
+  imageField?: string;
+};
+
+const collections: Record<string, CollectionConfig> = {
+  projects: {
+    title: "Projects",
+    collectionName: "projects",
+    cardType: "Card",
+    cssColorPalette: "dark_mode",
+    useAstroDefaultCSS: false,
+    imageField: "imagePath",
+  },
+  awards: {
+    title: "Awards",
+    collectionName: "awards",
+    cardType: "LinklessCard",
+    cssColorPalette: "dark_mode",
+    useAstroDefaultCSS: false,
+  },
+  wishlist: {
+    title: "Wishlist",
+    collectionName: "wishlist",
+    cardType: "LinklessCard",
+    cssColorPalette: "dark_mode",
+    useAstroDefaultCSS: false,
+  },
+  blog: {
+    title: "Blog",
+    collectionName: "blog",
+    cardType: "Card",
+    cssColorPalette: "light_mode",
+    useAstroDefaultCSS: true,
+  },
+};
+
+export async function getStaticPaths() {
+  const BUILD_TARGET = import.meta.env.BUILD_TARGET || "web";
+  const webOnlyCollections = ["blog"];
+  const electronOnlyCollections: string[] = [];
+
+  let collectionKeys = Object.keys(collections);
+
+  if (BUILD_TARGET === "electron") {
+    collectionKeys = collectionKeys.filter(
+      (k) => !webOnlyCollections.includes(k),
+    );
+  } else {
+    collectionKeys = collectionKeys.filter(
+      (k) => !electronOnlyCollections.includes(k),
+    );
+  }
+
+  return collectionKeys.map((key) => ({
+    params: { collectionType: key },
+    props: { config: collections[key] },
+  }));
+}
+
+const { config } = Astro.props;
+const entries = await getCollection(config.collectionName);
+const useAstroDefaultCSS = config.useAstroDefaultCSS !== false;
+---
+
+<Layout
+  title={config.title}
+  css_color_palette={config.cssColorPalette}
+  useAstroDefaultCSS={useAstroDefaultCSS}
+>
+  <main>
+    <ul role="list" class="link-card-grid">
+      {entries.map((entry) => {
+        const href =
+          config.cardType === "Card"
+            ? "/" + config.collectionName + "/" + entry.id.replace(/\.\w+$/, "")
+            : undefined;
+        const hasImage =
+          config.imageField != null &&
+          entry.data[config.imageField] != null;
+
+        if (config.cardType === "LinklessCard") {
+          return (
+            <LinklessCard
+              title={entry.data.title}
+              body={entry.data.description || entry.data.dateLastUpdated?.toString()}
+            />
+          );
+        }
+
+        if (hasImage) {
+          return (
+            <div>
+              <Card
+                href={href!}
+                title={entry.data.title}
+                body={entry.data.description}
+              />
+              <img
+                src={entry.data[config.imageField!]}
+                alt={"Image describing the " + entry.id.replace(/\.\w+$/, "") + " project."}
+              />
+            </div>
+          );
+        }
+
+        return (
+          <Card
+            href={href!}
+            title={entry.data.title}
+            body={entry.data.description}
+          />
+        );
+      })}
+    </ul>
+  </main>
+</Layout>
+
+<style>
+  main {
+    margin: auto;
+    padding: 1rem;
+    width: 800px;
+    max-width: calc(100% - 2rem);
+    font-size: 20px;
+    line-height: 1.6;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    margin-bottom: 1em;
+  }
+  img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 5px;
+  }
+  .link-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr));
+    gap: 2rem;
+    padding: 0;
+  }
+</style>

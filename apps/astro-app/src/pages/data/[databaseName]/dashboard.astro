@@ -9,7 +9,10 @@ import { Toaster } from "@/components/ui/sonner";
 
 export const prerender = true;
 export function getStaticPaths() {
-  return Object.values(config.data as DatabaseInfo[]).map(
+  const BUILD_TARGET = import.meta.env.BUILD_TARGET || "web";
+  const dataEntries = config.data as DatabaseInfo[] | undefined;
+  if (!dataEntries) return [];
+  return dataEntries.map(
     (dbinfo: DatabaseInfo) => ({
       params: {
         databaseName: dbinfo.dbname,
@@ -21,7 +24,7 @@ export function getStaticPaths() {
 
 const { databaseName } = Astro.params;
 
-const databaseInfo = (config as MainConfigSchema)["data"].find(
+const databaseInfo = ((config as MainConfigSchema)["data"] ?? []).find(
   (item) => item.dbname === databaseName,
 );
 ---

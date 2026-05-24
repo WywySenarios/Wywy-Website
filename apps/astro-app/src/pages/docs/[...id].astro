@@ -5,7 +5,12 @@ import Layout from "@/layouts/Layout.astro";
 import { render } from "astro:content";
 
 export async function getStaticPaths() {
+	const BUILD_TARGET = import.meta.env.BUILD_TARGET || "web";
 	const documentationCollection = await getCollection("docs");
+
+	if (BUILD_TARGET === "electron") {
+		return [];
+	}
 
     return documentationCollection.map((page) => ({
         params: {
