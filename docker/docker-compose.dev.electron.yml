@@ -1,0 +1,33 @@
+name: website-electron
+
+services:
+  astro-app:
+    restart: always
+    working_dir: /apps/astro-app
+    build:
+      context: ../
+      dockerfile: apps/astro-app/Dockerfile.dev
+      target: runtime
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - BUILD_TARGET=electron
+    ports:
+      - 4322:4321
+    volumes:
+      - ../apps/astro-app:/apps/astro-app
+      - /apps/astro-app/node_modules
+      - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/astro-app/config.yml
+      - ${DOCS_DIR}:/apps/astro-app/src/content/docs
+      - /apps/astro-app/src/pages/projects
+    env_file:
+      - path: ${UNIVERSAL_CONFIG_DIR}/.env
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/.env.dev
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env.dev
+        required: true
+    command: npm run dev -- --host
