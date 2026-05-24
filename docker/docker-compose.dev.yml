@@ -6,7 +6,7 @@ services:
     working_dir: /apps/astro-app
     build:
       context: ../
-      dockerfile: apps/astro-app/Dockerfile.dev
+      dockerfile: apps/astro-app/Dockerfile
       target: runtime
     environment:
       - NODE_ENV=development
@@ -16,7 +16,6 @@ services:
       - 4321:4321
     volumes:
       - ../apps/astro-app:/apps/astro-app
-      - /apps/astro-app/node_modules
       - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/astro-app/config.yml
       - ${DOCS_DIR}:/apps/astro-app/src/content/docs
     env_file:
