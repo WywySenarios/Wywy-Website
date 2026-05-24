@@ -2,6 +2,7 @@
 import "@/styles/global.css";
 import "@/styles/bars.css";
 import config from "@universal_root/config.yml";
+import NavDrawer from "@/components/NavDrawer";
 
 interface Props {
   title?: string;
@@ -49,8 +50,7 @@ let {
   <body>
     <!-- Top bar -->
     <nav class="top-bar">
-      <!-- Icon -->
-      <img src={iconPath} alt="Website Icon" />
+      <NavDrawer client:load />
 
       <!-- Buttons -->
       <!-- Made thanks to : https://stackoverflow.com/questions/2906582/how-do-i-create-an-html-button-that-acts-like-a-link -->
