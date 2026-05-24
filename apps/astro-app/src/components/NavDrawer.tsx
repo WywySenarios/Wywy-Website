@@ -1,4 +1,4 @@
-import { Menu, House, BookOpen } from "lucide-react";
+import { Menu, House, BookOpen, Settings } from "lucide-react";
 import {
   Drawer,
   DrawerTrigger,
@@ -32,6 +32,15 @@ export default function NavDrawer() {
             >
               <BookOpen className="h-5 w-5" />
               <span>Docs</span>
+            </a>
+          </DrawerClose>
+          <DrawerClose asChild>
+            <a
+              href="/settings"
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+            >
+              <Settings className="h-5 w-5" />
+              <span>Settings</span>
             </a>
           </DrawerClose>
         </div>

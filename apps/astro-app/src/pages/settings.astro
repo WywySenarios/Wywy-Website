@@ -1,0 +1,14 @@
+---
+export const prerender = true;
+import Layout from "@/layouts/Layout.astro";
+import { SettingsForm } from "@/components/settings/SettingsForm";
+import { Toaster } from "@/components/ui/sonner";
+
+const isElectron = import.meta.env.BUILD_TARGET === "electron";
+---
+<Layout title="Settings" css_color_palette="dark_mode">
+  <main>
+    <SettingsForm isElectron={isElectron} client:only="react" />
+    <Toaster client:idle />
+  </main>
+</Layout>
