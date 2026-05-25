@@ -22,6 +22,7 @@ services:
     volumes:
       - ../apps/astro-app:/apps/astro-app
       - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/astro-app/config.yml
+      - ${DOCS_DIR}:/apps/astro-app/src/content/docs
 
 secrets:
   wywywebsite-astro-cloudflare:
