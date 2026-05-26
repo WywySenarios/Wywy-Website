@@ -2,3 +2,5 @@
 
 ## ignore python virtual environment & packages
 .venv
+
+node_modules/

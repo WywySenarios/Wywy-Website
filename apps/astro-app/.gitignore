@@ -45,8 +45,6 @@ config/config.yml
 
 
 
-## ignore node packages
-node_modules
 
 ## ignore python virtual environment & packages
 .venv
