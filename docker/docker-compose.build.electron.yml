@@ -1,0 +1,13 @@
+name: website-electron-build
+
+services:
+  runner:
+    build:
+      context: ../
+      dockerfile: apps/electron-app/Dockerfile
+      target: runner
+    entrypoint: /entrypoint.sh
+    volumes:
+      - ../apps/astro-app:/app/apps/astro-app
+      - ../apps/electron-app:/app/apps/electron-app
+      - ${DOCS_DIR}:/app/apps/astro-app/src/content/docs

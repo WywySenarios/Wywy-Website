@@ -1,0 +1,17 @@
+{
+  "name": "@wywy/electron-app",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "package": "electron-builder",
+    "start": "electron .",
+    "dev": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.9.0"
+  }
+}

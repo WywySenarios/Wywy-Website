@@ -5,51 +5,42 @@ import Layout from "@/layouts/Layout.astro";
 import Card from "@/components/Card.astro";
 import LinklessCard from "@/components/LinklessCard.astro";
 
-type CollectionConfig = {
-  title: string;
-  collectionName: string;
-  cardType: "Card" | "LinklessCard";
-  cssColorPalette: string;
-  useAstroDefaultCSS: boolean;
-  imageField?: string;
-};
-
-const collections: Record<string, CollectionConfig> = {
-  projects: {
-    title: "Projects",
-    collectionName: "projects",
-    cardType: "Card",
-    cssColorPalette: "dark_mode",
-    useAstroDefaultCSS: false,
-    imageField: "imagePath",
-  },
-  awards: {
-    title: "Awards",
-    collectionName: "awards",
-    cardType: "LinklessCard",
-    cssColorPalette: "dark_mode",
-    useAstroDefaultCSS: false,
-  },
-  wishlist: {
-    title: "Wishlist",
-    collectionName: "wishlist",
-    cardType: "LinklessCard",
-    cssColorPalette: "dark_mode",
-    useAstroDefaultCSS: false,
-  },
-  blog: {
-    title: "Blog",
-    collectionName: "blog",
-    cardType: "Card",
-    cssColorPalette: "light_mode",
-    useAstroDefaultCSS: true,
-  },
-};
-
 export async function getStaticPaths() {
   const BUILD_TARGET = import.meta.env.BUILD_TARGET || "web";
   const webOnlyCollections = ["blog"];
   const electronOnlyCollections: string[] = [];
+
+  const collections = {
+    projects: {
+      title: "Projects",
+      collectionName: "projects",
+      cardType: "Card" as const,
+      cssColorPalette: "dark_mode",
+      useAstroDefaultCSS: false,
+      imageField: "imagePath",
+    },
+    awards: {
+      title: "Awards",
+      collectionName: "awards",
+      cardType: "LinklessCard" as const,
+      cssColorPalette: "dark_mode",
+      useAstroDefaultCSS: false,
+    },
+    wishlist: {
+      title: "Wishlist",
+      collectionName: "wishlist",
+      cardType: "LinklessCard" as const,
+      cssColorPalette: "dark_mode",
+      useAstroDefaultCSS: false,
+    },
+    blog: {
+      title: "Blog",
+      collectionName: "blog",
+      cardType: "Card" as const,
+      cssColorPalette: "light_mode",
+      useAstroDefaultCSS: true,
+    },
+  };
 
   let collectionKeys = Object.keys(collections);
 

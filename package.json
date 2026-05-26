@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "electron": "cd apps/electron-app && npx electron .",
+"build:electron": "cd apps/astro-app && BUILD_TARGET=electron npx astro build && cd ../electron-app && npx tsc && npx electron-builder",
+"build:electron:astro": "cd apps/astro-app && BUILD_TARGET=electron npx astro build",
+    "build:electron:app": "cd apps/electron-app && npx tsc && npx electron-builder"
+  }
+}

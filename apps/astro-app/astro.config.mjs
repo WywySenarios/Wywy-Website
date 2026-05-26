@@ -7,15 +7,16 @@ import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
 import yaml from "@rollup/plugin-yaml";
 
+const BUILD_TARGET = process.env.BUILD_TARGET || "web";
+
 // https://astro.build/config
 export default defineConfig({
-  adapter: cloudflare(),
+  ...(BUILD_TARGET === "electron"
+    ? { output: "static" }
+    : { adapter: cloudflare() }),
 
   vite: {
     plugins: [tailwindcss(), yaml()],
-    // build: {
-    //   minify: false,
-    // },
   },
 
   env: {
