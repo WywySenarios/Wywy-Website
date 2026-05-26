@@ -17,6 +17,7 @@ data/*
 src/content
 ### include legacy Astro content library config
 !src/content/config.ts
+!src/content/docs
 
 ## ignore Astro content libraries
 src/data
