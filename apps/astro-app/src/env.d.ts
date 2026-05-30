@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly MAIN_URL: string;
   readonly DATABASE_URL: string;
   readonly CACHE_URL: string;
+  readonly BUILD_TARGET?: string;
 }
 
 interface ImportMeta {
