@@ -3,7 +3,7 @@ App/Pods
 App/output
 App/App/public
 DerivedData
-xcuserdata
+**/xcuserdata
 App.xcarchive
 archive.plist
 
