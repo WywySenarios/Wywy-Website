@@ -54,7 +54,7 @@ function createMockWatcher(): { watcher: GeolocationWatcher; trigger: (fix: Geol
 describe("initPipeline", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.stubGlobal("fetch", vi.fn());
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
   });
 
   afterEach(() => {
@@ -140,6 +140,7 @@ describe("initPipeline", () => {
   it("increments retry count on failed POST", async () => {
     if (!process.env.CACHE_URL) return;
 
+    vi.spyOn(console, "error").mockImplementation(() => {});
     const mockFetch = vi.mocked(fetch);
     mockFetch.mockRejectedValue(new Error("Network error"));
 
@@ -168,6 +169,7 @@ describe("initPipeline", () => {
     });
 
     cleanup();
+    vi.mocked(console.error).mockRestore();
   });
 
   it("stops watching after cleanup is called", () => {
