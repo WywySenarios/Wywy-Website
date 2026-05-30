@@ -8,6 +8,7 @@
       "@public/*": ["./public/*"],
       "@data/*": ["./data/*"],
       "@/*": ["./src/*"], // src for this Astro app
+      "@pipeline/*": ["../pipeline/src/*"],
       "@root/*": ["./*"], // root for this Astro app
       "@universal_root/*": ["./../../*"] // root for all the WywyWebsite apps.
     },

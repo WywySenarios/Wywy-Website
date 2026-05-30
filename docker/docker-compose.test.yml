@@ -1,0 +1,29 @@
+name: website
+
+services:
+  test:
+    working_dir: /apps/pipeline
+    build:
+      context: ../
+      dockerfile: apps/pipeline/Dockerfile
+      args:
+        USER_ID: ${USER_ID}
+        CACHE_URL: ${CACHE_URL}
+        DATABASE_URL: ${DATABASE_URL}
+        MAIN_URL: ${MAIN_URL}
+    environment:
+      CACHE_URL: ${CACHE_URL}
+      DATABASE_URL: ${DATABASE_URL}
+      MAIN_URL: ${MAIN_URL}
+    env_file:
+      - path: ${UNIVERSAL_CONFIG_DIR}/.env
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/.env.dev
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env
+        required: true
+      - path: ${UNIVERSAL_CONFIG_DIR}/website/.env.dev
+        required: true
+    volumes:
+      - ../apps/pipeline:/apps/pipeline
+      - /apps/pipeline/node_modules

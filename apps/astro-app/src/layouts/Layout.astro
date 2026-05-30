@@ -3,6 +3,8 @@ import "@/styles/global.css";
 import "@/styles/bars.css";
 import config from "@root/config.yml";
 import NavDrawer from "@/components/NavDrawer";
+import { PipelineInit } from "@pipeline/react/pipeline-init";
+const BUILD_TARGET = import.meta.env.BUILD_TARGET || "web";
 
 interface Props {
   title?: string;
@@ -65,6 +67,8 @@ let {
       <!--  <input type="text" placeholder="Search (DOES NOT WORK)" /> -->
     </nav>
     <slot />
+
+    {BUILD_TARGET === "capacitor" && <PipelineInit client:only="react" />}
   </body>
 </html>
 
