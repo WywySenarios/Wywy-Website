@@ -6,15 +6,9 @@ services:
     build:
       context: ../
       dockerfile: apps/pipeline/Dockerfile
+      target: test
       args:
         USER_ID: ${USER_ID}
-        CACHE_URL: ${CACHE_URL}
-        DATABASE_URL: ${DATABASE_URL}
-        MAIN_URL: ${MAIN_URL}
-    environment:
-      CACHE_URL: ${CACHE_URL}
-      DATABASE_URL: ${DATABASE_URL}
-      MAIN_URL: ${MAIN_URL}
     env_file:
       - path: ${UNIVERSAL_CONFIG_DIR}/.env
         required: true
@@ -24,6 +18,3 @@ services:
         required: true
       - path: ${UNIVERSAL_CONFIG_DIR}/website/.env.dev
         required: true
-    volumes:
-      - ../apps/pipeline:/apps/pipeline
-      - /apps/pipeline/node_modules
