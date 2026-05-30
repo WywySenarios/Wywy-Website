@@ -1,6 +1,5 @@
 // @ts-check
 import { defineConfig, envField } from "astro/config";
-
 import cloudflare from "@astrojs/cloudflare";
 import tailwindcss from "@tailwindcss/vite";
 import mdx from "@astrojs/mdx";

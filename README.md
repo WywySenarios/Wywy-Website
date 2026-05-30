@@ -1,70 +1,28 @@
-# Purpose
+# iOS Build
 
-TBD.
+Builds the Astro site into a native iOS app via Capacitor.
 
-# Core Dependencies
+## Prerequisites
 
-- npm
-- python3
-- docker
+- Node.js 22+ (LTS)
+- Xcode (Mac App Store)
+- Xcode CLT
+- CocoaPods
+- Apple Developer account (free for device testing, $99/yr for App Store)
 
-# Installation
-
-## Docker
-
-1. Install Docker.
-
-- To allow your user to run docker: sudo chuser add _YOUR_CURRENT_USER_ docker
-
-2. Create & configure your cloudflare tokens
-   Astro token:
-
-- User API Token
-  - Account, Workers KV Storage, Edit (IDK if this is necessary)
-  - Account, Workers Scripts, Edit
-  - User, Memberships, Read
-  - User, User Details, Read (IDK if this is necessary)
-  - Zone, Zone, Read
-  - Zone, Worker Routes, Edit
-  - Zone, DNS, Edit
-    Sql-receptionist Token:
-- Tunnel Token
-  - You do not need to follow the instructions to create a tunnel. Just throw in the token into the correct secret location.
-
-3. Insert cloudflare tokens
-
-- Create secrets folder using `mkdir secrets`
-- cd to secrets folder
-- Insert Astro token `nano astro-cloudflare-token.txt`
-- Insert Sql-receptionist token `nano cloudflared-cloudflare-token.txt`
-
-4. Insert domain names
-
-- References to the main website & sql-receptionist in config.yml
-- The final URL of the main website inside apps/astro-app/wrangler.jsonc
-  - under "routes"
-
-5. Change the database password in docker/.env
-
-6. cd to docker folder
-
-```
-cd docker
+```bash
+./scripts/setup-ios.sh
 ```
 
-7. Run your servers.
+## Build
 
+```bash
+./scripts/build.sh
 ```
-./run.sh prod
-```
 
-## Backup
+This runs the platform-aware Electron entrypoint (builds Astro static output, packages macOS DMG), then builds the iOS app via Capacitor.
 
-SSH keys are required for backing up information.
+### Output
 
-- Backup server's public SSH key.
-- A public & private key to use for authentication.
-
-# Scoping
-
-TBD
+- macOS DMG: `apps/electron-app/release/`
+- iOS archive: `apps/capacitor-app/ios/`

@@ -17,6 +17,7 @@ data/*
 src/content
 ### include legacy Astro content library config
 !src/content/config.ts
+!src/content/docs
 
 ## ignore Astro content libraries
 src/data
@@ -44,8 +45,6 @@ config/config.yml
 
 
 
-## ignore node packages
-node_modules
 
 ## ignore python virtual environment & packages
 .venv
