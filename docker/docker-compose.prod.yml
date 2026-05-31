@@ -21,6 +21,7 @@ services:
       - 4321:4321
     volumes:
       - ../apps/astro-app:/apps/astro-app
+      - ../apps/http:/apps/http
       - ${UNIVERSAL_CONFIG_DIR}/config.yml:/apps/astro-app/config.yml
       - ${DOCS_DIR}:/apps/astro-app/src/content/docs
 
