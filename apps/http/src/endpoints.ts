@@ -1,5 +1,7 @@
-import type { OriginName } from "@/types/http";
-import { CACHE_URL, DATABASE_URL } from "astro:env/client";
+import type { OriginName } from "./types";
+
+const CACHE_URL = typeof process !== "undefined" ? process.env.CACHE_URL : undefined;
+const DATABASE_URL = typeof process !== "undefined" ? process.env.DATABASE_URL : undefined;
 
 export const ORIGIN_NAMES = ["master-database", "cache"] as const;
 

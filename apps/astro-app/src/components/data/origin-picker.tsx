@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { OriginName } from "@/types/http";
+import type { OriginName } from "@wywy/http/types";
 import { CACHE_URL, DATABASE_URL } from "astro:env/client";
 import type { Dispatch, JSX, SetStateAction } from "react";
 

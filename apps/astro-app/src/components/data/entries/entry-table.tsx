@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getZodDatasetType } from "@utils/data/schema";
-import { safeFetchDataset } from "@utils/data/http";
+import { safeFetchDataset } from "@wywy/http/data/http";
 import { toSnakeCase } from "@utils/parse";
 import { ZodError, type ZodType } from "zod";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";

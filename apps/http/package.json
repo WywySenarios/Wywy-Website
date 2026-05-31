@@ -1,0 +1,8 @@
+{
+  "name": "@wywy/http",
+  "private": true,
+  "type": "module",
+  "peerDependencies": {
+    "zod": "^3.0.0"
+  }
+}

@@ -3,15 +3,16 @@ import { useEffect, useState } from "react";
 import { Columns, Descriptors, Tags } from "@/components/data/data-entry";
 import type z from "zod";
 import { toast } from "sonner";
-import { getCSRFToken } from "@utils/auth";
+import { getCSRFToken } from "@wywy/http/http";
 import { parseDatabaseValue } from "@utils/data/deserialization";
-import type { JSONValue } from "@/types/http";
+import type { JSONValue } from "@wywy/http/types";
 import { CACHE_URL } from "astro:env/client";
 import { RefreshCcw, Upload } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { GeodeticCoordinate } from "@utils/datatypes/geodetic";
 import { createFormController } from "@/utils/data/form/full-entry-handlers";
-import { submitEntry, useDataset } from "@/utils/data/http";
+import { submitEntry } from "@wywy/http/data/http";
+import { useDataset } from "@utils/data/http";
 import { FormProvider, type FieldErrors } from "react-hook-form";
 import {
   TAG_NAMES_DATASET_SCHEMA,

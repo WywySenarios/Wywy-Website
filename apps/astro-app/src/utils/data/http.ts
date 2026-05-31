@@ -1,7 +1,6 @@
 "use client";
 
-import type { z, ZodType } from "zod";
-import { getCSRFToken } from "../auth";
+import { safeFetchDataset } from "@wywy/http/data/http";
 import { useEffect, useMemo, useState } from "react";
 import type {
   Dataset,
@@ -17,80 +16,8 @@ import {
   TAGS_DATASET_SCHEMA,
 } from "./schema";
 import { resolveEndpoint, useEndpoint } from "./endpoints";
-import type { OriginName } from "@/types/http";
+import type { OriginName } from "@wywy/http/types";
 import { toSnakeCase } from "@utils/parse";
-
-/**
- * Asynchronous entry submission to an undetermined endpoint.
- * @param endpoint
- * @param values
- * @param csrfEndpoint The endpoint to fetch a CSRF token from.
- * @returns
- */
-export async function submitEntry(
-  endpoint: string,
-  values: Record<string, any>,
-  origin?: OriginName,
-): Promise<void> {
-  const headers: HeadersInit = {
-    "Content-type": "application/json; charset=UTF-8",
-  };
-
-  if (origin !== undefined) {
-    headers["X-CSRFToken"] = await getCSRFToken(origin);
-  }
-
-  const response = await fetch(endpoint, {
-    method: "POST",
-    body: JSON.stringify(values),
-    mode: "cors",
-    credentials: "include",
-    headers: headers,
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw `Response not OK: ${response.status} ${response.statusText}; ${message}`;
-  }
-}
-
-/**
- * Asynchronous dataset validation with schema validation.
- * @param endpoint The endpoint to GET from.
- * @param schema The zod schema to validate against.
- * @returns A promise to fetch the data.
- */
-export async function safeFetchDataset<T extends ZodType<any>>(
-  endpoint: string,
-  schema: T,
-  options: {} = {
-    SELECT: "*",
-    ORDER_BY: "DESC",
-  },
-): Promise<z.infer<T>> {
-  const response = await fetch(`${endpoint}?${new URLSearchParams(options)}`, {
-    method: "GET",
-    mode: "cors",
-    credentials: "include",
-    headers: {},
-  });
-
-  if (!response.ok)
-    throw `Server response not OK: ${response.status} ${response.statusText} ${await response.text()}`;
-  const json = await response.json();
-
-  const result = schema.safeParse(json);
-  if (!result.success) {
-    throw result.error;
-  }
-
-  if (!result.data) {
-    // if Zod's behaviour is unexpected,
-    throw "Undefined data? Contact website administrator or dev for a fix.";
-  } else {
-    return result.data;
-  }
-}
 
 export interface useDatasetProps {
   valid: boolean;
@@ -107,17 +34,6 @@ export interface useDatasetProps {
   options?: Record<string, any>;
 }
 
-/**
- * React hook for dataset fetching.
- * @param valid Whether or not the given parameters are valid (i.e. whether or not the dataset is ready to be fetched)
- * @param table_type The type of the dataset to fetch.
- * @param schema The related configuration schema (if available) of the dataset to fetch.
- * @param source The source to consturct an endpoint off of.
- * @param endpointOptions The options for the endpoint construction.
- * @param refreshState A refreshState to update the dataset when desried. This is optional.
- * @param options The options for dataset fetching.
- * @returns The dataset, the loading state, and an error message (empty (but not necessarily falsy) if there is no error).
- */
 export function useDataset({
   valid,
   table_type,
@@ -156,7 +72,7 @@ export function useDataset({
 
   useEffect(() => {
     if (!valid) return;
-    if (loading) return; // avoid race condition
+    if (loading) return;
 
     if (endpoint === undefined) {
       setError("Invalid endpoint.");
@@ -180,17 +96,6 @@ export function useDataset({
   return [loading ? null : dataset, loading, error];
 }
 
-/**
- * React hook for related descriptor dataset fetching.
- * @param valid Whether or not the given parameters are valid (i.e. whether or not the dataset is ready to be fetched)
- * @param table_type The type of the dataset to fetch.
- * @param schema The related configuration schema (if available) of the dataset to fetch.
- * @param source The source to consturct an endpoint off of.
- * @param endpointOptions The options for the endpoint construction.
- * @param refreshState A refreshState to update the dataset when desried. This is optional.
- * @param options The options for dataset fetching.
- * @returns The dataset, the loading state, and an error message (empty (but not necessarily falsy) if there is no error).
- */
 export function useDescriptorDatasets({
   valid,
   table_type,
@@ -220,7 +125,7 @@ export function useDescriptorDatasets({
 
   useEffect(() => {
     if (!valid) return;
-    if (loading) return; // avoid race condition
+    if (loading) return;
 
     setLoading(true);
     setError("");

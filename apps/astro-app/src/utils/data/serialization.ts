@@ -1,5 +1,5 @@
 import { GeodeticCoordinate } from "../datatypes/geodetic";
-import type { JSONValue } from "@/types/http";
+import type { JSONValue } from "@wywy/http/types";
 
 type formatDatabaseValueParams =
   | { datatype: "int" | "integer" | "float" | "number"; value: number }

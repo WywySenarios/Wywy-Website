@@ -3,18 +3,11 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "paths": {
-      "@wywy/http/*": ["../http/src/*"]
-    },
-    "outDir": "dist",
-    "rootDir": "src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
-    "declaration": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "react"
+    "declaration": true
   },
   "include": ["src"]
 }

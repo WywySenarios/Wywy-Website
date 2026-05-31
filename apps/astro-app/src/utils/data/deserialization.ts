@@ -1,5 +1,5 @@
 import type { Datatype } from "@/types/data";
-import type { JSONValue } from "@/types/http";
+import type { JSONValue } from "@wywy/http/types";
 
 /**
  * Attempts to parse a database value, expecting the given datatype. Throws an error if unsuccessful.

@@ -6,13 +6,9 @@ import type {
   TableInfo,
   TableType,
 } from "@/types/data";
-import { type OriginName } from "@/types/http";
-import {
-  safeFetchDataset,
-  submitEntry,
-  useDataset,
-  useDescriptorDatasets,
-} from "@utils/data/http";
+import { type OriginName } from "@wywy/http/types";
+import { safeFetchDataset, submitEntry } from "@wywy/http/data/http";
+import { useDataset, useDescriptorDatasets } from "@utils/data/http";
 import { useEffect, useMemo, useState } from "react";
 import { NumberBox } from "../input-element/number-box";
 import { Button } from "@/components/ui/button";

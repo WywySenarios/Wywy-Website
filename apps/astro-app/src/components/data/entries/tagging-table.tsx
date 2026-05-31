@@ -14,7 +14,7 @@ import {
   TAGGING_TABLE_TAG_NAMES_SCHEMA,
   TAGGING_TABLE_TAGS_SCHEMA,
 } from "@utils/data/schema";
-import { submitEntry } from "@utils/data/http";
+import { submitEntry } from "@wywy/http/data/http";
 import { z } from "zod";
 import { FormProvider, useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

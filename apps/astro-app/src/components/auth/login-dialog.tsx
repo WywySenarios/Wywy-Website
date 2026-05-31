@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { JSX } from "astro/jsx-runtime";
 import { useEffect, useState } from "react";
-import { loginAll, logoutAll, whoamiAll } from "@utils/auth";
+import { loginAll, logoutAll, whoamiAll } from "@wywy/http/auth";
 import { toast } from "sonner";
 
 /**
