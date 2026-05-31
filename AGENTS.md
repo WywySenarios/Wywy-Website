@@ -16,6 +16,10 @@ See [`internal/services/website.mdx`](/etc/Wywy-Website-Control/internal/service
 
 Prefer using existing dependencies over adding new ones. Before adding a new package, check `package.json` for something that already does what you need. Add only when there is no reasonable existing alternative.
 
+## Git workflow
+
+After making changes, stage them with `git add` for the next commit.
+
 ## Language conventions
 
 When writing code, ALWAYS check the applicable language convention files in [`internal/conventions/languages/`](/etc/Wywy-Website-Control/internal/conventions/languages/):
