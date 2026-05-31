@@ -35,7 +35,7 @@ export function createNodePipelineDb(
           ),
         )
         .limit(limit)
-        .all() as any;
+        .all();
     },
     markForwarded(id) {
       db.update(geolocationFixes)
@@ -84,7 +84,7 @@ export function createCapacitorPipelineDb(
       });
     },
     async getPending(limit) {
-      return (await db
+      return await db
         .select()
         .from(geolocationFixes)
         .where(
@@ -93,7 +93,7 @@ export function createCapacitorPipelineDb(
             lt(geolocationFixes.retryCount, 3),
           ),
         )
-        .limit(limit)) as any;
+        .limit(limit);
     },
     async markForwarded(id) {
       await db
@@ -119,7 +119,7 @@ export function createCapacitorPipelineDb(
         .from(geolocationFixes)
         .orderBy(desc(geolocationFixes.timestamp))
         .limit(1);
-      return (row as any[])[0]?.ts;
+      return row[0]?.ts;
     },
   };
 }

@@ -41,11 +41,17 @@ describe("forwardBatch", () => {
 
     expect(result).toBe(true);
     expect(mockFetch).toHaveBeenCalledWith(
-      `${cacheUrl}/api/geolocation`,
+      `${cacheUrl}/cache/geolocation/geolocation_fixes`,
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sampleFixes),
+        body: JSON.stringify(sampleFixes.map((f) => {
+          const cleaned: Record<string, unknown> = {};
+          for (const [k, v] of Object.entries(f)) {
+            if (v !== null) cleaned[k.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)] = v;
+          }
+          return cleaned;
+        })),
       }),
     );
   });

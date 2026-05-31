@@ -5,7 +5,12 @@ import type { GeolocationFix } from "./geolocation/types";
 import type { PipelineDb } from "./index";
 
 function createMockDb(): PipelineDb {
-  const store: Array<{ id: number } & GeolocationFix & { retryCount: number; forwardedAt: number | null }> = [];
+  const store: Array<
+    { id: number } & GeolocationFix & {
+        retryCount: number;
+        forwardedAt: number | null;
+      }
+  > = [];
   let nextId = 1;
 
   return {
@@ -15,7 +20,7 @@ function createMockDb(): PipelineDb {
     getPending(limit) {
       return store
         .filter((r) => r.forwardedAt === null && r.retryCount < 3)
-        .slice(0, limit) as any;
+        .slice(0, limit);
     },
     markForwarded(id) {
       const record = store.find((r) => r.id === id);
@@ -33,7 +38,10 @@ function createMockDb(): PipelineDb {
   };
 }
 
-function createMockWatcher(): { watcher: GeolocationWatcher; trigger: (fix: GeolocationFix) => void } {
+function createMockWatcher(): {
+  watcher: GeolocationWatcher;
+  trigger: (fix: GeolocationFix) => void;
+} {
   let cb: ((fix: GeolocationFix) => void) | null = null;
 
   return {
@@ -54,7 +62,10 @@ function createMockWatcher(): { watcher: GeolocationWatcher; trigger: (fix: Geol
 describe("initPipeline", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(null, { status: 200 })),
+    );
   });
 
   afterEach(() => {
@@ -62,7 +73,7 @@ describe("initPipeline", () => {
     vi.unstubAllGlobals();
   });
 
-  it("stores a fix when the watcher fires", () => {
+  it("stores a fix when the watcher fires", async () => {
     const db = createMockDb();
     const { watcher, trigger } = createMockWatcher();
 
@@ -81,7 +92,7 @@ describe("initPipeline", () => {
 
     trigger(fix);
 
-    const pending = db.getPending(10);
+    const pending = await db.getPending(10);
     expect(pending).toHaveLength(1);
     expect(pending[0].latitude).toBe(37.7749);
 
@@ -95,9 +106,36 @@ describe("initPipeline", () => {
     const cleanup = initPipeline(watcher, db);
 
     const t0 = 0;
-    trigger({ latitude: 1, longitude: 1, accuracy: null, altitude: null, altitudeAccuracy: null, speed: null, heading: null, timestamp: t0 });
-    trigger({ latitude: 2, longitude: 2, accuracy: null, altitude: null, altitudeAccuracy: null, speed: null, heading: null, timestamp: t0 + 1000 });
-    trigger({ latitude: 3, longitude: 3, accuracy: null, altitude: null, altitudeAccuracy: null, speed: null, heading: null, timestamp: t0 + 2000 });
+    trigger({
+      latitude: 1,
+      longitude: 1,
+      accuracy: null,
+      altitude: null,
+      altitudeAccuracy: null,
+      speed: null,
+      heading: null,
+      timestamp: t0,
+    });
+    trigger({
+      latitude: 2,
+      longitude: 2,
+      accuracy: null,
+      altitude: null,
+      altitudeAccuracy: null,
+      speed: null,
+      heading: null,
+      timestamp: t0 + 1000,
+    });
+    trigger({
+      latitude: 3,
+      longitude: 3,
+      accuracy: null,
+      altitude: null,
+      altitudeAccuracy: null,
+      speed: null,
+      heading: null,
+      timestamp: t0 + 2000,
+    });
 
     const pending = db.getPending(10);
     expect(pending).toHaveLength(1);
@@ -162,8 +200,8 @@ describe("initPipeline", () => {
 
     trigger(fix);
 
-    await vi.waitFor(() => {
-      const pending = db.getPending(10);
+    await vi.waitFor(async () => {
+      const pending = await db.getPending(10);
       expect(pending).toHaveLength(1);
       expect(pending[0].retryCount).toBe(1);
     });

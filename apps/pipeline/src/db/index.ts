@@ -22,18 +22,18 @@ export async function createCapacitorDb(dbName: string) {
   const { drizzle: proxyDrizzle } = await import("drizzle-orm/sqlite-proxy");
 
   // Open (or create) the database
-  await (CapacitorSQLite as any).openDatabase({ database: dbName });
+  await CapacitorSQLite.openDatabase({ database: dbName });
 
   const queryFn: AsyncRemoteCallback = async (sql, params, method) => {
     if (method === "run") {
-      const result = await (CapacitorSQLite as any).run({
+      const result = await CapacitorSQLite.run({
         database: dbName,
         statement: sql,
         values: params,
       });
-      return { rows: result.changes };
+      return { rows: [] };
     }
-    const result = await (CapacitorSQLite as any).query({
+    const result = await CapacitorSQLite.query({
       database: dbName,
       statement: sql,
       values: params,

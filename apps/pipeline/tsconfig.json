@@ -3,11 +3,11 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "paths": {
-      "@wywy/http/*": ["../http/src/*"]
-    },
     "outDir": "dist",
-    "rootDir": "src",
+    "paths": {
+      "@wywy/http/*": ["../http/src/*"],
+      "@/*": ["../astro-app/src/*"]
+    },
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

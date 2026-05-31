@@ -8,7 +8,7 @@ export interface PipelineDb {
   insert(fix: GeolocationFix): void | Promise<void>;
   getPending(
     batchSize: number,
-  ): Array<{ id: number } & GeolocationFix & { retryCount: number }> | Promise<Array<{ id: number } & GeolocationFix & { retryCount: number }>>;
+  ): Array<{ id: number } & GeolocationFix & { retryCount: number; forwardedAt: number | null }> | Promise<Array<{ id: number } & GeolocationFix & { retryCount: number; forwardedAt: number | null }>>;
   markForwarded(id: number): void | Promise<void>;
   incrementRetry(id: number): void | Promise<void>;
   prune(retentionMs: number): void | Promise<void>;

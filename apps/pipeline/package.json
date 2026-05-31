@@ -12,7 +12,11 @@
   "peerDependencies": {
     "@capacitor-community/sqlite": "^7.0.0",
     "@capacitor/core": "^7.0.0",
-    "@capacitor/geolocation": "^7.0.0"
+    "@capacitor/geolocation": "^7.0.0",
+    "lucide-react": "^0.501.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "sonner": "^2.0.7"
   },
   "optionalDependencies": {
     "better-sqlite3": "^11.0.0"
@@ -23,6 +27,7 @@
     "@types/react-dom": "^19.2.3",
     "drizzle-kit": "^0.30.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.7",
+    "zod": "^3.0.0"
   }
 }

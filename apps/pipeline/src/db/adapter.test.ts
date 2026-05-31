@@ -62,10 +62,10 @@ describe("Node pipeline DB adapter", () => {
     timestamp: Date.now(),
   };
 
-  it("inserts a fix and retrieves it as pending", () => {
+  it("inserts a fix and retrieves it as pending", async () => {
     db.insert(sampleFix);
 
-    const pending = db.getPending(10);
+    const pending = await db.getPending(10);
     expect(pending).toHaveLength(1);
     expect(pending[0].latitude).toBe(sampleFix.latitude);
     expect(pending[0].longitude).toBe(sampleFix.longitude);
@@ -73,62 +73,62 @@ describe("Node pipeline DB adapter", () => {
     expect(pending[0].retryCount).toBe(0);
   });
 
-  it("returns empty pending when no rows exist", () => {
-    const pending = db.getPending(10);
+  it("returns empty pending when no rows exist", async () => {
+    const pending = await db.getPending(10);
     expect(pending).toHaveLength(0);
   });
 
-  it("marks a record as forwarded", () => {
+  it("marks a record as forwarded", async () => {
     db.insert(sampleFix);
-    const pending = db.getPending(10);
+    const pending = await db.getPending(10);
     expect(pending).toHaveLength(1);
 
     db.markForwarded(pending[0].id);
 
-    const remaining = db.getPending(10);
+    const remaining = await db.getPending(10);
     expect(remaining).toHaveLength(0);
 
     const lastTs = db.getLastTimestamp();
     expect(lastTs).toBe(sampleFix.timestamp);
   });
 
-  it("increments retry count", () => {
+  it("increments retry count", async () => {
     db.insert(sampleFix);
-    const pending = db.getPending(10);
+    const pending = await db.getPending(10);
     expect(pending[0].retryCount).toBe(0);
 
     db.incrementRetry(pending[0].id);
     db.incrementRetry(pending[0].id);
 
-    const pending2 = db.getPending(10);
+    const pending2 = await db.getPending(10);
     expect(pending2[0].retryCount).toBe(2);
   });
 
-  it("excludes records at max retries from pending", () => {
+  it("excludes records at max retries from pending", async () => {
     db.insert(sampleFix);
-    const pending = db.getPending(10);
+    const pending = await db.getPending(10);
     for (let i = 0; i < 3; i++) {
       db.incrementRetry(pending[0].id);
     }
 
-    const remaining = db.getPending(10);
+    const remaining = await db.getPending(10);
     expect(remaining).toHaveLength(0);
   });
 
-  it("prunes old forwarded records", () => {
+  it("prunes old forwarded records", async () => {
     vi.useFakeTimers();
     const baseTime = Date.now();
 
     vi.setSystemTime(baseTime);
     db.insert(sampleFix);
-    const pending = db.getPending(10);
+    const pending = await db.getPending(10);
     db.markForwarded(pending[0].id);
 
     vi.advanceTimersByTime(60_000);
 
     db.prune(50_000);
 
-    const afterPrune = db.getPending(10);
+    const afterPrune = await db.getPending(10);
     expect(afterPrune).toHaveLength(0);
 
     const lastTs = db.getLastTimestamp();
