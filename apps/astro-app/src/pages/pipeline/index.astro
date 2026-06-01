@@ -1,0 +1,13 @@
+---
+export const prerender = true;
+import Layout from "@/layouts/Layout.astro";
+import { PipelinePage } from "@pipeline/react/pipeline-page";
+const BUILD_TARGET = import.meta.env.BUILD_TARGET || "web";
+---
+<Layout title="Pipeline" css_color_palette="dark_mode">
+  {BUILD_TARGET === "capacitor" ? (
+    <PipelinePage client:only="react" />
+  ) : (
+    <p>Pipeline is only available in the mobile app.</p>
+  )}
+</Layout>

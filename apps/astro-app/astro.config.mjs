@@ -21,8 +21,14 @@ export default defineConfig({
     plugins: [tailwindcss(), yaml()],
     resolve: {
       alias: {
+        "@pipeline": path.resolve(__dirname, "../pipeline/src"),
         "@wywy/http": path.resolve(__dirname, "../http/src"),
       },
+    },
+    define: {
+      "import.meta.env.PUBLIC_MAIN_URL": JSON.stringify(process.env.MAIN_URL),
+      "import.meta.env.PUBLIC_DATABASE_URL": JSON.stringify(process.env.DATABASE_URL),
+      "import.meta.env.PUBLIC_CACHE_URL": JSON.stringify(process.env.CACHE_URL),
     },
   },
 

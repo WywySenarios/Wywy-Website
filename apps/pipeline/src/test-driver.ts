@@ -4,7 +4,7 @@ import { createNodePipelineDb } from "./db/adapter";
 import { initPipeline } from "./index";
 
 const dbPath = process.env.DB_PATH ?? "./data/pipeline.db";
-const db = createNodeDb(dbPath);
+const db = await createNodeDb(dbPath);
 const pipelineDb = createNodePipelineDb(db);
 
 console.log("[pipeline] Starting Node test driver — DB:", dbPath);

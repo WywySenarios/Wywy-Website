@@ -35,6 +35,15 @@ function createMockDb(): PipelineDb {
       const sorted = [...store].sort((a, b) => b.timestamp - a.timestamp);
       return sorted[0]?.timestamp;
     },
+    getStats(maxRetries) {
+      const total = store.length;
+      const pending = store.filter(
+        (r) => r.forwardedAt === null && r.retryCount < maxRetries,
+      ).length;
+      const failed = store.filter((r) => r.retryCount >= maxRetries).length;
+      const sorted = [...store].sort((a, b) => b.timestamp - a.timestamp);
+      return { total, pending, failed, lastTimestamp: sorted[0]?.timestamp };
+    },
   };
 }
 

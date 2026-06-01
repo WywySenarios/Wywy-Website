@@ -11,6 +11,9 @@ export const GEOLOCATION_PIPELINE = {
   /** Records older than this (days) are pruned */
   retentionDays: 30,
 
+  /** HTTP timeout for forwarding (ms) */
+  forwardTimeoutMs: 30_000,
+
   /** Local cache address (same-machine/loopback). Set to null to skip. */
   localCacheAddress: null as string | null,
 } as const;

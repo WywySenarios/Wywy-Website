@@ -2,11 +2,12 @@
   "private": true,
   "scripts": {
     "electron": "cd apps/electron-app && npx electron .",
-    "build:electron": "cd apps/astro-app && BUILD_TARGET=electron npx astro build && cd ../electron-app && npx tsc && npx electron-builder",
-    "build:electron:astro": "cd apps/astro-app && BUILD_TARGET=electron npx astro build",
+    "build:electron": ". scripts/source-env.sh && cd apps/astro-app && BUILD_TARGET=electron npx astro build && cd ../electron-app && npx tsc && npx electron-builder",
+    "build:electron:astro": ". scripts/source-env.sh && cd apps/astro-app && BUILD_TARGET=electron npx astro build",
     "build:electron:app": "cd apps/electron-app && npx tsc && npx electron-builder",
-    "build:capacitor": "cd apps/astro-app && BUILD_TARGET=capacitor npx astro build && cd ../capacitor-app && npx cap sync",
-    "build:capacitor:astro": "cd apps/astro-app && BUILD_TARGET=capacitor npx astro build",
+    "build:capacitor": "bash scripts/build-capacitor.sh prod",
+    "build:capacitor:dev": "bash scripts/build-capacitor.sh dev",
+    "build:capacitor:astro": ". scripts/source-env.sh && cd apps/astro-app && BUILD_TARGET=capacitor npx astro build",
     "build:capacitor:ios": "cd apps/capacitor-app && npx cap sync && npx cap build ios"
   }
 }

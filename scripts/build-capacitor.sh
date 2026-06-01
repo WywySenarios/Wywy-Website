@@ -47,6 +47,12 @@ npx cap sync
 if [ "$MODE" = "dev" ]; then
   echo "=== Running on iOS Simulator ==="
   npx cap run ios
+
+  echo ""
+  echo "=== Streaming app console logs (Ctrl+C to stop) ==="
+  set +e
+  xcrun simctl spawn booted log stream --predicate 'processImagePath CONTAINS "Wywy"' --level debug 2>&1
+  set -e
 else
   echo "=== Building iOS Archive (release) ==="
   SCHEME=$(xcodebuild -workspace ios/App/App.xcworkspace -list -json | \

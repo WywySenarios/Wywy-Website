@@ -1,4 +1,4 @@
-import { Menu, House, BookOpen, Settings } from "lucide-react";
+import { Menu, House, BookOpen, Settings, Activity } from "lucide-react";
 import {
   Drawer,
   DrawerTrigger,
@@ -6,7 +6,11 @@ import {
   DrawerClose,
 } from "@/components/ui/drawer";
 
-export default function NavDrawer() {
+interface Props {
+  buildTarget?: string;
+}
+
+export default function NavDrawer({ buildTarget = "web" }: Props) {
   return (
     <Drawer direction="left">
       <DrawerTrigger asChild>
@@ -34,6 +38,17 @@ export default function NavDrawer() {
               <span>Docs</span>
             </a>
           </DrawerClose>
+          {buildTarget === "capacitor" && (
+            <DrawerClose asChild>
+              <a
+                href="/pipeline"
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+              >
+                <Activity className="h-5 w-5" />
+                <span>Pipeline</span>
+              </a>
+            </DrawerClose>
+          )}
           <DrawerClose asChild>
             <a
               href="/settings"

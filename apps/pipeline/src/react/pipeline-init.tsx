@@ -1,42 +1,44 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { usePipeline } from "./pipeline-provider";
 
 export function PipelineInit() {
+  const { pipelineDb, loading } = usePipeline();
+  const cleanupRef = useRef<(() => void) | undefined>(undefined);
+
   useEffect(() => {
-    let cleanup: (() => void) | undefined;
+    if (!pipelineDb) return;
+    const db = pipelineDb;
+
     let cancelled = false;
 
     async function init() {
       try {
-        const [
-          { initPipeline },
-          { CapacitorGeolocationWatcher },
-          { createCapacitorPipelineDb },
-          { createCapacitorDb },
-        ] = await Promise.all([
-          import("../index"),
-          import("../drivers/capacitor"),
-          import("../db/adapter"),
-          import("../db/index"),
-        ]);
+        const [{ initPipeline }, { CapacitorGeolocationWatcher }] =
+          await Promise.all([
+            import("../index"),
+            import("../drivers/capacitor"),
+          ]);
 
         if (cancelled) return;
 
-        const db = await createCapacitorDb("pipeline");
-        const pipelineDb = createCapacitorPipelineDb(db);
-        cleanup = initPipeline(CapacitorGeolocationWatcher, pipelineDb);
-      } catch (err) {
-        console.error("[pipeline] Failed to initialize:", err);
+        cleanupRef.current = initPipeline(CapacitorGeolocationWatcher, db);
+      } catch (err: any) {
+        console.error("[pipeline] Failed to initialize:", {
+          message: err?.message ?? String(err),
+          code: err?.code,
+          stack: err?.stack,
+        });
       }
     }
 
     init();
     return () => {
       cancelled = true;
-      cleanup?.();
+      cleanupRef.current?.();
     };
-  }, []);
+  }, [pipelineDb]);
 
   return null;
 }

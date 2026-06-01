@@ -1,9 +1,14 @@
 import type { PipelineDb } from "../index";
 import type { GeolocationFix } from "../geolocation/types";
 import { geolocationFixes } from "./schema";
-import { eq, lt, and, isNull, desc, sql } from "drizzle-orm";
+import { eq, lt, and, isNull, desc, sql, count, gte } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type { SqliteRemoteDatabase } from "drizzle-orm/sqlite-proxy";
+
+function toSafeNum(v: unknown): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
 
 export function createNodePipelineDb(
   db: BetterSQLite3Database<typeof import("./schema")>,
@@ -61,7 +66,36 @@ export function createNodePipelineDb(
         .from(geolocationFixes)
         .orderBy(desc(geolocationFixes.timestamp))
         .get();
-      return row?.ts;
+      return row?.ts != null ? toSafeNum(row.ts) : undefined;
+    },
+    getStats(maxRetries) {
+      const [totalRow] = db.select({ value: count() }).from(geolocationFixes).all();
+      const [pendingRow] = db
+        .select({ value: count() })
+        .from(geolocationFixes)
+        .where(
+          and(
+            isNull(geolocationFixes.forwardedAt),
+            lt(geolocationFixes.retryCount, maxRetries),
+          ),
+        )
+        .all();
+      const [failedRow] = db
+        .select({ value: count() })
+        .from(geolocationFixes)
+        .where(gte(geolocationFixes.retryCount, maxRetries))
+        .all();
+      const ts = db
+        .select({ ts: geolocationFixes.timestamp })
+        .from(geolocationFixes)
+        .orderBy(desc(geolocationFixes.timestamp))
+        .get();
+      return {
+        total: toSafeNum(totalRow?.value),
+        pending: toSafeNum(pendingRow?.value),
+        failed: toSafeNum(failedRow?.value),
+        lastTimestamp: ts?.ts != null ? toSafeNum(ts.ts) : undefined,
+      };
     },
   };
 }
@@ -114,12 +148,39 @@ export function createCapacitorPipelineDb(
         .where(lt(geolocationFixes.forwardedAt, cutoff));
     },
     async getLastTimestamp() {
-      const row = await db
+      const rows = await db
         .select({ ts: geolocationFixes.timestamp })
         .from(geolocationFixes)
         .orderBy(desc(geolocationFixes.timestamp))
         .limit(1);
-      return row[0]?.ts;
+      return rows[0]?.ts != null ? toSafeNum(rows[0].ts) : undefined;
+    },
+    async getStats(maxRetries) {
+      const [totalRow] = await db.select({ value: count() }).from(geolocationFixes);
+      const [pendingRow] = await db
+        .select({ value: count() })
+        .from(geolocationFixes)
+        .where(
+          and(
+            isNull(geolocationFixes.forwardedAt),
+            lt(geolocationFixes.retryCount, maxRetries),
+          ),
+        );
+      const [failedRow] = await db
+        .select({ value: count() })
+        .from(geolocationFixes)
+        .where(gte(geolocationFixes.retryCount, maxRetries));
+      const tsRows = await db
+        .select({ ts: geolocationFixes.timestamp })
+        .from(geolocationFixes)
+        .orderBy(desc(geolocationFixes.timestamp))
+        .limit(1);
+      return {
+        total: toSafeNum(totalRow?.value),
+        pending: toSafeNum(pendingRow?.value),
+        failed: toSafeNum(failedRow?.value),
+        lastTimestamp: tsRows[0]?.ts != null ? toSafeNum(tsRows[0].ts) : undefined,
+      };
     },
   };
 }

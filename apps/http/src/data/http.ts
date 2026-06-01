@@ -6,9 +6,11 @@ export async function submitEntry(
   endpoint: string,
   values: Record<string, any>,
   origin?: OriginName,
+  signal?: AbortSignal,
+  contentType: string = "application/json",
 ): Promise<void> {
   const headers: HeadersInit = {
-    "Content-type": "application/json; charset=UTF-8",
+    "Content-type": `${contentType}; charset=UTF-8`,
   };
 
   if (origin !== undefined) {
@@ -21,6 +23,7 @@ export async function submitEntry(
     mode: "cors",
     credentials: "include",
     headers: headers,
+    signal,
   });
 
   if (!response.ok) {

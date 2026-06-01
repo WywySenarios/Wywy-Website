@@ -1,7 +1,11 @@
 import type { OriginName } from "./types";
 
-const CACHE_URL = typeof process !== "undefined" ? process.env.CACHE_URL : undefined;
-const DATABASE_URL = typeof process !== "undefined" ? process.env.DATABASE_URL : undefined;
+const CACHE_URL = typeof process !== "undefined"
+  ? process.env.CACHE_URL
+  : import.meta.env.PUBLIC_CACHE_URL;
+const DATABASE_URL = typeof process !== "undefined"
+  ? process.env.DATABASE_URL
+  : import.meta.env.PUBLIC_DATABASE_URL;
 
 export const ORIGIN_NAMES = ["master-database", "cache"] as const;
 

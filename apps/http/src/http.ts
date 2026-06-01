@@ -1,7 +1,13 @@
 import type { EndpointFactory, OriginName } from "./types";
 import { CSRF_ENDPOINTS } from "./endpoints";
 
-const CACHE_URL = typeof process !== "undefined" ? process.env.CACHE_URL : undefined;
+const CACHE_URL = typeof process !== "undefined"
+  ? process.env.CACHE_URL
+  : import.meta.env.PUBLIC_CACHE_URL;
+
+const DATABASE_URL = typeof process !== "undefined"
+  ? process.env.DATABASE_URL
+  : import.meta.env.PUBLIC_DATABASE_URL;
 
 export const CACHE_CSRF_ENDPOINT = `${CACHE_URL}/cache/csrf`;
 

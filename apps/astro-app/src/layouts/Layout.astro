@@ -3,7 +3,7 @@ import "@/styles/global.css";
 import "@/styles/bars.css";
 import config from "@root/config.yml";
 import NavDrawer from "@/components/NavDrawer";
-import { PipelineInit } from "@pipeline/react/pipeline-init";
+import { PipelineProvider } from "@pipeline/react/pipeline-provider";
 const BUILD_TARGET = import.meta.env.BUILD_TARGET || "web";
 
 interface Props {
@@ -52,7 +52,7 @@ let {
   <body>
     <!-- Top bar -->
     <nav class="top-bar">
-      <NavDrawer client:load />
+      <NavDrawer client:load buildTarget={BUILD_TARGET} />
 
       <!-- Buttons -->
       <!-- Made thanks to : https://stackoverflow.com/questions/2906582/how-do-i-create-an-html-button-that-acts-like-a-link -->
@@ -68,7 +68,7 @@ let {
     </nav>
     <slot />
 
-    {BUILD_TARGET === "capacitor" && <PipelineInit client:only="react" />}
+    {BUILD_TARGET === "capacitor" && <PipelineProvider client:only="react" />}
   </body>
 </html>
 
