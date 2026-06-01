@@ -3,6 +3,8 @@ import "@/styles/global.css";
 import "@/styles/bars.css";
 import config from "@root/config.yml";
 import NavDrawer from "@/components/NavDrawer";
+import LoginDialog from "@/components/auth/login-dialog";
+import { Toaster } from "@/components/ui/sonner";
 import { PipelineProvider } from "@pipeline/react/pipeline-provider";
 const BUILD_TARGET = import.meta.env.BUILD_TARGET || "web";
 
@@ -60,6 +62,8 @@ let {
         <input type="button" value="Home" />
       </a>
 
+      <LoginDialog client:only="react" />
+
       <slot name="top-bar-button2" />
       <slot name="top-bar-button3" />
 
@@ -69,6 +73,7 @@ let {
     <slot />
 
     {BUILD_TARGET === "capacitor" && <PipelineProvider client:only="react" />}
+    <Toaster client:load />
   </body>
 </html>
 

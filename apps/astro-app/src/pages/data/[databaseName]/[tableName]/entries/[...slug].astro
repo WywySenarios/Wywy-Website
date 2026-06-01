@@ -7,8 +7,6 @@ import config from "@root/config.yml";
 import Layout from "@/layouts/Layout.astro";
 
 import { EntryTable } from "@/components/data/entries/entry-table-page";
-import { Toaster } from "@/components/ui/sonner";
-import LoginDialog from "@/components/auth/login-dialog";
 
 export const prerender = true;
 export function getStaticPaths() {
@@ -142,7 +140,6 @@ switch (slug) {
   css_color_palette="light_mode"
   useAstroDefaultCSS={false}
 >
-  <LoginDialog client:only="react" slot="top-bar-button2" />
   <EntryTable
     schema={schema}
     databaseInfo={databaseInfo}
@@ -150,5 +147,4 @@ switch (slug) {
     type={type}
     client:load
   />
-  <Toaster client:idle />
 </Layout>

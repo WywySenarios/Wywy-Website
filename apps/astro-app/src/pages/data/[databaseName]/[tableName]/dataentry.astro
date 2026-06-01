@@ -9,8 +9,6 @@ import config from "@root/config.yml";
 import Layout from "@/layouts/Layout.astro";
 
 import DataEntryForm from "@/components/data/data-entry-form";
-import { Toaster } from "@/components/ui/sonner";
-import LoginDialog from "@/components/auth/login-dialog";
 
 export const prerender = true;
 export function getStaticPaths() {
@@ -69,7 +67,6 @@ if (!databaseInfo || !tableInfo) {
   css_color_palette="light_mode"
   useAstroDefaultCSS={false}
 >
-  <LoginDialog client:only="react" slot="top-bar-button2" />
   <DataEntryForm
     databaseInfo={databaseInfo}
     tableInfo={tableInfo}
@@ -77,5 +74,4 @@ if (!databaseInfo || !tableInfo) {
   >
     <div slot="fallback">Loading...</div>
   </DataEntryForm>
-  <Toaster client:load />
 </Layout>

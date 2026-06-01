@@ -6,8 +6,6 @@ import type { DatabaseInfo, DescriptorInfo, TableInfo } from "@/types/data";
 import config from "@root/config.yml";
 import Layout from "@/layouts/Layout.astro";
 
-import { Toaster } from "@/components/ui/sonner";
-import LoginDialog from "@/components/auth/login-dialog";
 import { EntryViewer } from "@/components/data/entries/entry-viewer";
 import { TAGGING_TABLE_TAGS_TABLE_SCHEMA } from "@utils/data/schema";
 import { TAGGING_TABLE_TAG_ALIASES_TABLE_SCHEMA } from "@utils/data/schema";
@@ -160,7 +158,6 @@ switch (slug) {
   css_color_palette="light_mode"
   useAstroDefaultCSS={false}
 >
-  <LoginDialog client:only="react" slot="top-bar-button2" />
   <EntryViewer
     schema={schema}
     databaseInfo={databaseInfo}
@@ -168,5 +165,4 @@ switch (slug) {
     type={type}
     client:only
   />
-  <Toaster client:idle />
 </Layout>

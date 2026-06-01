@@ -1,7 +1,6 @@
 ---
 export const prerender = true;
 import Layout from "@/layouts/Layout.astro";
-import { Toaster } from "@/components/ui/sonner";
 import { MyGeodeticCoordinate } from "@/components/projects/mylocation/my-geodetic-coordinate";
 ---
 
@@ -9,5 +8,4 @@ import { MyGeodeticCoordinate } from "@/components/projects/mylocation/my-geodet
   <h2>Where Am I?</h2>
   <p>Using the Javascript Geolocation API.</p>
   <MyGeodeticCoordinate client:only="react" />
-  <Toaster client:idle />
 </Layout>
