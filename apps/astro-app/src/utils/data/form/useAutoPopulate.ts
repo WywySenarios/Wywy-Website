@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import type { TableInfo, RecordOnEvent } from "@/types/data";
 import { handleRecordOn } from "@utils/data/form/updates";
+import { toSnakeCase } from "@utils/parse";
 import { toast } from "sonner";
 
 /**
@@ -34,6 +35,16 @@ export function useAutoPopulate(
           controller.setValue(`data.${key}`, value, {
             shouldValidate: true,
           });
+        }
+        if (mode === "purge") {
+          for (const columnSchema of tableInfo.schema) {
+            const columnName = toSnakeCase(columnSchema.name);
+            if (columnSchema.record_on === eventName) {
+              controller.setValue(`data.${columnName}`, undefined, {
+                shouldValidate: true,
+              });
+            }
+          }
         }
       } catch (error) {
         printError(error);
