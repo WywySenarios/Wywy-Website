@@ -25,12 +25,14 @@ case "$MODE" in
     ;;
 esac
 
-# Source environment variables — same order as docker compose
+# Source environment variables — least specific first, most specific last
 set -a
 [ -f "$CONFIG_DIR/.env" ]              && . "$CONFIG_DIR/.env"
-[ -f "$CONFIG_DIR/website/.env" ]      && . "$CONFIG_DIR/website/.env"
 if [ "$MODE" = "dev" ]; then
   [ -f "$CONFIG_DIR/.env.dev" ]        && . "$CONFIG_DIR/.env.dev"
+fi
+[ -f "$CONFIG_DIR/website/.env" ]      && . "$CONFIG_DIR/website/.env"
+if [ "$MODE" = "dev" ]; then
   [ -f "$CONFIG_DIR/website/.env.dev" ] && . "$CONFIG_DIR/website/.env.dev"
 fi
 set +a
