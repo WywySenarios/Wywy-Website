@@ -4,6 +4,12 @@ import type { GeolocationWatcher } from "./geolocation/watcher";
 import type { GeolocationFix } from "./geolocation/types";
 import type { PipelineDb } from "./index";
 
+vi.mock("@root/config.yml", () => ({
+  default: {
+    pipelines: [{ type: "location", target: { database_name: "geolocation", table_name: "geolocation_fixes" } }],
+  },
+}));
+
 function createMockDb(): PipelineDb {
   const store: Array<
     { id: number } & GeolocationFix & {

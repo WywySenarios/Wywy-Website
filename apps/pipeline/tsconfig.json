@@ -6,7 +6,8 @@
     "outDir": "dist",
     "paths": {
       "@wywy/http/*": ["../http/src/*"],
-      "@/*": ["../astro-app/src/*"]
+      "@/*": ["../astro-app/src/*"],
+      "@root/*": ["../astro-app/*"]
     },
     "strict": true,
     "esModuleInterop": true,

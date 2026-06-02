@@ -24,7 +24,34 @@ export async function getCSRFToken(origin: OriginName): Promise<string> {
   if (!csrfResponse.ok)
     throw new Error(`Failed to fetch CSRF token from ${endpoint}`);
   const csrfJSON: Object = await csrfResponse.json();
-  if ("csrfToken" in csrfJSON) return String(csrfJSON["csrfToken"]);
+  if ("csrfToken" in csrfJSON) {
+    const token = String(csrfJSON["csrfToken"]);
+    if (typeof document !== "undefined" && CACHE_URL) {
+      const cacheUrl = new URL(CACHE_URL);
+      const pageOrigin = typeof location !== "undefined"
+        ? `${location.protocol}//${location.hostname}`
+        : "";
+      const cacheOrigin = `${cacheUrl.protocol}//${cacheUrl.hostname}`;
+      const sameOrigin = pageOrigin === cacheOrigin;
+      const secure = CACHE_URL.startsWith("https:") ? "; Secure" : "";
+      const sameSite = sameOrigin ? "" : `; SameSite=None${secure}`;
+      document.cookie = `csrftoken=${token}; path=/${sameSite}`;
+
+      const w = window as unknown as Record<string, unknown>;
+      if (w.webkit?.messageHandlers?.cookieHandler) {
+        (w.webkit as Record<string, { postMessage: (msg: unknown) => void }>)
+          .messageHandlers.cookieHandler.postMessage({
+            name: "csrftoken",
+            value: token,
+            url: CACHE_URL,
+            path: "/",
+            secure: cacheUrl.protocol === "https:",
+            expires: Date.now() / 1000 + 365 * 86400,
+          });
+      }
+    }
+    return token;
+  }
   throw new Error(`Unexpected response to CSRF token request to ${endpoint}`);
 }
 

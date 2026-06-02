@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { forwardBatch } from "./cache";
 import type { GeolocationFix } from "./geolocation/types";
 
+vi.mock("@root/config.yml", () => ({
+  default: {
+    pipelines: [{ type: "location", target: { database_name: "geolocation", table_name: "geolocation_fixes" } }],
+  },
+}));
+
 const sampleFixes: GeolocationFix[] = [
   {
     latitude: 37.7749,
@@ -41,7 +47,7 @@ describe("forwardBatch", () => {
 
     expect(result).toBe(true);
     expect(mockFetch).toHaveBeenCalledWith(
-      `${cacheUrl}/cache/geolocation/geolocation_fixes`,
+      `${cacheUrl}/main/geolocation/geolocation_fixes`,
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/json" },

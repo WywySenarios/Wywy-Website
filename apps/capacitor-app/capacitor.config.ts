@@ -6,6 +6,7 @@ const config: CapacitorConfig = {
   webDir: '../astro-app/dist',
   server: {
     androidScheme: 'https',
+    iosScheme: 'http',
   },
 };
 

@@ -20,6 +20,14 @@ declare module "env" {
   export = config;
 }
 
+export interface PipelineSchema {
+  type: string;
+  target: {
+    database_name: string;
+    table_name: string;
+  };
+}
+
 export interface MainConfigSchema {
   websiteTitle: string; // Title of the website (e.g. "EZ & Wywy's Website!")
   websiteIcon: string; // path (relative to the public folder) for the website icon (e.g. "/favicon.svg")
@@ -33,4 +41,5 @@ export interface MainConfigSchema {
     schedule: string; // schedule to be displayed (e.g. default)
   };
   data: Array<DatabaseInfo>;
+  pipelines: Array<PipelineSchema>;
 }

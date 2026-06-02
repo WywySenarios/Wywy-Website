@@ -15,12 +15,12 @@ function mapPosition(pos: Position): GeolocationFix {
   return {
     latitude,
     longitude,
-    accuracy: accuracy ?? null,
-    altitude: altitude ?? null,
-    altitudeAccuracy: altitudeAccuracy ?? null,
-    speed: speed ?? null,
-    heading: heading ?? null,
-    timestamp: pos.timestamp,
+    accuracy: accuracy != null ? accuracy : null,
+    altitude: altitude != null && altitude !== 0 ? altitude : null,
+    altitudeAccuracy: altitudeAccuracy != null && altitudeAccuracy >= 0 ? altitudeAccuracy : null,
+    speed: speed != null && speed >= 0 ? speed : null,
+    heading: heading != null && heading >= 0 ? heading : null,
+    timestamp: Math.round(pos.timestamp),
   };
 }
 
