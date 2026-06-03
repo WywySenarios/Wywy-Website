@@ -261,13 +261,18 @@ export function TimerForm({
     }
   }
 
-  // Cancels the entire session: clears the cache and resets split state
+  // Cancels the entire session: purges start record_on columns and re-caches
   async function cancel() {
     if (isCaching) return;
     setIsCaching(true);
-
-    setIsSplit(false);
-    await cache({});
+    try {
+      await populate("start", "purge");
+      setIsSplit(false);
+      await cache();
+    } catch (reason) {
+      if (reason) toast(`Failed to cancel: ${reason}`);
+      setCacheError(true);
+    }
   }
 
   // Handles form entry submission, then restarts or cancels based on the clicked button's value

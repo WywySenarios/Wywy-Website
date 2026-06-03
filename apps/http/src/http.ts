@@ -11,9 +11,12 @@ const DATABASE_URL = typeof process !== "undefined"
 
 export const CACHE_CSRF_ENDPOINT = `${CACHE_URL}/cache/csrf`;
 
+let csrfTokenCache: string | undefined;
+
 export async function getCSRFToken(origin: OriginName): Promise<string> {
   if (origin == "master-database")
     throw "The master database does not have CSRF tokens.";
+  if (csrfTokenCache) return csrfTokenCache;
   const endpoint = CSRF_ENDPOINTS[origin];
 
   const csrfResponse: Response = await fetch(endpoint, {
@@ -26,6 +29,7 @@ export async function getCSRFToken(origin: OriginName): Promise<string> {
   const csrfJSON: Object = await csrfResponse.json();
   if ("csrfToken" in csrfJSON) {
     const token = String(csrfJSON["csrfToken"]);
+    csrfTokenCache = token;
     if (typeof document !== "undefined" && CACHE_URL) {
       const cacheUrl = new URL(CACHE_URL);
       const pageOrigin = typeof location !== "undefined"
@@ -35,7 +39,8 @@ export async function getCSRFToken(origin: OriginName): Promise<string> {
       const sameOrigin = pageOrigin === cacheOrigin;
       const secure = CACHE_URL.startsWith("https:") ? "; Secure" : "";
       const sameSite = sameOrigin ? "" : `; SameSite=None${secure}`;
-      document.cookie = `csrftoken=${token}; path=/${sameSite}`;
+      const expires = new Date(Date.now() + 365 * 86400 * 1000).toUTCString();
+      document.cookie = `csrftoken=${token}; path=/; expires=${expires}${sameSite}`;
 
       const w = window as unknown as Record<string, unknown>;
       if (w.webkit?.messageHandlers?.cookieHandler) {
